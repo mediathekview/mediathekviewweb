@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-
 <head>
     <title>MediathekView</title>
     <meta charset="utf-8">
@@ -13,9 +12,6 @@
     <script src="../../socket.io/socket.io.js"></script>
     <script src="../../static/mustache.min.js"></script>
 </head>
-
-
-
 
 <script>
     var socket = io();
@@ -41,12 +37,27 @@
             title: 'Sample',
             size: 5530000
         });
+
+        $('#queryInput').on('input', () => {
+            query($('#queryInput').val());
+        });
     });
 
-    socket.on('newDownload', (msg) => {
-        socket.emit('getDownloadMetaData', msg.id);
-        createDownloadDom(msg.id, msg.packageName);
+    function query(queryString) {
+        socket.emit('queryEntry', queryString)
+    }
+
+    socket.on('queryResult', (result) => {
+        clearMediathek();
+        for (var i in result) {
+            createEntryDOM(result[i]);
+            console.log(result[i]);
+        }
     });
+
+    function clearMediathek() {
+        $('#mediathek>table>tbody').empty();
+    }
 
     function createEntryDOM(entry) {
         var template = $('#entryDOMTemplate').html();
@@ -66,30 +77,37 @@
     <tr>
         <td>{{entry.num}}</td>
         <td>{{entry.channel}}</td>
-        <td>{{entry.topic}}</td>
+        <!--<td>{{entry.topic}}</td>-->
         <td>{{entry.title}}</td>
         <td>{{entry.date}}</td>
         <td>{{entry.time}}</td>
+        <td>{{entry.duration}}</td>
         <td>{{getSizeString}}</td>
         <td>{{entry.hasHD}}</td>
         <td>{{entry.hasSub}}</td>
         <td>{{entry.geo}}</td>
-        <td><a href="{{entry.urls.video}}"><span class="glyphicon glyphicon-film"></span> Logout</a></td>
+        <td><a href="{{entry.urls.video}}"><span class="glyphicon glyphicon-film"></span></a></td>
     </tr>
 </script>
 
 <body>
     <div class="container" id="mediathek">
 
+        <div class="input-group">
+            <span class="input-group-addon">Query</span>
+            <input type="text" class="form-control" id="queryInput">
+        </div>
+
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Channel</th>
-                    <th>Topic</th>
+                    <!--<th>Topic</th>-->
                     <th>Title</th>
                     <th>Date</th>
                     <th>Time</th>
+                    <th>Duration</th>
                     <th>Size</th>
                     <th>HD</th>
                     <th>Sub</th>

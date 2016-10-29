@@ -1,4 +1,4 @@
-var REDIS = require('redis');
+//var REDIS = require('redis');
 var express = require('express');
 var http = require('http');
 var path = require('path');
@@ -6,18 +6,20 @@ var readline = require('readline');
 var fs = require('fs');
 var STREAM = require('stream');
 var lineReader = require('line-reader');
+var moment = require('moment');
 
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
-var redis = REDIS.createClient();
+//var redis = REDIS.createClient();
 
 var searchIndex;
+var data = [];
 
 const initIndex = function(err, index) {
     if (!err) {
         searchIndex = index;
-        indexData('data');
+        indexData('../data');
     }
 }
 require('search-index')({}, initIndex);
@@ -33,25 +35,9 @@ io.on('connection', (socket) => {
     let searchPending = false;
     let lastSearchString = '';
 
-    socket.on('searchEntry', (query) => {
-        lastSearchString = query;
-
-        if (isSearching) {
-            searchPending = true;
-            return;
-        }
-
-        isSearching = true;
-        var results = searchEntries(query);
-        socket.emit('searchResult', results);
-
-        if (searchPending) {
-            searchPending = false;
-
-            var results = searchEntries(query);
-            socket.emit('searchResult', results);
-        }
-        isSearching = false;
+    socket.on('queryEntry', (query) => {
+        let result = queryEntries(query);
+        socket.emit('queryResult', result);
     });
 });
 
@@ -59,10 +45,19 @@ httpServer.listen(8080, () => {
     console.log('server listening on *:8080');
 });
 
-function searchEntries(query) {
-    var results = data.filter((entry) => {
+function queryEntries(query) {
+    let begin = Date.now();
+
+    let results = data.filter((entry) => {
         return entry.title.toLowerCase().includes(query);
-    });
+    }).sort((a, b) => {
+        let aMoment = moment(a.date + a.time, 'DD.MM.YYYYHHmm');
+        let bMoment = moment(b.date + b.time, 'DD.MM.YYYYHHmm');
+        if (aMoment.isSameOrAfter(bMoment)) return -1;
+        else return 1;
+    }).slice(0, 50);
+
+    console.log('query took ' + (Date.now() - begin) / 1000 + ' seconds');
 
     return results;
 }
@@ -71,9 +66,9 @@ function searchEntries(query) {
 var indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)" ]/;
 
 function indexData(file, endCallback) {
-    let indexStream = new STREAM.PassThrough({
+    /*let indexStream = new STREAM.PassThrough({
         objectMode: true
-    });
+    });*/
 
     var begin = Date.now();
     lineReader.eachLine(file, function(line, last) {
@@ -104,21 +99,22 @@ function indexData(file, endCallback) {
                 new: match[20]
             };
 
-            indexStream.push(entry);
+            data.push(entry);
+            //indexStream.push(entry);
         }
 
         if (last) {
-            //indexStream.push(null);
+            /*indexStream.push(null);
             indexStream.pipe(searchIndex.defaultPipeline()).pipe(searchIndex.add());
 
             setInterval(() => {
                 searchIndex.tellMeAboutMySearchIndex(function(err, info) {
                     console.log(info)
                 });
-            }, 1000);
+            }, 1000);*/
 
             console.log('indexing took ' + (Date.now() - begin) / 1000 + ' seconds');
-            //console.log('indexed ' + data.length + ' entries');
+            console.log('indexed ' + data.length + ' entries');
         }
     });
 }
