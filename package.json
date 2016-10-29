@@ -1,0 +1,18 @@
+{
+  "name": "mediathekviewweb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.14.0",
+    "line-reader": "^0.4.0",
+    "redis": "^2.6.2",
+    "search-index": "^0.9.4",
+    "socket.io": "^1.5.1"
+  }
+}

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <title>MediathekView</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../static/bootstrap-3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../static/mediathekview.css">
+    <script src="../../static/jquery-3.1.1.min.js"></script>
+    <script src="../../static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script src="../../socket.io/socket.io.js"></script>
+    <script src="../../static/mustache.min.js"></script>
+</head>
+
+
+
+
+<script>
+    var socket = io();
+
+    function formatBytes(bytes, decimals) {
+        if (bytes == 0) return '0 Byte';
+        var k = 1000;
+        var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        var i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+    }
+
+    $(function() { //jquery ready, page loaded
+        createEntryDOM({
+            num: 1,
+            channel: 'ARD',
+            title: 'Sample',
+            size: 5530000
+        });
+        createEntryDOM({
+            num: 1,
+            channel: 'ARD',
+            title: 'Sample',
+            size: 5530000
+        });
+    });
+
+    socket.on('newDownload', (msg) => {
+        socket.emit('getDownloadMetaData', msg.id);
+        createDownloadDom(msg.id, msg.packageName);
+    });
+
+    function createEntryDOM(entry) {
+        var template = $('#entryDOMTemplate').html();
+
+        var rendered = Mustache.render(template, {
+            entry: entry,
+            getSizeString: function() {
+                return formatBytes(this.entry.size, 2);
+            }
+        });
+
+        $('#mediathek>table>tbody').append(rendered);
+    }
+</script>
+
+<script id="entryDOMTemplate" type="x-tmpl-mustache">
+    <tr>
+        <td>{{entry.num}}</td>
+        <td>{{entry.channel}}</td>
+        <td>{{entry.topic}}</td>
+        <td>{{entry.title}}</td>
+        <td>{{entry.date}}</td>
+        <td>{{entry.time}}</td>
+        <td>{{getSizeString}}</td>
+        <td>{{entry.hasHD}}</td>
+        <td>{{entry.hasSub}}</td>
+        <td>{{entry.geo}}</td>
+        <td><a href="{{entry.urls.video}}"><span class="glyphicon glyphicon-film"></span> Logout</a></td>
+    </tr>
+</script>
+
+<body>
+    <div class="container" id="mediathek">
+
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Channel</th>
+                    <th>Topic</th>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Size</th>
+                    <th>HD</th>
+                    <th>Sub</th>
+                    <th>Geo</th>
+                    <th>Url</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>John</td>
+                    <td>Doe</td>
+                    <td>john@example.com</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+
+    <script type="text/javascript">
+        //$('#addDownloadModal').modal('show');
+    </script>
+</body>
+
+
+</html>
