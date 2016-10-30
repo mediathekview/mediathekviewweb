@@ -19,7 +19,9 @@ var data = [];
 const initIndex = function(err, index) {
     if (!err) {
         searchIndex = index;
-        indexData('../data');
+        setImmediate(() => indexData('../data'));
+    } else {
+        console.log(err);
     }
 }
 require('search-index')({}, initIndex);
@@ -66,9 +68,12 @@ function queryEntries(query) {
 var indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)" ]/;
 
 function indexData(file, endCallback) {
-    /*let indexStream = new STREAM.PassThrough({
+    let indexStream = new STREAM.PassThrough({
         objectMode: true
-    });*/
+    });
+
+
+    var totalLines = 0;
 
     var begin = Date.now();
     lineReader.eachLine(file, function(line, last) {
@@ -99,22 +104,25 @@ function indexData(file, endCallback) {
                 new: match[20]
             };
 
-            data.push(entry);
-            //indexStream.push(entry);
+            entry.id = ++totalLines;
+
+            //data.push(entry);
+            indexStream.push(entry);
         }
 
         if (last) {
-            /*indexStream.push(null);
+            indexStream.push(null);
             indexStream.pipe(searchIndex.defaultPipeline()).pipe(searchIndex.add());
+            console.log(indexStream);
 
             setInterval(() => {
                 searchIndex.tellMeAboutMySearchIndex(function(err, info) {
                     console.log(info)
                 });
-            }, 1000);*/
+            }, 1000);
 
             console.log('indexing took ' + (Date.now() - begin) / 1000 + ' seconds');
-            console.log('indexed ' + data.length + ' entries');
+            console.log('indexed ' + totalLines + ' entries');
         }
     });
 }
