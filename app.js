@@ -19,7 +19,7 @@ var data = [];
 const initIndex = function(err, index) {
     if (!err) {
         searchIndex = index;
-        setImmediate(() => indexData('../data'));
+        setImmediate(() => indexData('data'));
     } else {
         console.log(err);
     }
@@ -106,20 +106,19 @@ function indexData(file, endCallback) {
 
             entry.id = ++totalLines;
 
-            //data.push(entry);
-            indexStream.push(entry);
+            data.push(entry);
+            //indexStream.push(entry);
         }
 
         if (last) {
-            indexStream.push(null);
-            indexStream.pipe(searchIndex.defaultPipeline()).pipe(searchIndex.add());
-            console.log(indexStream);
+            //indexStream.push(null);
+            //indexStream.pipe(searchIndex.defaultPipeline()).pipe(searchIndex.add());
 
-            setInterval(() => {
+            /*setInterval(() => {
                 searchIndex.tellMeAboutMySearchIndex(function(err, info) {
                     console.log(info)
                 });
-            }, 1000);
+            }, 1000);*/
 
             console.log('indexing took ' + (Date.now() - begin) / 1000 + ' seconds');
             console.log('indexed ' + totalLines + ' entries');

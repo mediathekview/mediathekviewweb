@@ -6,15 +6,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../../static/bootstrap-3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../../static/mediathekview.css">
+    <link rel="stylesheet" type="text/css" href="../../static/DataTables/datatables.min.css" />
     <script src="../../static/jquery-3.1.1.min.js"></script>
     <script src="../../static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script src="../../socket.io/socket.io.js"></script>
     <script src="../../static/mustache.min.js"></script>
+    <script type="text/javascript" src="../../static/DataTables/datatables.min.js"></script>
 </head>
 
 <script>
     var socket = io();
+    var mediathekTable;
 
     function formatBytes(bytes, decimals) {
         if (bytes == 0) return '0 Byte';
@@ -25,17 +27,13 @@
     }
 
     $(function() { //jquery ready, page loaded
-        createEntryDOM({
-            num: 1,
-            channel: 'ARD',
-            title: 'Sample',
-            size: 5530000
-        });
-        createEntryDOM({
-            num: 1,
-            channel: 'ARD',
-            title: 'Sample',
-            size: 5530000
+        mediathekTable = $('#mediathek').DataTable({
+            columns: [{ "width": "10%" },
+                { "width": "50%" },
+                null,
+                null,
+                null
+            ]
         });
 
         $('#queryInput').on('input', () => {
@@ -48,15 +46,20 @@
     }
 
     socket.on('queryResult', (result) => {
-        clearMediathek();
-        for (var i in result) {
-            createEntryDOM(result[i]);
-            console.log(result[i]);
+        //clearMediathek();
+        mediathekTable.clear();
+
+        for (var i = 0; i < result.length; i++) {
+            mediathekTable.row.add([null, result[i].title, null, null, null, null, null, null, null]);
         }
+
+        mediathekTable.draw();
+
+        console.log(mediathekTable);
     });
 
     function clearMediathek() {
-        $('#mediathek>table>tbody').empty();
+        $('#mediathek').empty();
     }
 
     function createEntryDOM(entry) {
@@ -69,7 +72,7 @@
             }
         });
 
-        $('#mediathek>table>tbody').append(rendered);
+        $('#mediathek>tbody').append(rendered);
     }
 </script>
 
@@ -91,36 +94,26 @@
 </script>
 
 <body>
-    <div class="container" id="mediathek">
+    <div class="container">
 
         <div class="input-group">
             <span class="input-group-addon">Query</span>
             <input type="text" class="form-control" id="queryInput">
         </div>
 
-        <table class="table table-striped table-hover">
+        <table id="mediathek" class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>#</th>
                     <th>Channel</th>
-                    <!--<th>Topic</th>-->
                     <th>Title</th>
                     <th>Date</th>
                     <th>Time</th>
                     <th>Duration</th>
                     <th>Size</th>
-                    <th>HD</th>
-                    <th>Sub</th>
-                    <th>Geo</th>
                     <th>Url</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>John</td>
-                    <td>Doe</td>
-                    <td>john@example.com</td>
-                </tr>
             </tbody>
         </table>
 
