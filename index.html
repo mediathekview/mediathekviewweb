@@ -50,7 +50,7 @@
         mediathekTable.clear();
 
         for (var i = 0; i < result.length; i++) {
-            mediathekTable.row.add([null, result[i].title, null, null, null, null, null, null, null]);
+            mediathekTable.row.add([null, result[i].data.title, result[i].data.date, result[i].data.time, null, null, null, null, null]);
         }
 
         mediathekTable.draw();
