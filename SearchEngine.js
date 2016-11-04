@@ -1,8 +1,11 @@
+var HashTable = require('hashtable');
+
 class SearchEngine {
     constructor() {
         this.counter = 0;
         this.indexData = {};
-        this.searchindex = new Map();
+        //this.searchindex = new Map();
+        this.searchindex = new HashTable();
     }
 
     add(ident, data) {
@@ -21,7 +24,7 @@ class SearchEngine {
                     let key = split.slice(begin, end);
 
                     if (!this.searchindex.has(key)) {
-                        this.searchindex.set(key, new Set());
+                        this.searchindex.put(key, new Set());
                     }
 
                     this.searchindex.get(key).add(c);
@@ -29,7 +32,7 @@ class SearchEngine {
             }
         }
 
-        if(c % 1000 == 0) console.log('indexed ' + c + ' entries, containing ' + this.searchindex.size + ' mapkeys');
+        if(c % 1000 == 0) console.log('indexed ' + c + ' entries, containing ' + this.searchindex.size() + ' mapkeys');
     }
 
     search(query) {
