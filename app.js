@@ -1,4 +1,3 @@
-//var REDIS = require('redis');
 var express = require('express');
 var http = require('http');
 var path = require('path');
@@ -13,7 +12,6 @@ var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 var searchEngine = new SearchEngine();
-//var redis = REDIS.createClient();
 
 var data = [];
 indexData('../fulldata');
@@ -30,8 +28,9 @@ io.on('connection', (socket) => {
     let lastSearchString = '';
 
     socket.on('queryEntry', (query) => {
-        let result = queryEntries(query);
-        socket.emit('queryResult', result);
+        queryEntries(query, (result) => {
+            socket.emit('queryResult', result);
+        });
     });
 });
 
@@ -39,28 +38,30 @@ httpServer.listen(8080, () => {
     console.log('server listening on *:8080');
 });
 
-function queryEntries(query) {
-  console.log('querying ' + query);
+function queryEntries(query, callback) {
+    console.log('querying ' + query);
     let begin = Date.now();
 
-    let results = searchEngine.search(query).sort((a, b) => {
-        let relevanceDiff = b.relevance - a.relevance;
-        if (relevanceDiff == 0) {
-            let aMoment = moment.unix(a.data.timestamp);
-            let bMoment = moment.unix(b.data.timestamp);
+    searchEngine.search(query, (result) => {
+        result = result.sort((a, b) => {
+            let relevanceDiff = b.relevance - a.relevance;
+            if (relevanceDiff == 0) {
+                let aMoment = moment.unix(a.data.timestamp);
+                let bMoment = moment.unix(b.data.timestamp);
 
-            if (aMoment.isSameOrAfter(bMoment))
-                return -1;
-            else
-                return 1;
-        } else {
-            return relevanceDiff;
-        }
-    }).slice(0, 50);
+                if (aMoment.isSameOrAfter(bMoment))
+                    return -1;
+                else
+                    return 1;
+            } else {
+                return relevanceDiff;
+            }
+        }).slice(0, 50);
 
-    console.log('query took ' + (Date.now() - begin) / 1000 + ' seconds');
+        console.log('query took ' + (Date.now() - begin) / 1000 + ' seconds');
 
-    return results;
+        callback(result);
+    });
 }
 
 /*"X" : [ "Sender", "Thema", "Titel", "Datum", "Zeit", "Dauer", "Größe [MB]", "Beschreibung", "Url", "Website", "Url Untertitel", "Url RTMP", "Url Klein", "Url RTMP Klein", "Url HD", "Url RTMP HD", "DatumL", "Url History", "Geo", "neu" ] */

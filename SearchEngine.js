@@ -1,44 +1,71 @@
 var HashTable = require('hashtable');
+var REDIS = require('redis');
+
+var redis = REDIS.createClient();
+
+redis.on("error", function(err) {
+    console.log("Error " + err);
+});
+
+var skipsadd = true;
 
 class SearchEngine {
     constructor() {
         this.counter = 0;
         this.indexData = {};
         //this.searchindex = new Map();
-        this.searchindex = new HashTable();
+        //this.searchindex = new HashTable();
+
+        //redis.flushdb();
     }
 
     add(ident, data) {
         let c = this.counter++;
         this.indexData[c] = data;
 
-        var splits = ident.trim().toLowerCase().split(' ');
-        //console.log(splits);
+        if (!skipsadd) {
+            var splits = ident.trim().replace(':', '').toLowerCase().split(' ');
+            //console.log(splits);
 
-        for (let i in splits) {
-            let split = splits[i];
+            for (let i in splits) {
+                let split = splits[i];
 
-            for (let begin = 0; begin <= split.length - 4; begin++) {
-                for (let end = begin + 4; end <= split.length; end++) {
+                for (let begin = 0; begin <= split.length - 4; begin++) {
+                    for (let end = begin + 4; end <= split.length; end++) {
 
-                    let key = split.slice(begin, end);
+                        let key = split.slice(begin, end);
 
-                    if (!this.searchindex.has(key)) {
-                        this.searchindex.put(key, new Set());
+                        /*if (!this.searchindex.has(key)) {
+                            this.searchindex.put(key, new Set());
+                        }
+
+                        this.searchindex.get(key).add(c);*/
+
+                        redis.sadd(key, c);
                     }
-
-                    this.searchindex.get(key).add(c);
                 }
             }
         }
 
-        if(c % 1000 == 0) console.log('indexed ' + c + ' entries, containing ' + this.searchindex.size() + ' mapkeys');
+        //if (c % 1000 == 0) console.log('indexed ' + c + ' entries, containing ' + this.searchindex.size() + ' mapkeys');
+        redis.dbsize((err, reply) => {
+            if (c % 1000 == 0) console.log('indexed ' + c + ' entries, containing ' + reply + ' mapkeys');
+        });
     }
 
-    search(query) {
+    search(query, callback) {
         var splits = query.trim().toLowerCase().split(' ');
+        redis.sinter(splits, (err, reply) => {
+            let result = [];
 
-        var totalMatches = [];
+            for (var i = 0; i < reply.length; i++) {
+                result.push(this.indexData[reply[i]]);
+            }
+
+            callback(result);
+        });
+
+        /*var totalMatches = [];
 
         for (let i in splits) {
             let split = splits[i];
@@ -65,9 +92,8 @@ class SearchEngine {
                 data: this.indexData[i],
                 relevance: totalMatches[i]
             });
-        }
+        }*/
 
-        return result;
     }
 }
 
