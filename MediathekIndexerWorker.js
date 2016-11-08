@@ -134,11 +134,6 @@ function processEntry(entry, minWordSize, getNext) {
     if (entryBuffer.length >= 200) {
         flushEntryBuffer();
     }
-
-    //if (c % 1000 == 0) console.log('indexed ' + c + ' entries, containing ' + this.searchindex.size() + ' mapkeys');
-    redis.dbsize((err, reply) => {
-        if (c % 1000 == 0) console.log('indexed ' + c + ' entries, containing ' + reply + ' mapkeys');
-    });
 }
 
 function flushIndexBuffer() {
