@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
     let lastSearchString = '';
 
     socket.on('queryEntry', (query) => {
-        queryEntries(query, (result) => {
+        queryEntries(query, 'or', (result) => {
             socket.emit('queryResult', result);
         });
     });
@@ -38,14 +38,16 @@ httpServer.listen(8080, () => {
     console.log('server listening on *:8080');
 });
 
-function queryEntries(query, callback) {
+function queryEntries(query, mode, callback) {
     console.log('querying ' + query);
     let begin = Date.now();
 
-    searchEngine.search(query, (result) => {
+    searchEngine.search(query, mode, (result) => {
         result = result.sort((a, b) => {
             let relevanceDiff = b.relevance - a.relevance;
             if (relevanceDiff == 0) {
+              console.log(a);
+              console.log(b);
                 let aMoment = moment.unix(a.data.timestamp);
                 let bMoment = moment.unix(b.data.timestamp);
 
@@ -56,7 +58,9 @@ function queryEntries(query, callback) {
             } else {
                 return relevanceDiff;
             }
-        }).slice(0, 50);
+        }).slice(0, 50);//Math.min(50, result.length));
+
+        console.log(result);
 
         console.log('query took ' + (Date.now() - begin) / 1000 + ' seconds');
 
@@ -75,29 +79,31 @@ function indexData(file, endCallback) {
         var match = indexRegex.exec(line);
         if (match != null) {
             var entry = {
-                channel: match[1],
-                topic: match[2],
+                //channel: match[1],
+                //topic: match[2],
                 title: match[3],
-                date: match[4],
-                time: match[5],
+                //date: match[4],
+                //time: match[5],
                 timestamp: moment(match[4] + match[5], 'DD.MM.YYYYHHmm').unix(),
                 duration: match[6],
                 size: match[7] * 1000000, //MB to bytes
-                description: match[8],
-                urls: {
+                //description: match[8],
+                url_video: match[9],
+                url_website: match[10]
+                /*urls: {
                     video: match[9],
                     website: match[10],
-                    subtitle: match[11],
-                    rtmp: match[12],
-                    video_short: match[13],
-                    rtmp_short: match[14],
-                    hd: match[15],
-                    rtmp_hd: match[16],
-                    history: match[18],
-                },
-                dateL: match[17],
-                geo: match[19],
-                new: match[20]
+                    //subtitle: match[11],
+                    //rtmp: match[12],
+                    //video_short: match[13],
+                    //rtmp_short: match[14],
+                    //hd: match[15],
+                    //rtmp_hd: match[16],
+                    //history: match[18],
+                },*/
+                //dateL: match[17],
+                //geo: match[19],
+                //new: match[20]
             };
 
             entry.id = ++totalLines;

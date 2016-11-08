@@ -11,10 +11,12 @@
   "dependencies": {
     "express": "^4.14.0",
     "hashtable": "^2.0.2",
+    "ioredis": "^2.4.0",
     "line-reader": "^0.4.0",
     "moment": "^2.15.2",
     "redis": "^2.6.2",
     "search-index": "^0.9.4",
-    "socket.io": "^1.5.1"
+    "socket.io": "^1.5.1",
+    "underscore": "^1.8.3"
   }
 }

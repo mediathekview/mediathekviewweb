@@ -1,5 +1,6 @@
 var HashTable = require('hashtable');
 var REDIS = require('redis');
+var underscore = require('underscore');
 
 var redis = REDIS.createClient();
 
@@ -7,7 +8,9 @@ redis.on("error", function(err) {
     console.log("Error " + err);
 });
 
-var skipsadd = true;
+const skipsadd = false;
+
+const MIN_WORD_SIZE = 4;
 
 class SearchEngine {
     constructor() {
@@ -16,34 +19,36 @@ class SearchEngine {
         //this.searchindex = new Map();
         //this.searchindex = new HashTable();
 
-        //redis.flushdb();
+        redis.flushdb();
+        this.buffer = [];
+
+        this.debouncedFlushBuffer = underscore.debounce(this.flushBuffer, 100);
     }
+
 
     add(ident, data) {
         let c = this.counter++;
         this.indexData[c] = data;
 
         if (!skipsadd) {
-            var splits = ident.trim().replace(':', '').toLowerCase().split(' ');
-            //console.log(splits);
+            let splits = ident.trim().replace(':', '').toLowerCase().split(' ');
 
             for (let i in splits) {
                 let split = splits[i];
 
-                for (let begin = 0; begin <= split.length - 4; begin++) {
-                    for (let end = begin + 4; end <= split.length; end++) {
-
+                for (let begin = 0; begin <= split.length - MIN_WORD_SIZE; begin++) {
+                    for (let end = begin + MIN_WORD_SIZE; end <= split.length; end++) {
                         let key = split.slice(begin, end);
 
-                        /*if (!this.searchindex.has(key)) {
-                            this.searchindex.put(key, new Set());
-                        }
-
-                        this.searchindex.get(key).add(c);*/
-
-                        redis.sadd(key, c);
+                        this.buffer.push(['sadd', key, c]);
                     }
                 }
+            }
+
+            if (this.buffer.length >= 500) {
+                this.flushBuffer();
+            } else {
+                this.debouncedFlushBuffer();
             }
         }
 
@@ -53,47 +58,97 @@ class SearchEngine {
         });
     }
 
-    search(query, callback) {
-        var splits = query.trim().toLowerCase().split(' ');
-        redis.sinter(splits, (err, reply) => {
-            let result = [];
+    flushBuffer() {
+        redis.batch(this.buffer).exec();
+        this.buffer = [];
+    }
 
-            for (var i = 0; i < reply.length; i++) {
-                result.push(this.indexData[reply[i]]);
-            }
-
-            callback(result);
+    search(query, mode, callback) {
+        let splits = query.trim().toLowerCase().split(' ').filter((split) => {
+            return split.length >= MIN_WORD_SIZE;
         });
 
-        /*var totalMatches = [];
+        if (mode == 'or') {
+            this.getSets(splits, (sets) => {
+                let result = [];
 
-        for (let i in splits) {
-            let split = splits[i];
+                if (sets.length > 0) {
+                    let hits = {};
 
-            let matches = this.searchindex.get(split);
-            if (matches == undefined){
-              continue;
-            }
+                    for (let i = 0; i < sets.length; i++) {
+                        let set = sets[i];
 
-            for (var dataIndex of matches) {
+                        for (let j = 0; j < set.length; j++) {
+                            let dataIndex = set[j];
 
-                if (totalMatches[dataIndex] == undefined) {
-                    totalMatches[dataIndex] = 0;
+                            if (hits[dataIndex] === undefined) {
+                                hits[dataIndex] = 0;
+                            }
+
+                            hits[dataIndex]++;
+                        }
+                    }
+
+                    let keys = Object.keys(hits);
+
+                    for (let i = 0; i < keys.length; i++) {
+                        result.push({
+                            data: this.indexData[keys[i]],
+                            relevance: hits[keys[i]]
+                        });
+                    }
                 }
 
-                totalMatches[dataIndex]++;
+                callback(result);
+            });
+
+        } else if (mode == 'and') {
+
+            redis.sinter(splits, (err, reply) => {
+                let result = [];
+
+                for (let i = 0; i < reply.length; i++) {
+                    result.push({
+                        data: this.indexData[reply[i]],
+                        relevance: 1
+                    });
+                }
+
+                callback(result);
+            });
+
+        } else {
+            throw Error('mode is neither or nor and');
+        }
+    }
+
+    getSets(keys, callback, result, i = 0) {
+        if (result === undefined) result = [];
+
+        redis.smembers(keys[i], (err, reply) => {
+            result[i] = reply;
+
+            if (++i < keys.length) {
+                setImmediate(() => this.getSets(keys, callback, result, i));
+            } else {
+                callback(result);
+            }
+        });
+    }
+
+    intersect(a, b) {
+        let result = [];
+
+        for (let i = 0; i < a.length; i++) {
+            for (let j = 0; j < b.length; j++) {
+                if (a[i] == b[j]) {
+                    result.push(a[i]);
+                    break;
+                }
             }
         }
 
-        var result = [];
-
-        for (var i in totalMatches) {
-            result.push({
-                data: this.indexData[i],
-                relevance: totalMatches[i]
-            });
-        }*/
-
+        return result;
     }
 }
 
