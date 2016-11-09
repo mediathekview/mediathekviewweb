@@ -1,0 +1,20 @@
+{
+  #path to filmliste, can be absolute and relative
+  filmliste: data
+
+  #minimum word length in order to be indexed for querying. A good value is 4 to ignore common (german) stuff like "sch" and therefore save a lot of or at least some RAM and improve searching performance
+  min_word_size: 4
+
+  #number of indexing workers to fork or auto to set it to cpu count
+  workerNum: auto
+
+  redis: {
+    host: 127.0.0.1
+    port: 6379
+    password: ""
+    #database for search indices
+    db1: 0
+    #database for data entries
+    db2: 100
+  }
+}

@@ -1,12 +1,12 @@
 var REDIS = require('redis');
 
 class SearchEngine {
-    constructor(host = '127.0.0.1', port = 6379, password = '') {
+    constructor(host = '127.0.0.1', port = 6379, password = '', db1, db2) {
         this.searchIndex = REDIS.createClient({
             host: host,
             port: port,
             password: password,
-            db: 0
+            db: db1
         });
 
         this.searchIndex.on('error', (err) => {
@@ -17,7 +17,7 @@ class SearchEngine {
             host: host,
             port: port,
             password: password,
-            db: 1
+            db: db2
         });
 
         this.indexData.on('error', (err) => {

@@ -17,7 +17,7 @@ var getProgress;
 process.on('message', (message) => {
     if (message.type == 'command') {
         if (message.body.command == 'init') {
-            init(message.body.host, message.body.port, message.body.password);
+            init(message.body.host, message.body.port, message.body.password, message.body.db1, message.body.db2);
         } else if (message.body.command == 'indexFile') {
             indexFile(message.body.file, message.body.begin, message.body.skip, message.body.offset, message.body.minWordSize);
         } else {
@@ -28,19 +28,19 @@ process.on('message', (message) => {
     }
 });
 
-function init(host, port, password) {
+function init(host, port, password, db1, db2) {
     searchIndex = REDIS.createClient({
         host: host,
         port: port,
         password: password,
-        db: 0
+        db: db1
     });
 
     indexData = REDIS.createClient({
         host: host,
         port: port,
         password: password,
-        db: 1
+        db: db2
     });
 
     searchIndex.on('error', (err) => {

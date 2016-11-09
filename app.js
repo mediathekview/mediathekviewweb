@@ -1,26 +1,23 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const moment = require('moment');
 const SearchEngine = require('./SearchEngine.js');
 const MediathekIndexer = require('./MediathekIndexer.js');
+const Hjson = require('hjson');
 
-/*var skip = 4, offset=4;
-
-for(let i = 0; i< 10; i++) {
-  console.log((i-offset) %4 == 0);
-}
-process.exit(0);*/
+const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
+console.log(config);
+//process.exit(0);
 
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 var searchEngine = new SearchEngine();
-var mediathekIndexer = new MediathekIndexer();
+var mediathekIndexer = new MediathekIndexer(config.redis.host, config.redis.port,config.redis.password, config.redis.db1, config.redis.db2);
 
-const MIN_WORD_SIZE = 4;
-
-mediathekIndexer.indexFile('../fulldata', MIN_WORD_SIZE);
+mediathekIndexer.indexFile('../fulldata', config.min_word_size);
 
 var workerStates = [];
 
@@ -38,10 +35,10 @@ function logWorkerStates() {
         let num = i + 1;
 
         console.log('worker ' + num + ': ');
-        console.log('\tprogress ' + ': ' + (state.progress * 100) + '%');
-        console.log('\tentries ' + ': ' + state.entries);
-        console.log('\tindices ' + ': ' + state.indices);
-        console.log('\ttime ' + ': ' + (state.time / 1000) + ' seconds');
+        console.log('\tprogress: ' + (state.progress * 100).toFixed(2) + '%');
+        console.log('\tentries: ' + state.entries);
+        console.log('\tindices: ' + state.indices);
+        console.log('\ttime: ' + (state.time / 1000) + ' seconds');
     }
 }
 

@@ -10,8 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "byline": "^5.0.0",
+    "config": "^1.24.0",
     "express": "^4.14.0",
     "hashtable": "^2.0.2",
+    "hjson": "^2.3.1",
     "ioredis": "^2.4.0",
     "line-reader": "^0.4.0",
     "moment": "^2.15.2",
