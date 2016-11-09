@@ -1,20 +1,14 @@
-var express = require('express');
-var http = require('http');
-var path = require('path');
-var readline = require('readline');
-var fs = require('fs');
-var STREAM = require('stream');
-var lineReader = require('line-reader');
-var moment = require('moment');
-var SearchEngine = require('./SearchEngine.js');
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const moment = require('moment');
+const SearchEngine = require('./SearchEngine.js');
+const MediathekIndexer = require('./MediathekIndexer.js');
 
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 var searchEngine = new SearchEngine();
-
-var data = [];
-indexData('../fulldata');
 
 app.use('/static', express.static('static'));
 
@@ -65,55 +59,5 @@ function queryEntries(query, mode, callback) {
         console.log('query took ' + (Date.now() - begin) / 1000 + ' seconds');
 
         callback(result);
-    });
-}
-
-/*"X" : [ "Sender", "Thema", "Titel", "Datum", "Zeit", "Dauer", "Größe [MB]", "Beschreibung", "Url", "Website", "Url Untertitel", "Url RTMP", "Url Klein", "Url RTMP Klein", "Url HD", "Url RTMP HD", "DatumL", "Url History", "Geo", "neu" ] */
-var indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)" ]/;
-
-function indexData(file, endCallback) {
-    var totalLines = 0;
-
-    var begin = Date.now();
-    lineReader.eachLine(file, function(line, last) {
-        var match = indexRegex.exec(line);
-        if (match != null) {
-            var entry = {
-                //channel: match[1],
-                //topic: match[2],
-                title: match[3],
-                //date: match[4],
-                //time: match[5],
-                timestamp: moment(match[4] + match[5], 'DD.MM.YYYYHHmm').unix(),
-                duration: match[6],
-                size: match[7] * 1000000, //MB to bytes
-                //description: match[8],
-                url_video: match[9],
-                url_website: match[10]
-                /*urls: {
-                    video: match[9],
-                    website: match[10],
-                    //subtitle: match[11],
-                    //rtmp: match[12],
-                    //video_short: match[13],
-                    //rtmp_short: match[14],
-                    //hd: match[15],
-                    //rtmp_hd: match[16],
-                    //history: match[18],
-                },*/
-                //dateL: match[17],
-                //geo: match[19],
-                //new: match[20]
-            };
-
-            entry.id = ++totalLines;
-            searchEngine.add(entry.title, entry);
-            //data.push(entry);
-        }
-
-        if (last) {
-            console.log('indexing took ' + (Date.now() - begin) / 1000 + ' seconds');
-            console.log('indexed ' + totalLines + ' entries');
-        }
     });
 }

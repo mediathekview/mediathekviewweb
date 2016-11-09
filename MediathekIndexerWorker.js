@@ -1,10 +1,17 @@
 const REDIS = require('redis');
+const fs = require('fs');
 const lineReader = require('line-reader');
-const underscore = require('underscore');
+const moment = require('moment');
 
 var indexBuffer = []; //for searchIndex
 var entryBuffer = []; //for indexData
 var entryCounter = 0;
+var currentLine = 0;
+var progress = 0;
+var notifyInterval;
+var indexBegin;
+
+var getProgress;
 
 process.on('message', (message) => {
     if (message.type == 'command') {
@@ -64,14 +71,32 @@ function emitInitialized() {
 }
 
 
-
 /*"X" : [ "Sender", "Thema", "Titel", "Datum", "Zeit", "Dauer", "Größe [MB]", "Beschreibung", "Url", "Website", "Url Untertitel", "Url RTMP", "Url Klein", "Url RTMP Klein", "Url HD", "Url RTMP HD", "DatumL", "Url History", "Geo", "neu" ] */
 const indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)" ]/;
 
 function indexFile(file, skip, offset, minWordSize) {
-    lineReader.eachLine(file, (line, last, getNext) => {
+    indexBegin = Date.now();
+    notifyInterval = setInterval(() => notifyProgress(), 1000);
 
-        var match = indexRegex.exec(line);
+    let fileStream = fs.createReadStream(file);
+
+    let fileSize = 0;
+    fs.stat(file, (err, stats) => {
+        fileSize = stats.size;
+    });
+
+    getProgress = () => {
+        return fileStream.bytesRead / fileSize;
+    };
+
+    lineReader.eachLine(fileStream, (line, last, getNext) => {
+        currentLine++;
+
+        if (currentLine < offset || currentLine % skip != 0) {
+            getNext();
+        }
+
+        let match = indexRegex.exec(line);
         if (match != null) {
             var entry = {
                 //channel: match[1],
@@ -102,14 +127,13 @@ function indexFile(file, skip, offset, minWordSize) {
             };
         }
 
-        if (last) {
-            flushIndexBuffer();
-            flushEntryBuffer();
-        }
+        processEntry(entry, minWordSize, last, getNext);
+    }).then((err) => {
+        finalize();
     });
 }
 
-function processEntry(entry, minWordSize, getNext) {
+function processEntry(entry, minWordSize, last, getNext) {
     entryCounter++;
 
     let splits = entry.title.trim().replace(':', '').toLowerCase().split(' ');
@@ -121,12 +145,12 @@ function processEntry(entry, minWordSize, getNext) {
             for (let end = begin + MIN_WORD_SIZE; end <= split.length; end++) {
                 let key = split.slice(begin, end);
 
-                indexBuffer.push(['sadd', key, entryCounter]);
+                indexBuffer.push(['sadd', key, currentLine]);
             }
         }
     }
 
-    entryBuffer.push(['hmset', entryCounter, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size, 'url_video', entry.url_video, 'url_website', entry.url_website]);
+    entryBuffer.push(['hmset', currentLine, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size, 'url_video', entry.url_video, 'url_website', entry.url_website]);
 
     if (indexBuffer.length >= 500) {
         flushIndexBuffer();
@@ -134,16 +158,40 @@ function processEntry(entry, minWordSize, getNext) {
     if (entryBuffer.length >= 200) {
         flushEntryBuffer();
     }
+
+    if (!last) {
+        getNext();
+    }
+}
+
+function finalize() {
+    flushIndexBuffer();
+    flushEntryBuffer();
+    clearInterval(notifyInterval);
+    notifyProgress(true);
 }
 
 function flushIndexBuffer() {
-    indexData.batch(indexBuffer).exec();
+    searchIndex.batch(indexBuffer).exec();
     indexBuffer = [];
 }
 
 function flushEntryBuffer() {
-    searchIndex.batch(entryBuffer).exec();
+    indexData.batch(entryBuffer).exec();
     entryBuffer = [];
+}
+
+function notifyProgress(done = false) {
+    searchIndex.dbsize((err, reply) => {
+        sendMessage('notification', {
+            notification: 'progress',
+            entries: entryCounter,
+            indices: reply,
+            time: Date.now() - begin,
+            progress: getProgress(),
+            done: done
+        });
+    });
 }
 
 function sendMessage(type, body) {
