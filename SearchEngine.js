@@ -70,10 +70,10 @@ class SearchEngine {
 
         } else if (mode == 'and') {
             this.searchIndex.sinter(splits, (err, reply) => {
-              if (err) {
-                callback(null, err);
-                return;
-              }
+                if (err) {
+                    callback(null, err);
+                    return;
+                }
 
                 let commands = [];
 
@@ -102,6 +102,7 @@ class SearchEngine {
         if (result === undefined) result = [];
 
         this.searchIndex.smembers(keys[i], (err, reply) => {
+            if (err) callback(null, err);
             result[i] = reply;
 
             if (++i < keys.length) {
