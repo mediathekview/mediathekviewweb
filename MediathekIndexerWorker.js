@@ -19,8 +19,7 @@ process.on('message', (message) => {
         if (message.body.command == 'init') {
             init(message.body.host, message.body.port, message.body.password);
         } else if (message.body.command == 'indexFile') {
-          console.log(message);
-            indexFile(message.body.file, message.body.skip, message.body.offset, message.body.minWordSize);
+            indexFile(message.body.file, message.body.begin, message.body.skip, message.body.offset, message.body.minWordSize);
         } else {
             console.log('unrecognized command: ' + message.body.command);
         }
@@ -76,7 +75,7 @@ function emitInitialized() {
 /*"X" : [ "Sender", "Thema", "Titel", "Datum", "Zeit", "Dauer", "Größe [MB]", "Beschreibung", "Url", "Website", "Url Untertitel", "Url RTMP", "Url Klein", "Url RTMP Klein", "Url HD", "Url RTMP HD", "DatumL", "Url History", "Geo", "neu" ] */
 const indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)" ]/;
 
-function indexFile(file, skip, offset, minWordSize) {
+function indexFile(file,begin, skip, offset, minWordSize) {
     indexBegin = Date.now();
     notifyInterval = setInterval(() => notifyState(), 1000);
 
@@ -94,10 +93,11 @@ function indexFile(file, skip, offset, minWordSize) {
     lineReader.eachLine(fileStream, (line, last, getNext) => {
         currentLine++;
 
+
         if (last) {
             setImmediate(() => finalize());
         }
-        else if (currentLine < offset || currentLine % skip != 0) {
+        else if (currentLine <= begin || (currentLine-offset) % skip != 0) {
             setImmediate(() => getNext());
             return;
         }
@@ -133,6 +133,9 @@ function indexFile(file, skip, offset, minWordSize) {
             };
 
             processEntry(entry, minWordSize, last, getNext);
+        }
+        else {
+            setImmediate(() => getNext());
         }
     });
 }
@@ -173,6 +176,8 @@ function finalize() {
     flushIndexBuffer();
     flushEntryBuffer();
     notifyState(true);
+
+    setTimeout(() => process.exit(0), 500);
 }
 
 function flushIndexBuffer() {

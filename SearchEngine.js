@@ -25,13 +25,13 @@ class SearchEngine {
         });
     }
 
-    search(query, mode, minWordSize, callback) {
+    search(query, minWordSize, mode, callback) {
         let splits = query.trim().toLowerCase().split(' ').filter((split) => {
             return split.length >= minWordSize;
         });
 
         if (splits.length == 0) {
-          callback([]);
+            callback([]);
         }
 
         if (mode == 'or') {
@@ -69,30 +69,30 @@ class SearchEngine {
             });
 
         } else if (mode == 'and') {
-
             this.searchIndex.sinter(splits, (err, reply) => {
-              console.log(err);
-              console.log(reply);
-                let result = [];
+              if (err) {
+                callback(null, err);
+                return;
+              }
 
                 let commands = [];
 
                 for (let i = 0; i < reply.length; i++) {
-                  console.log('hgetall');
                     commands.push(['hgetall', reply[i]]);
-                    this.indexData.batch(commands).exec((err, reply) => {
-                      console.log('hgetall done');
-                        console.log(reply);
-                        result.push({
-                            data: this.indexData[reply[i]],
-                            relevance: 1
-                        });
-                    });
                 }
 
-                callback(result);
-            });
+                this.indexData.batch(commands).exec((err, reply) => {
+                    let result = [];
 
+                    for (var i = 0; i < reply.length; i++) {
+                        result.push({
+                            data: reply[i],
+                            relevance: 1
+                        });
+                    }
+                    callback(result);
+                });
+            });
         } else {
             throw Error('mode is neither or nor and');
         }

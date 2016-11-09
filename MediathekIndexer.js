@@ -6,8 +6,8 @@ const underscore = require('underscore');
 
 const cpuCount = os.cpus().length;
 
-const workerNum = 1;
-const workerArgs = process.execArgv.concat(['--optimize_for_size', '--max_old_space_size=30', '--max_executable_size=50', '--memory-reducer']);
+const workerNum = 4;
+const workerArgs = process.execArgv.concat(['--optimize_for_size', '--max_old_space_size=60', '--max_executable_size=100', '--memory-reducer']);
 
 class MediathekIndexer extends EventEmitter {
     constructor(host = '127.0.0.1', port = 6379, password = '', flush = true) {
@@ -43,11 +43,11 @@ class MediathekIndexer extends EventEmitter {
 
     startWorkers(file, minWordSize) {
         for (let i = 0; i < workerNum; i++) {
-            this.startWorker(file, minWordSize, workerNum, i);
+            this.startWorker(file, minWordSize, i,workerNum, i);
         }
     }
 
-    startWorker(file, minWordSize, skip, offset) {
+    startWorker(file, minWordSize,begin, skip, offset) {
         console.log('worker started: ' + skip + ' ' + offset);
 
         let worker = cp.fork('./MediathekIndexerWorker.js', {
@@ -78,6 +78,7 @@ class MediathekIndexer extends EventEmitter {
                     this.sendMessage(worker, 'command', {
                         command: 'indexFile',
                         file: file,
+                        begin: begin,
                         skip: skip,
                         offset: offset,
                         minWordSize: minWordSize
