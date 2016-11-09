@@ -6,8 +6,11 @@ const underscore = require('underscore');
 
 const cpuCount = os.cpus().length;
 
+const workerNum = 1;
+const workerArgs = process.execArgv.concat(['--optimize_for_size', '--max_old_space_size=30', '--max_executable_size=50', '--memory-reducer']);
+
 class MediathekIndexer extends EventEmitter {
-    constructor(host = '127.0.0.1', port = 6379, password = null, flush = true) {
+    constructor(host = '127.0.0.1', port = 6379, password = '', flush = true) {
         super();
         this.workers = [];
         this.workersState = [];
@@ -19,33 +22,37 @@ class MediathekIndexer extends EventEmitter {
         };
     }
 
-    indexFile(file) {
+    indexFile(file, minWordSize) {
         if (this.options.flush) {
             let redis = REDIS.createClient({
-                host: host,
-                port: port,
-                password: password
+                host: this.options.host,
+                port: this.options.port,
+                password: this.options.password
             });
             redis.on('ready', () => {
                 redis.flushall((err, reply) => {
                     console.log('flushed: ' + reply);
                     redis.quit();
-                    this.startWorkers(file);
+                    this.startWorkers(file, minWordSize);
                 });
             });
         } else {
-            this.startWorkers(file);
+            this.startWorkers(file, minWordSize);
         }
     }
 
-    startWorkers(file) {
-        for (let i = 0; i < cpuCount; i++) {
-            this.startWorker(file, i, i);
+    startWorkers(file, minWordSize) {
+        for (let i = 0; i < workerNum; i++) {
+            this.startWorker(file, minWordSize, workerNum, i);
         }
     }
 
-    startWorker(file, skip, offset) {
-        let worker = cp.fork('./MediathekIndexerWorker.js');
+    startWorker(file, minWordSize, skip, offset) {
+        console.log('worker started: ' + skip + ' ' + offset);
+
+        let worker = cp.fork('./MediathekIndexerWorker.js', {
+            execArgv: workerArgs
+        });
 
         this.workers.push({
             worker: worker,
@@ -72,18 +79,19 @@ class MediathekIndexer extends EventEmitter {
                         command: 'indexFile',
                         file: file,
                         skip: skip,
-                        offset: offset
+                        offset: offset,
+                        minWordSize: minWordSize
                     });
-                } else if (message.body.notification == 'progress') {
-                    workersState[workerIndex] = message.body;
-                    emitWorkerState(workerIndex);
+                } else if (message.body.notification == 'state') {
+                    this.workersState[workerIndex] = message.body;
+                    this.emitWorkerState(workerIndex);
                 }
             }
         });
     }
 
     emitWorkerState(index) {
-        this.emit('workerProgress', index, workersState[workerIndex]);
+        this.emit('workerState', index, this.workersState[index]);
     }
 
     sendMessage(worker, type, body) {

@@ -3,11 +3,12 @@ const fs = require('fs');
 const lineReader = require('line-reader');
 const moment = require('moment');
 
+var searchIndex, indexData;
+
 var indexBuffer = []; //for searchIndex
 var entryBuffer = []; //for indexData
 var entryCounter = 0;
 var currentLine = 0;
-var progress = 0;
 var notifyInterval;
 var indexBegin;
 
@@ -18,6 +19,7 @@ process.on('message', (message) => {
         if (message.body.command == 'init') {
             init(message.body.host, message.body.port, message.body.password);
         } else if (message.body.command == 'indexFile') {
+          console.log(message);
             indexFile(message.body.file, message.body.skip, message.body.offset, message.body.minWordSize);
         } else {
             console.log('unrecognized command: ' + message.body.command);
@@ -28,36 +30,36 @@ process.on('message', (message) => {
 });
 
 function init(host, port, password) {
-    var searchIndex = REDIS.createClient({
+    searchIndex = REDIS.createClient({
         host: host,
         port: port,
         password: password,
         db: 0
     });
 
-    var indexData = REDIS.createClient({
+    indexData = REDIS.createClient({
         host: host,
         port: port,
         password: password,
         db: 1
     });
 
-    var searchIndex.on('error', (err) => {
+    searchIndex.on('error', (err) => {
         sendMessage('notification', {
             notification: 'error',
             error: err
         });
     });
 
-    var indexData.on('error', (err) => {
+    indexData.on('error', (err) => {
         sendMessage('notification', {
             notification: 'error',
             error: err
         });
     });
 
-    var searchIndex.on('ready', () => emitInitialized());
-    var indexData.on('ready', () => emitInitialized());
+    searchIndex.on('ready', () => emitInitialized());
+    indexData.on('ready', () => emitInitialized());
 }
 
 var initCounter = 0;
@@ -76,7 +78,7 @@ const indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)
 
 function indexFile(file, skip, offset, minWordSize) {
     indexBegin = Date.now();
-    notifyInterval = setInterval(() => notifyProgress(), 1000);
+    notifyInterval = setInterval(() => notifyState(), 1000);
 
     let fileStream = fs.createReadStream(file);
 
@@ -92,13 +94,17 @@ function indexFile(file, skip, offset, minWordSize) {
     lineReader.eachLine(fileStream, (line, last, getNext) => {
         currentLine++;
 
-        if (currentLine < offset || currentLine % skip != 0) {
-            getNext();
+        if (last) {
+            setImmediate(() => finalize());
+        }
+        else if (currentLine < offset || currentLine % skip != 0) {
+            setImmediate(() => getNext());
+            return;
         }
 
         let match = indexRegex.exec(line);
         if (match != null) {
-            var entry = {
+            let entry = {
                 //channel: match[1],
                 //topic: match[2],
                 title: match[3],
@@ -125,11 +131,9 @@ function indexFile(file, skip, offset, minWordSize) {
                     //geo: match[19],
                     //new: match[20]
             };
-        }
 
-        processEntry(entry, minWordSize, last, getNext);
-    }).then((err) => {
-        finalize();
+            processEntry(entry, minWordSize, last, getNext);
+        }
     });
 }
 
@@ -141,8 +145,8 @@ function processEntry(entry, minWordSize, last, getNext) {
     for (let i in splits) {
         let split = splits[i];
 
-        for (let begin = 0; begin <= split.length - MIN_WORD_SIZE; begin++) {
-            for (let end = begin + MIN_WORD_SIZE; end <= split.length; end++) {
+        for (let begin = 0; begin <= split.length - minWordSize; begin++) {
+            for (let end = begin + minWordSize; end <= split.length; end++) {
                 let key = split.slice(begin, end);
 
                 indexBuffer.push(['sadd', key, currentLine]);
@@ -160,15 +164,15 @@ function processEntry(entry, minWordSize, last, getNext) {
     }
 
     if (!last) {
-        getNext();
+        setImmediate(() => getNext());
     }
 }
 
 function finalize() {
+    clearInterval(notifyInterval);
     flushIndexBuffer();
     flushEntryBuffer();
-    clearInterval(notifyInterval);
-    notifyProgress(true);
+    notifyState(true);
 }
 
 function flushIndexBuffer() {
@@ -181,13 +185,13 @@ function flushEntryBuffer() {
     entryBuffer = [];
 }
 
-function notifyProgress(done = false) {
+function notifyState(done = false) {
     searchIndex.dbsize((err, reply) => {
         sendMessage('notification', {
-            notification: 'progress',
+            notification: 'state',
             entries: entryCounter,
             indices: reply,
-            time: Date.now() - begin,
+            time: Date.now() - indexBegin,
             progress: getProgress(),
             done: done
         });

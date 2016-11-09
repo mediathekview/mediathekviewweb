@@ -1,7 +1,7 @@
 var REDIS = require('redis');
 
 class SearchEngine {
-    constructor() {
+    constructor(host = '127.0.0.1', port = 6379, password = '') {
         this.searchIndex = REDIS.createClient({
             host: host,
             port: port,
@@ -29,6 +29,10 @@ class SearchEngine {
         let splits = query.trim().toLowerCase().split(' ').filter((split) => {
             return split.length >= minWordSize;
         });
+
+        if (splits.length == 0) {
+          callback([]);
+        }
 
         if (mode == 'or') {
             this.getSets(splits, (sets) => {
@@ -66,13 +70,23 @@ class SearchEngine {
 
         } else if (mode == 'and') {
 
-            redis.sinter(splits, (err, reply) => {
+            this.searchIndex.sinter(splits, (err, reply) => {
+              console.log(err);
+              console.log(reply);
                 let result = [];
 
+                let commands = [];
+
                 for (let i = 0; i < reply.length; i++) {
-                    result.push({
-                        data: this.indexData[reply[i]],
-                        relevance: 1
+                  console.log('hgetall');
+                    commands.push(['hgetall', reply[i]]);
+                    this.indexData.batch(commands).exec((err, reply) => {
+                      console.log('hgetall done');
+                        console.log(reply);
+                        result.push({
+                            data: this.indexData[reply[i]],
+                            relevance: 1
+                        });
                     });
                 }
 
@@ -87,7 +101,7 @@ class SearchEngine {
     getSets(keys, callback, result, i = 0) {
         if (result === undefined) result = [];
 
-        redis.smembers(keys[i], (err, reply) => {
+        this.searchIndex.smembers(keys[i], (err, reply) => {
             result[i] = reply;
 
             if (++i < keys.length) {
