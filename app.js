@@ -15,7 +15,7 @@ var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 var searchEngine = new SearchEngine();
-var mediathekIndexer = new MediathekIndexer(config.redis.host, config.redis.port,config.redis.password, config.redis.db1, config.redis.db2);
+var mediathekIndexer = new MediathekIndexer(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 
 mediathekIndexer.indexFile('../fulldata', config.min_word_size);
 
@@ -50,7 +50,7 @@ app.get('/', function(req, res) {
 
 io.on('connection', (socket) => {
     socket.on('queryEntry', (query) => {
-        queryEntries(query, 'or', (result) => {
+        queryEntries(query, 'and', (result) => {
             socket.emit('queryResult', result);
         });
     });
@@ -71,6 +71,10 @@ function queryEntries(query, mode, callback) {
             return;
         }
 
+        let searchEngineTime = Date.now() - begin;
+        begin = Date.now();
+        let resultCount = result.length;
+
         result = result.sort((a, b) => {
             let relevanceDiff = b.relevance - a.relevance;
             if (relevanceDiff == 0) {
@@ -84,10 +88,21 @@ function queryEntries(query, mode, callback) {
             } else {
                 return relevanceDiff;
             }
-        }).slice(0, 50); //Math.min(50, result.length));
+        }).slice(0, 50);
+
+        let filterTime = Date.now() - begin;
+        let queryInfo = {
+            searchEngineTime: searchEngineTime,
+            filterTime: filterTime,
+            resultCount: resultCount
+        };
+
+        callback({
+            data: result,
+            queryInfo: queryInfo
+        });
 
         console.log('query took ' + (Date.now() - begin) / 1000 + ' seconds');
 
-        callback(result);
     });
 }

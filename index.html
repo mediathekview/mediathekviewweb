@@ -42,7 +42,10 @@
                 null,
                 null,
                 null
-            ]
+            ],
+            searching: false,
+            ordering: false,
+            info: true
         });
 
         $('#queryInput').on('input', () => {
@@ -59,16 +62,19 @@
     socket.on('queryResult', (result) => {
         //clearMediathek();
         mediathekTable.clear();
-        console.log(result);
+        let data = result.data;
 
-        for (var i = 0; i < result.length; i++) {
-            let dateTime = moment.unix(result[i].data.timestamp);
-            let channelMatch = channelRegex.exec(result[i].data.url_website);
-            mediathekTable.row.add(['<a target="_blank" href="' + result[i].data.url_website + '">' + channelMatch[2] + '</a>', result[i].data.title, dateTime.format('L'), dateTime.format('LT'), result[i].data.duration, formatBytes(result[i]
-                .data.size), '<a target="_blank" href="' + result[i].data.url_video + '"><span class="glyphicon glyphicon-film"></span></a>']);
+        for (var i = 0; i < data.length; i++) {
+            let dateTime = moment.unix(data[i].data.timestamp);
+            let channelMatch = channelRegex.exec(data[i].data.url_website);
+            mediathekTable.row.add(['<a target="_blank" href="' + data[i].data.url_website + '">' + channelMatch[2] + '</a>', data[i].data.title, dateTime.format('L'), dateTime.format('LT'), data[i].data.duration,
+                formatBytes(data[i].data.size), '<a target="_blank" href="' + data[i].data.url_video + '"><span class="glyphicon glyphicon-film"></span></a>'
+            ]);
         }
 
         mediathekTable.draw();
+
+        $('#queryInfoLabel').text('Search engine took ' + result.queryInfo.searchEngineTime + ' ms, filtering out of ' + result.queryInfo.resultCount + ' results and sorting by relevance took ' + result.queryInfo.filterTime + ' ms');
     });
 
     function clearMediathek() {
@@ -139,6 +145,8 @@
             <tbody>
             </tbody>
         </table>
+
+        <label id="queryInfoLabel"></label>
 
     </div>
 
