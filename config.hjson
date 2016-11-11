@@ -15,6 +15,6 @@
     #database for search indices
     db1: 0
     #database for data entries
-    db2: 100
+    db2: 1
   }
 }

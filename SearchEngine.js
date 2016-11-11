@@ -32,11 +32,11 @@ class SearchEngine {
 
         if (splits.length == 0) {
             callback([]);
+            return;
         }
 
         if (mode == 'or') {
             this.getSets(splits, (sets) => {
-                let result = [];
 
                 if (sets.length > 0) {
                     let hits = {};
@@ -56,16 +56,26 @@ class SearchEngine {
                     }
 
                     let keys = Object.keys(hits);
+                    let commands = [];
 
                     for (let i = 0; i < keys.length; i++) {
-                        result.push({
-                            data: this.indexData[keys[i]],
-                            relevance: hits[keys[i]]
-                        });
+                        commands.push(['hgetall', keys[i]]);
                     }
+
+                    this.indexData.batch(commands).exec((err, reply) => {
+                        let result = [];
+
+                        for (var i = 0; i < reply.length; i++) {
+                            result.push({
+                                data: reply[i],
+                                relevance: hits[keys[i]]
+                            });
+                        }
+                        callback(result);
+                    });
                 }
 
-                callback(result);
+                callback([]);
             });
 
         } else if (mode == 'and') {
@@ -100,6 +110,9 @@ class SearchEngine {
 
     getSets(keys, callback, result, i = 0) {
         if (result === undefined) result = [];
+
+        if (keys[i] == undefined)
+        throw Error();
 
         this.searchIndex.smembers(keys[i], (err, reply) => {
             if (err) callback(null, err);

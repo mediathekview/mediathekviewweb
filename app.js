@@ -50,7 +50,7 @@ app.get('/', function(req, res) {
 
 io.on('connection', (socket) => {
     socket.on('queryEntry', (query) => {
-        queryEntries(query, 'and', (result) => {
+        queryEntries(query, 'or', (result) => {
             socket.emit('queryResult', result);
         });
     });
@@ -64,7 +64,7 @@ function queryEntries(query, mode, callback) {
     console.log('querying ' + query);
     let begin = Date.now();
 
-    searchEngine.search(query, MIN_WORD_SIZE, mode, (result, err) => {
+    searchEngine.search(query, config.min_word_size, mode, (result, err) => {
         if (err) {
             console.log(err);
             callback([]);

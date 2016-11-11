@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>MediathekView</title>
+    <title>MediathekViewWeb</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../../static/bootstrap-3.3.7/css/bootstrap.min.css">
@@ -10,13 +10,17 @@
     <script src="../../static/jquery-3.1.1.min.js"></script>
     <script src="../../static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script src="../../socket.io/socket.io.js"></script>
-    <script src="../../static/mustache.min.js"></script>
+    <!--<script src="../../static/mustache.min.js"></script>-->
+    <script src="../../static/moment.min.js"></script>
     <script type="text/javascript" src="../../static/DataTables/datatables.min.js"></script>
 </head>
 
 <script>
     var socket = io();
     var mediathekTable;
+
+    var locale = window.navigator.userLanguage || window.navigator.language;
+    moment.locale(locale);
 
     function formatBytes(bytes, decimals) {
         if (bytes == 0) return '0 Byte';
@@ -28,8 +32,13 @@
 
     $(function() { //jquery ready, page loaded
         mediathekTable = $('#mediathek').DataTable({
-            columns: [{ "width": "10%" },
-                { "width": "50%" },
+            columns: [{
+                    "width": "10%"
+                }, {
+                    "width": "50%"
+                },
+                null,
+                null,
                 null,
                 null,
                 null
@@ -45,17 +54,21 @@
         socket.emit('queryEntry', queryString)
     }
 
+
+    var channelRegex = /https?:\/\/(\S*\.)*([a-z]*)\.\w+/;
     socket.on('queryResult', (result) => {
         //clearMediathek();
         mediathekTable.clear();
+        console.log(result);
 
         for (var i = 0; i < result.length; i++) {
-            mediathekTable.row.add([null, result[i].data.title, result[i].data.date, result[i].data.time, null, null, null, null, null]);
+            let dateTime = moment.unix(result[i].data.timestamp);
+            let channelMatch = channelRegex.exec(result[i].data.url_website);
+            mediathekTable.row.add(['<a target="_blank" href="' + result[i].data.url_website + '">' + channelMatch[2] + '</a>', result[i].data.title, dateTime.format('L'), dateTime.format('LT'), result[i].data.duration, formatBytes(result[i]
+                .data.size), '<a target="_blank" href="' + result[i].data.url_video + '"><span class="glyphicon glyphicon-film"></span></a>']);
         }
 
         mediathekTable.draw();
-
-        console.log(mediathekTable);
     });
 
     function clearMediathek() {
@@ -94,6 +107,16 @@
 </script>
 
 <body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">MediathekViewWeb</a>
+            </div>
+            <ul class="nav navbar-nav">
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
 
         <div class="input-group">
@@ -104,7 +127,7 @@
         <table id="mediathek" class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Channel</th>
+                    <th>Website</th>
                     <th>Title</th>
                     <th>Date</th>
                     <th>Time</th>
