@@ -42,13 +42,24 @@
 
         socket.emit('queryEntry', {
             queryString: queryString,
-            mode: mode
+            mode: mode,
+            filters: {
+              
+            }
         });
     }
 
     socket.on('websiteNames', (websites) => {
         websiteNames = websites;
-        console.log(websiteNames);
+
+        let multiselect = $('#websiteNamesMultiselect');
+
+        multiselect.empty();
+        for (var i = 0; i < websites.length; i++) {
+            multiselect.append('<option value="' + websites[i] + '">' + websites[i] + '</option>');
+        }
+
+        $('#websiteNamesMultiselect').multiselect('rebuild');
     });
 
     socket.on('queryResult', (result) => {
@@ -102,6 +113,8 @@
             enableClickableOptGroups: true,
             disableIfEmpty: true,
             disabledText: 'none available',
+            includeSelectAllOption: true,
+            selectAllValue: 'select-all',
             onChange: (option, checked, select) => {
                 websiteNamesMultiselectChangedWhileOpen = true;
             },
@@ -111,11 +124,13 @@
                     websiteNamesMultiselectChangedWhileOpen = false;
                 }
             },
-            buttonText: function(options, select) {
+            buttonText: (options, select) => {
                 if (options.length === 0) {
                     return 'Websites';
                 } else if (options.length > 3) {
-                    return options.length + ' options selected';
+                    return options.length + ' websites selected';
+                } else if (options.length == websiteNames.length) {
+                    return 'All Websites';
                 } else {
                     var labels = [];
                     options.each(function() {
@@ -128,9 +143,9 @@
                     return labels.join(', ') + '';
                 }
             },
-            buttonTitle: function(options, select) {
+            buttonTitle: (options, select) => {
                 var labels = [];
-                options.each(function () {
+                options.each(function() {
                     labels.push($(this).text());
                 });
                 return labels.join(' - ');
@@ -175,14 +190,6 @@
             <div class="panel-heading">Filters</div>
             <div class="panel-body">
                 <select id="websiteNamesMultiselect" multiple="multiple">
-                  <optgroup label="All" class="group-1">
-                    <option value="cheese">Cheese</option>
-                    <option value="tomatoes">Tomatoes</option>
-                    <option value="mozarella">Mozzarella</option>
-                    <option value="mushrooms">Mushrooms</option>
-                    <option value="pepperoni">Pepperoni</option>
-                    <option value="onions">Onions</option>
-                  </optgroup>
                 </select>
             </div>
         </div>
