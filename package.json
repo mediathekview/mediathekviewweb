@@ -20,6 +20,7 @@
     "redis": "^2.6.2",
     "search-index": "^0.9.4",
     "socket.io": "^1.5.1",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "video.js": "^5.12.6"
   }
 }
