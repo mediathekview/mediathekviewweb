@@ -10,7 +10,7 @@
     <script src="../../static/jquery.min.js"></script>
     <script src="../../static/bootstrap/js/bootstrap.min.js"></script>
     <script src="../../socket.io/socket.io.js"></script>
-    <script src="../../static/moment.min.js"></script>
+    <script src="../../static/moment-with-locales.min.js"></script>
     <script src="../../static/DataTables/datatables.min.js"></script>
 </head>
 
@@ -73,6 +73,7 @@
 
         $('#queryInfoLabel').text('Search engine took ' + result.queryInfo.searchEngineTime + ' ms, filtering out of ' + result.queryInfo.resultCount + ' results and sorting by relevance took ' + result.queryInfo.filterTime + ' ms');
     });
+</script>
 
 <body>
     <nav class="navbar navbar-default">
@@ -111,7 +112,6 @@
         <label id="queryInfoLabel"></label>
 
     </div>
-
 
     <script type="text/javascript">
         //$('#addDownloadModal').modal('show');
