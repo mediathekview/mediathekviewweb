@@ -23,6 +23,7 @@
     var socket = io();
     var mediathekTable;
     var websiteNames = [];
+    var websiteNamesMultiselectChangedWhileOpen = false;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
@@ -97,6 +98,44 @@
             info: true
         });
 
+        $('#websiteNamesMultiselect').multiselect({
+            enableClickableOptGroups: true,
+            disableIfEmpty: true,
+            disabledText: 'none available',
+            onChange: (option, checked, select) => {
+                websiteNamesMultiselectChangedWhileOpen = true;
+            },
+            onDropdownHide: () => {
+                if (websiteNamesMultiselectChangedWhileOpen) {
+                    query();
+                    websiteNamesMultiselectChangedWhileOpen = false;
+                }
+            },
+            buttonText: function(options, select) {
+                if (options.length === 0) {
+                    return 'Websites';
+                } else if (options.length > 3) {
+                    return options.length + ' options selected';
+                } else {
+                    var labels = [];
+                    options.each(function() {
+                        if ($(this).attr('label') !== undefined) {
+                            labels.push($(this).attr('label'));
+                        } else {
+                            labels.push($(this).html());
+                        }
+                    });
+                    return labels.join(', ') + '';
+                }
+            },
+            buttonTitle: function(options, select) {
+                var labels = [];
+                options.each(function () {
+                    labels.push($(this).text());
+                });
+                return labels.join(' - ');
+            }
+        });
         socket.emit('getWebsiteNames');
 
         $('#queryInput').on('input', () => query());
@@ -134,7 +173,18 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">Filters</div>
-            <div class="panel-body">Panel Content</div>
+            <div class="panel-body">
+                <select id="websiteNamesMultiselect" multiple="multiple">
+                  <optgroup label="All" class="group-1">
+                    <option value="cheese">Cheese</option>
+                    <option value="tomatoes">Tomatoes</option>
+                    <option value="mozarella">Mozzarella</option>
+                    <option value="mushrooms">Mushrooms</option>
+                    <option value="pepperoni">Pepperoni</option>
+                    <option value="onions">Onions</option>
+                  </optgroup>
+                </select>
+            </div>
         </div>
 
         <br>
