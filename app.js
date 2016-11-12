@@ -54,6 +54,11 @@ io.on('connection', (socket) => {
             socket.emit('queryResult', result);
         });
     });
+    socket.on('getWebsiteNames', () => {
+      searchEngine.getWebsiteNames((result) => {
+        socket.emit('websiteNames', result);
+      });
+    });
 });
 
 httpServer.listen(8080, () => {

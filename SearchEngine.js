@@ -108,11 +108,20 @@ class SearchEngine {
         }
     }
 
+    getWebsiteNames(callback) {
+        this.indexData.smembers('websitenames', (err, reply) => {
+            if (err)
+                throw Error(err);
+
+            callback(reply);
+        });
+    }
+
     getSets(keys, callback, result, i = 0) {
         if (result === undefined) result = [];
 
         if (keys[i] == undefined)
-        throw Error();
+            throw Error();
 
         this.searchIndex.smembers(keys[i], (err, reply) => {
             if (err) callback(null, err);

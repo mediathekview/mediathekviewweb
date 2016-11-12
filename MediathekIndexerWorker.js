@@ -5,6 +5,8 @@ const moment = require('moment');
 
 var searchIndex, indexData;
 
+var websitesSet = new Set();
+
 var indexBuffer = []; //for searchIndex
 var entryBuffer = []; //for indexData
 var entryCounter = 0;
@@ -74,8 +76,9 @@ function emitInitialized() {
 
 /*"X" : [ "Sender", "Thema", "Titel", "Datum", "Zeit", "Dauer", "Größe [MB]", "Beschreibung", "Url", "Website", "Url Untertitel", "Url RTMP", "Url Klein", "Url RTMP Klein", "Url HD", "Url RTMP HD", "DatumL", "Url History", "Geo", "neu" ] */
 const indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)" ]/;
+const websiteRegex = /https?:\/\/([A-Za-z0-9-]+\.)*([A-Za-z0-9-]+\.[A-Za-z0-9-]+)/;
 
-function indexFile(file,begin, skip, offset, minWordSize) {
+function indexFile(file, begin, skip, offset, minWordSize) {
     indexBegin = Date.now();
     notifyInterval = setInterval(() => notifyState(), 1000);
 
@@ -96,14 +99,22 @@ function indexFile(file,begin, skip, offset, minWordSize) {
 
         if (last) {
             setImmediate(() => finalize());
-        }
-        else if (currentLine <= begin || (currentLine-offset) % skip != 0) {
+        } else if (currentLine <= begin || (currentLine - offset) % skip != 0) {
             setImmediate(() => getNext());
             return;
         }
 
         let match = indexRegex.exec(line);
         if (match != null) {
+            let websiteNameMatch = websiteRegex.exec(match[10]);
+
+            let websiteName;
+            if (websiteNameMatch != null) {
+                websiteName = websiteNameMatch[2];
+            } else {
+                websiteName = 'unknown';
+            }
+
             let entry = {
                 //channel: match[1],
                 //topic: match[2],
@@ -114,6 +125,7 @@ function indexFile(file,begin, skip, offset, minWordSize) {
                 duration: match[6],
                 size: match[7] * 1000000, //MB to bytes
                 //description: match[8],
+                websiteName: websiteName,
                 url_video: match[9],
                 url_website: match[10]
                     /*urls: {
@@ -133,8 +145,7 @@ function indexFile(file,begin, skip, offset, minWordSize) {
             };
 
             processEntry(entry, minWordSize, last, getNext);
-        }
-        else {
+        } else {
             setImmediate(() => getNext());
         }
     });
@@ -157,7 +168,8 @@ function processEntry(entry, minWordSize, last, getNext) {
         }
     }
 
-    entryBuffer.push(['hmset', currentLine, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size, 'url_video', entry.url_video, 'url_website', entry.url_website]);
+    websitesSet.add(entry.websiteName);
+    entryBuffer.push(['hmset', currentLine, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size, 'url_video', entry.url_video, 'url_website', entry.url_website, 'websiteName', entry.websiteName]);
 
     if (indexBuffer.length >= 500) {
         flushIndexBuffer();
@@ -175,9 +187,21 @@ function finalize() {
     clearInterval(notifyInterval);
     flushIndexBuffer();
     flushEntryBuffer();
-    notifyState(true);
 
-    setTimeout(() => process.exit(0), 500);
+    indexData.sadd('websitenames', Array.from(websitesSet), (err, reply) => {
+        notifyState(true);
+
+        searchIndex.quit(() => exitProcess());
+        indexData.quit(() => exitProcess());
+    });
+}
+
+var exitCounter = 0;
+
+function exitProcess() {
+    if (++exitCounter == 2) {
+        setTimeout(() => process.exit(0), 500);
+    }
 }
 
 function flushIndexBuffer() {
