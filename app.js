@@ -50,7 +50,7 @@ app.get('/', function(req, res) {
 
 io.on('connection', (socket) => {
     socket.on('queryEntry', (query) => {
-        queryEntries(query, 'and', (result) => {
+        queryEntries(query.queryString, query.mode, (result) => {
             socket.emit('queryResult', result);
         });
     });

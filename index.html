@@ -6,12 +6,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../../static/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="../../static/DataTables/datatables.min.css" />
+    <link rel="stylesheet" href="../../static/DataTables/datatables.min.css" />
+    <link rel="stylesheet" href="../../static/video-js.min.css" />
     <script src="../../static/jquery.min.js"></script>
     <script src="../../static/bootstrap/js/bootstrap.min.js"></script>
     <script src="../../socket.io/socket.io.js"></script>
     <script src="../../static/moment-with-locales.min.js"></script>
     <script src="../../static/DataTables/datatables.min.js"></script>
+    <script src="../../static/video.min.js"></script>
+    <script src="../../static/bootbox.min.js"></script>
 </head>
 
 <script>
@@ -47,13 +50,18 @@
             info: true
         });
 
-        $('#queryInput').on('input', () => {
-            query($('#queryInput').val());
-        });
+        $('#queryInput').on('input', () => query());
+        $('#queryField input:radio').change(() => query());
     });
 
-    function query(queryString) {
-        socket.emit('queryEntry', queryString)
+    function query() {
+        let queryString = $('#queryInput').val();
+        let mode = $('#queryField input:radio:checked').val();
+
+        socket.emit('queryEntry', {
+            queryString: queryString,
+            mode: mode
+        });
     }
 
     var channelRegex = /https?:\/\/(\S*\.)*([a-z]*)\.\w+/;
@@ -65,7 +73,7 @@
             let dateTime = moment.unix(data[i].data.timestamp);
             let channelMatch = channelRegex.exec(data[i].data.url_website);
             mediathekTable.row.add(['<a target="_blank" href="' + data[i].data.url_website + '">' + channelMatch[2] + '</a>', data[i].data.title, dateTime.format('L'), dateTime.format('LT'), data[i].data.duration,
-                formatBytes(data[i].data.size), '<a target="_blank" href="' + data[i].data.url_video + '"><span class="glyphicon glyphicon-film"></span></a>'
+                formatBytes(data[i].data.size), createPlayButton(data[i].data.title, data[i].data.url_video) /*'<a target="_blank" href="' + data[i].data.url_video + '"><span class="glyphicon glyphicon-film"></span></a>'*/
             ]);
         }
 
@@ -73,6 +81,19 @@
 
         $('#queryInfoLabel').text('Search engine took ' + result.queryInfo.searchEngineTime + ' ms, filtering out of ' + result.queryInfo.resultCount + ' results and sorting by relevance took ' + result.queryInfo.filterTime + ' ms');
     });
+
+    function createPlayButton(title, url) {
+        return '<a target="_blank" href="' + url + '" onclick="playVideo(\'' + title + '\',\'' + url + '\'); return false;"><span class="glyphicon glyphicon-film"></span></a>';
+    }
+
+    function playVideo(title, url) {
+        var dialog = bootbox.dialog({
+            title: title,
+            message: '<video class="video-js" controls preload="auto"><source src="' + url + '" type="video/mp4"></video>',
+            backdrop: true,
+            onEscape: true
+        });
+    }
 </script>
 
 <body>
@@ -88,16 +109,16 @@
 
     <div class="container">
 
-        <div class="input-group">
+        <div class="input-group" id="queryField">
             <span class="input-group-addon">Query</span>
             <input type="text" class="form-control" id="queryInput">
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode"> AND</input>
+              <input type="radio" name="searchmode" value="and" id="andRadioButton" checked> AND</input>
             </span>
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode"> OR</input>
+              <input type="radio" name="searchmode" value="or" id="orRadioButton"> OR</input>
             </span>
         </div>
 
