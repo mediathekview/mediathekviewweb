@@ -5,14 +5,13 @@
     <title>MediathekViewWeb</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../../static/bootstrap-3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="../../static/DataTables/datatables.min.css" />
-    <script src="../../static/jquery-3.1.1.min.js"></script>
-    <script src="../../static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script src="../../static/jquery.min.js"></script>
+    <script src="../../static/bootstrap/js/bootstrap.min.js"></script>
     <script src="../../socket.io/socket.io.js"></script>
-    <!--<script src="../../static/mustache.min.js"></script>-->
     <script src="../../static/moment.min.js"></script>
-    <script type="text/javascript" src="../../static/DataTables/datatables.min.js"></script>
+    <script src="../../static/DataTables/datatables.min.js"></script>
 </head>
 
 <script>
@@ -57,10 +56,8 @@
         socket.emit('queryEntry', queryString)
     }
 
-
     var channelRegex = /https?:\/\/(\S*\.)*([a-z]*)\.\w+/;
     socket.on('queryResult', (result) => {
-        //clearMediathek();
         mediathekTable.clear();
         let data = result.data;
 
@@ -76,41 +73,6 @@
 
         $('#queryInfoLabel').text('Search engine took ' + result.queryInfo.searchEngineTime + ' ms, filtering out of ' + result.queryInfo.resultCount + ' results and sorting by relevance took ' + result.queryInfo.filterTime + ' ms');
     });
-
-    function clearMediathek() {
-        $('#mediathek').empty();
-    }
-
-    function createEntryDOM(entry) {
-        var template = $('#entryDOMTemplate').html();
-
-        var rendered = Mustache.render(template, {
-            entry: entry,
-            getSizeString: function() {
-                return formatBytes(this.entry.size, 2);
-            }
-        });
-
-        $('#mediathek>tbody').append(rendered);
-    }
-</script>
-
-<script id="entryDOMTemplate" type="x-tmpl-mustache">
-    <tr>
-        <td>{{entry.num}}</td>
-        <td>{{entry.channel}}</td>
-        <!--<td>{{entry.topic}}</td>-->
-        <td>{{entry.title}}</td>
-        <td>{{entry.date}}</td>
-        <td>{{entry.time}}</td>
-        <td>{{entry.duration}}</td>
-        <td>{{getSizeString}}</td>
-        <td>{{entry.hasHD}}</td>
-        <td>{{entry.hasSub}}</td>
-        <td>{{entry.geo}}</td>
-        <td><a href="{{entry.urls.video}}"><span class="glyphicon glyphicon-film"></span></a></td>
-    </tr>
-</script>
 
 <body>
     <nav class="navbar navbar-default">
