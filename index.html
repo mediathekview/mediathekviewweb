@@ -23,6 +23,7 @@
     var socket = io();
     var mediathekTable;
     var websiteNames = [];
+    var selectedWebsiteNames = new Set();
     var websiteNamesMultiselectChangedWhileOpen = false;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
@@ -44,22 +45,30 @@
             queryString: queryString,
             mode: mode,
             filters: {
-              
+                websiteNames: Array.from(selectedWebsiteNames)
             }
         });
     }
 
     socket.on('websiteNames', (websites) => {
+      websites = websites.sort();
         websiteNames = websites;
-
         let multiselect = $('#websiteNamesMultiselect');
 
-        multiselect.empty();
+        let data = [];
         for (var i = 0; i < websites.length; i++) {
-            multiselect.append('<option value="' + websites[i] + '">' + websites[i] + '</option>');
+            data.push({
+                label: websites[i],
+                title: websites[i],
+                value: websites[i],
+                selected: true
+            });
+            selectedWebsiteNames.add(websites[i]);
         }
 
-        $('#websiteNamesMultiselect').multiselect('rebuild');
+        multiselect.multiselect('dataprovider', data);
+
+        //$('#websiteNamesMultiselect').multiselect('rebuild');
     });
 
     socket.on('queryResult', (result) => {
@@ -116,11 +125,24 @@
             includeSelectAllOption: true,
             selectAllValue: 'select-all',
             onChange: (option, checked, select) => {
+                if (option == undefined) {
+                    if (!checked) selectedWebsiteNames.clear();
+                    else selectedWebsiteNames = new Set(websiteNames);
+                } else {
+                    let website = option[0].value;
+
+                    if (checked) {
+                        selectedWebsiteNames.add(website);
+                    } else {
+                        selectedWebsiteNames.delete(website);
+                    }
+                }
                 websiteNamesMultiselectChangedWhileOpen = true;
+                query();
             },
             onDropdownHide: () => {
                 if (websiteNamesMultiselectChangedWhileOpen) {
-                    query();
+                    //query();
                     websiteNamesMultiselectChangedWhileOpen = false;
                 }
             },

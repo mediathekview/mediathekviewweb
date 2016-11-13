@@ -16,6 +16,7 @@ var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 var searchEngine = new SearchEngine();
 var mediathekIndexer = new MediathekIndexer(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
+var websiteNames = [];
 
 mediathekIndexer.indexFile('../fulldata', config.min_word_size);
 
@@ -50,14 +51,15 @@ app.get('/', function(req, res) {
 
 io.on('connection', (socket) => {
     socket.on('queryEntry', (query) => {
-        queryEntries(query.queryString, query.mode, (result) => {
+        queryEntries(query.queryString, query.mode, query.filters, (result) => {
             socket.emit('queryResult', result);
         });
     });
     socket.on('getWebsiteNames', () => {
-      searchEngine.getWebsiteNames((result) => {
-        socket.emit('websiteNames', result);
-      });
+        searchEngine.getWebsiteNames((result) => {
+            socket.emit('websiteNames', result);
+            websiteNames = result;
+        });
     });
 });
 
@@ -65,7 +67,7 @@ httpServer.listen(8080, () => {
     console.log('server listening on *:8080');
 });
 
-function queryEntries(query, mode, callback) {
+function queryEntries(query, mode, filters, callback) {
     console.log('querying ' + query);
     let begin = Date.now();
 
@@ -79,6 +81,12 @@ function queryEntries(query, mode, callback) {
         let searchEngineTime = Date.now() - begin;
         begin = Date.now();
         let resultCount = result.length;
+
+        if (filters.websiteNames.length != websiteNames.length) {
+            result = result.filter((entry) => {
+                return filters.websiteNames.includes(entry.data.websiteName);
+            });
+        }
 
         result = result.sort((a, b) => {
             let relevanceDiff = b.relevance - a.relevance;
