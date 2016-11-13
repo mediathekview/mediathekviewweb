@@ -5,6 +5,7 @@
     <title>MediathekViewWeb</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../static/index.css">
     <link rel="stylesheet" href="../../static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../../static/DataTables/datatables.min.css" />
     <link rel="stylesheet" href="../../static/video-js.min.css" />
@@ -25,6 +26,7 @@
     var websiteNames = [];
     var selectedWebsiteNames = new Set();
     var websiteNamesMultiselectChangedWhileOpen = false;
+    var connectingDialog;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
@@ -36,6 +38,14 @@
         var i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
     }
+
+    socket.on('connect', () => {
+        connectingDialog.modal('hide');
+    });
+
+    socket.on('disconnect', () => {
+        connectingDialog.modal('show');
+    });
 
     function query() {
         let queryString = $('#queryInput').val();
@@ -51,7 +61,7 @@
     }
 
     socket.on('websiteNames', (websites) => {
-      websites = websites.sort();
+        websites = websites.sort();
         websiteNames = websites;
         let multiselect = $('#websiteNamesMultiselect');
 
@@ -100,7 +110,13 @@
         });
     }
 
-    $(function() { //jquery ready, page loaded
+    $(function() {
+        connectingDialog = bootbox.dialog({
+            title: 'No connection',
+            message: '<span class="glyphicon glyphicon-repeat spinning"></span> Connecting...',
+            closeButton: false
+        });
+
         mediathekTable = $('#mediathek').DataTable({
             columns: [{
                     width: "10%"
