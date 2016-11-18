@@ -71,13 +71,7 @@ function startServer() {
             result = result.sort((a, b) => {
                 let relevanceDiff = b.relevance - a.relevance;
                 if (relevanceDiff == 0) {
-                    let aMoment = moment.unix(a.data.timestamp);
-                    let bMoment = moment.unix(b.data.timestamp);
-
-                    if (aMoment.isSameOrAfter(bMoment))
-                        return -1;
-                    else
-                        return 1;
+                    return b.data.timestamp - a.data.timestamp;
                 } else {
                     return relevanceDiff;
                 }
