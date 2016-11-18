@@ -14,7 +14,7 @@ console.log(config);
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
-var searchEngine = new SearchEngine();
+var searchEngine = new SearchEngine('localhost', 6379, '', config.redis.db1, config.redis.db2);
 var mediathekIndexer = new MediathekIndexer(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 var websiteNames = [];
 
