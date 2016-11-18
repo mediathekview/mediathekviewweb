@@ -6,7 +6,7 @@ const underscore = require('underscore');
 
 const cpuCount = os.cpus().length;
 
-const workerNum = 4;
+const workerNum = Math.ceil(cpuCount * 1.5);
 const workerArgs = process.execArgv.concat(['--optimize_for_size', '--max_old_space_size=60', '--max_executable_size=100', '--memory-reducer']);
 
 class MediathekIndexer extends EventEmitter {
