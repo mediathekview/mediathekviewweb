@@ -1,8 +1,12 @@
 {
   "name": "mediathekviewweb",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Web version of Mediathekview",
+  "repository":
+  { "type": "git",
+    "url": "https://github.com/bagbag/mediathekviewweb.git"
+  },
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
