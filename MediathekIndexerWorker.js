@@ -96,58 +96,39 @@ function indexFile(file, begin, skip, offset, minWordSize) {
     lineReader.eachLine(fileStream, (line, last, getNext) => {
         currentLine++;
 
-
         if (last) {
             setImmediate(() => finalize());
-        } else if (currentLine <= begin || (currentLine - offset) % skip != 0) {
+            return;
+        } else if (currentLine <= 3 || currentLine <= begin || (currentLine - offset) % skip != 0) {
             setImmediate(() => getNext());
             return;
         }
 
-        let match = indexRegex.exec(line);
-        if (match != null) {
-            let websiteNameMatch = websiteRegex.exec(match[10]);
+        if (line[line.length - 1] == ',')
+            line = line.slice(0, -1);
 
-            let websiteName;
-            if (websiteNameMatch != null) {
-                websiteName = websiteNameMatch[2];
-            } else {
-                websiteName = 'unknown';
-            }
+        let parsed = JSON.parse('{' + line + '}').X;
 
-            let entry = {
-                //channel: match[1],
-                //topic: match[2],
-                title: match[3],
-                //date: match[4],
-                //time: match[5],
-                timestamp: moment(match[4] + match[5], 'DD.MM.YYYYHHmm').unix(),
-                duration: match[6],
-                size: match[7] * 1000000, //MB to bytes
-                //description: match[8],
-                websiteName: websiteName,
-                url_video: match[9],
-                url_website: match[10]
-                    /*urls: {
-                        video: match[9],
-                        website: match[10],
-                        //subtitle: match[11],
-                        //rtmp: match[12],
-                        //video_short: match[13],
-                        //rtmp_short: match[14],
-                        //hd: match[15],
-                        //rtmp_hd: match[16],
-                        //history: match[18],
-                    },*/
-                    //dateL: match[17],
-                    //geo: match[19],
-                    //new: match[20]
-            };
+        let websiteNameMatch = websiteRegex.exec(parsed[9]);
 
-            processEntry(entry, minWordSize, last, getNext);
+        let websiteName;
+        if (websiteNameMatch != null) {
+            websiteName = websiteNameMatch[2];
         } else {
-            setImmediate(() => getNext());
+            websiteName = 'unknown';
         }
+
+        let entry = {
+            title: parsed[2],
+            timestamp: moment(parsed[3] + parsed[4], 'DD.MM.YYYYHHmm').unix(),
+            duration: parsed[5],
+            size: parsed[6] * 1000000, //MB to bytes
+            websiteName: websiteName,
+            url_video: parsed[8],
+            url_website: parsed[9]
+        };
+
+        processEntry(entry, minWordSize, last, getNext);
     });
 }
 
