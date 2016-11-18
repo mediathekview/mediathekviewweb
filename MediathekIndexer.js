@@ -46,7 +46,7 @@ class MediathekIndexer extends EventEmitter {
                         redis.flushdb((reply) => {
                             console.log(reply);
                             redis.quit();
-                            this.startWorkers(file, minWordSize);
+                            this.startWorkers(file, minWordSize, this.options.db1, this.options.db2);
                         });
                     });
                 });
@@ -54,13 +54,13 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    startWorkers(file, minWordSize) {
+    startWorkers(file, minWordSize, db1, db2) {
         for (let i = 0; i < workerNum; i++) {
-            this.startWorker(file, minWordSize, i, workerNum, i);
+            this.startWorker(file, minWordSize, i, workerNum, i, db1, db2);
         }
     }
 
-    startWorker(file, minWordSize, begin, skip, offset) {
+    startWorker(file, minWordSize, begin, skip, offset, db1, db2) {
         console.log('worker started: ' + skip + ' ' + offset);
 
         let worker = cp.fork('./MediathekIndexerWorker.js', {
@@ -85,7 +85,9 @@ class MediathekIndexer extends EventEmitter {
                         command: 'init',
                         host: this.options.host,
                         port: this.options.port,
-                        password: this.options.password
+                        password: this.options.password,
+                        db1: db1,
+                        db2: db2
                     });
                 } else if (message.body.notification == 'initialized') {
                     this.sendMessage(worker, 'command', {
