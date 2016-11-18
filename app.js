@@ -9,7 +9,6 @@ const Hjson = require('hjson');
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 console.log(config);
-//process.exit(0);
 
 var app = express();
 var httpServer = http.Server(app);

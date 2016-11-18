@@ -88,7 +88,7 @@
         for (var i = 0; i < data.length; i++) {
             let dateTime = moment.unix(data[i].data.timestamp);
             mediathekTable.row.add(['<a target="_blank" href="' + data[i].data.url_website + '">' + data[i].data.websiteName + '</a>', data[i].data.title, dateTime.format('L'), dateTime.format('LT'), data[i].data.duration,
-                formatBytes(data[i].data.size), createPlayButton(data[i].data.title, data[i].data.url_video) /*'<a target="_blank" href="' + data[i].data.url_video + '"><span class="glyphicon glyphicon-film"></span></a>'*/
+                formatBytes(data[i].data.size), createPlayButton(data[i].data.title, data[i].data.url_video)
             ]);
         }
 
@@ -98,7 +98,7 @@
     });
 
     function createPlayButton(title, url) {
-        return '<a target="_blank" href="' + url + '" onclick="playVideo(\'' + title + '\',\'' + url + '\'); return false;"><span class="glyphicon glyphicon-film"></span></a>';
+        return '<a target="_blank" href="' + url + '" onclick="playVideo(\'' + title.replace(/"/g, '\\u0022') + '\',\'' + url + '\'); return false;"><span class="glyphicon glyphicon-film"></span></a>';
     }
 
     function playVideo(title, url) {
