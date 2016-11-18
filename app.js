@@ -17,8 +17,6 @@ var searchEngine = new SearchEngine('localhost', 6379, '', config.redis.db1, con
 var mediathekIndexer = new MediathekIndexer(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 var websiteNames = [];
 
-mediathekIndexer.indexFile('../fulldata', config.min_word_size);
-
 var serverStarted = false;
 var workerStates = [];
 
@@ -93,6 +91,12 @@ function startServer() {
 
         });
     }
+}
+
+if (config.index) {
+    mediathekIndexer.indexFile('../fulldata', config.min_word_size);
+} else {
+    startServer();
 }
 
 mediathekIndexer.on('workerState', (workerIndex, state) => {
