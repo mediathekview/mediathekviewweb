@@ -44,8 +44,8 @@ function startServer() {
         });
     });
 
-    httpServer.listen(8080, () => {
-        console.log('server listening on *:8080');
+    httpServer.listen(config.webserverPort, () => {
+        console.log('server listening on *:' + config.webserverPort);
     });
 
     function queryEntries(query, mode, filters, callback) {
