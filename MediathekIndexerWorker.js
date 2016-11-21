@@ -118,18 +118,32 @@ function indexFile(file, begin, skip, offset, minWordSize) {
             websiteName = 'unknown';
         }
 
+        durationSplit = parsed[5].split(':');
+
         let entry = {
             title: parsed[2],
-            timestamp: moment(parsed[3] + parsed[4], 'DD.MM.YYYYHHmm').unix(),
-            duration: parsed[5],
-            size: parsed[6] * 1000000, //MB to bytes
+            //timestamp: moment(parsed[3] + parsed[4], 'DD.MM.YYYYHHmm').unix(),
+            timestamp: parseInt(parsed[16]),
+            duration: (parseInt(durationSplit[0]) * 60 * 60) + (parseInt(durationSplit[1]) * 60) + parseInt(durationSplit[2]),
+            size: parseInt(parsed[6]) * 1000000, //MB to bytes
             websiteName: websiteName,
             url_video: parsed[8],
-            url_website: parsed[9]
+            url_website: parsed[9],
+            url_video_low: createUrlFromBase(parsed[8], parsed[12]),
+            url_video_hd: createUrlFromBase(parsed[8], parsed[14])
         };
 
         processEntry(entry, minWordSize, last, getNext);
     });
+}
+
+function createUrlFromBase(baseUrl, newUrl) {
+    let newSplit = newUrl.split('|');
+    if (newSplit.length == 2) {
+        return baseUrl.substr(0, newSplit[0]) + newSplit[1];
+    } else {
+        return '';
+    }
 }
 
 function processEntry(entry, minWordSize, last, getNext) {
@@ -150,7 +164,9 @@ function processEntry(entry, minWordSize, last, getNext) {
     }
 
     websitesSet.add(entry.websiteName);
-    entryBuffer.push(['hmset', currentLine, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size, 'url_video', entry.url_video, 'url_website', entry.url_website, 'websiteName', entry.websiteName]);
+    entryBuffer.push(['hmset', currentLine, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size,
+        'url_video', entry.url_video, 'url_video_low', entry.url_video_low, 'url_video_hd', entry.url_video_hd, 'url_website', entry.url_website, 'websiteName', entry.websiteName
+    ]);
 
     if (indexBuffer.length >= 500) {
         flushIndexBuffer();

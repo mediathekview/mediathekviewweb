@@ -83,22 +83,32 @@
 
     socket.on('queryResult', (result) => {
         mediathekTable.clear();
-        let data = result.data;
 
-        for (var i = 0; i < data.length; i++) {
-            let dateTime = moment.unix(data[i].data.timestamp);
-            mediathekTable.row.add(['<a target="_blank" href="' + data[i].data.url_website + '">' + data[i].data.websiteName + '</a>', data[i].data.title, dateTime.format('L'), dateTime.format('LT'), data[i].data.duration,
-                formatBytes(data[i].data.size), createPlayButton(data[i].data.title, data[i].data.url_video)
-            ]);
+        for (var i = 0; i < result.results.length; i++) {
+            let data = result.results[i].data;
+            data.dateString = moment.unix(data.timestamp).format('L');
+            data.timeString = moment.unix(data.timestamp).format('LT');
+            data.durationString = isNaN(data.duration) ? '?' : moment.unix(data.duration - 3600).format('LT');
+
+            mediathekTable.row.add(data);
         }
 
         mediathekTable.draw();
 
-        $('#queryInfoLabel').text('Search engine took ' + result.queryInfo.searchEngineTime + ' ms, filtering out of ' + result.queryInfo.resultCount + ' results and sorting by relevance took ' + result.queryInfo.filterTime + ' ms');
+        $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, das Filtern von ' + result.queryInfo.resultCount +
+            ' Ergebnissen und das Sotieren nach Relevanz dauerte ' + result.queryInfo.filterTime + ' ms.');
     });
 
-    function createPlayButton(title, url) {
-        return '<a target="_blank" href="' + url + '" onclick="playVideo(\'' + title.replace(/"/g, '\\u0022') + '\',\'' + url + '\'); return false;"><span class="glyphicon glyphicon-film"></span></a>';
+    function createPlayButton(text, videoTitle, videoUrl) {
+        return $('<a>', {
+            target: '_blank',
+            text: text,
+            href: videoUrl,
+            click: () => {
+                playVideo(videoTitle, videoUrl);
+                return false;
+            }
+        });
     }
 
     function playVideo(title, url) {
@@ -110,6 +120,10 @@
         });
     }
 
+    function returnEmptyString() {
+        return '';
+    }
+
     $(function() {
         connectingDialog = bootbox.dialog({
             title: 'No connection',
@@ -118,17 +132,56 @@
         });
 
         mediathekTable = $('#mediathek').DataTable({
-            columns: [{
-                    width: "10%"
-                }, {
-                    width: "50%"
-                },
-                null,
-                null,
-                null,
-                null,
-                null
-            ],
+            columns: [{ //Website
+                width: "10%",
+                data: null,
+                render: returnEmptyString,
+                createdCell: (td, cellData, rowData, row, col) => {
+                    let link = $('<a>', {
+                        target: '_blank',
+                        text: rowData.websiteName,
+                        href: rowData.url_website
+                    });
+                    $(td).append(link);
+                }
+            }, { //Title
+                data: 'title'
+            }, { //Date
+                width: "7%",
+                data: 'dateString'
+            }, { //Time
+                width: "6%",
+                data: 'timeString'
+            }, { //Duration
+                width: "6%",
+                data: 'durationString'
+            }, { //Size
+                width: "6%",
+                data: 'size',
+                render: (data, type, obj) => {
+                    if (type == 'display') {
+                        return isNaN(data) ? '?' : formatBytes(data, 2);
+                    }
+                }
+            }, { //Video
+                width: '8%',
+                data: null,
+                render: returnEmptyString,
+                createdCell: (td, cellData, rowData, row, col) => {
+                    if (!!rowData.url_video_low) {
+                        $(td).append(createPlayButton('', rowData.title, rowData.url_video_low).append($('<span>').addClass('glyphicon glyphicon-sd-video glyph-big glyph-margin-right')));
+                    }
+                    if (!!rowData.url_video != '') {
+                        $(td).append(createPlayButton('', rowData.title, rowData.url_video).append($('<span>').addClass('glyphicon glyphicon-film glyph-big')));
+                    }
+                    if (!!rowData.url_video_hd != '') {
+                        $(td).append(createPlayButton('', rowData.title, rowData.url_video_hd).append($('<span>').addClass('glyphicon glyphicon-hd-video glyph-big glyph-margin-left')));
+                    }
+                }
+            }],
+            language: {
+                url: "/static/dataTables.german.lang"
+            },
             searching: false,
             ordering: false,
             info: true
@@ -164,11 +217,11 @@
             },
             buttonText: (options, select) => {
                 if (options.length === 0) {
-                    return 'Websites';
+                    return 'Webseiten';
                 } else if (options.length > 3) {
-                    return options.length + ' websites selected';
+                    return options.length + ' Webseiten ausgewählt';
                 } else if (options.length == websiteNames.length) {
-                    return 'All Websites';
+                    return 'Alle Webseiten';
                 } else {
                     var labels = [];
                     options.each(function() {
@@ -180,13 +233,6 @@
                     });
                     return labels.join(', ') + '';
                 }
-            },
-            buttonTitle: (options, select) => {
-                var labels = [];
-                options.each(function() {
-                    labels.push($(this).text());
-                });
-                return labels.join(' - ');
             }
         });
         socket.emit('getWebsiteNames');
@@ -210,22 +256,22 @@
     <div class="container">
 
         <div class="input-group" id="queryField">
-            <span class="input-group-addon">Query</span>
+            <span class="input-group-addon">Suche</span>
             <input type="text" class="form-control" id="queryInput">
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="and" id="andRadioButton" checked> AND</input>
+              <input type="radio" name="searchmode" value="and" id="andRadioButton" checked> UND</input>
             </span>
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="or" id="orRadioButton"> OR</input>
+              <input type="radio" name="searchmode" value="or" id="orRadioButton"> ODER</input>
             </span>
         </div>
 
         <br>
 
         <div class="panel panel-default">
-            <div class="panel-heading">Filters</div>
+            <div class="panel-heading">Filter</div>
             <div class="panel-body">
                 <select id="websiteNamesMultiselect" multiple="multiple">
                 </select>
@@ -237,13 +283,13 @@
         <table id="mediathek" class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Website</th>
-                    <th>Title</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Duration</th>
-                    <th>Size</th>
-                    <th>Url</th>
+                    <th>Webseite</th>
+                    <th>Titel</th>
+                    <th>Datum</th>
+                    <th>Zeit</th>
+                    <th>Dauer</th>
+                    <th>Größe</th>
+                    <th>Video</th>
                 </tr>
             </thead>
             <tbody>
@@ -255,7 +301,6 @@
     </div>
 
     <script type="text/javascript">
-        //$('#addDownloadModal').modal('show');
     </script>
 </body>
 

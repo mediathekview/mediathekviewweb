@@ -12,3 +12,19 @@
     from { -webkit-transform: rotate(0deg); }
     to { -webkit-transform: rotate(360deg); }
 }
+
+.hidden {
+    display: none;
+}
+
+span.glyph-big {
+    font-size: 1.3em;
+}
+
+span.glyph-margin-right {
+  margin-right: 5px;
+}
+
+span.glyph-margin-left {
+  margin-left: 5px;
+}

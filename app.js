@@ -13,7 +13,7 @@ console.log(config);
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
-var searchEngine = new SearchEngine('localhost', 6379, '', config.redis.db1, config.redis.db2);
+var searchEngine = new SearchEngine(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 var mediathekIndexer = new MediathekIndexer(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 var websiteNames = [];
 
@@ -49,7 +49,7 @@ function startServer() {
         console.log('querying ' + query);
         let begin = Date.now();
 
-        searchEngine.search(query, config.min_word_size, mode, (result, err) => {
+        searchEngine.search(query, config.min_word_size, mode, (results, err) => {
             if (err) {
                 console.log(err);
                 callback([]);
@@ -58,15 +58,15 @@ function startServer() {
 
             let searchEngineTime = Date.now() - begin;
             begin = Date.now();
-            let resultCount = result.length;
+            let resultCount = results.length;
 
             if (filters.websiteNames.length != websiteNames.length) {
-                result = result.filter((entry) => {
+                results = results.filter((entry) => {
                     return filters.websiteNames.includes(entry.data.websiteName);
                 });
             }
 
-            result = result.sort((a, b) => {
+            results = results.sort((a, b) => {
                 let relevanceDiff = b.relevance - a.relevance;
                 if (relevanceDiff == 0) {
                     return b.data.timestamp - a.data.timestamp;
@@ -83,7 +83,7 @@ function startServer() {
             };
 
             callback({
-                data: result,
+                results: results,
                 queryInfo: queryInfo
             });
 
