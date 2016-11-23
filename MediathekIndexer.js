@@ -5,15 +5,17 @@ const REDIS = require('redis');
 const underscore = require('underscore');
 
 const cpuCount = os.cpus().length;
-
-const workerNum = Math.ceil(cpuCount * 1.5);
-const workerArgs = process.execArgv.concat(['--optimize_for_size', '--max_old_space_size=60', '--max_executable_size=100', '--memory-reducer']);
+//'--max_old_space_size=100', '--max_executable_size=100',
+const workerArgs = process.execArgv.concat(['--optimize_for_size', '--memory-reducer']);
 
 class MediathekIndexer extends EventEmitter {
-    constructor(host = '127.0.0.1', port = 6379, password = '', db1, db2) {
+    constructor(workerCount, host = '127.0.0.1', port = 6379, password = '', db1, db2) {
         super();
+
+        this.workerCount = workerCount == 'auto' ? Math.ceil(cpuCount * 1.5) : workerCount;
+
         this.workers = [];
-        this.workersState = [];
+        this.workersState = new Array(this.workerCount);
         this.options = {
             host: host,
             port: port,
@@ -21,9 +23,15 @@ class MediathekIndexer extends EventEmitter {
             db1: db1,
             db2: db2
         };
+        this.indices = 0;
+        this.indexBegin = 0;
     }
 
     indexFile(file, minWordSize) {
+        this.indexBegin = Date.now();
+
+        this.emitProgress();
+
         let redis = REDIS.createClient({
             host: this.options.host,
             port: this.options.port,
@@ -55,8 +63,8 @@ class MediathekIndexer extends EventEmitter {
     }
 
     startWorkers(file, minWordSize, db1, db2) {
-        for (let i = 0; i < workerNum; i++) {
-            this.startWorker(file, minWordSize, i, workerNum, i, db1, db2);
+        for (let i = 0; i < this.workerCount; i++) {
+            this.startWorker(file, minWordSize, i, this.workerCount, i, db1, db2);
         }
     }
 
@@ -100,14 +108,40 @@ class MediathekIndexer extends EventEmitter {
                     });
                 } else if (message.body.notification == 'state') {
                     this.workersState[workerIndex] = message.body;
-                    this.emitWorkerState(workerIndex);
+                    this.indices = message.body.indices;
+                    this.emitProgress();
                 }
             }
         });
     }
 
-    emitWorkerState(index) {
-        this.emit('workerState', index, this.workersState[index]);
+    emitProgress() {
+        this.emitProgress = underscore.throttle(() => {
+            var progress = 0;
+            var entries = 0;
+            var done = true;
+
+            for (var i = 0; i < this.workersState.length; i++) {
+                if (this.workersState[i] != undefined) {
+                    progress += this.workersState[i].progress;
+                    entries += this.workersState[i].entries;
+                    if (this.workersState[i].done == false) {
+                        done = false;
+                    }
+                } else {
+                    done = false;
+                }
+            }
+
+            this.emit('state', {
+                progress: progress / this.workerCount,
+                entries: entries,
+                indices: this.indices,
+                time: Date.now() - this.indexBegin,
+                done: done
+            });
+        }, 500);
+        this.emitProgress();
     }
 
     sendMessage(worker, type, body) {

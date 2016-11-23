@@ -2,6 +2,9 @@ const REDIS = require('redis');
 const fs = require('fs');
 const lineReader = require('line-reader');
 const moment = require('moment');
+const exec = require('child_process').exec;
+
+exec('renice 10 -p ' + process.pid);
 
 var searchIndex, indexData;
 
@@ -80,7 +83,7 @@ const websiteRegex = /https?:\/\/([A-Za-z0-9-]+\.)*([A-Za-z0-9-]+\.[A-Za-z0-9-]+
 
 function indexFile(file, begin, skip, offset, minWordSize) {
     indexBegin = Date.now();
-    notifyInterval = setInterval(() => notifyState(), 1000);
+    notifyInterval = setInterval(() => notifyState(), 500);
 
     let fileStream = fs.createReadStream(file);
 

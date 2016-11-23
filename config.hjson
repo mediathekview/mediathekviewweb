@@ -3,14 +3,14 @@
   filmliste: data
 
   #minimum word length in order to be indexed for querying. A good value is 4 to ignore common (german) stuff like "sch" and therefore save a lot of or at least some RAM and improve searching performance
-  min_word_size: 4
+  min_word_size: 3
 
   webserverPort: 8080,
 
   index: true,
 
   #number of indexing workers to fork or auto to set it to cpu count
-  workerNum: auto
+  workerCount: auto
 
   redis: {
     host: 127.0.0.1

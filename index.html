@@ -16,7 +16,7 @@
     <script src="../../static/moment-with-locales.min.js"></script>
     <script src="../../static/DataTables/datatables.min.js"></script>
     <script src="../../static/video.min.js"></script>
-    <script src="../../static/bootbox.min.js"></script>
+    <script src="../../static/underscore-min.js"></script>
     <script src="../../static/bootstrap-multiselect.js"></script>
 </head>
 
@@ -27,6 +27,7 @@
     var selectedWebsiteNames = new Set();
     var websiteNamesMultiselectChangedWhileOpen = false;
     var connectingDialog;
+    var indexingDialog;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
@@ -40,24 +41,44 @@
     }
 
     socket.on('connect', () => {
-        connectingDialog.modal('hide');
+        $('#connectingModal').modal('hide');
     });
 
     socket.on('disconnect', () => {
-        connectingDialog.modal('show');
+        $('#indexingModal').modal('hide');
+        $('#connectingModal').modal('show');
+    });
+
+    socket.on('indexState', (state) => {
+        let progress = (state.progress * 100).toFixed(0);
+        $('#indexingProgressbar').css('width', (progress + '%')).text(progress + '%');
+        $('#indexingEntriesLabel').text(state.entries);
+        $('#indexingIndicesLabel').text(state.indices);
+        $('#indexingTimeLabel').text((state.time / 1000).toFixed(0) + ' Sekunden');
+
+
+        if (!state.done) {
+            $('#indexingModal').modal('show');
+        } else {
+            socket.emit('getWebsiteNames');
+            $('#indexingModal').modal('hide');
+        }
     });
 
     function query() {
-        let queryString = $('#queryInput').val();
-        let mode = $('#queryField input:radio:checked').val();
+        query = _.throttle(() => {
+            let queryString = $('#queryInput').val();
+            let mode = $('#queryField input:radio:checked').val();
 
-        socket.emit('queryEntry', {
-            queryString: queryString,
-            mode: mode,
-            filters: {
-                websiteNames: Array.from(selectedWebsiteNames)
-            }
-        });
+            socket.emit('queryEntry', {
+                queryString: queryString,
+                mode: mode,
+                filters: {
+                    websiteNames: Array.from(selectedWebsiteNames)
+                }
+            });
+        }, 350);
+        query();
     }
 
     socket.on('websiteNames', (websites) => {
@@ -125,11 +146,17 @@
     }
 
     $(function() {
-        connectingDialog = bootbox.dialog({
-            title: 'No connection',
-            message: '<span class="glyphicon glyphicon-repeat spinning"></span> Connecting...',
-            closeButton: false
+        $('#connectingModal').modal({
+            backdrop: 'static',
+            keyboard: false
         });
+        $('#indexingModal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: false
+        });
+
+        $('#connectingModal').modal('show');
 
         mediathekTable = $('#mediathek').DataTable({
             columns: [{ //Website
@@ -297,6 +324,49 @@
         </table>
 
         <label id="queryInfoLabel"></label>
+
+        <div id="connectingModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Keine Verbindung...</h4>
+                    </div>
+                    <div class="modal-body">
+                        <span class="glyphicon glyphicon-repeat spinning"></span> Verbinden...
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="indexingModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Datenbank wird neu gebaut...</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="progress">
+                            <div id="indexingProgressbar" class="progress-bar progress-bar-striped active" role="progressbar" style="min-width: 2em;">
+                                0%
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4">Einträge:
+                                <div id="indexingEntriesLabel">0</div>
+                            </div>
+                            <div class="col-sm-4">Indizes:
+                                <div id="indexingIndicesLabel">0</div>
+                            </div>
+                            <div class="col-sm-4">Dauer:
+                                <div id="indexingTimeLabel">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
 
     </div>
 
