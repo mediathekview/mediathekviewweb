@@ -4,13 +4,21 @@
 }
 
 @keyframes spin {
-    from { transform: scale(1) rotate(0deg); }
-    to { transform: scale(1) rotate(360deg); }
+    from {
+        transform: scale(1) rotate(0deg);
+    }
+    to {
+        transform: scale(1) rotate(360deg);
+    }
 }
 
 @-webkit-keyframes spin2 {
-    from { -webkit-transform: rotate(0deg); }
-    to { -webkit-transform: rotate(360deg); }
+    from {
+        -webkit-transform: rotate(0deg);
+    }
+    to {
+        -webkit-transform: rotate(360deg);
+    }
 }
 
 .hidden {
@@ -22,9 +30,9 @@ span.glyph-big {
 }
 
 span.glyph-margin-right {
-  margin-right: 5px;
+    margin-right: 3px;
 }
 
 span.glyph-margin-left {
-  margin-left: 5px;
+    margin-left: 3px;
 }

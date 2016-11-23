@@ -17,6 +17,7 @@
     <script src="../../static/DataTables/datatables.min.js"></script>
     <script src="../../static/video.min.js"></script>
     <script src="../../static/underscore-min.js"></script>
+    <script src="../../static/bootbox.min.js"></script>
     <script src="../../static/bootstrap-multiselect.js"></script>
 </head>
 
@@ -195,15 +196,22 @@
                 data: null,
                 render: returnEmptyString,
                 createdCell: (td, cellData, rowData, row, col) => {
-                    if (!!rowData.url_video_low) {
-                        $(td).append(createPlayButton('', rowData.title, rowData.url_video_low).append($('<span>').addClass('glyphicon glyphicon-sd-video glyph-big glyph-margin-right')));
-                    }
-                    if (!!rowData.url_video != '') {
-                        $(td).append(createPlayButton('', rowData.title, rowData.url_video).append($('<span>').addClass('glyphicon glyphicon-film glyph-big')));
-                    }
-                    if (!!rowData.url_video_hd != '') {
-                        $(td).append(createPlayButton('', rowData.title, rowData.url_video_hd).append($('<span>').addClass('glyphicon glyphicon-hd-video glyph-big glyph-margin-left')));
-                    }
+                    let sdButton = createPlayButton('', rowData.title, rowData.url_video_low);
+                    let sdIcon = $('<span>').addClass('glyphicon glyphicon-sd-video glyph-big glyph-margin-right');
+                    sdButton.append(sdIcon);
+                    if (!rowData.url_video_low) sdButton.css('visibility', 'hidden');
+
+                    let mButton = createPlayButton('', rowData.title, rowData.url_video);
+                    let mIcon = $('<span>').addClass('glyphicon glyphicon-film glyph-big glyph-margin-left glyph-margin-right');
+                    mButton.append(mIcon);
+                    if (!rowData.url_video) mButton.css('visibility', 'hidden');
+
+                    let hdButton = createPlayButton('', rowData.title, rowData.url_video_hd);
+                    let hdIcon = $('<span>').addClass('glyphicon glyphicon-hd-video glyph-big glyph-margin-left');
+                    hdButton.append(hdIcon);
+                    if (!rowData.url_video_hd) hdButton.css('visibility', 'hidden');
+
+                    $(td).append(sdButton).append(mButton).append(hdButton);
                 }
             }],
             language: {
