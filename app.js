@@ -6,6 +6,7 @@ const moment = require('moment');
 const SearchEngine = require('./SearchEngine.js');
 const MediathekIndexer = require('./MediathekIndexer.js');
 const Hjson = require('hjson');
+const exec = require('child_process').exec;
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 console.log(config);
@@ -115,11 +116,74 @@ mediathekIndexer.on('state', (state) => {
 });
 
 
-function indexMediathek() {
-    indexing = true;
-    mediathekIndexer.indexFile('../fulldata', config.min_word_size);
+function updateMediathek(callback) {
+    let content = "";
+    let req = http.get('http://zdfmediathk.sourceforge.net/akt.xml', function(res) {
+        res.setEncoding("utf8");
+        res.on("data", function(chunk) {
+            content += chunk;
+        });
+
+        res.on("end", function() {
+            let filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
+            let urlMatches = [];
+
+            let match;
+            while ((match = filmlisteUrlRegex.exec(content)) !== null) {
+                urlMatches.push(match);
+            }
+
+            let url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
+
+            let request = http.get(url, function(response) {
+                let filename = config.filmliste + '.xz';
+                fs.stat(filename, (err, stats) => {
+                    if (!err) {
+                        fs.unlinkSync(filename);
+                    }
+                    let fileStream = fs.createWriteStream(config.filmliste + '.xz');
+                    response.pipe(fileStream);
+                    response.on('end', () => {
+                        fs.stat(config.filmliste, (err, stats) => {
+                            if (!err) {
+                                fs.unlinkSync(config.filmliste);
+                            }
+
+                            exec('unxz ' + config.filmliste + '.xz').on('exit', () => {
+                                callback();
+                            });
+                        });
+                    });
+                });
+            });
+
+            request.on('error', (e) => {
+                console.log('Error downloading filmliste: ' + e.message);
+                console.log('Trying again in 1 minute');
+
+                clearTimeout(updateLoopTimeout);
+                updateLoopTimeout = setTimeout(updateLoop, 1 * 60 * 1000);
+            });
+        });
+    });
+    req.end();
 }
 
-if (config.index) {
-    indexMediathek();
+function indexMediathek() {
+    indexing = true;
+    mediathekIndexer.indexFile(config.filmliste, config.min_word_size);
 }
+
+var updateLoopTimeout;
+
+function updateLoop() {
+    if (config.index) {
+        updateMediathek(() => {
+            indexMediathek(() => {
+                updateLoopTimeout = setTimeout(updateLoop, config.mediathekUpdateInterval * 60 * 1000);
+            });
+        });
+    }
+}
+
+updateLoop();

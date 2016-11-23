@@ -1,13 +1,14 @@
 {
   #path to filmliste, can be absolute and relative
-  filmliste: data
+  filmliste: ../filmliste
 
   #minimum word length in order to be indexed for querying. A good value is 4 to ignore common (german) stuff like "sch" and therefore save a lot of or at least some RAM and improve searching performance
   min_word_size: 3
 
-  webserverPort: 8080,
+  webserverPort: 8080
 
-  index: true,
+  index: true
+  mediathekUpdateInterval: 60
 
   #number of indexing workers to fork or auto to set it to cpu count
   workerCount: auto

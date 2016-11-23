@@ -2,10 +2,11 @@ const EventEmitter = require('events');
 const cp = require('child_process');
 const os = require('os');
 const REDIS = require('redis');
+const moment = require('moment');
 const underscore = require('underscore');
+const lineReader = require('line-reader');
 
 const cpuCount = os.cpus().length;
-//'--max_old_space_size=100', '--max_executable_size=100',
 const workerArgs = process.execArgv.concat(['--optimize_for_size', '--memory-reducer']);
 
 class MediathekIndexer extends EventEmitter {
@@ -25,40 +26,49 @@ class MediathekIndexer extends EventEmitter {
         };
         this.indices = 0;
         this.indexBegin = 0;
-    }
 
-    indexFile(file, minWordSize) {
-        this.indexBegin = Date.now();
-
-        this.emitProgress();
-
-        let redis = REDIS.createClient({
+        this.redis = REDIS.createClient({
             host: this.options.host,
             port: this.options.port,
             password: this.options.password
         });
 
-        redis.on('ready', () => {
-            redis.select(this.options.db1, (err, reply) => {
-                if (err) throw err;
-                console.log('flushing db ' + this.options.db1)
-                redis.flushdb((reply) => {
-                    console.log(reply);
-                    console.log('flushing db ' + this.options.db2)
-                    redis.select(this.options.db2, (err, reply) => {
-                        if (err) {
-                            console.error(err);
-                            process.exit(1);
-                        }
-                        console.log(reply);
-                        redis.flushdb((reply) => {
-                            console.log(reply);
-                            redis.quit();
-                            this.startWorkers(file, minWordSize, this.options.db1, this.options.db2);
-                        });
+        this.callback = null;
+    }
+
+    indexFile(file, minWordSize, callback) {
+        if (this.indexing) {
+            throw new Error('already indexing');
+        }
+
+        this.callback = callback;
+
+        this.indexBegin = Date.now();
+
+        this.emitState();
+
+        let currentLine = 0;
+        lineReader.eachLine(file, (line, last, getNext) => {
+            currentLine++;
+            if (currentLine == 2) {
+                var filmliste = JSON.parse('{' + line.slice(0, -1) + '}').Filmliste;
+
+                this.redis.batch()
+                    .select(this.options.db1)
+                    .flushdb()
+                    .select(this.options.db2)
+                    .flushdb()
+                    .set('dataTimestamp', moment(filmliste[0], 'DD.MM.YYYY, HH:mm').unix())
+                    .exec((err, replies) => {
+                        if (err) throw err;
+                        this.indices = 0;
+                        this.startWorkers(file, minWordSize, this.options.db1, this.options.db2);
                     });
-                });
-            });
+
+                getNext(false);
+            } else {
+                getNext();
+            }
         });
     }
 
@@ -109,14 +119,14 @@ class MediathekIndexer extends EventEmitter {
                 } else if (message.body.notification == 'state') {
                     this.workersState[workerIndex] = message.body;
                     this.indices = message.body.indices;
-                    this.emitProgress();
+                    this.emitState();
                 }
             }
         });
     }
 
-    emitProgress() {
-        this.emitProgress = underscore.throttle(() => {
+    emitState() {
+        this.emitState = underscore.throttle(() => {
             var progress = 0;
             var entries = 0;
             var done = true;
@@ -140,8 +150,16 @@ class MediathekIndexer extends EventEmitter {
                 time: Date.now() - this.indexBegin,
                 done: done
             });
+
+            if (done) {
+                this.workers = [];
+                this.workersState = new Array(this.workerCount);
+                if (typeof(this.callback) == 'function') {
+                    this.callback();
+                }
+            }
         }, 500);
-        this.emitProgress();
+        this.emitState();
     }
 
     sendMessage(worker, type, body) {
