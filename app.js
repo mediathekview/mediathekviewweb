@@ -55,7 +55,7 @@ httpServer.listen(config.webserverPort, () => {
 });
 
 function queryEntries(query, mode, filters, callback) {
-    console.log('querying ' + query);
+    console.log(moment().format('HH:mm') + ' - querying ' + query);
     let begin = Date.now();
 
     searchEngine.search(query, config.min_word_size, mode, (results, err) => {
@@ -96,7 +96,7 @@ function queryEntries(query, mode, filters, callback) {
             queryInfo: queryInfo
         });
 
-        console.log('query took ' + (Date.now() - begin) / 1000 + ' seconds');
+        console.log('\tquery took ' + (Date.now() - begin) / 1000 + ' seconds');
 
     });
 }
