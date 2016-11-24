@@ -27,11 +27,15 @@
     var websiteNames = [];
     var selectedWebsiteNames = new Set();
     var websiteNamesMultiselectChangedWhileOpen = false;
-    var connectingDialog;
-    var indexingDialog;
+    var connectingModal;
+    var indexingModal;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
+
+    function modalIsOpen(modalDOM) {
+        return (modalDOM.data('bs.modal') || {}).isShown;
+    }
 
     function formatBytes(bytes, decimals) {
         if (bytes == 0) return '0 Byte';
@@ -42,12 +46,14 @@
     }
 
     socket.on('connect', () => {
-        $('#connectingModal').modal('hide');
+        connectingModal.modal('hide');
     });
 
     socket.on('disconnect', () => {
-        $('#indexingModal').modal('hide');
-        $('#connectingModal').modal('show');
+        indexingModal.modal('hide');
+        if (!modalIsOpen(connectingModal)) {
+            connectingModal.modal('show');
+        }
     });
 
     socket.on('indexState', (state) => {
@@ -59,10 +65,12 @@
 
 
         if (!state.done) {
-            $('#indexingModal').modal('show');
+            if (!modalIsOpen(indexingModal)) {
+                indexingModal.modal('show');
+            }
         } else {
             socket.emit('getWebsiteNames');
-            $('#indexingModal').modal('hide');
+            indexingModal.modal('hide');
         }
     });
 
@@ -147,17 +155,24 @@
     }
 
     $(function() {
-        $('#connectingModal').modal({
+        connectingModal = $('#connectingModal');
+        connectingModal.modal({
             backdrop: 'static',
             keyboard: false
         });
-        $('#indexingModal').modal({
+
+        indexingModal = $('#indexingModal');
+        indexingModal.modal({
             backdrop: 'static',
             keyboard: false,
             show: false
         });
 
-        $('#connectingModal').modal('show');
+        if (socket.disconnected) {
+            if (!modalIsOpen(connectingModal)) {
+                connectingModal.modal('show');
+            }
+        }
 
         mediathekTable = $('#mediathek').DataTable({
             columns: [{ //Website

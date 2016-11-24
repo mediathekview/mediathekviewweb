@@ -30,10 +30,31 @@ class MediathekIndexer extends EventEmitter {
         this.redis = REDIS.createClient({
             host: this.options.host,
             port: this.options.port,
-            password: this.options.password
+            password: this.options.password,
+            db: db2
         });
 
         this.callback = null;
+    }
+
+    getLastIndexTimestamp(callback) {
+        this.redis.get('indexTimestamp', (err, reply) => {
+            if (!err) {
+                callback(reply);
+            } else {
+                callback(0);
+            }
+        });
+    }
+
+    getLastIndexCompleted(callback) {
+        this.redis.get('indexCompleted', (err, reply) => {
+            if (!err) {
+                callback(reply === 'true');
+            } else {
+                callback(false);
+            }
+        });
     }
 
     indexFile(file, minWordSize, callback) {
@@ -58,7 +79,7 @@ class MediathekIndexer extends EventEmitter {
                     .flushdb()
                     .select(this.options.db2)
                     .flushdb()
-                    .set('dataTimestamp', moment(filmliste[0], 'DD.MM.YYYY, HH:mm').unix())
+                    .set('indexTimestamp', Date.now()) //moment(filmliste[0], 'DD.MM.YYYY, HH:mm').unix())
                     .exec((err, replies) => {
                         if (err) throw err;
                         this.indices = 0;
@@ -154,9 +175,11 @@ class MediathekIndexer extends EventEmitter {
             if (done) {
                 this.workers = [];
                 this.workersState = new Array(this.workerCount);
-                if (typeof(this.callback) == 'function') {
-                    this.callback();
-                }
+                this.redis.set('indexCompleted', true, (err, reply) => {
+                    if (typeof(this.callback) == 'function') {
+                        this.callback();
+                    }
+                });
             }
         }, 500);
         this.emitState();

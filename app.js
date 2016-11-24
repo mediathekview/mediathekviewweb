@@ -9,6 +9,7 @@ const Hjson = require('hjson');
 const exec = require('child_process').exec;
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
+config.mediathekUpdateInterval = parseInt(config.mediathekUpdateInterval) * 60 * 1000;
 console.log(config);
 
 var app = express();
@@ -20,6 +21,7 @@ var websiteNames = [];
 
 var indexing = false;
 var lastIndexingState;
+var updateLoopTimeout;
 
 app.use('/static', express.static('static'));
 
@@ -174,16 +176,26 @@ function indexMediathek() {
     mediathekIndexer.indexFile(config.filmliste, config.min_word_size);
 }
 
-var updateLoopTimeout;
 
 function updateLoop() {
     if (config.index) {
         updateMediathek(() => {
             indexMediathek(() => {
-                updateLoopTimeout = setTimeout(updateLoop, config.mediathekUpdateInterval * 60 * 1000);
+                updateLoopTimeout = setTimeout(updateLoop, config.mediathekUpdateInterval);
             });
         });
     }
 }
 
-updateLoop();
+mediathekIndexer.getLastIndexCompleted((completed) => {
+    if (completed) {
+        mediathekIndexer.getLastIndexTimestamp((result) => {
+            let timeToNextUpdate = Math.min((parseInt(result) + config.mediathekUpdateInterval) - Date.now(), config.mediathekUpdateInterval);
+            console.log('scheduling next filmliste update in about ' + moment.duration(timeToNextUpdate).humanize());
+            setTimeout(updateLoop, timeToNextUpdate);
+        });
+    } else {
+        console.log('updating filmliste now');
+        setTimeout(updateLoop, 0);
+    }
+});
