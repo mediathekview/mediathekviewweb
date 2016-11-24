@@ -124,6 +124,7 @@ function indexFile(file, begin, skip, offset, minWordSize) {
         durationSplit = parsed[5].split(':');
 
         let entry = {
+            topic: parsed[1],
             title: parsed[2],
             //timestamp: moment(parsed[3] + parsed[4], 'DD.MM.YYYYHHmm').unix(),
             timestamp: parseInt(parsed[16]),
@@ -152,7 +153,7 @@ function createUrlFromBase(baseUrl, newUrl) {
 function processEntry(entry, minWordSize, last, getNext) {
     entryCounter++;
 
-    let splits = entry.title.trim().replace(':', '').toLowerCase().split(' ');
+    let splits = (entry.title + ' ' + entry.topic).trim().replace(':', '').toLowerCase().split(' ');
 
     for (let i in splits) {
         let split = splits[i];
