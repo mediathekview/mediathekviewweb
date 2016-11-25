@@ -9,7 +9,7 @@ const Hjson = require('hjson');
 const exec = require('child_process').exec;
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
-config.mediathekUpdateInterval = parseInt(config.mediathekUpdateInterval) * 60 * 1000;
+config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60 * 1000;
 console.log(config);
 
 var app = express();
@@ -21,7 +21,6 @@ var websiteNames = [];
 
 var indexing = false;
 var lastIndexingState;
-var updateLoopTimeout;
 
 app.use('/static', express.static('static'));
 
@@ -118,7 +117,7 @@ mediathekIndexer.on('state', (state) => {
 });
 
 
-function updateMediathek(callback) {
+function downloadFilmliste(successCallback, errCallback) {
     let content = "";
     let req = http.get('http://zdfmediathk.sourceforge.net/akt.xml', function(res) {
         res.setEncoding("utf8");
@@ -152,7 +151,7 @@ function updateMediathek(callback) {
                             }
 
                             exec('unxz ' + config.filmliste + '.xz').on('exit', () => {
-                                callback();
+                                successCallback();
                             });
                         });
                     });
@@ -160,42 +159,52 @@ function updateMediathek(callback) {
             });
 
             request.on('error', (e) => {
-                console.log('Error downloading filmliste: ' + e.message);
-                console.log('Trying again in 1 minute');
-
-                clearTimeout(updateLoopTimeout);
-                updateLoopTimeout = setTimeout(updateLoop, 1 * 60 * 1000);
+                errCallback(e);
             });
         });
     });
     req.end();
 }
 
-function indexMediathek() {
+function indexMediathek(callback) {
     indexing = true;
-    mediathekIndexer.indexFile(config.filmliste, config.min_word_size);
+    mediathekIndexer.indexFile(config.filmliste, config.min_word_size, callback);
 }
-
 
 function updateLoop() {
     if (config.index) {
-        updateMediathek(() => {
-            indexMediathek(() => {
-                updateLoopTimeout = setTimeout(updateLoop, config.mediathekUpdateInterval);
-            });
+        checkUpdateNeeded((updateNeeded) => {
+            if (updateNeeded) {
+                downloadFilmliste(() => {
+                    indexMediathek(() => {
+                        setTimeout(updateLoop, 60 * 1000);
+                    });
+                }, (err) => {
+                    console.log('download error: ' + err.message);
+                    console.log('trying again in a minute');
+                    setTimeout(updateLoop, 60 * 1000);
+                });
+            } else {
+                setTimeout(updateLoop, 60 * 1000);
+            }
         });
     }
 }
 
-mediathekIndexer.getLastIndexCompleted((completed) => {
-    if (completed) {
-        mediathekIndexer.getLastIndexTimestamp((result) => {
-            let timeToNextUpdate = Math.min((parseInt(result) + config.mediathekUpdateInterval) - Date.now(), config.mediathekUpdateInterval);
-            console.log('scheduling next filmliste update in about ' + moment.duration(timeToNextUpdate).humanize());
-            setTimeout(updateLoop, timeToNextUpdate);
-        });
-    } else {
-        console.log('updating filmliste now');
-        setTimeout(updateLoop, 0);
-    }
-});
+function checkUpdateNeeded(callback) {
+    mediathekIndexer.getLastIndexHasCompleted((completed) => {
+        if (completed) {
+            mediathekIndexer.getLastIndexTimestamp((result) => {
+                if ((parseInt(result) + config.mediathekUpdateInterval) <= Date.now()) {
+                    callback(true);
+                } else {
+                    callback(false);
+                }
+            });
+        } else {
+            callback(true);
+        }
+    });
+}
+
+setImmediate(updateLoop);

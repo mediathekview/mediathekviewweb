@@ -34,7 +34,7 @@ class MediathekIndexer extends EventEmitter {
             db: db2
         });
 
-        this.callback = null;
+        this.indexingCompleteCallback = null;
     }
 
     getLastIndexTimestamp(callback) {
@@ -47,7 +47,7 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    getLastIndexCompleted(callback) {
+    getLastIndexHasCompleted(callback) {
         this.redis.get('indexCompleted', (err, reply) => {
             if (!err) {
                 callback(reply === 'true');
@@ -57,12 +57,12 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    indexFile(file, minWordSize, callback) {
+    indexFile(file, minWordSize, indexingCompleteCallback) {
         if (this.indexing) {
             throw new Error('already indexing');
         }
 
-        this.callback = callback;
+        this.indexingCompleteCallback = indexingCompleteCallback;
 
         this.indexBegin = Date.now();
 
@@ -79,7 +79,6 @@ class MediathekIndexer extends EventEmitter {
                     .flushdb()
                     .select(this.options.db2)
                     .flushdb()
-                    .set('indexTimestamp', Date.now()) //moment(filmliste[0], 'DD.MM.YYYY, HH:mm').unix())
                     .exec((err, replies) => {
                         if (err) throw err;
                         this.indices = 0;
@@ -175,11 +174,14 @@ class MediathekIndexer extends EventEmitter {
             if (done) {
                 this.workers = [];
                 this.workersState = new Array(this.workerCount);
-                this.redis.set('indexCompleted', true, (err, reply) => {
-                    if (typeof(this.callback) == 'function') {
-                        this.callback();
-                    }
-                });
+                this.redis.batch()
+                    .set('indexTimestamp', Date.now())
+                    .set('indexCompleted', true)
+                    .exec((err, replies) => {
+                        if (typeof(this.indexingCompleteCallback) == 'function') {
+                            this.indexingCompleteCallback();
+                        }
+                    });
             }
         }, 500);
         this.emitState();
