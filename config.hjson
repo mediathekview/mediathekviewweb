@@ -23,4 +23,12 @@
     #database for data entries
     db2: 1
   }
+
+  piwik: {
+    enabled: false
+    websiteUrl: "https://example.de"
+    piwikUrl: "https://piwik.example.de/piwik.php"
+    token_auth: "abc123"
+    siteId: 1
+  }
 }

@@ -7,6 +7,7 @@ const SearchEngine = require('./SearchEngine.js');
 const MediathekIndexer = require('./MediathekIndexer.js');
 const Hjson = require('hjson');
 const exec = require('child_process').exec;
+const PiwikTracker = require('piwik-tracker');
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60 * 1000;
@@ -15,12 +16,19 @@ console.log(config);
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
+if (config.piwik.enabled) var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
 var searchEngine = new SearchEngine(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 var websiteNames = [];
 
 var indexing = false;
 var lastIndexingState;
+
+
+
+piwik.on('error', function(err) {
+    console.log('error tracking request: ', err)
+})
 
 app.use('/static', express.static('static'));
 
@@ -29,6 +37,7 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', (socket) => {
+    var clientIp = socket.request.connection.remoteAddress;
     if (indexing && lastIndexingState != null) {
         socket.emit('indexState', lastIndexingState);
     }
@@ -46,6 +55,33 @@ io.on('connection', (socket) => {
             socket.emit('websiteNames', result);
             websiteNames = result;
         });
+    });
+
+    let socketUid = null;
+    socket.on('requestUid', () => {
+        socket.emit('uid', (1000 + Math.floor(Math.random() * 1000)).toString() + Date.now().toString());
+    });
+
+    socket.on('track', (uid) => {
+        if (!uid)
+            return;
+
+        if (socketUid == null) {
+            socketUid = uid;
+        } else if (uid != socketUid) {
+            return;
+        }
+
+        if (config.piwik.enabled) {
+            console.log(config.piwik);
+            console.log('tracking ' + uid);
+            piwik.track({
+                token_auth: config.piwik.token_auth,
+                url: config.piwik.websiteUrl,
+                uid: uid,
+                cip: clientIp
+            });
+        }
     });
 });
 

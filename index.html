@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../static/video-js.min.css" />
     <link rel="stylesheet" href="../../static/bootstrap-multiselect.css" />
     <script src="../../static/jquery.min.js"></script>
+    <script src="../../static/js.cookie.js"></script>
     <script src="../../static/bootstrap/js/bootstrap.min.js"></script>
     <script src="../../socket.io/socket.io.js"></script>
     <script src="../../static/moment-with-locales.min.js"></script>
@@ -285,6 +286,33 @@
                 }
             }
         });
+
+        let localUid;
+        if (typeof(Storage) !== "undefined") {
+            localStorage.getItem('uid');
+        }
+        if (!!localUid) {
+            localUid = localUid.trim();
+        } else {
+            localUid = Cookies.get('uid');
+            if (!!localUid) {
+                localUid = localUid.trim();
+            }
+        }
+
+        if (!!localUid && localUid.length > 10) {
+            socket.emit('track', localUid);
+        } else {
+            socket.on('uid', (uid) => {
+                localStorage.setItem('uid', uid);
+                Cookies.set('uid', uid, {
+                    expires: 99999
+                });
+                socket.emit('track', uid);
+            });
+            socket.emit('requestUid');
+        }
+
         socket.emit('getWebsiteNames');
 
         $('#queryInput').on('input', () => query());
