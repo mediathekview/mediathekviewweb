@@ -46,17 +46,6 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
     }
 
-    socket.on('connect', () => {
-        connectingModal.modal('hide');
-    });
-
-    socket.on('disconnect', () => {
-        indexingModal.modal('hide');
-        if (!modalIsOpen(connectingModal)) {
-            connectingModal.modal('show');
-        }
-    });
-
     socket.on('indexState', (state) => {
         let progress = (state.progress * 100).toFixed(0);
         $('#indexingProgressbar').css('width', (progress + '%')).text(progress + '%');
@@ -167,6 +156,17 @@
             backdrop: 'static',
             keyboard: false,
             show: false
+        });
+
+        socket.on('connect', () => {
+            connectingModal.modal('hide');
+        });
+
+        socket.on('disconnect', () => {
+            indexingModal.modal('hide');
+            if (!modalIsOpen(connectingModal)) {
+                connectingModal.modal('show');
+            }
         });
 
         if (socket.disconnected) {
