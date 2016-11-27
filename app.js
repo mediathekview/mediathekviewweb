@@ -8,6 +8,7 @@ const MediathekIndexer = require('./MediathekIndexer.js');
 const Hjson = require('hjson');
 const exec = require('child_process').exec;
 const PiwikTracker = require('piwik-tracker');
+const utils = require('./utils.js');
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60 * 1000;
@@ -37,10 +38,15 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', (socket) => {
-    var clientIp = socket.request.connection.remoteAddress;
+    var clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
+    var socketUid = null;
+
+    console.log('client connected, ip: ' + clientIp);
+
     if (indexing && lastIndexingState != null) {
         socket.emit('indexState', lastIndexingState);
     }
+
     socket.on('queryEntry', (query) => {
         if (indexing) {
             return;
@@ -50,6 +56,7 @@ io.on('connection', (socket) => {
             socket.emit('queryResult', result);
         });
     });
+
     socket.on('getWebsiteNames', () => {
         searchEngine.getWebsiteNames((result) => {
             socket.emit('websiteNames', result);
@@ -57,27 +64,34 @@ io.on('connection', (socket) => {
         });
     });
 
-    let socketUid = null;
+    function emitNewUid() {
+        socket.emit('uid', utils.randomValueBase64(32));
+    }
+
     socket.on('requestUid', () => {
-        socket.emit('uid', (1000 + Math.floor(Math.random() * 1000)).toString() + Date.now().toString());
+        emitNewUid();
     });
 
-    socket.on('track', (uid) => {
-        if (!uid)
+    socket.on('track', (data) => {
+        if (!data.uid || data.uid.length != 32) {
+            emitNewUid();
             return;
+        }
 
-        if (socketUid == null) {
-            socketUid = uid;
-        } else if (uid != socketUid) {
+        if (!socketUid) {
+            socketUid = data.uid;
+        } else if (data.uid != socketUid) {
+            socket.emit('uid', socketUid);
             return;
         }
 
         if (!!piwik) {
-            console.log('tracking user ' + uid);
             piwik.track({
+                pv_id: data.pv_id,
+                action_name: data.action,
                 token_auth: config.piwik.token_auth,
                 url: config.piwik.websiteUrl,
-                uid: uid,
+                uid: socketUid,
                 cip: clientIp
             });
         }
@@ -86,10 +100,10 @@ io.on('connection', (socket) => {
 
 httpServer.listen(config.webserverPort, () => {
     console.log('server listening on *:' + config.webserverPort);
+    console.log();
 });
 
 function queryEntries(query, mode, filters, callback) {
-    console.log(moment().format('HH:mm') + ' - querying ' + query);
     let begin = Date.now();
 
     searchEngine.search(query, mode, (results, err) => {
@@ -130,7 +144,7 @@ function queryEntries(query, mode, filters, callback) {
             queryInfo: queryInfo
         });
 
-        console.log('\tquery took ' + (searchEngineTime + filterTime) + ' ms');
+        console.log(moment().format('HH:mm') + ' - querying "' + query + '" took ' + (searchEngineTime + filterTime) + ' ms');
     });
 }
 

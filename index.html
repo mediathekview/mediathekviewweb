@@ -30,12 +30,24 @@
     var websiteNamesMultiselectChangedWhileOpen = false;
     var connectingModal;
     var indexingModal;
+    var uid;
+    var pv_id;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
 
     function modalIsOpen(modalDOM) {
         return (modalDOM.data('bs.modal') || {}).isShown;
+    }
+
+    function randomString(len) {
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for (var i = 0; i < len; i++)
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        return text;
     }
 
     function formatBytes(bytes, decimals) {
@@ -45,6 +57,46 @@
         var i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
     }
+
+    pv_id = randomString(6);
+
+    function track(action) {
+        socket.emit('track', {
+            uid: uid,
+            action: action,
+            pv_id: pv_id
+        });
+    }
+
+    if (typeof(Storage) !== "undefined") {
+        uid = localStorage.getItem('uid');
+    }
+    if (!!uid) {
+        uid = uid.trim();
+    } else {
+        uid = Cookies.get('uid');
+        if (!!uid) {
+            uid = uid.trim();
+        }
+    }
+    if (!!uid && uid.length == 32) {
+        track('index');
+    } else {
+        socket.on('uid', (_uid) => {
+            localStorage.setItem('uid', _uid);
+            Cookies.set('uid', _uid, {
+                expires: 99999
+            });
+            uid = _uid;
+
+            track('index');
+        });
+        socket.emit('requestUid');
+    }
+
+    setInterval(() => {
+        track('heartbeat');
+    }, 3 * 60 * 1000); //every 3 minutes
 
     socket.on('indexState', (state) => {
         let progress = (state.progress * 100).toFixed(0);
@@ -64,6 +116,13 @@
         }
     });
 
+    function trackQuery() {
+        trackQuery = _.debounce(() => {
+            track('query');
+        }, 2000);
+        trackQuery();
+    }
+
     function query() {
         query = _.throttle(() => {
             let queryString = $('#queryInput').val();
@@ -76,7 +135,9 @@
                     websiteNames: Array.from(selectedWebsiteNames)
                 }
             });
-        }, 350);
+
+            trackQuery();
+        }, 250);
         query();
     }
 
@@ -138,6 +199,7 @@
             backdrop: true,
             onEscape: true
         });
+        track('play');
     }
 
     function returnEmptyString() {
@@ -286,32 +348,6 @@
                 }
             }
         });
-
-        let localUid;
-        if (typeof(Storage) !== "undefined") {
-            localUid = localStorage.getItem('uid');
-        }
-        if (!!localUid) {
-            localUid = localUid.trim();
-        } else {
-            localUid = Cookies.get('uid');
-            if (!!localUid) {
-                localUid = localUid.trim();
-            }
-        }
-
-        if (!!localUid && localUid.length > 10) {
-            socket.emit('track', localUid);
-        } else {
-            socket.on('uid', (uid) => {
-                localStorage.setItem('uid', uid);
-                Cookies.set('uid', uid, {
-                    expires: 99999
-                });
-                socket.emit('track', uid);
-            });
-            socket.emit('requestUid');
-        }
 
         socket.emit('getWebsiteNames');
 
