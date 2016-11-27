@@ -73,8 +73,7 @@ io.on('connection', (socket) => {
         }
 
         if (!!piwik) {
-            console.log(config.piwik);
-            console.log('tracking ' + uid);
+            console.log('tracking user ' + uid);
             piwik.track({
                 token_auth: config.piwik.token_auth,
                 url: config.piwik.websiteUrl,
