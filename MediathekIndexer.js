@@ -57,7 +57,7 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    indexFile(file, minWordSize, indexingCompleteCallback) {
+    indexFile(file, substrSize, indexingCompleteCallback) {
         if (this.indexing) {
             throw new Error('already indexing');
         }
@@ -82,7 +82,7 @@ class MediathekIndexer extends EventEmitter {
                     .exec((err, replies) => {
                         if (err) throw err;
                         this.indices = 0;
-                        this.startWorkers(file, minWordSize, this.options.db1, this.options.db2);
+                        this.startWorkers(file, substrSize, this.options.db1, this.options.db2);
                     });
 
                 getNext(false);
@@ -92,13 +92,13 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    startWorkers(file, minWordSize, db1, db2) {
+    startWorkers(file, substrSize, db1, db2) {
         for (let i = 0; i < this.workerCount; i++) {
-            this.startWorker(file, minWordSize, i, this.workerCount, i, db1, db2);
+            this.startWorker(file, substrSize, i, this.workerCount, i, db1, db2);
         }
     }
 
-    startWorker(file, minWordSize, begin, skip, offset, db1, db2) {
+    startWorker(file, substrSize, begin, skip, offset, db1, db2) {
         console.log('worker started: ' + skip + ' ' + offset);
 
         let worker = cp.fork('./MediathekIndexerWorker.js', {
@@ -134,7 +134,7 @@ class MediathekIndexer extends EventEmitter {
                         begin: begin,
                         skip: skip,
                         offset: offset,
-                        minWordSize: minWordSize
+                        substrSize: substrSize
                     });
                 } else if (message.body.notification == 'state') {
                     this.workersState[workerIndex] = message.body;

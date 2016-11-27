@@ -2,8 +2,9 @@
   #path to filmliste, can be absolute and relative
   filmliste: ../filmliste
 
-  #minimum word length in order to be indexed for querying. A good value is 4 to ignore common (german) stuff like "sch" and therefore save a lot of or at least some RAM and improve searching performance
-  min_word_size: 3
+  #create substrings with length of N to word.length of every indexed word in order to allow prefix and suffix searching.
+  #A good value is 4 to ignore common (german) stuff like "sch" and therefore save a lot of or at least some RAM and improve searching performance
+  substrSize: 4
 
   webserverPort: 8080
 

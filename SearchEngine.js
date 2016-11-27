@@ -25,9 +25,9 @@ class SearchEngine {
         });
     }
 
-    search(query, minWordSize, mode, callback) {
+    search(query, mode, callback) {
         let splits = query.trim().toLowerCase().split(' ').filter((split) => {
-            return split.length >= minWordSize;
+            return !!split;
         });
 
         if (splits.length == 0) {

@@ -24,11 +24,11 @@ var websiteNames = [];
 var indexing = false;
 var lastIndexingState;
 
-
-
-piwik.on('error', function(err) {
-    console.log('error tracking request: ', err)
-})
+if (!!piwik) {
+    piwik.on('error', function(err) {
+        console.log('piwik: error tracking request: ', err)
+    });
+}
 
 app.use('/static', express.static('static'));
 
@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        if (config.piwik.enabled) {
+        if (!!piwik) {
             console.log(config.piwik);
             console.log('tracking ' + uid);
             piwik.track({
@@ -93,7 +93,7 @@ function queryEntries(query, mode, filters, callback) {
     console.log(moment().format('HH:mm') + ' - querying ' + query);
     let begin = Date.now();
 
-    searchEngine.search(query, config.min_word_size, mode, (results, err) => {
+    searchEngine.search(query, mode, (results, err) => {
         if (err) {
             console.log(err);
             callback([]);
@@ -131,8 +131,7 @@ function queryEntries(query, mode, filters, callback) {
             queryInfo: queryInfo
         });
 
-        console.log('\tquery took ' + (Date.now() - begin) / 1000 + ' seconds');
-
+        console.log('\tquery took ' + (searchEngineTime + filterTime) + ' ms');
     });
 }
 
@@ -204,7 +203,7 @@ function downloadFilmliste(successCallback, errCallback) {
 
 function indexMediathek(callback) {
     indexing = true;
-    mediathekIndexer.indexFile(config.filmliste, config.min_word_size, callback);
+    mediathekIndexer.indexFile(config.filmliste, config.substrSize, callback);
 }
 
 function updateLoop() {
