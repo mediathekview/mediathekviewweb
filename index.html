@@ -289,7 +289,7 @@
 
         let localUid;
         if (typeof(Storage) !== "undefined") {
-            localStorage.getItem('uid');
+            localUid = localStorage.getItem('uid');
         }
         if (!!localUid) {
             localUid = localUid.trim();
