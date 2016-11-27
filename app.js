@@ -88,11 +88,15 @@ io.on('connection', (socket) => {
         if (!!piwik) {
             piwik.track({
                 pv_id: data.pv_id,
-                action_name: data.action,
                 token_auth: config.piwik.token_auth,
                 url: config.piwik.websiteUrl,
                 uid: socketUid,
-                cip: clientIp
+                cip: clientIp,
+                ua: data.ua,
+                lang: data.lang,
+                res: data.res,
+                e_c: data.e_c,
+                e_a: data.action,
             });
         }
     });

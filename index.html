@@ -63,8 +63,12 @@
     function track(action) {
         socket.emit('track', {
             uid: uid,
-            action: action,
-            pv_id: pv_id
+            pv_id: pv_id,
+            ua: navigator.userAgent,
+            lang: navigator.language,
+            res: window.screen.width + "x" + window.screen.height,
+            e_c: 'MediathekViewWeb',
+            e_a: action
         });
     }
 
@@ -95,7 +99,9 @@
     }
 
     setInterval(() => {
-        track('heartbeat');
+        if (socket.connected) {
+            track('heartbeat');
+        }
     }, 3 * 60 * 1000); //every 3 minutes
 
     socket.on('indexState', (state) => {
