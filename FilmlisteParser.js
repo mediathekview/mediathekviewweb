@@ -70,7 +70,7 @@ function finalize() {
         entries: entries
     });
 
-    redis.quit(() => process.exit(0), 500);
+    redis.quit(() => process.exit(0));
 }
 
 function flushBuffer(last) {
