@@ -13,7 +13,7 @@ class MediathekIndexer extends EventEmitter {
     constructor(workerCount, host = '127.0.0.1', port = 6379, password = '', db1, db2) {
         super();
 
-        this.workerCount = workerCount == 'auto' ? Math.ceil(cpuCount * 1.5) : workerCount;
+        this.workerCount = !workerCount ? cpuCount : workerCount;
 
         this.workers = [];
         this.workersState = new Array(this.workerCount);
