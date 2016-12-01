@@ -72,13 +72,6 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('getWebsiteNames', () => {
-        searchEngine.getWebsiteNames((result) => {
-            socket.emit('websiteNames', result);
-            websiteNames = result;
-        });
-    });
-
     function emitNewUid() {
         socket.emit('uid', utils.randomValueBase64(32));
     }

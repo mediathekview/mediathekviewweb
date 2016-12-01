@@ -119,7 +119,6 @@
                 indexingModal.modal('show');
             }
         } else {
-            socket.emit('getWebsiteNames');
             indexingModal.modal('hide');
         }
     });
@@ -359,8 +358,6 @@
                 }
             }
         });
-
-        socket.emit('getWebsiteNames');
 
         $('#queryInput').on('input', () => query());
         $('#queryField input:radio').change(() => query());
