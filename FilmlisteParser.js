@@ -10,10 +10,13 @@ var buffer = [];
 var entries = 0;
 var getProgress;
 
-function parseFilmliste(file, redisSettings, listKey) {
+ipc.on('parseFilmliste', (data) => {
+    parseFilmliste(data.file, data.redisSettings);
+});
+
+function parseFilmliste(file, redisSettings) {
     begin = Date.now();
     redis = REDIS.createClient(redisSettings);
-
 
     let currentChannel;
     let currentTopic;
@@ -40,6 +43,9 @@ function parseFilmliste(file, redisSettings, listKey) {
             }
 
             let parsed = JSON.parse(line);
+            entries++;
+
+            parsed[20] = entries;
 
             if (parsed[0].length == 0) {
                 parsed[0] = currentChannel;
@@ -52,7 +58,7 @@ function parseFilmliste(file, redisSettings, listKey) {
                 currentTopic = parsed[1];
             }
 
-            buffer.push(['lpush', listKey, JSON.stringify(parsed)]);
+            buffer.push(['lpush', 'entries', JSON.stringify(parsed)]);
 
             if (currentLine % 500 == 0) {
                 flushBuffer(false);
@@ -70,7 +76,7 @@ function finalize() {
         entries: entries
     });
 
-    redis.quit(() => process.exit(0));
+    redis.batch().set('parsingDone', true).quit(() => setTimeout(() => process.exit(0), 500)).exec();
 }
 
 function flushBuffer(last) {
@@ -80,7 +86,6 @@ function flushBuffer(last) {
         redis.batch(buffer).exec();
     }
 
-    entries += buffer.length;
     buffer = [];
 
     ipc.send('state', {
@@ -90,7 +95,3 @@ function flushBuffer(last) {
 }
 
 ipc.send('ready');
-
-ipc.on('parseFilmliste', (data) => {
-    parseFilmliste(data.file, data.redisSettings, data.listKey);
-});

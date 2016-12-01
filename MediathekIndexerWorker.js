@@ -2,143 +2,61 @@ const REDIS = require('redis');
 const fs = require('fs');
 const lineReader = require('line-reader');
 const moment = require('moment');
-const exec = require('child_process').exec;
+const IPC = require('./IPC.js');
+const utils = require('./utils.js');
 
-exec('renice 10 -p ' + process.pid);
+var ipc = new IPC(process);
 
-var searchIndex, indexData;
-
-var websitesSet = new Set();
-
-var indexBuffer = []; //for searchIndex
+var indicesRedis, entriesRedis, filmlisteRedis;
+var error = false;
+var noNewFilme = false;
+var filmlisteBuffer = [];
+var channelSet = new Set();
+var topicSet = new Set();
+var indexBuffer = []; //for indicesRedis
 var entryBuffer = []; //for indexData
 var entryCounter = 0;
-var currentLine = 0;
 var notifyInterval;
 var indexBegin;
+var substringSize;
 
-var getProgress;
-
-process.on('message', (message) => {
-    if (message.type == 'command') {
-        if (message.body.command == 'init') {
-            init(message.body.host, message.body.port, message.body.password, message.body.db1, message.body.db2);
-        } else if (message.body.command == 'indexFile') {
-            indexFile(message.body.file, message.body.begin, message.body.skip, message.body.offset, message.body.substrSize);
-        } else {
-            console.log('unrecognized command: ' + message.body.command);
-        }
-    } else {
-        console.log('unrecognized message.type: ' + message.type);
-    }
+ipc.on('init', (data) => {
+    console.log(data);
+    init(data.indicesRedisSettings, data.entriesRedisSettings, data.filmlisteRedisSettings);
 });
 
-function init(host, port, password, db1, db2) {
-    searchIndex = REDIS.createClient({
-        host: host,
-        port: port,
-        password: password,
-        db: db1
-    });
+ipc.on('index', (data) => {
+    index(data.substringSize);
+});
 
-    indexData = REDIS.createClient({
-        host: host,
-        port: port,
-        password: password,
-        db: db2
-    });
+function init(indicesRedisSettings, entriesRedisSettings, filmlisteRedisSettings) {
+    indicesRedis = REDIS.createClient(indicesRedisSettings);
+    entriesRedis = REDIS.createClient(entriesRedisSettings);
+    filmlisteRedis = REDIS.createClient(filmlisteRedisSettings);
 
-    searchIndex.on('error', (err) => {
-        sendMessage('notification', {
-            notification: 'error',
-            error: err
-        });
-    });
+    indicesRedis.on('error', (err) => handleError(err));
+    entriesRedis.on('error', (err) => handleError(err));
+    filmlisteRedis.on('error', (err) => handleError(err));
 
-    indexData.on('error', (err) => {
-        sendMessage('notification', {
-            notification: 'error',
-            error: err
-        });
-    });
+    indicesRedis.on('ready', () => emitInitialized());
+    entriesRedis.on('ready', () => emitInitialized());
+    filmlisteRedis.on('ready', () => emitInitialized());
+}
 
-    searchIndex.on('ready', () => emitInitialized());
-    indexData.on('ready', () => emitInitialized());
+function handleError(err) {
+    error = true;
+    ipc.send('error', err);
+    indicesRedis.quit();
+    entriesRedis.quit();
+    filmlisteRedis.quit();
 }
 
 var initCounter = 0;
 
 function emitInitialized() {
-    if (++initCounter == 2) {
-        sendMessage('notification', {
-            notification: 'initialized'
-        });
+    if (++initCounter == 3) {
+        ipc.send('initialized');
     }
-}
-
-
-/*"X" : [ "Sender", "Thema", "Titel", "Datum", "Zeit", "Dauer", "Größe [MB]", "Beschreibung", "Url", "Website", "Url Untertitel", "Url RTMP", "Url Klein", "Url RTMP Klein", "Url HD", "Url RTMP HD", "DatumL", "Url History", "Geo", "neu" ] */
-const indexRegex = /"X" : \[ "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)", "(.*?)" ]/;
-const websiteRegex = /https?:\/\/([A-Za-z0-9-]+\.)*([A-Za-z0-9-]+\.[A-Za-z0-9-]+)/;
-
-function indexFile(file, begin, skip, offset, substrSize) {
-    indexBegin = Date.now();
-    notifyInterval = setInterval(() => notifyState(), 500);
-
-    let fileStream = fs.createReadStream(file);
-
-    let fileSize = 0;
-    fs.stat(file, (err, stats) => {
-        fileSize = stats.size;
-    });
-
-    getProgress = () => {
-        return fileStream.bytesRead / fileSize;
-    };
-
-    lineReader.eachLine(fileStream, (line, last, getNext) => {
-        currentLine++;
-
-        if (last) {
-            setImmediate(() => finalize());
-            return;
-        } else if (currentLine <= 3 || currentLine <= begin || (currentLine - offset) % skip != 0) {
-            setImmediate(() => getNext());
-            return;
-        }
-
-        if (line[line.length - 1] == ',')
-            line = line.slice(0, -1);
-
-        let parsed = JSON.parse('{' + line + '}').X;
-
-        let websiteNameMatch = websiteRegex.exec(parsed[9]);
-
-        let websiteName;
-        if (websiteNameMatch != null) {
-            websiteName = websiteNameMatch[2];
-        } else {
-            websiteName = 'unknown';
-        }
-
-        durationSplit = parsed[5].split(':');
-
-        let entry = {
-            topic: parsed[1],
-            title: parsed[2],
-            //timestamp: moment(parsed[3] + parsed[4], 'DD.MM.YYYYHHmm').unix(),
-            timestamp: parseInt(parsed[16]),
-            duration: (parseInt(durationSplit[0]) * 60 * 60) + (parseInt(durationSplit[1]) * 60) + parseInt(durationSplit[2]),
-            size: parseInt(parsed[6]) * 1000000, //MB to bytes
-            websiteName: websiteName,
-            url_video: parsed[8],
-            url_website: parsed[9],
-            url_video_low: createUrlFromBase(parsed[8], parsed[12]),
-            url_video_hd: createUrlFromBase(parsed[8], parsed[14])
-        };
-
-        processEntry(entry, substrSize, last, getNext);
-    });
 }
 
 function createUrlFromBase(baseUrl, newUrl) {
@@ -150,44 +68,143 @@ function createUrlFromBase(baseUrl, newUrl) {
     }
 }
 
-function processEntry(entry, substrSize, last, getNext) {
+function index(substrSize) {
+    indexBegin = Date.now();
+    notifyInterval = setInterval(() => notifyState(), 500);
+    substringSize = substrSize;
+
+    fillBuffer();
+    processEntry();
+}
+
+function fillBuffer() {
+    let parsingDone = false;
+    let llen = 0;
+    filmlisteRedis.multi()
+        .lrange('entries', -250, -1, (err, result) => {
+            filmlisteBuffer = filmlisteBuffer.concat(result);
+        }).ltrim('entries', 0, -251)
+        .get('parsingDone', (err, result) => {
+            parsingDone = result;
+        }).llen('entries', (err, result) => {
+            llen = result;
+        }).exec((err, result) => {
+            if (parsingDone && llen == 0) {
+                noNewFilme = true;
+            }
+        });
+}
+
+function processEntry() {
+    if (error) {
+        return;
+    }
+
+    if (filmlisteBuffer.length < 50 && !noNewFilme) {
+        fillBuffer();
+    }
+
+    if (filmlisteBuffer.length == 0) {
+        if (!noNewFilme) {
+            setTimeout(() => processEntry(), 10);
+            return;
+        } else {
+            finalize();
+            return;
+        }
+    }
+
     entryCounter++;
 
-    let splits = (entry.title + ' ' + entry.topic).trim().toLowerCase().split(/\s|:/).filter((split) => {
-        return !!split;
-    });
+    let parsed = JSON.parse(filmlisteBuffer.pop());
+    let index = parsed[20];
 
-    for (let i in splits) {
-        let split = splits[i];
+    durationSplit = parsed[5].split(':');
 
-        if (split.length < substrSize) {
-            indexBuffer.push(['sadd', split, currentLine]);
-        } else {
-            for (let begin = 0; begin <= split.length - substrSize; begin++) {
-                for (let end = begin + substrSize; end <= split.length; end++) {
-                    let key = split.slice(begin, end);
+    let entry = {
+        channel: parsed[0],
+        topic: parsed[1],
+        title: parsed[2],
+        timestamp: parseInt(parsed[16]),
+        duration: (parseInt(durationSplit[0]) * 60 * 60) + (parseInt(durationSplit[1]) * 60) + parseInt(durationSplit[2]),
+        size: parseInt(parsed[6]) * 1000000, //MB to bytes
+        url_video: parsed[8],
+        url_website: parsed[9],
+        url_video_low: createUrlFromBase(parsed[8], parsed[12]),
+        url_video_hd: createUrlFromBase(parsed[8], parsed[14])
+    };
 
-                    indexBuffer.push(['sadd', key, currentLine]);
-                }
+    entryBuffer.push(['hmset', index, 'channel', entry.channel, 'topic', entry.topic, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size,
+        'url_video', entry.url_video, 'url_video_low', entry.url_video_low, 'url_video_hd', entry.url_video_hd, 'url_website', entry.url_website
+    ]);
+
+    if (!channelSet.has(entry.channel)) {
+        channelSet.add(entry.channel);
+        indexBuffer.push(['sadd', 'channels', entry.channel]);
+    }
+    if (!topicSet.has(entry.topic)) {
+        topicSet.add(entry.topic);
+        indexBuffer.push(['sadd', 'topics', entry.topic]);
+    }
+
+    indexBuffer.push(['sadd', 'channel:' + entry.channel, index]);
+    indexBuffer.push(['sadd', 'topic:' + entry.topic, index]);
+    indexBuffer.push(['zadd', 'times', !!entry.timestamp ? entry.timestamp : -1, index]);
+    indexBuffer.push(['zadd', 'durations', !!entry.duration ? entry.duration : -1, index]);
+
+    let titleSplits = utils.createGoodSplits(entry.title);
+    let topicSplits = utils.createGoodSplits(entry.topic);
+    let channelSplits = utils.createGoodSplits(entry.channel);
+
+    for (let i = 0; i < titleSplits.length; i++) {
+        let subs = createSubStrings(titleSplits[i], substringSize);
+
+        for (let j = 0; j < subs.length; j++) {
+            indexBuffer.push(['sadd', 'i:' + subs[j], index]);
+        }
+    }
+
+    for (let i = 0; i < topicSplits.length; i++) {
+        let subs = createSubStrings(topicSplits[i], substringSize);
+
+        for (let j = 0; j < subs.length; j++) {
+            indexBuffer.push(['sadd', 't:' + subs[j], 'topic:' + entry.topic]);
+        }
+    }
+
+    for (let i = 0; i < channelSplits.length; i++) {
+        let subs = createSubStrings(channelSplits[i], 2);
+
+        for (let j = 0; j < subs.length; j++) {
+            indexBuffer.push(['sadd', 'c:' + subs[j], 'channel:' + entry.channel]);
+        }
+    }
+
+    if (indexBuffer.length >= 500) {
+        flushIndexBuffer();
+    }
+    if (entryBuffer.length >= 150) {
+        flushEntryBuffer();
+    }
+
+    setImmediate(() => processEntry());
+}
+
+function createSubStrings(str, minLength) {
+    let subs = [];
+
+    if (str.length < minLength) {
+        subs.push(str);
+    } else {
+        for (let begin = 0; begin <= str.length - minLength; begin++) {
+            for (let end = begin + minLength; end <= str.length; end++) {
+                let sub = str.slice(begin, end);
+                subs.push(sub);
             }
         }
     }
 
-    websitesSet.add(entry.websiteName);
-    entryBuffer.push(['hmset', currentLine, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size,
-        'url_video', entry.url_video, 'url_video_low', entry.url_video_low, 'url_video_hd', entry.url_video_hd, 'url_website', entry.url_website, 'websiteName', entry.websiteName
-    ]);
-
-    if (indexBuffer.length >= 300) {
-        flushIndexBuffer();
-    }
-    if (entryBuffer.length >= 100) {
-        flushEntryBuffer();
-    }
-
-    if (!last) {
-        setImmediate(() => getNext());
-    }
+    return subs;
 }
 
 function finalize() {
@@ -195,52 +212,40 @@ function finalize() {
     flushIndexBuffer();
     flushEntryBuffer();
 
-    indexData.sadd('websitenames', Array.from(websitesSet), (err, reply) => {
-        notifyState(true);
+    notifyState(true);
 
-        searchIndex.quit(() => exitProcess());
-        indexData.quit(() => exitProcess());
-    });
+    indicesRedis.quit(() => exitProcess());
+    entriesRedis.quit(() => exitProcess());
+    filmlisteRedis.quit(() => exitProcess());
 }
 
 var exitCounter = 0;
 
 function exitProcess() {
-    if (++exitCounter == 2) {
+    if (++exitCounter == 3) {
         setTimeout(() => process.exit(0), 500);
     }
 }
 
 function flushIndexBuffer() {
-    searchIndex.batch(indexBuffer).exec();
+    indicesRedis.batch(indexBuffer).exec();
     indexBuffer = [];
 }
 
 function flushEntryBuffer() {
-    indexData.batch(entryBuffer).exec();
+    entriesRedis.batch(entryBuffer).exec();
     entryBuffer = [];
 }
 
 function notifyState(done = false) {
-    searchIndex.dbsize((err, reply) => {
-        sendMessage('notification', {
-            notification: 'state',
+    indicesRedis.dbsize((err, reply) => {
+        ipc.send('state', {
             entries: entryCounter,
             indices: reply,
             time: Date.now() - indexBegin,
-            progress: getProgress(),
             done: done
         });
     });
 }
 
-function sendMessage(type, body) {
-    process.send({
-        type: type,
-        body: body
-    });
-}
-
-sendMessage('notification', {
-    notification: 'ready'
-});
+ipc.send('ready');

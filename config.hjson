@@ -4,9 +4,9 @@
 
   #create substrings with length of N to word.length of every indexed word in order to allow prefix and suffix searching.
   #A good value is 4 to ignore common (german) stuff like "sch" and therefore save a lot of or at least some RAM and improve searching performance
-  substrSize: 4
+  substrSize: 3
 
-  webserverPort: 8080
+  webserverPort: 8000
 
   index: true
   #Update Mediathek every N minutes
@@ -23,7 +23,11 @@
     db1: 0
     #database for data entries
     db2: 1
+    #database for parsed Filmliste (only used while parsing)
+    db3: 2
   }
+
+
 
   piwik: {
     enabled: false

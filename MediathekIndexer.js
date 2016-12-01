@@ -1,6 +1,7 @@
 const EventEmitter = require('events');
 const cp = require('child_process');
 const os = require('os');
+const IPC = require('./IPC.js');
 const REDIS = require('redis');
 const moment = require('moment');
 const underscore = require('underscore');
@@ -10,35 +11,30 @@ const cpuCount = os.cpus().length;
 const workerArgs = process.execArgv.concat(['--optimize_for_size', '--memory-reducer']);
 
 class MediathekIndexer extends EventEmitter {
-    constructor(workerCount, host = '127.0.0.1', port = 6379, password = '', db1, db2) {
+    constructor(workerCount, indicesRedisSettings, entriesRedisSettings, filmlisteRedisSettings) {
         super();
 
-        this.workerCount = !workerCount ? cpuCount : workerCount;
+        this.options = {};
+        this.options.workerCount = workerCount == 'auto' ? cpuCount : workerCount;
+        this.options.indicesRedisSettings = indicesRedisSettings;
+        this.options.entriesRedisSettings = entriesRedisSettings;
+        this.options.filmlisteRedisSettings = filmlisteRedisSettings;
 
-        this.workers = [];
-        this.workersState = new Array(this.workerCount);
-        this.options = {
-            host: host,
-            port: port,
-            password: password,
-            db1: db1,
-            db2: db2
-        };
-        this.indices = 0;
+        this.indicesRedis = REDIS.createClient(this.options.indicesRedisSettings);
+        this.entriesRedis = REDIS.createClient(this.options.entriesRedisSettings);
+        this.filmlisteRedis = REDIS.createClient(this.options.filmlisteRedisSettings);
+
+        this.indexers = [];
+        this.indexersState = new Array(this.options.workerCount);
+        this.totalEntries = 0;
+        this.parserProgress = 0;
         this.indexBegin = 0;
-
-        this.redis = REDIS.createClient({
-            host: this.options.host,
-            port: this.options.port,
-            password: this.options.password,
-            db: db2
-        });
 
         this.indexingCompleteCallback = null;
     }
 
     getLastIndexTimestamp(callback) {
-        this.redis.get('indexTimestamp', (err, reply) => {
+        this.indicesRedis.get('indexTimestamp', (err, reply) => {
             if (!err) {
                 callback(reply);
             } else {
@@ -48,7 +44,7 @@ class MediathekIndexer extends EventEmitter {
     }
 
     getLastIndexHasCompleted(callback) {
-        this.redis.get('indexCompleted', (err, reply) => {
+        this.indicesRedis.get('indexCompleted', (err, reply) => {
             if (!err) {
                 callback(reply === 'true');
             } else {
@@ -62,86 +58,89 @@ class MediathekIndexer extends EventEmitter {
             throw new Error('already indexing');
         }
 
+        this.file = file;
+        this.substringSize = substrSize;
         this.indexingCompleteCallback = indexingCompleteCallback;
-
         this.indexBegin = Date.now();
 
+
+        this.flushedDatabasesCounter = 0;
+        this.indicesRedis.flushdb(() => this.flushedDatabase());
+        this.entriesRedis.flushdb(() => this.flushedDatabase());
+        this.filmlisteRedis.flushdb(() => this.flushedDatabase());
+
         this.emitState();
+    }
 
-        let currentLine = 0;
-        lineReader.eachLine(file, (line, last, getNext) => {
-            currentLine++;
-            if (currentLine == 2) {
-                var filmliste = JSON.parse('{' + line.slice(0, -1) + '}').Filmliste;
+    flushedDatabase() {
+        if (++this.flushedDatabasesCounter == 3) {
+            this.indices = 0;
+            this.startWorkers();
+        }
+    }
 
-                this.redis.batch()
-                    .select(this.options.db1)
-                    .flushdb()
-                    .select(this.options.db2)
-                    .flushdb()
-                    .exec((err, replies) => {
-                        if (err) throw err;
-                        this.indices = 0;
-                        this.startWorkers(file, substrSize, this.options.db1, this.options.db2);
-                    });
+    startWorkers() {
+        let filmlisteParser = cp.fork('./FilmlisteParser.js', {
+            execArgv: workerArgs
+        });
 
-                getNext(false);
-            } else {
-                getNext();
+        let parserIpc = new IPC(filmlisteParser);
+
+        parserIpc.on('ready', () => {
+            parserIpc.send('parseFilmliste', {
+                file: this.file,
+                redisSettings: this.options.filmlisteRedisSettings
+            });
+            parserIpc.on('state', (state) => {
+                this.totalEntries = state.entries;
+                this.parserProgress = state.progress;
+            });
+
+            for (let i = 0; i < this.options.workerCount; i++) {
+                this.startIndexer();
             }
         });
     }
 
-    startWorkers(file, substrSize, db1, db2) {
-        for (let i = 0; i < this.workerCount; i++) {
-            this.startWorker(file, substrSize, i, this.workerCount, i, db1, db2);
-        }
-    }
-
-    startWorker(file, substrSize, begin, skip, offset, db1, db2) {
-        console.log('worker started: ' + skip + ' ' + offset);
-
-        let worker = cp.fork('./MediathekIndexerWorker.js', {
+    startIndexer() {
+        let indexer = cp.fork('./MediathekIndexerWorker.js', {
             execArgv: workerArgs
         });
+        var ipcIndexer = new IPC(indexer);
 
-        this.workers.push({
-            worker: worker,
+        ipcIndexer.on('ready', () => {
+            ipcIndexer.send('init', {
+                indicesRedisSettings: this.options.indicesRedisSettings,
+                entriesRedisSettings: this.options.entriesRedisSettings,
+                filmlisteRedisSettings: this.options.filmlisteRedisSettings
+            });
+        });
+
+        ipcIndexer.on('initialized', () => {
+            ipcIndexer.send('index', {
+                substringSize: this.substringSize
+            });
+        });
+
+        ipcIndexer.on('error', (err) => {
+            this.emit('error', err);
+        });
+
+        let indexerIndex = this.indexers.length;
+
+        ipcIndexer.on('state', (state) => {
+            this.indexersState[indexerIndex] = state;
+            this.indices = state.indices;
+            this.emitState();
+        });
+
+        this.indexers.push({
+            indexer: indexer,
             progress: 0,
             entries: 0,
             indices: 0,
             time: 0,
             done: false
-        });
-
-        let workerIndex = this.workers.length - 1;
-
-        worker.on('message', (message) => {
-            if (message.type == 'notification') {
-                if (message.body.notification == 'ready') {
-                    this.sendMessage(worker, 'command', {
-                        command: 'init',
-                        host: this.options.host,
-                        port: this.options.port,
-                        password: this.options.password,
-                        db1: db1,
-                        db2: db2
-                    });
-                } else if (message.body.notification == 'initialized') {
-                    this.sendMessage(worker, 'command', {
-                        command: 'indexFile',
-                        file: file,
-                        begin: begin,
-                        skip: skip,
-                        offset: offset,
-                        substrSize: substrSize
-                    });
-                } else if (message.body.notification == 'state') {
-                    this.workersState[workerIndex] = message.body;
-                    this.indices = message.body.indices;
-                    this.emitState();
-                }
-            }
         });
     }
 
@@ -150,12 +149,18 @@ class MediathekIndexer extends EventEmitter {
             var progress = 0;
             var entries = 0;
             var done = true;
+            var indices = 0;
 
-            for (var i = 0; i < this.workersState.length; i++) {
-                if (this.workersState[i] != undefined) {
-                    progress += this.workersState[i].progress;
-                    entries += this.workersState[i].entries;
-                    if (this.workersState[i].done == false) {
+            for (var i = 0; i < this.indexersState.length; i++) {
+                if (this.indexersState[i] != undefined) {
+                    progress += this.indexersState[i].progress;
+                    entries += this.indexersState[i].entries;
+
+                    if (this.indexersState[i].indices > indices) {
+                        indices = this.indexersState[i].indices;
+                    }
+
+                    if (this.indexersState[i].done == false) {
                         done = false;
                     }
                 } else {
@@ -163,8 +168,12 @@ class MediathekIndexer extends EventEmitter {
                 }
             }
 
+            console.log((this.totalEntries / this.parserProgress));
+
             this.emit('state', {
-                progress: progress / this.workerCount,
+                parserProgress: this.parserProgress,
+                indexingProgress: entries / (this.totalEntries / this.parserProgress),
+                totalEntries: this.totalEntries,
                 entries: entries,
                 indices: this.indices,
                 time: Date.now() - this.indexBegin,
@@ -172,9 +181,9 @@ class MediathekIndexer extends EventEmitter {
             });
 
             if (done) {
-                this.workers = [];
-                this.workersState = new Array(this.workerCount);
-                this.redis.batch()
+                this.indexers = [];
+                this.indexersState = new Array(this.options.workerCount);
+                this.indicesRedis.batch()
                     .set('indexTimestamp', Date.now())
                     .set('indexCompleted', true)
                     .exec((err, replies) => {
@@ -185,13 +194,6 @@ class MediathekIndexer extends EventEmitter {
             }
         }, 500);
         this.emitState();
-    }
-
-    sendMessage(worker, type, body) {
-        worker.send({
-            type: type,
-            body: body
-        });
     }
 }
 

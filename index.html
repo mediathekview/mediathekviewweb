@@ -105,8 +105,10 @@
     }, 3 * 60 * 1000); //every 3 minutes
 
     socket.on('indexState', (state) => {
-        let progress = (state.progress * 100).toFixed(0);
-        $('#indexingProgressbar').css('width', (progress + '%')).text(progress + '%');
+        let parsingProgress = (state.parserProgress * 100).toFixed(0);
+        let indexingProgress = (state.indexingProgress * 100).toFixed(0);
+        $('#parsingProgressbar').css('width', (parsingProgress + '%')).text(parsingProgress + '%');
+        $('#indexingProgressbar').css('width', (indexingProgress + '%')).text(indexingProgress + '%');
         $('#indexingEntriesLabel').text(state.entries);
         $('#indexingIndicesLabel').text(state.indices);
         $('#indexingTimeLabel').text((state.time / 1000).toFixed(0) + ' Sekunden');
@@ -172,7 +174,7 @@
         mediathekTable.clear();
 
         for (var i = 0; i < result.results.length; i++) {
-            let data = result.results[i].data;
+            let data = result.results[i];
             data.dateString = moment.unix(data.timestamp).format('L');
             data.timeString = moment.unix(data.timestamp).format('LT');
             data.durationString = isNaN(data.duration) ? '?' : moment.unix(data.duration - 3600).format('LT');
@@ -182,8 +184,8 @@
 
         mediathekTable.draw();
 
-        $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, das Filtern von ' + result.queryInfo.resultCount +
-            ' Ergebnissen und das Sotieren nach Relevanz dauerte ' + result.queryInfo.filterTime + ' ms.');
+        $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, zeige ' + result.queryInfo.resultCount +
+            ' von ' + result.queryInfo.totalResults + ' Treffern.');
     });
 
     function createPlayButton(text, videoTitle, videoUrl) {
@@ -244,31 +246,34 @@
         }
 
         mediathekTable = $('#mediathek').DataTable({
-            columns: [{ //Website
-                width: "10%",
+            columns: [{ //Sender
+                width: '6%',
                 data: null,
                 render: returnEmptyString,
                 createdCell: (td, cellData, rowData, row, col) => {
                     let link = $('<a>', {
                         target: '_blank',
-                        text: rowData.websiteName,
+                        text: rowData.channel,
                         href: rowData.url_website
                     });
                     $(td).append(link);
                 }
+            }, { //Thema
+                width: '14%',
+                data: 'topic'
             }, { //Title
                 data: 'title'
             }, { //Date
-                width: "7%",
+                width: '7%',
                 data: 'dateString'
             }, { //Time
-                width: "6%",
+                width: '5%',
                 data: 'timeString'
             }, { //Duration
-                width: "6%",
+                width: '5%',
                 data: 'durationString'
             }, { //Size
-                width: "6%",
+                width: '6%',
                 data: 'size',
                 render: (data, type, obj) => {
                     if (type == 'display') {
@@ -299,7 +304,7 @@
                 }
             }],
             language: {
-                url: "/static/dataTables.german.lang"
+                url: '/static/dataTables.german.lang'
             },
             searching: false,
             ordering: false,
@@ -377,33 +382,34 @@
 
         <div class="input-group" id="queryField">
             <span class="input-group-addon">Suche</span>
-            <input type="text" class="form-control" id="queryInput">
+            <input type="text" class="form-control" id="queryInput" placeholder="!sender1 !sender2 #thema,mit,leerzeichen eintrag den ich suche">
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="and" id="andRadioButton" checked> UND</input>
+              <input type="radio" name="searchmode" value="true" id="andRadioButton" checked> Titel &amp; Thema</input>
             </span>
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="or" id="orRadioButton"> ODER</input>
+              <input type="radio" name="searchmode" value="false" id="orRadioButton"> Titel</input>
             </span>
         </div>
 
         <br>
 
-        <div class="panel panel-default">
+        <!--<div class="panel panel-default">
             <div class="panel-heading">Filter</div>
             <div class="panel-body">
                 <select id="websiteNamesMultiselect" multiple="multiple">
                 </select>
             </div>
-        </div>
+        </div>-->
 
         <br>
 
         <table id="mediathek" class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Webseite</th>
+                    <th>Sender</th>
+                    <th>Thema</th>
                     <th>Titel</th>
                     <th>Datum</th>
                     <th>Zeit</th>
@@ -439,6 +445,11 @@
                         <h4 class="modal-title">Datenbank wird aktualisiert...</h4>
                     </div>
                     <div class="modal-body">
+                        <div class="progress">
+                            <div id="parsingProgressbar" class="progress-bar progress-bar-striped active" role="progressbar" style="min-width: 2em;">
+                                0%
+                            </div>
+                        </div>
                         <div class="progress">
                             <div id="indexingProgressbar" class="progress-bar progress-bar-striped active" role="progressbar" style="min-width: 2em;">
                                 0%

@@ -19,7 +19,22 @@ var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 if (config.piwik.enabled) var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
 var searchEngine = new SearchEngine(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
-var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
+var mediathekIndexer = new MediathekIndexer(config.workerCount, {
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+    db: config.redis.db1
+}, {
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+    db: config.redis.db2
+}, {
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password,
+    db: config.redis.db3
+});
 var websiteNames = [];
 
 var indexing = false;
@@ -107,10 +122,10 @@ httpServer.listen(config.webserverPort, () => {
     console.log();
 });
 
-function queryEntries(query, mode, filters, callback) {
+function queryEntries(query, includeTitle, filters, callback) {
     let begin = Date.now();
 
-    searchEngine.search(query, mode, (results, err) => {
+    searchEngine.search(query, includeTitle === 'true', (result, err) => {
         if (err) {
             console.log(err);
             callback([]);
@@ -118,37 +133,19 @@ function queryEntries(query, mode, filters, callback) {
         }
 
         let searchEngineTime = Date.now() - begin;
-        begin = Date.now();
-        let resultCount = results.length;
 
-        if (filters.websiteNames.length != websiteNames.length) {
-            results = results.filter((entry) => {
-                return filters.websiteNames.includes(entry.data.websiteName);
-            });
-        }
-
-        results = results.sort((a, b) => {
-            let relevanceDiff = b.relevance - a.relevance;
-            if (relevanceDiff == 0) {
-                return b.data.timestamp - a.data.timestamp;
-            } else {
-                return relevanceDiff;
-            }
-        }).slice(0, 50);
-
-        let filterTime = Date.now() - begin;
         let queryInfo = {
             searchEngineTime: searchEngineTime,
-            filterTime: filterTime,
-            resultCount: resultCount
+            resultCount: result.result.length,
+            totalResults: result.totalResults
         };
 
         callback({
-            results: results,
+            results: result.result,
             queryInfo: queryInfo
         });
 
-        console.log(moment().format('HH:mm') + ' - querying "' + query + '" took ' + (searchEngineTime + filterTime) + ' ms');
+        console.log(moment().format('HH:mm') + ' - querying "' + query + '" took ' + searchEngineTime + ' ms');
     });
 }
 
@@ -157,9 +154,12 @@ mediathekIndexer.on('state', (state) => {
     io.sockets.emit('indexState', state);
 
     console.log();
-    console.log('\tprogress: ' + (state.progress * 100).toFixed(2) + '%');
+    console.log('\tpprogress: ' + (state.parserProgress * 100).toFixed(2) + '%');
+    console.log('\tiprogress: ' + (state.indexingProgress * 100).toFixed(2) + '%');
+    console.log('\ttotalEntries: ' + state.totalEntries);
     console.log('\tentries: ' + state.entries);
     console.log('\tindices: ' + state.indices);
+    console.log('\tdone: ' + state.done);
     console.log('\ttime: ' + (state.time / 1000) + ' seconds');
 
     if (state.done) {

@@ -1,4 +1,5 @@
 var REDIS = require('redis');
+const utils = require('./utils.js');
 
 class SearchEngine {
     constructor(host = '127.0.0.1', port = 6379, password = '', db1, db2) {
@@ -23,93 +24,163 @@ class SearchEngine {
         this.indexData.on('error', (err) => {
             console.log('SearchEngine error: ' + err);
         });
+
+        this.destCounter = 0;
     }
 
-    search(query, mode, callback) {
-        let splits = query.trim().toLowerCase().split(' ').filter((split) => {
+    getUniqueDest() {
+        return 'uniques:' + this.destCounter++;
+    }
+
+    search(q, searchTopic, callback) {
+        let query = this.parseQuery(q);
+
+        let channels = [];
+        let topics = [];
+        let deletions = [];
+
+        let searchTopicResult = [];
+
+        let totalResults = 0;
+
+        let batch = this.searchIndex.batch();
+
+        this.resolveChannelsTopics(query.channels, 'c:', batch, channels, deletions); //channels will contain something like ['channel:ARD', 'channel:ZDF'] after batch.exec()
+        this.resolveChannelsTopics(query.topics, 't:', batch, topics, deletions); //topics will contain something like ['topic:Tagesschau', 'topic:Sturm der Liebe'] after batch.exec()
+
+        if (searchTopic === true && query.titleParts.length > 0) {
+            this.resolveChannelsTopics([query.titleParts], 't:', batch, searchTopicResult, deletions); //searchTopicResult will contain something like ['topic:Sturm der Liebe'] after batch.exec()
+        }
+
+        batch.exec((err, reply) => {
+            if (err) console.log(err);
+
+            let unionSets = [];
+            let titleParts = query.titleParts.map((val) => {
+                return 'i:' + val;
+            });
+
+            let resultBatch = this.searchIndex.batch();
+
+
+            if (channels.length > 0 && topics.length > 0) {
+                for (let i = 0; i < channels.length; i++) {
+                    for (let j = 0; j < topics.length; j++) {
+                        let unionSet = this.getUniqueDest();
+                        unionSets.push(unionSet);
+                        let command = [unionSet, channels[i], topics[j]].concat(titleParts);
+                        resultBatch.sinterstore(command);
+                    }
+                }
+            } else if (channels.length > 0) {
+                for (let i = 0; i < channels.length; i++) {
+                    let unionSet = this.getUniqueDest();
+                    unionSets.push(unionSet);
+                    let command = [unionSet, channels[i]].concat(titleParts);
+                    resultBatch.sinterstore(command);
+                }
+            } else if (topics.length > 0) {
+                for (let i = 0; i < topics.length; i++) {
+                    let unionSet = this.getUniqueDest();
+                    unionSets.push(unionSet);
+                    let command = [unionSet, topics[i]].concat(titleParts);
+                    resultBatch.sinterstore(command);
+                }
+            } else {
+                let unionSet = this.getUniqueDest();
+                unionSets.push(unionSet);
+                let command = [unionSet].concat(titleParts);
+                resultBatch.sinterstore(command);
+            }
+
+            if (searchTopicResult.length > 0) {
+                let unionSet = this.getUniqueDest();
+                unionSets.push(unionSet);
+                let command = [unionSet].concat(searchTopicResult);
+                resultBatch.sinterstore(command);
+            }
+
+            let resultSet = this.getUniqueDest();
+            let sortedResultSet = this.getUniqueDest();
+            deletions.push(resultSet, sortedResultSet);
+
+            resultBatch.sunionstore(resultSet, unionSets);
+            resultBatch.scard(resultSet, (err, reply) => {
+              totalResults = reply;
+            });
+            resultBatch.zinterstore(sortedResultSet, 2, 'times', resultSet);
+            resultBatch.zrevrange(sortedResultSet, 0, 49, (err, result) => {
+                let commands = [];
+                for (let i = 0; i < result.length; i++) {
+                    commands.push(['hgetall', result[i]]);
+                }
+
+                this.indexData.batch(commands).exec((err, result) => {
+                    callback({result: result, totalResults: totalResults});
+                });
+            });
+
+            deletions = deletions.concat(unionSets);
+            resultBatch.del(deletions);
+            resultBatch.exec();
+        });
+    }
+
+    resolveChannelsTopics(inputs, suffix, redisBatch, output, deletions) {
+        if (inputs.length > 0) {
+            let sets = [];
+            for (let i = 0; i < inputs.length; i++) {
+                let inputSplits = inputs[i].map((val) => {
+                    return suffix + val;
+                });
+
+                let intersection = this.getUniqueDest();
+                deletions.push(intersection);
+                sets.push(intersection);
+                redisBatch.sinterstore(intersection, inputSplits);
+            }
+            redisBatch.sunion(sets, (err, result) => {
+                for (let i = 0; i < result.length; i++) {
+                    output.push(result[i]);
+                }
+            });
+        }
+    }
+
+    parseQuery(query) {
+        let channels = [];
+        let topics = [];
+        let titleParts = [];
+
+        let splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
             return !!split;
         });
 
-        if (splits.length == 0) {
-            callback([]);
-            return;
+        for (let i = 0; i < splits.length; i++) {
+            let split = splits[i];
+
+            if (split[0] == '!') {
+                channels.push(utils.replaceBadChars(split.slice(1, split.length), ',').split(',').filter((split) => {
+                    return !!split;
+                }));
+            } else if (split[0] == '#') {
+                topics.push(utils.replaceBadChars(split.slice(1, split.length), ',').split(',').filter((split) => {
+                    return !!split;
+                }));
+            } else {
+                titleParts = titleParts.concat(utils.createGoodSplits(split));
+            }
         }
 
-        if (mode == 'or') {
-            this.getSets(splits, (sets) => {
-
-                if (sets.length > 0) {
-                    let hits = {};
-
-                    for (let i = 0; i < sets.length; i++) {
-                        let set = sets[i];
-
-                        for (let j = 0; j < set.length; j++) {
-                            let dataIndex = set[j];
-
-                            if (hits[dataIndex] === undefined) {
-                                hits[dataIndex] = 0;
-                            }
-
-                            hits[dataIndex]++;
-                        }
-                    }
-
-                    let keys = Object.keys(hits);
-                    let commands = [];
-
-                    for (let i = 0; i < keys.length; i++) {
-                        commands.push(['hgetall', keys[i]]);
-                    }
-
-                    this.indexData.batch(commands).exec((err, reply) => {
-                        let result = [];
-
-                        for (var i = 0; i < reply.length; i++) {
-                            result.push({
-                                data: reply[i],
-                                relevance: hits[keys[i]]
-                            });
-                        }
-                        callback(result);
-                    });
-                }
-
-                callback([]);
-            });
-
-        } else if (mode == 'and') {
-            this.searchIndex.sinter(splits, (err, reply) => {
-                if (err) {
-                    callback(null, err);
-                    return;
-                }
-
-                let commands = [];
-
-                for (let i = 0; i < reply.length; i++) {
-                    commands.push(['hgetall', reply[i]]);
-                }
-
-                this.indexData.batch(commands).exec((err, reply) => {
-                    let result = [];
-
-                    for (var i = 0; i < reply.length; i++) {
-                        result.push({
-                            data: reply[i],
-                            relevance: 1
-                        });
-                    }
-                    callback(result);
-                });
-            });
-        } else {
-            throw Error('mode is neither or nor and');
+        return {
+            channels: channels,
+            topics: topics,
+            titleParts: titleParts
         }
     }
 
-    getWebsiteNames(callback) {
-        this.indexData.smembers('websitenames', (err, reply) => {
+    getChannels(callback) {
+        this.indexData.smembers('channels', (err, reply) => {
             if (err)
                 throw Error(err);
 
@@ -117,37 +188,13 @@ class SearchEngine {
         });
     }
 
-    getSets(keys, callback, result, i = 0) {
-        if (result === undefined) result = [];
+    getTopics(callback) {
+        this.indexData.smembers('topics', (err, reply) => {
+            if (err)
+                throw Error(err);
 
-        if (keys[i] == undefined)
-            throw Error();
-
-        this.searchIndex.smembers(keys[i], (err, reply) => {
-            if (err) callback(null, err);
-            result[i] = reply;
-
-            if (++i < keys.length) {
-                setImmediate(() => this.getSets(keys, callback, result, i));
-            } else {
-                callback(result);
-            }
+            callback(reply);
         });
-    }
-
-    intersect(a, b) {
-        let result = [];
-
-        for (let i = 0; i < a.length; i++) {
-            for (let j = 0; j < b.length; j++) {
-                if (a[i] == b[j]) {
-                    result.push(a[i]);
-                    break;
-                }
-            }
-        }
-
-        return result;
     }
 }
 
