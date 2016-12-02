@@ -16,10 +16,10 @@ MediathekViewWeb ist ein simples, alternatives Frontend für die Filmlisten des 
 
 - "#doku weltall" zeigt alle Beiträge aller Sender im Thema Doku, die im Titel Weltall enhalten.
 
-##### In den allermeisten Fällen reicht es jedoch, wenn du einfach nur das eingibst, was du suchst
-
-- "planet wissen" zeigt alle Beiträge, in denen Planet und Wissen im Titel (oder je nach Einstellunge auch im Thema) vorkommt.
-
 ##### Es lassen sich auch mehrere Sender und/oder Themen Angeben.
 
 - "!ard !ndr #sturm,der,liebe #rote,rosen" zeigt Sturm der Liebe und Rote Rosen von ARD und ZDF
+
+##### In den **allermeisten** Fällen reicht es jedoch, wenn du einfach nur das eingibst, was du suchst
+
+- "planet wissen" zeigt alle Beiträge, in denen Planet und Wissen im Titel (oder je nach Einstellunge auch im Thema) vorkommt.
