@@ -51,6 +51,12 @@ app.use('/static', express.static('static'));
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
 });
+app.get('/impressum', function(req, res) {
+    res.sendFile(path.join(__dirname + '/impressum.html'));
+});
+app.get('/datenschutz', function(req, res) {
+    res.sendFile(path.join(__dirname + '/datenschutz.html'));
+});
 
 io.on('connection', (socket) => {
     var clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
