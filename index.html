@@ -379,7 +379,7 @@
 
         <div class="input-group" id="queryField">
             <span class="input-group-addon">Suche</span>
-            <input type="text" class="form-control" id="queryInput" placeholder="!sender1 !sender2 #thema,mit,leerzeichen eintrag den ich suche">
+            <input type="text" class="form-control" id="queryInput">
 
             <span class="input-group-addon">
               <input type="radio" name="searchmode" value="true" id="andRadioButton" checked> Titel &amp; Thema</input>
@@ -388,18 +388,13 @@
             <span class="input-group-addon">
               <input type="radio" name="searchmode" value="false" id="orRadioButton"> Titel</input>
             </span>
+
+            <span class="input-group-btn">
+              <a target="_blank" href="https://github.com/bagbag/mediathekviewweb" class="btn btn-default" type="button">Hilfe!</a>
+            </span>
         </div>
 
         <br>
-
-        <!--<div class="panel panel-default">
-            <div class="panel-heading">Filter</div>
-            <div class="panel-body">
-                <select id="websiteNamesMultiselect" multiple="multiple">
-                </select>
-            </div>
-        </div>-->
-
         <br>
 
         <table id="mediathek" class="table table-striped table-hover">
