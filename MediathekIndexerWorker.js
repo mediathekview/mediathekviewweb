@@ -165,7 +165,7 @@ function processEntry() {
     }
 
     for (let i = 0; i < topicSplits.length; i++) {
-        let subs = createSubStrings(topicSplits[i], substringSize);
+        let subs = createSubStrings(topicSplits[i], 2);
 
         for (let j = 0; j < subs.length; j++) {
             indexBuffer.push(['sadd', 't:' + subs[j], 'topic:' + entry.topic]);

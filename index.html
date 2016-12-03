@@ -133,11 +133,11 @@
     function query() {
         query = _.throttle(() => {
             let queryString = $('#queryInput').val();
-            let mode = $('#queryField input:radio:checked').val();
+            let includeTitle = $('#queryField input:radio:checked').val();
 
             socket.emit('queryEntry', {
                 queryString: queryString,
-                mode: mode,
+                includeTitle: includeTitle,
                 filters: {
                     websiteNames: Array.from(selectedWebsiteNames)
                 }
@@ -382,15 +382,19 @@
             <input type="text" class="form-control" id="queryInput">
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="true" id="andRadioButton" checked> Titel &amp; Thema</input>
+              <input type="radio" name="searchmode" value="true" id="andRadioButton"> Titel &amp; Thema</input>
             </span>
 
             <span class="input-group-addon">
               <input type="radio" name="searchmode" value="false" id="orRadioButton"> Titel</input>
             </span>
 
+            <span class="input-group-addon">
+              <input type="radio" name="searchmode" value="auto" id="orRadioButton" checked> Auto</input>
+            </span>
+
             <span class="input-group-btn">
-              <a target="_blank" href="https://github.com/bagbag/mediathekviewweb" class="btn btn-default" type="button">Hilfe!</a>
+              <button onclick="window.open('https://github.com/bagbag/mediathekviewweb', '_blank');" class="btn btn-default" type="button">Hilfe!</button>
             </span>
         </div>
 

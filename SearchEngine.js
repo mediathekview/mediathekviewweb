@@ -48,7 +48,13 @@ class SearchEngine {
         this.resolveChannelsTopics(query.channels, 'c:', batch, channels, deletions); //channels will contain something like ['channel:ARD', 'channel:ZDF'] after batch.exec()
         this.resolveChannelsTopics(query.topics, 't:', batch, topics, deletions); //topics will contain something like ['topic:Tagesschau', 'topic:Sturm der Liebe'] after batch.exec()
 
-        if (searchTopic === true && query.titleParts.length > 0) {
+        if (searchTopic == 'auto') {
+            searchTopic = topics.length == 0;
+        } else {
+            searchTopic = searchTopic == 'true';
+        }
+
+        if (searchTopic == true && query.titleParts.length > 0) {
             this.resolveChannelsTopics([query.titleParts], 't:', batch, searchTopicResult, deletions); //searchTopicResult will contain something like ['topic:Sturm der Liebe'] after batch.exec()
         }
 
@@ -97,7 +103,7 @@ class SearchEngine {
                 let unionSet = this.getUniqueDest();
                 unionSets.push(unionSet);
                 let command = [unionSet].concat(searchTopicResult);
-                resultBatch.sinterstore(command);
+                resultBatch.sunionstore(command);
             }
 
             let resultSet = this.getUniqueDest();
@@ -106,7 +112,7 @@ class SearchEngine {
 
             resultBatch.sunionstore(resultSet, unionSets);
             resultBatch.scard(resultSet, (err, reply) => {
-              totalResults = reply;
+                totalResults = reply;
             });
             resultBatch.zinterstore(sortedResultSet, 2, 'times', resultSet);
             resultBatch.zrevrange(sortedResultSet, 0, 49, (err, result) => {
@@ -115,8 +121,12 @@ class SearchEngine {
                     commands.push(['hgetall', result[i]]);
                 }
 
+
                 this.indexData.batch(commands).exec((err, result) => {
-                    callback({result: result, totalResults: totalResults});
+                    callback({
+                        result: result,
+                        totalResults: totalResults
+                    });
                 });
             });
 

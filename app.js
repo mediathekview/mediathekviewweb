@@ -73,7 +73,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        queryEntries(query.queryString, query.mode, query.filters, (result) => {
+        queryEntries(query.queryString, query.includeTitle, query.filters, (result) => {
             socket.emit('queryResult', result);
         });
     });
@@ -124,7 +124,7 @@ httpServer.listen(config.webserverPort, () => {
 function queryEntries(query, includeTitle, filters, callback) {
     let begin = Date.now();
 
-    searchEngine.search(query, includeTitle === 'true', (result, err) => {
+    searchEngine.search(query, includeTitle, (result, err) => {
         if (err) {
             console.log(err);
             callback([]);
