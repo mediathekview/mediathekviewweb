@@ -69,67 +69,74 @@ class SearchEngine {
             let resultBatch = this.searchIndex.batch();
 
 
+
+            let indicesUnion;
+            if (searchTopicResult.length > 0) {
+                indicesUnion = this.getUniqueDest();
+                deletions.push(indicesUnion);
+
+                let titleIndicies;
+                if (titleParts.length > 0) {
+                    titleIndicies = this.getUniqueDest();
+                    deletions.push(titleIndicies);
+                    resultBatch.sinterstore([titleIndicies].concat(titleParts));
+                } else {
+                    titleIndicies = titleParts[0];
+                }
+
+                resultBatch.sunionstore([indicesUnion, titleIndicies].concat(searchTopicResult));
+            }
+
+            var sinterstoreCommand = '';
+
             if (channels.length > 0 && topics.length > 0) {
                 for (let i = 0; i < channels.length; i++) {
                     for (let j = 0; j < topics.length; j++) {
                         let unionSet = this.getUniqueDest();
                         unionSets.push(unionSet);
-                        let command = [unionSet, channels[i], topics[j]].concat(titleParts);
-                        resultBatch.sinterstore(command);
+
+                        if (indicesUnion) {
+                            sinterstoreCommand = [unionSet, channels[i], topics[j], indicesUnion];
+                        } else {
+                            sinterstoreCommand = [unionSet, channels[i], topics[j]].concat(titleParts);
+                        }
                     }
                 }
             } else if (channels.length > 0) {
                 for (let i = 0; i < channels.length; i++) {
                     let unionSet = this.getUniqueDest();
                     unionSets.push(unionSet);
-                    let command = [unionSet, channels[i]].concat(titleParts);
-                    resultBatch.sinterstore(command);
+
+                    if (indicesUnion) {
+                        sinterstoreCommand = [unionSet, channels[i], indicesUnion];
+                    } else {
+                        sinterstoreCommand = [unionSet, channels[i]].concat(titleParts);
+                    }
                 }
             } else if (topics.length > 0) {
                 for (let i = 0; i < topics.length; i++) {
                     let unionSet = this.getUniqueDest();
                     unionSets.push(unionSet);
-                    let command = [unionSet, topics[i]].concat(titleParts);
-                    resultBatch.sinterstore(command);
+
+                    if (indicesUnion) {
+                        sinterstoreCommand = [unionSet, topics[i], indicesUnion];
+                    } else {
+                        sinterstoreCommand = [unionSet, topics[j]].concat(titleParts);
+                    }
                 }
             } else {
                 let unionSet = this.getUniqueDest();
                 unionSets.push(unionSet);
-                let command = [unionSet].concat(titleParts);
-                resultBatch.sinterstore(command);
-            }
+                sinterstoreCommand = [unionSet, indicesUnion];
 
-            if (searchTopicResult.length > 0) {
-                let topicUnion = this.getUniqueDest();
-                deletions.push(topicUnion);
-                let command = [topicUnion].concat(searchTopicResult);
-                resultBatch.sunionstore(command);
-
-                if (channels.length > 0 && topics.length > 0) {
-                    for (let i = 0; i < channels.length; i++) {
-                        for (let j = 0; j < topics.length; j++) {
-                            let unionSet = this.getUniqueDest();
-                            unionSets.push(unionSet);
-                            let command = [unionSet, channels[i], topics[j]].concat(topicUnion);
-                            resultBatch.sinterstore(command);
-                        }
-                    }
-                } else if (channels.length > 0) {
-                    for (let i = 0; i < channels.length; i++) {
-                        let unionSet = this.getUniqueDest();
-                        unionSets.push(unionSet);
-                        let command = [unionSet, channels[i]].concat(topicUnion);
-                        resultBatch.sinterstore(command);
-                    }
-                } else if (topics.length > 0) {
-                    for (let i = 0; i < topics.length; i++) {
-                        let unionSet = this.getUniqueDest();
-                        unionSets.push(unionSet);
-                        let command = [unionSet, topics[i]].concat(topicUnion);
-                        resultBatch.sinterstore(command);
-                    }
+                if (indicesUnion) {
+                    sinterstoreCommand = [unionSet, indicesUnion];
+                } else {
+                    sinterstoreCommand = [unionSet].concat(titleParts);
                 }
             }
+
+            resultBatch.sinterstore(sinterstoreCommand);
 
             let resultSet = this.getUniqueDest();
             let sortedResultSet = this.getUniqueDest();
