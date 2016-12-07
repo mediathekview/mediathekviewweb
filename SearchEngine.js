@@ -100,10 +100,35 @@ class SearchEngine {
             }
 
             if (searchTopicResult.length > 0) {
-                let unionSet = this.getUniqueDest();
-                unionSets.push(unionSet);
-                let command = [unionSet].concat(searchTopicResult);
+                let topicUnion = this.getUniqueDest();
+                deletions.push(topicUnion);
+                let command = [topicUnion].concat(searchTopicResult);
                 resultBatch.sunionstore(command);
+
+                if (channels.length > 0 && topics.length > 0) {
+                    for (let i = 0; i < channels.length; i++) {
+                        for (let j = 0; j < topics.length; j++) {
+                            let unionSet = this.getUniqueDest();
+                            unionSets.push(unionSet);
+                            let command = [unionSet, channels[i], topics[j]].concat(topicUnion);
+                            resultBatch.sinterstore(command);
+                        }
+                    }
+                } else if (channels.length > 0) {
+                    for (let i = 0; i < channels.length; i++) {
+                        let unionSet = this.getUniqueDest();
+                        unionSets.push(unionSet);
+                        let command = [unionSet, channels[i]].concat(topicUnion);
+                        resultBatch.sinterstore(command);
+                    }
+                } else if (topics.length > 0) {
+                    for (let i = 0; i < topics.length; i++) {
+                        let unionSet = this.getUniqueDest();
+                        unionSets.push(unionSet);
+                        let command = [unionSet, topics[i]].concat(topicUnion);
+                        resultBatch.sinterstore(command);
+                    }
+                }
             }
 
             let resultSet = this.getUniqueDest();
