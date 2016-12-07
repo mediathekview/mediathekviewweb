@@ -121,7 +121,7 @@ class SearchEngine {
                     if (indicesUnion) {
                         sinterstoreCommand = [unionSet, topics[i], indicesUnion];
                     } else {
-                        sinterstoreCommand = [unionSet, topics[j]].concat(titleParts);
+                        sinterstoreCommand = [unionSet, topics[i]].concat(titleParts);
                     }
                 }
             } else {
