@@ -11,7 +11,7 @@ class SearchEngine {
         });
 
         this.searchIndex.on('error', (err) => {
-            console.log('SearchEngine error: ' + err);
+            console.error('SearchEngine error: ' + err);
         });
 
         this.indexData = REDIS.createClient({
@@ -22,7 +22,7 @@ class SearchEngine {
         });
 
         this.indexData.on('error', (err) => {
-            console.log('SearchEngine error: ' + err);
+            console.error('SearchEngine error: ' + err);
         });
 
         this.destCounter = 0;
@@ -59,7 +59,7 @@ class SearchEngine {
         }
 
         batch.exec((err, reply) => {
-            if (err) console.log(err);
+            if (err) console.error(err);
 
             let unionSets = [];
             let titleParts = query.titleParts.map((val) => {
@@ -67,8 +67,6 @@ class SearchEngine {
             });
 
             let resultBatch = this.searchIndex.batch();
-
-
 
             let indicesUnion;
             if (searchTopicResult.length > 0) {

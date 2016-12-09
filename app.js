@@ -126,7 +126,7 @@ function queryEntries(query, includeTitle, filters, callback) {
 
     searchEngine.search(query, includeTitle, (result, err) => {
         if (err) {
-            console.log(err);
+            console.error(err);
             callback([]);
             return;
         }

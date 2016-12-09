@@ -21,7 +21,6 @@ var indexBegin;
 var substringSize;
 
 ipc.on('init', (data) => {
-    console.log(data);
     init(data.indicesRedisSettings, data.entriesRedisSettings, data.filmlisteRedisSettings);
 });
 

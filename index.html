@@ -25,9 +25,6 @@
 <script>
     var socket = io();
     var mediathekTable;
-    var websiteNames = [];
-    var selectedWebsiteNames = new Set();
-    var websiteNamesMultiselectChangedWhileOpen = false;
     var connectingModal;
     var indexingModal;
     var uid;
@@ -137,37 +134,13 @@
 
             socket.emit('queryEntry', {
                 queryString: queryString,
-                includeTitle: includeTitle,
-                filters: {
-                    websiteNames: Array.from(selectedWebsiteNames)
-                }
+                includeTitle: includeTitle
             });
 
             trackQuery();
         }, 250);
         query();
     }
-
-    socket.on('websiteNames', (websites) => {
-        websites = websites.sort();
-        websiteNames = websites;
-        let multiselect = $('#websiteNamesMultiselect');
-
-        let data = [];
-        for (var i = 0; i < websites.length; i++) {
-            data.push({
-                label: websites[i],
-                title: websites[i],
-                value: websites[i],
-                selected: true
-            });
-            selectedWebsiteNames.add(websites[i]);
-        }
-
-        multiselect.multiselect('dataprovider', data);
-
-        //$('#websiteNamesMultiselect').multiselect('rebuild');
-    });
 
     socket.on('queryResult', (result) => {
         mediathekTable.clear();
@@ -308,55 +281,6 @@
             searching: false,
             ordering: false,
             info: true
-        });
-
-        $('#websiteNamesMultiselect').multiselect({
-            enableClickableOptGroups: true,
-            disableIfEmpty: true,
-            disabledText: 'none available',
-            includeSelectAllOption: true,
-            selectAllValue: 'select-all',
-            onChange: (option, checked, select) => {
-                if (option == undefined) {
-                    if (!checked) selectedWebsiteNames.clear();
-                    else selectedWebsiteNames = new Set(websiteNames);
-                } else {
-                    let website = option[0].value;
-
-                    if (checked) {
-                        selectedWebsiteNames.add(website);
-                    } else {
-                        selectedWebsiteNames.delete(website);
-                    }
-                }
-                websiteNamesMultiselectChangedWhileOpen = true;
-                query();
-            },
-            onDropdownHide: () => {
-                if (websiteNamesMultiselectChangedWhileOpen) {
-                    //query();
-                    websiteNamesMultiselectChangedWhileOpen = false;
-                }
-            },
-            buttonText: (options, select) => {
-                if (options.length === 0) {
-                    return 'Webseiten';
-                } else if (options.length > 3) {
-                    return options.length + ' Webseiten ausgewählt';
-                } else if (options.length == websiteNames.length) {
-                    return 'Alle Webseiten';
-                } else {
-                    var labels = [];
-                    options.each(function() {
-                        if ($(this).attr('label') !== undefined) {
-                            labels.push($(this).attr('label'));
-                        } else {
-                            labels.push($(this).html());
-                        }
-                    });
-                    return labels.join(', ') + '';
-                }
-            }
         });
 
         $('#queryInput').on('input', () => query());
