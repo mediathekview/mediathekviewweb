@@ -122,16 +122,18 @@ httpServer.listen(config.webserverPort, () => {
 });
 
 function queryEntries(query, includeTitle, filters, callback) {
-    let begin = Date.now();
+    let begin = process.hrtime();
 
     searchEngine.search(query, includeTitle, (result, err) => {
+        let end = process.hrtime(begin);
+
         if (err) {
             console.error(err);
             callback([]);
             return;
         }
 
-        let searchEngineTime = Date.now() - begin;
+        let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
         let queryInfo = {
             searchEngineTime: searchEngineTime,
