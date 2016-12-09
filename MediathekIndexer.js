@@ -130,7 +130,9 @@ class MediathekIndexer extends EventEmitter {
 
         ipcIndexer.on('state', (state) => {
             this.indexersState[indexerIndex] = state;
-            this.indices = state.indices;
+            if (state.indices > this.indices) {
+                this.indices = state.indices;
+            }
             this.emitState();
         });
 
@@ -156,10 +158,6 @@ class MediathekIndexer extends EventEmitter {
                     progress += this.indexersState[i].progress;
                     entries += this.indexersState[i].entries;
 
-                    if (this.indexersState[i].indices > indices) {
-                        indices = this.indexersState[i].indices;
-                    }
-
                     if (this.indexersState[i].done == false) {
                         done = false;
                     }
@@ -168,32 +166,60 @@ class MediathekIndexer extends EventEmitter {
                 }
             }
 
-            console.log((this.totalEntries / this.parserProgress));
-
-            this.emit('state', {
-                parserProgress: this.parserProgress,
-                indexingProgress: entries / (this.totalEntries / this.parserProgress),
-                totalEntries: this.totalEntries,
-                entries: entries,
-                indices: this.indices,
-                time: Date.now() - this.indexBegin,
-                done: done
-            });
-
             if (done) {
                 this.indexers = [];
                 this.indexersState = new Array(this.options.workerCount);
-                this.indicesRedis.batch()
-                    .set('indexTimestamp', Date.now())
-                    .set('indexCompleted', true)
-                    .exec((err, replies) => {
-                        if (typeof(this.indexingCompleteCallback) == 'function') {
-                            this.indexingCompleteCallback();
-                        }
+
+                this.indicesRedis.smembers('channels', (err, result) => {
+
+                    let batch1 = this.indicesRedis.batch();
+                    let batch2 = this.indicesRedis.batch();
+                    let batch3 = this.indicesRedis.batch();
+
+                    for (let i = 0; i < result.length; i++) {
+                        let channel = 'channel:' + result[i];
+
+                        batch1.zinterstore(channel + 'newesttemp', 2, 'times', channel)
+                            .zrevrange(channel + 'newesttemp', 0, 49, 'withscores', (err, result) => {
+                                let commands = [];
+                                for (let i = 0; i < result.length; i += 2) {
+                                    batch2.zadd(channel + 'newest', result[i + 1], result[i]);
+                                }
+                            })
+                            .del(channel + 'newesttemp');
+                    }
+
+                    batch1.exec(() => {
+                        batch2.exec(() => {
+                            batch3.set('indexTimestamp', Date.now())
+                                .set('indexCompleted', true)
+                                .exec((err, replies) => {
+                                    this._emitState(entries, done);
+                                    if (typeof(this.indexingCompleteCallback) == 'function') {
+                                        this.indexingCompleteCallback();
+                                    }
+                                });
+                        });
                     });
+                });
+            } else {
+                this._emitState(entries, done);
             }
+
         }, 500);
         this.emitState();
+    }
+
+    _emitState(entries, done) {
+        this.emit('state', {
+            parserProgress: this.parserProgress,
+            indexingProgress: entries / (this.totalEntries / this.parserProgress),
+            totalEntries: this.totalEntries,
+            entries: entries,
+            indices: this.indices,
+            time: Date.now() - this.indexBegin,
+            done: done
+        });
     }
 }
 
