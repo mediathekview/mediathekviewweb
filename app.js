@@ -17,7 +17,10 @@ console.log(config);
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
-if (config.piwik.enabled) var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
+if (config.piwik.enabled) {
+    var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
+}
+
 var searchEngine = new SearchEngine(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
 var mediathekIndexer = new MediathekIndexer(config.workerCount, {
     host: config.redis.host,
@@ -73,7 +76,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        queryEntries(query.queryString, query.includeTitle, query.filters, (result) => {
+        queryEntries(query.queryString, query.includeTitle, (result) => {
             socket.emit('queryResult', result);
         });
     });
@@ -110,7 +113,7 @@ io.on('connection', (socket) => {
                 lang: data.lang,
                 res: data.res,
                 e_c: data.e_c,
-                e_a: data.action,
+                e_a: data.action
             });
         }
     });
@@ -121,9 +124,8 @@ httpServer.listen(config.webserverPort, () => {
     console.log();
 });
 
-function queryEntries(query, includeTitle, filters, callback) {
+function queryEntries(query, includeTitle, callback) {
     let begin = process.hrtime();
-
     searchEngine.search(query, includeTitle, (result, err) => {
         let end = process.hrtime(begin);
 
@@ -141,10 +143,7 @@ function queryEntries(query, includeTitle, filters, callback) {
             totalResults: result.totalResults
         };
 
-        callback({
-            results: result.result,
-            queryInfo: queryInfo
-        });
+        callback({results: result.result, queryInfo: queryInfo});
 
         console.log(moment().format('HH:mm') + ' - querying "' + query + '" took ' + searchEngineTime + ' ms');
     });
@@ -168,7 +167,6 @@ mediathekIndexer.on('state', (state) => {
         console.log();
     }
 });
-
 
 function downloadFilmliste(successCallback, errCallback) {
     let content = "";
