@@ -134,7 +134,7 @@ function processEntry() {
     };
 
     entryBuffer.push(['hmset', index, 'channel', entry.channel, 'topic', entry.topic, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size,
-        'url_video', entry.url_video, 'url_video_low', entry.url_video_low, 'url_video_hd', entry.url_video_hd, 'url_website', entry.url_website
+        'url_video', entry.url_video, 'url_video_low', entry.url_video_low, 'url_video_hd', entry.url_video_hd, 'url_website', entry.url_website, 'index', index
     ]);
 
     if (!channelSet.has(entry.channel)) {
