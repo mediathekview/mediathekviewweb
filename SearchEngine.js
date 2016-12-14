@@ -129,7 +129,7 @@ class SearchEngine {
                     resultBatch.sunionstore([indicesUnion, titleIndicies].concat(searchTopicResult));
                 }
 
-                var sinterstoreCommand = '';
+                let sinterstoreCommands = [];
 
                 if (channels.length > 0 && topics.length > 0) {
                     for (let i = 0; i < channels.length; i++) {
@@ -137,11 +137,14 @@ class SearchEngine {
                             let unionSet = this.getUniqueDest();
                             unionSets.push(unionSet);
 
+                            let sinterstoreCommand;
                             if (indicesUnion) {
                                 sinterstoreCommand = [unionSet, channels[i], topics[j], indicesUnion];
                             } else {
                                 sinterstoreCommand = [unionSet, channels[i], topics[j]].concat(titleParts);
                             }
+
+                            sinterstoreCommands.push(sinterstoreCommand)
                         }
                     }
                 } else if (channels.length > 0) {
@@ -149,22 +152,26 @@ class SearchEngine {
                         let unionSet = this.getUniqueDest();
                         unionSets.push(unionSet);
 
+                        let sinterstoreCommand;
                         if (indicesUnion) {
                             sinterstoreCommand = [unionSet, channels[i], indicesUnion];
                         } else {
                             sinterstoreCommand = [unionSet, channels[i]].concat(titleParts);
                         }
+                        sinterstoreCommands.push(sinterstoreCommand)
                     }
                 } else if (topics.length > 0) {
                     for (let i = 0; i < topics.length; i++) {
                         let unionSet = this.getUniqueDest();
                         unionSets.push(unionSet);
 
+                        let sinterstoreCommand;
                         if (indicesUnion) {
                             sinterstoreCommand = [unionSet, topics[i], indicesUnion];
                         } else {
                             sinterstoreCommand = [unionSet, topics[i]].concat(titleParts);
                         }
+                        sinterstoreCommands.push(sinterstoreCommand)
                     }
                 } else {
                     let unionSet = this.getUniqueDest();
@@ -178,7 +185,9 @@ class SearchEngine {
                     }
                 }
 
-                resultBatch.sinterstore(sinterstoreCommand);
+                for (let i = 0; i < sinterstoreCommands.length; i++) {
+                    resultBatch.sinterstore(sinterstoreCommands[i]);
+                }
 
                 let resultSet = this.getUniqueDest();
                 let sortedResultSet = this.getUniqueDest();
