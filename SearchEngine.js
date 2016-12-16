@@ -183,6 +183,7 @@ class SearchEngine {
                     } else {
                         sinterstoreCommand = [unionSet].concat(titleParts);
                     }
+                    sinterstoreCommands.push(sinterstoreCommand)
                 }
 
                 for (let i = 0; i < sinterstoreCommands.length; i++) {
