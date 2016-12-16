@@ -176,8 +176,8 @@ class SearchEngine {
                 } else {
                     let unionSet = this.getUniqueDest();
                     unionSets.push(unionSet);
-                    sinterstoreCommand = [unionSet, indicesUnion];
 
+                    let sinterstoreCommand;
                     if (indicesUnion) {
                         sinterstoreCommand = [unionSet, indicesUnion];
                     } else {
