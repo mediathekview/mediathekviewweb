@@ -35,6 +35,9 @@ function parseFilmliste(file, redisSettings) {
     lineReader.eachLine(fileStream, (line, last, getNext) => {
         currentLine++;
 
+        //if (currentLine == 20000)
+        //    last = true;
+
         if (currentLine >= 4 && !last) {
             if (line[line.length - 1] == ',') {
                 line = line.slice(8, -1);
@@ -67,7 +70,9 @@ function parseFilmliste(file, redisSettings) {
             flushBuffer(true);
         }
 
-        getNext();
+        if (!last) {
+            getNext();
+        }
     });
 }
 

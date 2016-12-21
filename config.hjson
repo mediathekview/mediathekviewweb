@@ -13,21 +13,20 @@
   mediathekUpdateInterval: 60
 
   #number of indexing workers to fork or auto to set it to cpu count
-  workerCount: auto
+  workerCount: 1
 
   redis: {
-    host: 127.0.0.1
+    host: "127.0.0.1"
     port: 6379
     password: ""
-    #database for search indices
-    db1: 0
-    #database for data entries
-    db2: 1
     #database for parsed Filmliste (only used while parsing)
-    db3: 2
+    db: 2
   }
 
-
+  elasticsearch: {
+    host: "127.0.0.1"
+    port: 9200
+  }
 
   piwik: {
     enabled: false

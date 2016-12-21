@@ -21,23 +21,8 @@ if (config.piwik.enabled) {
     var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
 }
 
-var searchEngine = new SearchEngine(config.redis.host, config.redis.port, config.redis.password, config.redis.db1, config.redis.db2);
-var mediathekIndexer = new MediathekIndexer(config.workerCount, {
-    host: config.redis.host,
-    port: config.redis.port,
-    password: config.redis.password,
-    db: config.redis.db1
-}, {
-    host: config.redis.host,
-    port: config.redis.port,
-    password: config.redis.password,
-    db: config.redis.db2
-}, {
-    host: config.redis.host,
-    port: config.redis.port,
-    password: config.redis.password,
-    db: config.redis.db3
-});
+var searchEngine = new SearchEngine(config.redis);
+var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis, config.elasticsearch);
 var websiteNames = [];
 
 var indexing = false;
@@ -76,7 +61,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        queryEntries(query.queryString, query.includeTitle, (result) => {
+        queryEntries(query.queryString, query.searchTopic, query.future, (result) => {
             socket.emit('queryResult', result);
         });
     });
@@ -124,9 +109,9 @@ httpServer.listen(config.webserverPort, () => {
     console.log();
 });
 
-function queryEntries(query, includeTitle, callback) {
+function queryEntries(query, searchTopic, future, callback) {
     let begin = process.hrtime();
-    searchEngine.search(query, includeTitle, (result, err) => {
+    searchEngine.search(query, searchTopic, future, (result, err) => {
         let end = process.hrtime(begin);
 
         if (err) {
@@ -143,7 +128,10 @@ function queryEntries(query, includeTitle, callback) {
             totalResults: result.totalResults
         };
 
-        callback({results: result.result, queryInfo: queryInfo});
+        callback({
+            results: result.result,
+            queryInfo: queryInfo
+        });
 
         console.log(moment().format('HH:mm') + ' - querying "' + query + '" took ' + searchEngineTime + ' ms');
     });
@@ -158,7 +146,6 @@ mediathekIndexer.on('state', (state) => {
     console.log('\tiprogress: ' + (state.indexingProgress * 100).toFixed(2) + '%');
     console.log('\ttotalEntries: ' + state.totalEntries);
     console.log('\tentries: ' + state.entries);
-    console.log('\tindices: ' + state.indices);
     console.log('\tdone: ' + state.done);
     console.log('\ttime: ' + (state.time / 1000) + ' seconds');
 

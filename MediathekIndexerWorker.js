@@ -4,58 +4,53 @@ const lineReader = require('line-reader');
 const moment = require('moment');
 const IPC = require('./IPC.js');
 const utils = require('./utils.js');
+const elasticsearch = require('elasticsearch');
 
 var ipc = new IPC(process);
 
-var indicesRedis, entriesRedis, filmlisteRedis;
+var redis;
+var searchClient;
+var searchIndex;
 var error = false;
 var noNewFilme = false;
+var buffer = [];
+var bufferFlushPending = false;
+var isFlushing = false;
 var filmlisteBuffer = [];
-var channelSet = new Set();
-var topicSet = new Set();
-var indexBuffer = []; //for indicesRedis
-var entryBuffer = []; //for indexData
 var entryCounter = 0;
 var notifyInterval;
 var indexBegin;
-var substringSize;
 
 ipc.on('init', (data) => {
-    init(data.indicesRedisSettings, data.entriesRedisSettings, data.filmlisteRedisSettings);
+    init(data.redisSettings, data.elasticsearchSettings, data.index);
 });
 
-ipc.on('index', (data) => {
-    index(data.substringSize);
+ipc.on('index', () => {
+    index();
 });
 
-function init(indicesRedisSettings, entriesRedisSettings, filmlisteRedisSettings) {
-    indicesRedis = REDIS.createClient(indicesRedisSettings);
-    entriesRedis = REDIS.createClient(entriesRedisSettings);
-    filmlisteRedis = REDIS.createClient(filmlisteRedisSettings);
+function init(redisSettings, elasticsearchSettings, index) {
+    redis = REDIS.createClient(redisSettings);
+    searchIndex = index;
 
-    indicesRedis.on('error', (err) => handleError(err));
-    entriesRedis.on('error', (err) => handleError(err));
-    filmlisteRedis.on('error', (err) => handleError(err));
+    redis.on('error', (err) => handleError(err));
+    redis.on('ready', () => emitInitialized());
 
-    indicesRedis.on('ready', () => emitInitialized());
-    entriesRedis.on('ready', () => emitInitialized());
-    filmlisteRedis.on('ready', () => emitInitialized());
+    searchClient = new elasticsearch.Client({
+        host: elasticsearchSettings.host + ':' + elasticsearchSettings.port
+    });
 }
 
 function handleError(err) {
     error = true;
     ipc.send('error', err);
-    indicesRedis.quit();
-    entriesRedis.quit();
-    filmlisteRedis.quit();
+    redis.quit();
 }
 
 var initCounter = 0;
 
 function emitInitialized() {
-    if (++initCounter == 3) {
-        ipc.send('initialized');
-    }
+    ipc.send('initialized');
 }
 
 function createUrlFromBase(baseUrl, newUrl) {
@@ -67,10 +62,9 @@ function createUrlFromBase(baseUrl, newUrl) {
     }
 }
 
-function index(substrSize) {
+function index() {
     indexBegin = Date.now();
     notifyInterval = setInterval(() => notifyState(), 500);
-    substringSize = substrSize;
 
     fillBuffer();
     processEntry();
@@ -79,7 +73,7 @@ function index(substrSize) {
 function fillBuffer() {
     let parsingDone = false;
     let llen = 0;
-    filmlisteRedis.multi()
+    redis.multi()
         .lrange('entries', -250, -1, (err, result) => {
             filmlisteBuffer = filmlisteBuffer.concat(result);
         }).ltrim('entries', 0, -251)
@@ -113,6 +107,11 @@ function processEntry() {
         }
     }
 
+    if (buffer.length > 500) {
+        setTimeout(() => processEntry(), 10);
+        return;
+    }
+
     entryCounter++;
 
     let parsed = JSON.parse(filmlisteBuffer.pop());
@@ -133,117 +132,66 @@ function processEntry() {
         url_video_hd: createUrlFromBase(parsed[8], parsed[14])
     };
 
-    entryBuffer.push(['hmset', index, 'channel', entry.channel, 'topic', entry.topic, 'title', entry.title, 'timestamp', entry.timestamp, 'duration', entry.duration, 'size', entry.size,
-        'url_video', entry.url_video, 'url_video_low', entry.url_video_low, 'url_video_hd', entry.url_video_hd, 'url_website', entry.url_website, 'index', index
-    ]);
-
-    if (!channelSet.has(entry.channel)) {
-        channelSet.add(entry.channel);
-        indexBuffer.push(['sadd', 'channels', entry.channel]);
-    }
-    if (!topicSet.has(entry.topic)) {
-        topicSet.add(entry.topic);
-        indexBuffer.push(['sadd', 'topics', entry.topic]);
-    }
-
-    indexBuffer.push(['sadd', 'channel:' + entry.channel, index]);
-    indexBuffer.push(['sadd', 'topic:' + entry.topic, index]);
-    indexBuffer.push(['zadd', 'times', !!entry.timestamp ? entry.timestamp : -1, index]);
-    indexBuffer.push(['zadd', 'durations', !!entry.duration ? entry.duration : -1, index]);
-
-    let titleSplits = utils.createGoodSplits(entry.title);
-    let topicSplits = utils.createGoodSplits(entry.topic);
-    let channelSplits = utils.createGoodSplits(entry.channel);
-
-    for (let i = 0; i < titleSplits.length; i++) {
-        let subs = createSubStrings(titleSplits[i], substringSize);
-
-        for (let j = 0; j < subs.length; j++) {
-            indexBuffer.push(['sadd', 'i:' + subs[j], index]);
+    buffer.push({
+        index: {
+            _index: searchIndex,
+            _type: 'entries',
+            _id: index
         }
-    }
+    });
+    buffer.push(entry);
 
-    for (let i = 0; i < topicSplits.length; i++) {
-        let subs = createSubStrings(topicSplits[i], 2);
-
-        for (let j = 0; j < subs.length; j++) {
-            indexBuffer.push(['sadd', 't:' + subs[j], 'topic:' + entry.topic]);
-        }
-    }
-
-    for (let i = 0; i < channelSplits.length; i++) {
-        let subs = createSubStrings(channelSplits[i], 2);
-
-        for (let j = 0; j < subs.length; j++) {
-            indexBuffer.push(['sadd', 'c:' + subs[j], 'channel:' + entry.channel]);
-        }
-    }
-
-    if (indexBuffer.length >= 500) {
-        flushIndexBuffer();
-    }
-    if (entryBuffer.length >= 150) {
-        flushEntryBuffer();
+    if (buffer.length >= 350) {
+        flushBuffer();
     }
 
     setImmediate(() => processEntry());
 }
 
-function createSubStrings(str, minLength) {
-    let subs = [];
-
-    if (str.length < minLength) {
-        subs.push(str);
-    } else {
-        for (let begin = 0; begin <= str.length - minLength; begin++) {
-            for (let end = begin + minLength; end <= str.length; end++) {
-                let sub = str.slice(begin, end);
-                subs.push(sub);
-            }
-        }
-    }
-
-    return subs;
-}
-
 function finalize() {
     clearInterval(notifyInterval);
-    flushIndexBuffer();
-    flushEntryBuffer();
+    flushBuffer();
 
     notifyState(true);
-
-    indicesRedis.quit(() => exitProcess());
-    entriesRedis.quit(() => exitProcess());
-    filmlisteRedis.quit(() => exitProcess());
+    redis.quit(() => exitProcess());
 }
 
 var exitCounter = 0;
 
 function exitProcess() {
-    if (++exitCounter == 3) {
-        setTimeout(() => process.exit(0), 500);
+    setTimeout(() => process.exit(0), 500);
+}
+
+function flushBuffer() {
+    if (!isFlushing) {
+        bufferFlushPending = false;
+        isFlushing = true;
+
+        searchClient.bulk({
+            body: buffer
+        }, (err, resp) => {
+            if (err) {
+                handleError(err);
+            }
+
+            isFlushing = false;
+
+            if (bufferFlushPending) {
+                setImmediate(() => flushBuffer(), 10);
+            }
+        });
+
+        buffer = [];
+    } else if (!bufferFlushPending) {
+        bufferFlushPending = true;
     }
 }
 
-function flushIndexBuffer() {
-    indicesRedis.batch(indexBuffer).exec();
-    indexBuffer = [];
-}
-
-function flushEntryBuffer() {
-    entriesRedis.batch(entryBuffer).exec();
-    entryBuffer = [];
-}
-
 function notifyState(done = false) {
-    indicesRedis.dbsize((err, reply) => {
-        ipc.send('state', {
-            entries: entryCounter,
-            indices: reply,
-            time: Date.now() - indexBegin,
-            done: done
-        });
+    ipc.send('state', {
+        entries: entryCounter,
+        time: Date.now() - indexBegin,
+        done: done
     });
 }
 

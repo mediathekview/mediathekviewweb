@@ -107,7 +107,6 @@
         $('#parsingProgressbar').css('width', (parsingProgress + '%')).text(parsingProgress + '%');
         $('#indexingProgressbar').css('width', (indexingProgress + '%')).text(indexingProgress + '%');
         $('#indexingEntriesLabel').text(state.entries);
-        $('#indexingIndicesLabel').text(state.indices);
         $('#indexingTimeLabel').text((state.time / 1000).toFixed(0) + ' Sekunden');
 
 
@@ -130,12 +129,16 @@
     function query() {
         query = _.throttle(() => {
             let queryString = $('#queryInput').val();
-            let includeTitle = $('#queryField input:radio:checked').val();
+            let searchTopic = $('#queryField input:radio:checked').val();
+            let future = !!$('#queryField input:checkbox:checked').prop('checked')
 
-            socket.emit('queryEntry', {
+            let queryObj = {
                 queryString: queryString,
-                includeTitle: includeTitle
-            });
+                searchTopic: searchTopic,
+                future: future
+            };
+
+            socket.emit('queryEntry', queryObj);
 
             trackQuery();
         }, 250);
@@ -149,7 +152,7 @@
             let data = result.results[i];
             data.dateString = moment.unix(data.timestamp).format('L');
             data.timeString = moment.unix(data.timestamp).format('LT');
-            data.durationString = isNaN(data.duration) ? '?' : moment.unix(data.duration - 3600).format('LT');
+            data.durationString = isNaN(data.duration) ? '?' : moment.unix(data.duration - 3600).format('mm:ss');
 
             mediathekTable.row.add(data);
         }
@@ -285,6 +288,7 @@
 
         $('#queryInput').on('input', () => query());
         $('#queryField input:radio').change(() => query());
+        $('#queryField input:checkbox:checked').change(() => query());
     });
 </script>
 
@@ -310,15 +314,19 @@
             <input type="text" class="form-control" id="queryInput">
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="true" id="andRadioButton"> Titel &amp; Thema</input>
+              <input type="radio" name="searchmode" value="true"> Titel &amp; Thema</input>
             </span>
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="false" id="orRadioButton"> Titel</input>
+              <input type="radio" name="searchmode" value="false"> Titel</input>
             </span>
 
             <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="auto" id="orRadioButton" checked> Auto</input>
+              <input type="radio" name="searchmode" value="auto" checked> Auto</input>
+            </span>
+
+            <span class="input-group-addon">
+              <input type="checkbox" name="future" id="futureCheckbox" checked> Zukunft</input>
             </span>
 
             <span class="input-group-btn">
@@ -382,9 +390,6 @@
                         <div class="row">
                             <div class="col-sm-4">Einträge:
                                 <div id="indexingEntriesLabel">0</div>
-                            </div>
-                            <div class="col-sm-4">Indizes:
-                                <div id="indexingIndicesLabel">0</div>
                             </div>
                             <div class="col-sm-4">Dauer:
                                 <div id="indexingTimeLabel">0</div>
