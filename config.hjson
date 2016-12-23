@@ -19,7 +19,6 @@
     host: "127.0.0.1"
     port: 6379
     password: ""
-    #database for parsed Filmliste (only used while parsing)
     db: 2
   }
 
@@ -34,5 +33,15 @@
     piwikUrl: "https://piwik.example.de/piwik.php"
     token_auth: "abc123"
     siteId: 1
+  }
+
+  postgres: {
+    user: "mediathekviewweb"
+    database: "mediathekviewweb"
+    password: ""
+    host: "localhost"
+    port: 5432
+    max: 3 //number of connections
+    idleTimeoutMillis: 30000
   }
 }

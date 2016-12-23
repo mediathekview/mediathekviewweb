@@ -9,17 +9,24 @@ const Hjson = require('hjson');
 const exec = require('child_process').exec;
 const PiwikTracker = require('piwik-tracker');
 const utils = require('./utils.js');
+const sql = require('./postgres.js');
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60 * 1000;
-console.log(config);
+if (config.redis.password == '') {
+  delete config.redis.password; //to prevent warning message
+}
+
+sql.init(config.postgres);
+sql.createQueriesTable();
+
+if (config.piwik.enabled) {
+    var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
+}
 
 var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
-if (config.piwik.enabled) {
-    var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
-}
 
 var searchEngine = new SearchEngine(config.redis);
 var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis, config.elasticsearch);
@@ -63,6 +70,7 @@ io.on('connection', (socket) => {
 
         queryEntries(query.queryString, query.searchTopic, query.future, (result) => {
             socket.emit('queryResult', result);
+            sql.addQueryRow(query.queryString, result.queryInfo.searchEngineTime);
         });
     });
 
