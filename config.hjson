@@ -13,7 +13,7 @@
   mediathekUpdateInterval: 60
 
   #number of indexing workers to fork or auto to set it to cpu count
-  workerCount: 1
+  workerCount: auto
 
   redis: {
     host: "127.0.0.1"
@@ -36,6 +36,7 @@
   }
 
   postgres: {
+    enabled: true
     user: "mediathekviewweb"
     database: "mediathekviewweb"
     password: ""

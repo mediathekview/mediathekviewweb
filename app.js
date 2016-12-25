@@ -9,16 +9,19 @@ const Hjson = require('hjson');
 const exec = require('child_process').exec;
 const PiwikTracker = require('piwik-tracker');
 const utils = require('./utils.js');
-const sql = require('./postgres.js');
+
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
-config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60 * 1000;
+config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60;
 if (config.redis.password == '') {
-  delete config.redis.password; //to prevent warning message
+    delete config.redis.password; //to prevent warning message
 }
 
-sql.init(config.postgres);
-sql.createQueriesTable();
+if (config.postgres.enabled) {
+    const sql = require('./postgres.js');
+    sql.init(config.postgres);
+    sql.createQueriesTable();
+}
 
 if (config.piwik.enabled) {
     var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
@@ -70,7 +73,10 @@ io.on('connection', (socket) => {
 
         queryEntries(query.queryString, query.searchTopic, query.future, (result) => {
             socket.emit('queryResult', result);
-            sql.addQueryRow(query.queryString, result.queryInfo.searchEngineTime);
+
+            if (config.postgres.enabled) {
+                sql.addQueryRow(query.queryString, result.queryInfo.searchEngineTime);
+            }
         });
     });
 
@@ -217,31 +223,11 @@ function indexMediathek(callback) {
     mediathekIndexer.indexFile(config.filmliste, config.substrSize, callback);
 }
 
-function updateLoop() {
-    if (config.index) {
-        checkUpdateNeeded((updateNeeded) => {
-            if (updateNeeded) {
-                downloadFilmliste(() => {
-                    indexMediathek(() => {
-                        setTimeout(updateLoop, 60 * 1000);
-                    });
-                }, (err) => {
-                    console.log('download error: ' + err.message);
-                    console.log('trying again in a minute');
-                    setTimeout(updateLoop, 60 * 1000);
-                });
-            } else {
-                setTimeout(updateLoop, 60 * 1000);
-            }
-        });
-    }
-}
-
 function checkUpdateNeeded(callback) {
     mediathekIndexer.getLastIndexHasCompleted((completed) => {
         if (completed) {
             mediathekIndexer.getLastIndexTimestamp((result) => {
-                if ((parseInt(result) + config.mediathekUpdateInterval) <= Date.now()) {
+                if ((parseInt(result) + config.mediathekUpdateInterval) <= (Date.now() / 1000)) {
                     callback(true);
                 } else {
                     callback(false);
@@ -249,6 +235,28 @@ function checkUpdateNeeded(callback) {
             });
         } else {
             callback(true);
+        }
+    });
+}
+
+function updateLoop() {
+    if (!config.index) {
+        return;
+    }
+
+    checkUpdateNeeded((updateNeeded) => {
+        if (updateNeeded) {
+            downloadFilmliste(() => {
+                indexMediathek(() => {
+                    setTimeout(updateLoop, 60 * 1000);
+                });
+            }, (err) => {
+                console.error('download error: ' + err.message);
+                console.error('trying again in 15 seconds');
+                setTimeout(updateLoop, 15 * 1000);
+            });
+        } else {
+            setTimeout(updateLoop, 60 * 1000);
         }
     });
 }
