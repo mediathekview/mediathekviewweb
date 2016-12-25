@@ -2,10 +2,6 @@
   #path to filmliste, can be absolute and relative
   filmliste: ../filmliste
 
-  #create substrings with length of N to word.length of every indexed word in order to allow prefix and suffix searching.
-  #A good value is 4 to ignore common (german) stuff like "sch" and therefore save a lot of or at least some RAM and improve searching performance
-  substrSize: 3
-
   webserverPort: 8000
 
   index: true
