@@ -244,13 +244,20 @@ function updateLoop() {
         return;
     }
 
+    console.log('check for update');
     checkUpdateNeeded((updateNeeded) => {
+        console.log('update needed: ' + updateNeeded);
+
         if (updateNeeded) {
+            console.log('downloading filmliste...');
             downloadFilmliste(() => {
                 indexMediathek(() => {
+                    console.log('indexing filmliste...');
                     setTimeout(updateLoop, 60 * 1000);
                 });
             }, (err) => {
+                console.log('download failed...');
+                console.log('download error: ' + err.message);
                 console.error('download error: ' + err.message);
                 console.error('trying again in 15 seconds');
                 setTimeout(updateLoop, 15 * 1000);
