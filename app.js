@@ -220,7 +220,7 @@ function downloadFilmliste(successCallback, errCallback) {
 
 function indexMediathek(callback) {
     indexing = true;
-    mediathekIndexer.indexFile(config.filmliste, config.substrSize, callback);
+    mediathekIndexer.indexFile(config.filmliste, callback);
 }
 
 function checkUpdateNeeded(callback) {
@@ -251,8 +251,9 @@ function updateLoop() {
         if (updateNeeded) {
             console.log('downloading filmliste...');
             downloadFilmliste(() => {
+                console.log('indexing filmliste...');
                 indexMediathek(() => {
-                    console.log('indexing filmliste...');
+                    console.log('indexing done');
                     setTimeout(updateLoop, 60 * 1000);
                 });
             }, (err) => {
