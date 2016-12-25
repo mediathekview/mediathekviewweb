@@ -17,8 +17,9 @@ if (config.redis.password == '') {
     delete config.redis.password; //to prevent warning message
 }
 
+var sql;
 if (config.postgres.enabled) {
-    const sql = require('./postgres.js');
+    sql = require('./postgres.js');
     sql.init(config.postgres);
     sql.createQueriesTable();
 }
