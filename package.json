@@ -29,7 +29,6 @@
     "piwik-tracker": "^1.0.0",
     "redis": "^2.6.3",
     "socket.io": "^1.7.1",
-    "underscore": "^1.8.3",
-    "video.js": "^5.12.6"
+    "underscore": "^1.8.3"
   }
 }
