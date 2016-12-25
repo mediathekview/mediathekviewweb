@@ -36,3 +36,33 @@ span.glyph-margin-right {
 span.glyph-margin-left {
     margin-left: 3px;
 }
+
+.initiallyHidden {
+    display: none;
+}
+
+.overlay {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    overflow-x: hidden;
+}
+
+.overlay-content {
+    position: relative;
+    top: 15%;
+    width: 50%;
+    margin: auto;
+    text-align: center;
+}
+
+.overlay .closeButton {
+    position: absolute;
+    top: 20px;
+    right: 45px;
+    font-size: 60px;
+}

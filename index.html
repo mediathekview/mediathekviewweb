@@ -176,13 +176,19 @@
     }
 
     function playVideo(title, url) {
-        var dialog = bootbox.dialog({
-            title: title,
-            message: '<video class="video-js" controls preload="auto"><source src="' + url + '" type="video/mp4"></video>',
-            backdrop: true,
-            onEscape: true
-        });
+        $('#videooverlay').show(200, () => {
+            $('#videocontent').html('<video id="asd" controls width="100%"> <source src="' + url + '"></video>');
+            $('#asd').click(function() {
+                this.paused ? this.play() : this.pause();
+            });
+        }).focus();
+
         track('play');
+    }
+
+    function closeVideo() {
+        $('#videocontent').html('');
+        $('#videooverlay').hide(200);
     }
 
     function returnEmptyString() {
@@ -289,10 +295,26 @@
         $('#queryInput').on('input', () => query());
         $('#queryField input:radio').change(() => query());
         $('#queryField input:checkbox:checked').change(() => query());
+
+        $('#videocloseButton').click(() => {
+            closeVideo();
+        });
+        $('#videooverlay').keyup((e) => {
+            if (e.key == "Escape" || e.keyCode == 27) {
+                closeVideo();
+            }
+        });
     });
 </script>
 
 <body>
+
+    <div id="videooverlay" class="overlay initiallyHidden" tabindex="0">
+        <a href="#" id="videocloseButton" class="closeButton">&times;</a>
+        <div id="videocontent" class="overlay-content">
+        </div>
+    </div>
+
     <nav class="navbar navbar-default">
         <div class="container-fluid">
             <div class="navbar-header">
