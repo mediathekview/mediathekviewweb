@@ -161,16 +161,119 @@
             ' von ' + result.queryInfo.totalResults + ' Treffern.');
     });
 
-    function createPlayButton(text, videoTitle, videoUrl) {
-        return $('<a>', {
+    function createTableRow(text, url, videoTitle, filename, filesize) {
+        let tableRow = $('<tr>');
+
+        let watchButton = $('<a>', {
             target: '_blank',
-            text: text,
-            href: videoUrl,
+            href: url,
             click: () => {
-                playVideo(videoTitle, videoUrl);
+                playVideo(videoTitle, url);
                 return false;
             }
         });
+
+        let eyeIcon = $('<span>').addClass('glyphicon glyphicon-eye-open glyph-big glyph-margin-right');
+        watchButton.append(eyeIcon);
+
+        let downloadButton = $('<a>', {
+            target: '_blank',
+            href: url,
+            download: filename
+        });
+
+        let downloadIcon = $('<span>').addClass('glyphicon glyphicon-save glyph-big glyph-margin-left');
+        downloadButton.append(downloadIcon);
+
+        tableRow.append($('<td>').text(text));
+        tableRow.append($('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2)));
+        tableRow.append($('<td>').append(watchButton).append(downloadButton));
+        //tableRow.append($('<td>').append(downloadButton));
+
+        return tableRow;
+    }
+
+    function hidePopoverIfNotHovered(button) {
+        setTimeout(() => {
+            let popoverID = button.attr('aria-describedby');
+            let popover = $('#' + popoverID);
+            if (popover.length) {
+                if (!popover.is(':hover') && !button.is(':hover')) {
+                    button.popover('hide');
+                }
+            }
+        }, 150);
+    }
+
+    function createVideoActionButton(entry) {
+        let highestQualityUrl = entry.url_video_hd ? entry.url_video_hd : (entry.url_video ? entry.url_video : entry.url_video_low);
+
+        let button = $('<a>', {
+            target: '_blank',
+            href: entry.url_video,
+            click: () => {
+                playVideo(entry.title, highestQualityUrl);
+                return false;
+            }
+        });
+
+        let icon = $('<span>').addClass('glyphicon glyphicon-film glyph-big');
+        button.append(icon);
+
+        let table = $('<table>').addClass('table-condensed');
+        table.append(`<thead>
+              <tr>
+                <th>Qualität</th>
+                <th>Größe</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>`);
+
+
+        let tableHead = $('<thead>');
+
+        let tableBody = $('<tbody>');
+
+        let filename = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + entry.timestamp;
+
+        if (entry.url_video_hd) {
+            tableBody.append(createTableRow('Hoch', entry.url_video_hd, entry.title, filename));
+        }
+        if (entry.url_video) {
+            tableBody.append(createTableRow('Mittel', entry.url_video, entry.title, filename, entry.size));
+        }
+        if (entry.url_video_low) {
+            tableBody.append(createTableRow('Niedrig', entry.url_video_low, entry.title, filename));
+        }
+
+        table.append(tableBody);
+
+        button.popover({
+            trigger: 'manual',
+            toggle: 'popover',
+            placement: 'right',
+            container: 'body',
+            content: table,
+            html: true,
+            animation: true
+        });
+
+        button.on('mouseenter', () => {
+            button.popover('show');
+            let popoverID = button.attr('aria-describedby');
+            let popover = $('#' + popoverID);
+            if (popover.length) {
+                popover.on('mouseleave', () => {
+                    hidePopoverIfNotHovered(button);
+                });
+            }
+        });
+
+        button.on('mouseleave', () => {
+            hidePopoverIfNotHovered(button);
+        });
+
+        return button;
     }
 
     function playVideo(title, url) {
@@ -238,33 +341,25 @@
                     $(td).append(link);
                 }
             }, { //Thema
-                width: '14%',
+                width: '16%',
                 data: 'topic'
             }, { //Title
                 data: 'title'
             }, { //Date
-                width: '7%',
+                width: '8%',
                 data: 'dateString'
             }, { //Time
-                width: '5%',
+                width: '7%',
                 data: 'timeString'
             }, { //Duration
                 width: '5%',
                 data: 'durationString'
-            }, { //Size
-                width: '6%',
-                data: 'size',
-                render: (data, type, obj) => {
-                    if (type == 'display') {
-                        return isNaN(data) ? '?' : formatBytes(data, 2);
-                    }
-                }
             }, { //Video
-                width: '8%',
+                width: '4%',
                 data: null,
                 render: returnEmptyString,
                 createdCell: (td, cellData, rowData, row, col) => {
-                    let sdButton = createPlayButton('', rowData.title, rowData.url_video_low);
+                    /*let sdButton = createPlayButton('', rowData.title, rowData.url_video_low);
                     let sdIcon = $('<span>').addClass('glyphicon glyphicon-sd-video glyph-big glyph-margin-right');
                     sdButton.append(sdIcon);
                     if (!rowData.url_video_low) sdButton.css('visibility', 'hidden');
@@ -277,9 +372,11 @@
                     let hdButton = createPlayButton('', rowData.title, rowData.url_video_hd);
                     let hdIcon = $('<span>').addClass('glyphicon glyphicon-hd-video glyph-big glyph-margin-left');
                     hdButton.append(hdIcon);
-                    if (!rowData.url_video_hd) hdButton.css('visibility', 'hidden');
+                    if (!rowData.url_video_hd) hdButton.css('visibility', 'hidden');*/
 
-                    $(td).append(sdButton).append(mButton).append(hdButton);
+                    //$(td).append(sdButton).append(mButton).append(hdButton);
+
+                    $(td).append(createVideoActionButton(rowData));
                 }
             }],
             language: {
@@ -366,7 +463,6 @@
                     <th>Datum</th>
                     <th>Zeit</th>
                     <th>Dauer</th>
-                    <th>Größe</th>
                     <th>Video</th>
                 </tr>
             </thead>

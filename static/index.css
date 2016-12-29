@@ -30,11 +30,11 @@ span.glyph-big {
 }
 
 span.glyph-margin-right {
-    margin-right: 3px;
+    margin-right: 0.25em;
 }
 
 span.glyph-margin-left {
-    margin-left: 3px;
+    margin-left: 0.25em;
 }
 
 .initiallyHidden {
