@@ -181,7 +181,7 @@ mediathekIndexer.on('state', (state) => {
 
 function downloadFilmliste(successCallback, errCallback) {
     let content = "";
-    let req = http.get('http://zdfmediathk.sourceforge.net/akt.xml', function(res) {
+    let req = http.get('https://res.mediathekview.de/akt.xml', function(res) {
         res.setEncoding("utf8");
         res.on("data", function(chunk) {
             content += chunk;
