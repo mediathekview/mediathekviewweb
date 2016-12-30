@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
@@ -181,7 +182,7 @@ mediathekIndexer.on('state', (state) => {
 
 function downloadFilmliste(successCallback, errCallback) {
     let content = "";
-    let req = http.get('https://res.mediathekview.de/akt.xml', function(res) {
+    let req = https.get('https://res.mediathekview.de/akt.xml', function(res) {
         res.setEncoding("utf8");
         res.on("data", function(chunk) {
             content += chunk;
