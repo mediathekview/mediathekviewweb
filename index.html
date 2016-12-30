@@ -207,7 +207,7 @@
             pagination.append(button);
         }
 
-        let nextButton = createPaginationButton('Nächste', false, currentPage > 0, () => {
+        let nextButton = createPaginationButton('Nächste', false, currentPage < (totalPages - 1), () => {
             currentPage++;
         });
         pagination.append(nextButton);
