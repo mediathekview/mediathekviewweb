@@ -8,7 +8,7 @@ MediathekViewWeb ist eine simple, alternative Oberfläche für die Filmlisten de
 ##### 2. Ein klick auf das Videosymbol um die Sendung sofort in der besten verfügbaren Qualität zu starten oder mit der Maus nur drübergehen, um das Menü zu öffnen.
 
 ![Popover](https://abload.de/img/popover59syr.png)
-##### Ein klick auf das Auge bei der gewünschten Qualität um das Video zu starten oder auf das Festplattensymbol um das Video herunterzuladen.
+##### Ein klick auf das Auge bei der gewünschten Qualität um das Video zu starten oder auf das Festplattensymbol um das Video herunterzuladen. Letzteres wird nicht von allen Browsern unterstützt - bei diesen kann man dann per Rechtsklick -> "Speichern Unter" das Video herunterladen.
 
 
 ##### Im geöffneten Player das X oben rechts oder Escape drücken um es zu schließen. 
