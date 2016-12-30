@@ -310,11 +310,78 @@
         return button;
     }
 
+    function isFullscreen() {
+        if (document.fullscreenElement) {
+            return true;
+        } else if (document.webkitFullscreenElement) {
+            return true;
+        } else if (document.mozFullScreenElement) {
+            return true;
+        } else if (document.msFullscreenElement) {
+            return true;
+        } else {
+            return false;
+        };
+    }
+
+    function requestFullscreen(element) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.webkitRequestFullScreen) {
+            element.webkitRequestFullScreen();
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
+    }
+
+    function exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+
+    function getVideo() {
+        return $('#videocontent > video')[0];;
+    }
+
+    function toggleVideoPause() {
+        let video = getVideo();
+        video.paused ? video.play() : video.pause();
+    }
+
     function playVideo(title, url) {
         $('#videooverlay').show(200, () => {
-            $('#videocontent').html('<video id="asd" controls width="100%"> <source src="' + url + '"></video>');
-            $('#asd').click(function() {
-                this.paused ? this.play() : this.pause();
+            let videoplayer = $('<video>', {
+                controls: '',
+                width: '100%'
+            }).append($('<source>', {
+                src: url
+            }));
+
+            $('#videocontent').append(videoplayer);
+
+            let video = videoplayer[0];
+
+            videoplayer.click((e) => {
+                if (e.offsetY < video.clientHeight * 0.92) { //to prevent pausing when clicking player controls
+                    toggleVideoPause();
+                }
+            });
+
+            videoplayer.dblclick(() => {
+                if (isFullscreen()) {
+                    exitFullscreen();
+                } else {
+                    requestFullscreen(video);
+                }
             });
         }).focus();
 
@@ -322,7 +389,7 @@
     }
 
     function closeVideo() {
-        $('#videocontent').html('');
+        $('#videocontent').empty();
         $('#videooverlay').hide(200);
     }
 
@@ -394,23 +461,6 @@
                 data: null,
                 render: returnEmptyString,
                 createdCell: (td, cellData, rowData, row, col) => {
-                    /*let sdButton = createPlayButton('', rowData.title, rowData.url_video_low);
-                    let sdIcon = $('<span>').addClass('glyphicon glyphicon-sd-video glyph-big glyph-margin-right');
-                    sdButton.append(sdIcon);
-                    if (!rowData.url_video_low) sdButton.css('visibility', 'hidden');
-
-                    let mButton = createPlayButton('', rowData.title, rowData.url_video);
-                    let mIcon = $('<span>').addClass('glyphicon glyphicon-film glyph-big glyph-margin-left glyph-margin-right');
-                    mButton.append(mIcon);
-                    if (!rowData.url_video) mButton.css('visibility', 'hidden');
-
-                    let hdButton = createPlayButton('', rowData.title, rowData.url_video_hd);
-                    let hdIcon = $('<span>').addClass('glyphicon glyphicon-hd-video glyph-big glyph-margin-left');
-                    hdButton.append(hdIcon);
-                    if (!rowData.url_video_hd) hdButton.css('visibility', 'hidden');*/
-
-                    //$(td).append(sdButton).append(mButton).append(hdButton);
-
                     $(td).append(createVideoActionButton(rowData));
                 }
             }],
@@ -429,9 +479,17 @@
         $('#videocloseButton').click(() => {
             closeVideo();
         });
+
         $('#videooverlay').keyup((e) => {
-            if (e.key == "Escape" || e.keyCode == 27) {
-                closeVideo();
+            console.log(e.key);
+            if (e.key == 'Escape' || e.keyCode == 27) {
+                if (isFullscreen()) {
+                    exitFullscreen();
+                } else {
+                    closeVideo();
+                }
+            } else if (e.key == ' ' || e.keyCode == 32) { //Space
+                toggleVideoPause();
             }
         });
 
@@ -442,8 +500,7 @@
 <body>
     <div id="videooverlay" class="overlay initiallyHidden" tabindex="0">
         <a href="#" id="videocloseButton" class="closeButton">&times;</a>
-        <div id="videocontent" class="overlay-content">
-        </div>
+        <div id="videocontent" class="overlay-content"></div>
     </div>
 
     <nav class="navbar navbar-default">
