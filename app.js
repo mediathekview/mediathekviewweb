@@ -67,8 +67,7 @@ io.on('connection', (socket) => {
     if (indexing && lastIndexingState != null) {
         socket.emit('indexState', lastIndexingState);
     }
-
-
+    
     socket.on('getContentLength', (url, callback) => {
         request.head(url, (error, response, body) => {
             let contentLength = response.headers['content-length'];
@@ -76,13 +75,13 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('queryEntry', (query) => {
+    socket.on('queryEntry', (query, callback) => {
         if (indexing) {
             return;
         }
 
         queryEntries(query.queryString, query.searchTopic, query.future, (result) => {
-            socket.emit('queryResult', result);
+            callback(result);
 
             if (config.postgres.enabled) {
                 sql.addQueryRow(query.queryString, result.queryInfo.searchEngineTime);
@@ -265,7 +264,6 @@ function updateLoop() {
     }
 
     checkUpdateNeeded((updateNeeded) => {
-
         if (updateNeeded) {
             console.log('downloading filmliste...');
             downloadFilmliste(() => {

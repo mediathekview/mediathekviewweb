@@ -136,14 +136,16 @@
                 future: future
             };
 
-            socket.emit('queryEntry', queryObj);
+            socket.emit('queryEntry', queryObj, (result) => {
+              handleQueryResult(result);
+            });
 
             trackQuery();
         }, 250);
         query();
     }
 
-    socket.on('queryResult', (result) => {
+    function handleQueryResult(result) {
         mediathekTable.clear();
 
         for (var i = 0; i < result.results.length; i++) {
@@ -159,11 +161,11 @@
 
         $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, zeige ' + result.queryInfo.resultCount +
             ' von ' + result.queryInfo.totalResults + ' Treffern.');
-    });
+    }
 
     function getContentLength(url, callback) {
-        socket.emit('getContentLength', url, (response) => {
-            callback(response);
+        socket.emit('getContentLength', url, (contentLength) => {
+            callback(contentLength);
         });
     }
 
