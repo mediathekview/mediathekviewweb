@@ -161,6 +161,12 @@
             ' von ' + result.queryInfo.totalResults + ' Treffern.');
     });
 
+    function getContentLength(url, callback) {
+        socket.emit('getContentLength', url, (response) => {
+            callback(response);
+        });
+    }
+
     function createTableRow(text, url, videoTitle, filename, filesize) {
         let tableRow = $('<tr>');
 
@@ -185,8 +191,11 @@
         let downloadIcon = $('<span>').addClass('glyphicon glyphicon-save glyph-big glyph-margin-left');
         downloadButton.append(downloadIcon);
 
+        let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2));
+
+
         tableRow.append($('<td>').text(text));
-        tableRow.append($('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2)));
+        tableRow.append(filesizeCell);
         tableRow.append($('<td>').append(watchButton).append(downloadButton));
         //tableRow.append($('<td>').append(downloadButton));
 
@@ -231,19 +240,23 @@
 
 
         let tableHead = $('<thead>');
-
         let tableBody = $('<tbody>');
 
         let filename = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + entry.timestamp;
 
+        let lowRow, midRow, highRow;
+
         if (entry.url_video_hd) {
-            tableBody.append(createTableRow('Hoch', entry.url_video_hd, entry.title, filename));
+            highRow = createTableRow('Hoch', entry.url_video_hd, entry.title, filename);
+            tableBody.append(highRow);
         }
         if (entry.url_video) {
-            tableBody.append(createTableRow('Mittel', entry.url_video, entry.title, filename, entry.size));
+            midRow = createTableRow('Mittel', entry.url_video, entry.title, filename, entry.size);
+            tableBody.append(midRow);
         }
         if (entry.url_video_low) {
-            tableBody.append(createTableRow('Niedrig', entry.url_video_low, entry.title, filename));
+            lowRow = createTableRow('Niedrig', entry.url_video_low, entry.title, filename);
+            tableBody.append(lowRow);
         }
 
         table.append(tableBody);
@@ -258,6 +271,8 @@
             animation: true
         });
 
+        let requestedFilesize = false;
+
         button.on('mouseenter', () => {
             button.popover('show');
             let popoverID = button.attr('aria-describedby');
@@ -266,6 +281,25 @@
                 popover.on('mouseleave', () => {
                     hidePopoverIfNotHovered(button);
                 });
+            }
+
+            if (!requestedFilesize) {
+                requestedFilesize = true;
+                if (highRow) {
+                    getContentLength(entry.url_video_hd, (bytes) => {
+                        highRow.find('td:eq(1)').text(formatBytes(bytes, 2));
+                    });
+                }
+                if (midRow) {
+                    getContentLength(entry.url_video, (bytes) => {
+                        midRow.find('td:eq(1)').text(formatBytes(bytes, 2));
+                    });
+                }
+                if (lowRow) {
+                    getContentLength(entry.url_video_low, (bytes) => {
+                        lowRow.find('td:eq(1)').text(formatBytes(bytes, 2));
+                    });
+                }
             }
         });
 

@@ -28,6 +28,7 @@
     "pg": "^6.1.2",
     "piwik-tracker": "^1.0.0",
     "redis": "^2.6.3",
+    "request": "^2.79.0",
     "socket.io": "^1.7.1",
     "underscore": "^1.8.3"
   }

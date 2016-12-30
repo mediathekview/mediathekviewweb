@@ -9,6 +9,7 @@ const Hjson = require('hjson');
 const exec = require('child_process').exec;
 const PiwikTracker = require('piwik-tracker');
 const utils = require('./utils.js');
+const request = require('request');
 
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
@@ -66,6 +67,14 @@ io.on('connection', (socket) => {
     if (indexing && lastIndexingState != null) {
         socket.emit('indexState', lastIndexingState);
     }
+
+
+    socket.on('getContentLength', (url, callback) => {
+        request.head(url, (error, response, body) => {
+            let contentLength = response.headers['content-length'];
+            callback(contentLength);
+        });
+    });
 
     socket.on('queryEntry', (query) => {
         if (indexing) {
