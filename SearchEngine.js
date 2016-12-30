@@ -10,6 +10,8 @@ class SearchEngine {
 
     search(q, searchTopic, future, callback) {
         let query = this.parseQuery(q);
+        let musts = [];
+        let elasticQuery = {};
 
         if (searchTopic == 'auto') {
             if (query.topics.length == 0) {
@@ -24,97 +26,89 @@ class SearchEngine {
         }
 
         if (query.channels.length == 0 && query.topics.length == 0 && query.titleParts.length == 0) {
-            callback({
-                result: [],
-                totalResults: 0
-            });
-            return;
-        }
-
-        let filter = {};
-        if (!future) {
-            filter.range = {
-                timestamp: {
-                    lte: Math.floor(Date.now() / 1000)
-                }
-            }
-        }
-
-
-        let musts = [];
-
-        let channelMatches = [];
-        for (let i = 0; i < query.channels.length; i++) {
-            channelMatches.push({
-                match: {
-                    channel: {
-                        query: query.channels[i].join(' '),
-                        operator: 'and',
-                        fuzziness: 'auto'
-                    }
-                }
-            });
-        }
-
-        musts.push({
-            bool: {
-                should: channelMatches
-            }
-        });
-
-        let topicMatches = [];
-        for (let i = 0; i < query.topics.length; i++) {
-            topicMatches.push({
-                match: {
-                    topic: {
-                        query: query.topics[i].join(' '),
-                        operator: 'and',
-                        fuzziness: 'auto'
-                    }
-                }
-            });
-        }
-
-        musts.push({
-            bool: {
-                should: topicMatches
-            }
-        });
-
-        if (query.titleParts.length > 0) {
-            if (searchTopic) {
-                musts.push({
-                    bool: {
-                        should: [{
-                            match: {
-                                title: {
-                                    query: query.titleParts.join(' '),
-                                    operator: 'and',
-                                    fuzziness: 'auto'
-                                }
-                            }
-                        }, {
-                            match: {
-                                topic: {
-                                    query: query.titleParts.join(' '),
-                                    operator: 'and',
-                                    fuzziness: 'auto'
-                                }
-                            }
-                        }]
-                    }
-                });
-            } else {
-                musts.push({
+            elasticQuery = this.createFilter(false);
+        } else {
+            let filter = this.createFilter(future);
+            let channelMatches = [];
+            for (let i = 0; i < query.channels.length; i++) {
+                channelMatches.push({
                     match: {
-                        title: {
-                            query: query.titleParts.join(' '),
+                        channel: {
+                            query: query.channels[i].join(' '),
                             operator: 'and',
                             fuzziness: 'auto'
                         }
                     }
                 });
             }
+
+            musts.push({
+                bool: {
+                    should: channelMatches
+                }
+            });
+
+            let topicMatches = [];
+            for (let i = 0; i < query.topics.length; i++) {
+                topicMatches.push({
+                    match: {
+                        topic: {
+                            query: query.topics[i].join(' '),
+                            operator: 'and',
+                            fuzziness: 'auto'
+                        }
+                    }
+                });
+            }
+
+            musts.push({
+                bool: {
+                    should: topicMatches
+                }
+            });
+
+            if (query.titleParts.length > 0) {
+                if (searchTopic) {
+                    musts.push({
+                        bool: {
+                            should: [{
+                                match: {
+                                    title: {
+                                        query: query.titleParts.join(' '),
+                                        operator: 'and',
+                                        fuzziness: 'auto'
+                                    }
+                                }
+                            }, {
+                                match: {
+                                    topic: {
+                                        query: query.titleParts.join(' '),
+                                        operator: 'and',
+                                        fuzziness: 'auto'
+                                    }
+                                }
+                            }]
+                        }
+                    });
+                } else {
+                    musts.push({
+                        match: {
+                            title: {
+                                query: query.titleParts.join(' '),
+                                operator: 'and',
+                                fuzziness: 'auto'
+                            }
+                        }
+                    });
+                }
+            }
+
+            elasticQuery = {
+                bool: {
+                    must: musts,
+                    filter: filter
+                }
+            };
         }
 
         this.searchClient.search({
@@ -122,12 +116,7 @@ class SearchEngine {
             type: 'entries',
             size: 50,
             body: {
-                query: {
-                    bool: {
-                        must: musts,
-                        filter: filter
-                    }
-                },
+                query: elasticQuery,
                 sort: {
                     timestamp: {
                         order: "desc"
@@ -153,6 +142,20 @@ class SearchEngine {
                 });
             }
         });
+    }
+
+    createFilter(includeFuture) {
+        let filter = {};
+
+        if (!includeFuture) {
+            filter.range = {
+                timestamp: {
+                    lte: Math.floor(Date.now() / 1000)
+                }
+            }
+        }
+
+        return filter;
     }
 
     parseQuery(query) {

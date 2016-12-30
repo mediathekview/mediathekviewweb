@@ -126,7 +126,7 @@
 
     function query() {
         query = _.throttle(() => {
-            let queryString = $('#queryInput').val();
+            let queryString = $('#queryInput').val().trim();
             let searchTopic = $('#queryField input:radio:checked').val();
             let future = !!$('#queryField input:checkbox:checked').prop('checked')
 
@@ -434,11 +434,12 @@
                 closeVideo();
             }
         });
+
+        query();
     });
 </script>
 
 <body>
-
     <div id="videooverlay" class="overlay initiallyHidden" tabindex="0">
         <a href="#" id="videocloseButton" class="closeButton">&times;</a>
         <div id="videocontent" class="overlay-content">
