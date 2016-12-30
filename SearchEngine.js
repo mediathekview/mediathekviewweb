@@ -8,7 +8,7 @@ class SearchEngine {
         });
     }
 
-    search(q, searchTopic, future, callback) {
+    search(q, searchTopic, future, from = 0, size = 10, callback) {
         let query = this.parseQuery(q);
         let musts = [];
         let elasticQuery = {};
@@ -114,7 +114,8 @@ class SearchEngine {
         this.searchClient.search({
             index: 'filmliste',
             type: 'entries',
-            size: 50,
+            from: from,
+            size: size,
             body: {
                 query: elasticQuery,
                 sort: {

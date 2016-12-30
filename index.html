@@ -22,6 +22,8 @@
 
 <script>
     var socket = io();
+    var currentPage = 0;
+    var itemsPerPage = 15;
     var mediathekTable;
     var connectingModal;
     var indexingModal;
@@ -133,11 +135,13 @@
             let queryObj = {
                 queryString: queryString,
                 searchTopic: searchTopic,
-                future: future
+                future: future,
+                from: currentPage * itemsPerPage,
+                size: itemsPerPage
             };
 
             socket.emit('queryEntry', queryObj, (result) => {
-              handleQueryResult(result);
+                handleQueryResult(result);
             });
 
             trackQuery();
@@ -159,9 +163,56 @@
 
         mediathekTable.draw();
 
-        $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, zeige ' + result.queryInfo.resultCount +
-            ' von ' + result.queryInfo.totalResults + ' Treffern.');
+        let actualPagesCount = Math.ceil(result.queryInfo.totalResults / itemsPerPage);
+        shownPagesCount = Math.min(actualPagesCount, Math.floor(10000 / itemsPerPage));
+
+        createPagination(shownPagesCount);
+
+        $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, zeige Treffer ' + (currentPage * itemsPerPage + 1) +
+            ' bis ' + ((currentPage + 1) * itemsPerPage) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.');
     }
+
+    function createPaginationButton(text, active, enabled, callback) {
+        let button = $('<li>').addClass(active ? 'active' : '').addClass(enabled ? '' : 'disabled').append($('<a>', {
+            href: '#',
+            text: text
+        }));
+
+        if (enabled && !active) {
+            button.click(() => {
+                callback();
+                query();
+            });
+        }
+
+        return button;
+    }
+
+    function createPagination(totalPages) {
+        let pagination = $('#pagination');
+        pagination.empty();
+
+        let backButton = createPaginationButton('Zurück', false, currentPage > 0, () => {
+            currentPage--;
+        });
+        pagination.append(backButton);
+
+        let pagingBegin = Math.max(0, currentPage - 2 - (2 - Math.min(2, totalPages - (currentPage + 1))));
+        let pagingEnd = Math.min(totalPages, pagingBegin + 5);
+
+        for (let i = pagingBegin; i < pagingEnd; i++) {
+            let button = createPaginationButton(i + 1, currentPage == i, true, () => {
+                currentPage = i;
+            });
+            pagination.append(button);
+        }
+
+        let nextButton = createPaginationButton('Nächste', false, currentPage > 0, () => {
+            currentPage++;
+        });
+        pagination.append(nextButton);
+    }
+
 
     function getContentLength(url, callback) {
         socket.emit('getContentLength', url, (contentLength) => {
@@ -471,12 +522,19 @@
             },
             searching: false,
             ordering: false,
-            info: true
+            info: false,
+            paging: false
         });
 
-        $('#queryInput').on('input', () => query());
-        $('#queryField input:radio').change(() => query());
-        $('#queryField input:checkbox:checked').change(() => query());
+        let newQuery = () => {
+            currentPage = 0;
+            query();
+        };
+
+        $('#queryInput').on('input', () => newQuery());
+
+        $('#queryField input:radio').change(() => newQuery());
+        $('#queryField input:checkbox:checked').change(() => newQuery());
 
         $('#videocloseButton').click(() => {
             closeVideo();
@@ -565,7 +623,16 @@
             </tbody>
         </table>
 
-        <label id="queryInfoLabel"></label>
+        <div class="row">
+            <div class="col-sm-7">
+                <label id="queryInfoLabel"></label>
+            </div>
+            <div class="col-sm-5">
+                <ul id="pagination" class="pagination paginationstyle">
+                </ul>
+            </div>
+        </div>
+
 
         <div id="connectingModal" class="modal fade" role="dialog">
             <div class="modal-dialog">

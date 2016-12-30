@@ -37,6 +37,11 @@ span.glyph-margin-left {
     margin-left: 0.25em;
 }
 
+.paginationstyle{
+    margin: 0 !important;
+    float: right;
+}
+
 .initiallyHidden {
     display: none;
 }
