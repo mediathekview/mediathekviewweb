@@ -12,7 +12,6 @@ const PiwikTracker = require('piwik-tracker');
 const utils = require('./utils.js');
 const request = require('request');
 
-
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60;
 if (config.redis.password == '') {
@@ -180,53 +179,63 @@ mediathekIndexer.on('state', (state) => {
     }
 });
 
-function downloadFilmliste(successCallback, errCallback) {
-    let content = "";
-    let req = https.get('https://res.mediathekview.de/akt.xml', function(res) {
-        res.setEncoding("utf8");
-        res.on("data", function(chunk) {
-            content += chunk;
-        });
-
-        res.on("end", function() {
+function getRandomFilmlisteMirror(callback) {
+    request.get('https://res.mediathekview.de/akt.xml', (error, response, body) => {
+        if (!error && response.statusCode == 200) {
             let filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
             let urlMatches = [];
 
             let match;
-            while ((match = filmlisteUrlRegex.exec(content)) !== null) {
+            while ((match = filmlisteUrlRegex.exec(body)) !== null) {
                 urlMatches.push(match);
             }
 
             let url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
 
-            let request = http.get(url, function(response) {
-                let filename = config.filmliste + '.xz';
-                fs.stat(filename, (err, stats) => {
-                    if (!err) {
-                        fs.unlinkSync(filename);
-                    }
-                    let fileStream = fs.createWriteStream(config.filmliste + '.xz');
-                    response.pipe(fileStream);
-                    response.on('end', () => {
-                        fs.stat(config.filmliste, (err, stats) => {
-                            if (!err) {
-                                fs.unlinkSync(config.filmliste);
-                            }
+            callback(url);
+        }
+    });
+}
 
-                            exec('unxz ' + config.filmliste + '.xz').on('exit', () => {
-                                successCallback();
-                            });
-                        });
+function deleteFileIfExist(file, callback) {
+    fs.stat(file, (err, stats) => {
+        if (!err) {
+            fs.unlink(file, () => {
+                callback();
+            });
+        } else {
+            callback();
+        }
+    });
+}
+
+function downloadFilmliste(successCallback, errCallback) {
+    getRandomFilmlisteMirror((url) => {
+        let file = config.filmliste + '.xz';
+
+        deleteFileIfExist(file, () => {
+            let req = request.get(url);
+            req.on('error', function(err) {
+                errCallback(err);
+            });
+
+            let fileStream = fs.createWriteStream(file);
+            req.pipe(fileStream);
+
+            fileStream.on('error', (error) => {
+                req.abort();
+                errCallback(error);
+            });
+
+            req.on('end', () => {
+                deleteFileIfExist(config.filmliste, () => {
+                    exec('unxz ' + config.filmliste + '.xz').on('exit', () => {
+                        successCallback();
                     });
                 });
             });
-
-            request.on('error', (e) => {
-                errCallback(e);
-            });
         });
     });
-    req.end();
 }
 
 function indexMediathek(callback) {
@@ -255,9 +264,7 @@ function updateLoop() {
         return;
     }
 
-    console.log('check for update');
     checkUpdateNeeded((updateNeeded) => {
-        console.log('update needed: ' + updateNeeded);
 
         if (updateNeeded) {
             console.log('downloading filmliste...');
@@ -268,10 +275,9 @@ function updateLoop() {
                     setTimeout(updateLoop, 60 * 1000);
                 });
             }, (err) => {
-                console.log('download failed...');
-                console.log('download error: ' + err.message);
                 console.error('download error: ' + err.message);
-                console.error('trying again in 15 seconds');
+                console.log('download failed...');
+                console.log('trying again in 15 seconds');
                 setTimeout(updateLoop, 15 * 1000);
             });
         } else {
@@ -279,5 +285,4 @@ function updateLoop() {
         }
     });
 }
-
 setImmediate(updateLoop);
