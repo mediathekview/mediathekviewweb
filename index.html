@@ -25,7 +25,7 @@
     var connectingModal;
     var indexingModal;
     var uid;
-    var pv_id;
+    var pv_id = randomString(6);
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
@@ -52,17 +52,20 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
     }
 
-    pv_id = randomString(6);
-
     function track(action) {
+      let date = new Date();
         socket.emit('track', {
             uid: uid,
             pv_id: pv_id,
             ua: navigator.userAgent,
             lang: navigator.language,
             res: window.screen.width + "x" + window.screen.height,
-            e_c: 'MediathekViewWeb',
-            e_a: action
+            urlref: document.referrer,
+            action_name: action,
+            h: date.getHours(),
+            m: date.getMinutes(),
+            s: date.getSeconds(),
+            rand: randomString(10)
         });
     }
 

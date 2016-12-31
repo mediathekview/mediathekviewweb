@@ -112,16 +112,21 @@ io.on('connection', (socket) => {
 
         if (!!piwik) {
             piwik.track({
-                pv_id: data.pv_id,
                 token_auth: config.piwik.token_auth,
                 url: config.piwik.websiteUrl,
                 uid: socketUid,
                 cip: clientIp,
+
+                pv_id: data.pv_id,
                 ua: data.ua,
                 lang: data.lang,
                 res: data.res,
-                e_c: data.e_c,
-                e_a: data.action
+                urlref: data.urlref,
+                action_name: data.action_name,
+                h: data.h,
+                m: data.m,
+                s: data.s,
+                rand: data.rand
             });
         }
     });
