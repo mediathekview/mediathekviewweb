@@ -14,7 +14,7 @@ const request = require('request');
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60;
-if (config.redis.password == '') {
+if (config.redis.password === '') {
     delete config.redis.password; //to prevent warning message
 }
 

@@ -21,9 +21,7 @@ class MediathekIndexer extends EventEmitter {
         this.options.elasticsearchSettings = elasticsearchSettings;
 
         this.redis = REDIS.createClient(this.options.redisSettings);
-        this.searchClient = new elasticsearch.Client({
-            host: this.options.elasticsearchSettings.host + ':' + this.options.elasticsearchSettings.port
-        });
+        this.searchClient = new elasticsearch.Client(this.options.elasticsearchSettings);
 
         this.indexers = [];
         this.indexersState = new Array(this.options.workerCount);
@@ -214,19 +212,16 @@ class MediathekIndexer extends EventEmitter {
                 this.indexers = [];
                 this.indexersState = new Array(this.options.workerCount);
 
-                this.redis.smembers('channels', (err, result) => {
+                let batch = this.redis.batch();
 
-                    let batch = this.redis.batch();
-
-                    batch.set('indexTimestamp', Math.floor(Date.now() / 1000))
-                        .set('indexCompleted', true)
-                        .exec((err, replies) => {
-                            this._emitState(entries, done);
-                            if (typeof(this.indexingCompleteCallback) == 'function') {
-                                this.indexingCompleteCallback();
-                            }
-                        });
-                });
+                batch.set('indexTimestamp', Math.floor(Date.now() / 1000))
+                    .set('indexCompleted', true)
+                    .exec((err, replies) => {
+                        this._emitState(entries, done);
+                        if (typeof(this.indexingCompleteCallback) == 'function') {
+                            this.indexingCompleteCallback();
+                        }
+                    });
             } else {
                 this._emitState(entries, done);
             }
