@@ -3,9 +3,7 @@ const elasticsearch = require('elasticsearch');
 
 class SearchEngine {
     constructor(elasticsearchSettings) {
-        this.searchClient = new elasticsearch.Client({
-            host: 'localhost:9200'
-        });
+        this.searchClient = new elasticsearch.Client(elasticsearchSettings);
     }
 
     search(q, searchTopic, future, from = 0, size = 10, callback) {

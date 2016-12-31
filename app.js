@@ -33,7 +33,7 @@ var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 
-var searchEngine = new SearchEngine(config.redis);
+var searchEngine = new SearchEngine(config.elasticsearch);
 var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis, config.elasticsearch);
 var websiteNames = [];
 
