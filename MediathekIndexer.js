@@ -4,7 +4,7 @@ const os = require('os');
 const IPC = require('./IPC.js');
 const REDIS = require('redis');
 const moment = require('moment');
-const underscore = require('underscore');
+const lodash = require('lodash');
 const lineReader = require('line-reader');
 const elasticsearch = require('elasticsearch');
 
@@ -192,7 +192,7 @@ class MediathekIndexer extends EventEmitter {
     }
 
     emitState() {
-        this.emitState = underscore.throttle(() => {
+        this.emitState = lodash.throttle(() => {
             var progress = 0;
             var entries = 0;
             var done = true;
