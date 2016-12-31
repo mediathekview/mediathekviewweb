@@ -18,10 +18,12 @@ class MediathekIndexer extends EventEmitter {
         this.options = {};
         this.options.workerCount = workerCount == 'auto' ? cpuCount : workerCount;
         this.options.redisSettings = redisSettings;
-        this.options.elasticsearchSettings = elasticsearchSettings;
+        this.options.elasticsearchSettings = JSON.stringify(elasticsearchSettings);
+
+
 
         this.redis = REDIS.createClient(this.options.redisSettings);
-        this.searchClient = new elasticsearch.Client(this.options.elasticsearchSettings);
+        this.searchClient = new elasticsearch.Client(JSON.parse(this.options.elasticsearchSettings));
 
         this.indexers = [];
         this.indexersState = new Array(this.options.workerCount);
@@ -160,7 +162,7 @@ class MediathekIndexer extends EventEmitter {
         ipcIndexer.on('ready', () => {
             ipcIndexer.send('init', {
                 redisSettings: this.options.redisSettings,
-                elasticsearchSettings: this.options.elasticsearchSettings,
+                elasticsearchSettings: JSON.parse(this.options.elasticsearchSettings),
                 index: 'filmliste'
             });
         });

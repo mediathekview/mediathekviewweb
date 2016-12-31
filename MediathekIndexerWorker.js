@@ -36,9 +36,7 @@ function init(redisSettings, elasticsearchSettings, index) {
     redis.on('error', (err) => handleError(err));
     redis.on('ready', () => emitInitialized());
 
-    searchClient = new elasticsearch.Client({
-        host: elasticsearchSettings.host + ':' + elasticsearchSettings.port
-    });
+    searchClient = new elasticsearch.Client(elasticsearchSettings);
 }
 
 function handleError(err) {

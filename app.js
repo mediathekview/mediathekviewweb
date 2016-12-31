@@ -33,8 +33,10 @@ var app = express();
 var httpServer = http.Server(app);
 var io = require('socket.io')(httpServer);
 
-var searchEngine = new SearchEngine(config.elasticsearch);
-var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis, config.elasticsearch);
+var elasticsearchSettings = JSON.stringify(config.elasticsearch);
+
+var searchEngine = new SearchEngine(JSON.parse(elasticsearchSettings));
+var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis, JSON.parse(elasticsearchSettings));
 var websiteNames = [];
 
 var indexing = false;
