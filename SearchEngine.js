@@ -6,7 +6,7 @@ class SearchEngine {
         this.searchClient = new elasticsearch.Client(elasticsearchSettings);
     }
 
-    search(q, searchTopic, future, from = 0, size = 10, callback) {
+    search(q, searchTopic, future, from = 0, size = 10, fuzzy = false, callback) {
         let query = this.parseQuery(q);
         let musts = [];
         let elasticQuery = {};
@@ -24,7 +24,7 @@ class SearchEngine {
         }
 
         if (query.channels.length == 0 && query.topics.length == 0 && query.titleParts.length == 0) {
-            elasticQuery = this.createFilter(false);
+            elasticQuery = this.createFilter(future);
         } else {
             let filter = this.createFilter(future);
             let channelMatches = [];
@@ -33,8 +33,7 @@ class SearchEngine {
                     match: {
                         channel: {
                             query: query.channels[i].join(' '),
-                            operator: 'and',
-                            fuzziness: 'auto'
+                            operator: 'and'
                         }
                     }
                 });
@@ -53,7 +52,7 @@ class SearchEngine {
                         topic: {
                             query: query.topics[i].join(' '),
                             operator: 'and',
-                            fuzziness: 'auto'
+                            fuzziness: fuzzy ? 'auto' : 0
                         }
                     }
                 });
@@ -74,7 +73,7 @@ class SearchEngine {
                                     title: {
                                         query: query.titleParts.join(' '),
                                         operator: 'and',
-                                        fuzziness: 'auto'
+                                        fuzziness: fuzzy ? 'auto' : 0
                                     }
                                 }
                             }, {
@@ -82,7 +81,7 @@ class SearchEngine {
                                     topic: {
                                         query: query.titleParts.join(' '),
                                         operator: 'and',
-                                        fuzziness: 'auto'
+                                        fuzziness: fuzzy ? 'auto' : 0
                                     }
                                 }
                             }]
@@ -94,7 +93,7 @@ class SearchEngine {
                             title: {
                                 query: query.titleParts.join(' '),
                                 operator: 'and',
-                                fuzziness: 'auto'
+                                fuzziness: fuzzy ? 'auto' : 0
                             }
                         }
                     });
@@ -127,7 +126,7 @@ class SearchEngine {
             }
         }, (error, response, status) => {
             if (error) {
-                console.log("search error: " + error)
+                console.error("search error: " + error)
             } else {
                 let result = [];
 
@@ -163,20 +162,26 @@ class SearchEngine {
         let titleParts = [];
 
         let splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
-            return !!split;
+            return (split.length > 0);
         });
 
         for (let i = 0; i < splits.length; i++) {
             let split = splits[i];
 
             if (split[0] == '!') {
-                channels.push(split.slice(1, split.length).split(',').filter((split) => {
-                    return !!split;
-                }));
+                let c = split.slice(1, split.length).split(',').filter((split) => {
+                    return (split.length > 0);
+                });
+                if (c.length > 0) {
+                    channels.push(c);
+                }
             } else if (split[0] == '#') {
-                topics.push(split.slice(1, split.length).split(',').filter((split) => {
-                    return !!split;
-                }));
+                let t = split.slice(1, split.length).split(',').filter((split) => {
+                    return (split.length > 0);
+                });
+                if (t.length > 0) {
+                    topics.push(t);
+                }
             } else {
                 titleParts = titleParts.concat(split.split(/\s+/));
             }

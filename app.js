@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        queryEntries(query.queryString, query.searchTopic, query.future, query.from, query.size, (result) => {
+        queryEntries(query.queryString, query.searchTopic, query.future, query.from, query.size, query.fuzzy, (result) => {
             callback(result);
 
             if (config.postgres.enabled) {
@@ -139,9 +139,9 @@ httpServer.listen(config.webserverPort, () => {
     console.log();
 });
 
-function queryEntries(query, searchTopic, future, from, size, callback) {
+function queryEntries(query, searchTopic, future, from, size, fuzzy, callback) {
     let begin = process.hrtime();
-    searchEngine.search(query, searchTopic, future, from, size, (result, err) => {
+    searchEngine.search(query, searchTopic, future, from, size, fuzzy, (result, err) => {
         let end = process.hrtime(begin);
 
         if (err) {

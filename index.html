@@ -53,7 +53,7 @@
     }
 
     function track(action) {
-      let date = new Date();
+        let date = new Date();
         socket.emit('track', {
             uid: uid,
             pv_id: pv_id,
@@ -131,13 +131,16 @@
     function query() {
         query = _.throttle(() => {
             let queryString = $('#queryInput').val().trim();
-            let searchTopic = $('#queryField input:radio:checked').val();
-            let future = !!$('#queryField input:checkbox:checked').prop('checked')
+            //let searchTopic = $('#queryField input:radio:checked').val();
+            let future = !!$('#futureCheckbox').prop('checked');
+            let fuzzy = !!$('#fuzzyCheckbox').prop('checked');
+
 
             let queryObj = {
                 queryString: queryString,
-                searchTopic: searchTopic,
+                searchTopic: 'auto',
                 future: future,
+                fuzzy: fuzzy,
                 from: currentPage * itemsPerPage,
                 size: itemsPerPage
             };
@@ -534,9 +537,8 @@
         };
 
         $('#queryInput').on('input', () => newQuery());
-
         $('#queryField input:radio').change(() => newQuery());
-        $('#queryField input:checkbox:checked').change(() => newQuery());
+        $('#queryField input:checkbox').change(() => newQuery());
 
         $('#videocloseButton').click(() => {
             closeVideo();
@@ -586,7 +588,7 @@
             <span class="input-group-addon">Suche</span>
             <input type="text" style="min-width:13em" class="form-control" id="queryInput">
 
-            <span class="input-group-addon">
+            <!--<span class="input-group-addon">
               <input type="radio" name="searchmode" value="true"> Titel &amp; Thema</input>
             </span>
 
@@ -596,10 +598,14 @@
 
             <span class="input-group-addon">
               <input type="radio" name="searchmode" value="auto" checked> Auto</input>
+            </span>-->
+
+            <span class="input-group-addon">
+              <input type="checkbox" name="fuzzy" id="fuzzyCheckbox"> Ähnlich</input>
             </span>
 
             <span class="input-group-addon">
-              <input type="checkbox" name="future" id="futureCheckbox" checked> Zukunft</input>
+              <input type="checkbox" name="future" id="futureCheckbox"> Zukunft</input>
             </span>
 
             <span class="input-group-btn">

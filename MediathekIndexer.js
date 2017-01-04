@@ -73,60 +73,144 @@ class MediathekIndexer extends EventEmitter {
                 if (err) {
                     console.error(err);
                 } else {
-                    this.searchClient.indices.putMapping({
-                        index: 'filmliste',
-                        type: 'entries',
-                        body: {
-                            properties: {
-                                channel: {
-                                    'type': 'string',
-                                    'index': 'analyzed'
-                                },
-                                topic: {
-                                    'type': 'string',
-                                    'index': 'analyzed'
-                                },
-                                title: {
-                                    'type': 'string',
-                                    'index': 'analyzed'
-                                },
-                                timestamp: {
-                                    'type': 'long'
-                                },
-                                duration: {
-                                    'type': 'long'
-                                },
-                                size: {
-                                    'type': 'long'
-                                },
-                                url_video: {
-                                    'type': 'string',
-                                    'index': 'no'
-                                },
-                                url_website: {
-                                    'type': 'string',
-                                    'index': 'no'
-                                },
-                                url_video_low: {
-                                    'type': 'string',
-                                    'index': 'no'
-                                },
-                                url_video_hd: {
-                                    'type': 'string',
-                                    'index': 'no'
-                                }
-                            }
-                        }
+                    this.searchClient.indices.close({
+                        index: 'filmliste'
                     }, (err, resp, status) => {
                         if (err) {
-                            console.log(err);
+                            console.error(err);
+                        } else {
+                            this.putSettings((err, resp, status) => {
+                                if (err) {
+                                    console.error(err);
+                                } else {
+                                    this.putMapping((err, resp, status) => {
+                                        if (err) {
+                                            console.error(err);
+                                        } else {
+                                            this.searchClient.indices.open({
+                                                index: 'filmliste'
+                                            }, (err, resp, status) => {
+                                                if (err) {
+                                                    console.error(err);
+                                                } else {
+                                                    this.redis.flushdb(() => this.startWorkers());
+                                                    this.emitState();
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
                         }
-
-                        this.redis.flushdb(() => this.startWorkers());
-                        this.emitState();
                     });
                 }
             });
+        });
+    }
+
+    putMapping(callback) {
+        this.searchClient.indices.putMapping({
+            index: 'filmliste',
+            type: 'entries',
+            body: {
+                properties: {
+                    channel: {
+                        type: 'text',
+                        index: 'true',
+                        analyzer: 'mvw_index_analyzer',
+                        search_analyzer: 'mvw_search_analyzer'
+                    },
+                    topic: {
+                        type: 'text',
+                        index: 'true',
+                        analyzer: 'mvw_index_analyzer',
+                        search_analyzer: 'mvw_search_analyzer'
+                    },
+                    title: {
+                        type: 'text',
+                        index: 'true',
+                        analyzer: 'mvw_index_analyzer',
+                        search_analyzer: 'mvw_search_analyzer'
+                    },
+                    timestamp: {
+                        type: 'long',
+                        index: 'not_analyzed',
+                    },
+                    duration: {
+                        type: 'long',
+                        index: 'no'
+                    },
+                    size: {
+                        type: 'long',
+                        index: 'no'
+                    },
+                    url_video: {
+                        type: 'string',
+                        index: 'no'
+                    },
+                    url_website: {
+                        type: 'string',
+                        index: 'no'
+                    },
+                    url_video_low: {
+                        type: 'string',
+                        index: 'no'
+                    },
+                    url_video_hd: {
+                        type: 'string',
+                        index: 'no'
+                    }
+                }
+            }
+        }, (err, resp, status) => {
+            callback(err, resp, status);
+        });
+    }
+
+    putSettings(callback) {
+        this.searchClient.indices.putSettings({
+            index: 'filmliste',
+            body: {
+                analysis: {
+                    analyzer: {
+                        mvw_index_analyzer: {
+                            type: 'custom',
+                            tokenizer: 'mvw_tokenizer',
+                            filter: [
+                                'lowercase',
+                                'asciifolding'
+                            ]
+                        },
+                        mvw_search_analyzer: {
+                            type: 'custom',
+                            tokenizer: 'standard',
+                            filter: [
+                                'lowercase',
+                                'asciifolding'
+                            ]
+                        }
+                    },
+                    tokenizer: {
+                        mvw_tokenizer: {
+                            type: 'ngram',
+                            min_gram: 1,
+                            max_gram: 12,
+                            token_chars: [
+                                'letter',
+                                'digit'
+                            ]
+                        }
+                    },
+                    filter: {
+                        asciifoldingpreserveorig: {
+                            type: 'asciifolding',
+                            'preserve_original': true
+                        }
+                    }
+                }
+            }
+        }, (err, resp, status) => {
+            callback(err, resp, status);
         });
     }
 
