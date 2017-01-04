@@ -30,6 +30,14 @@
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
 
+    Number.prototype.pad = function(size) {
+        var s = String(this);
+        while (s.length < (size || 2)) {
+            s = "0" + s;
+        }
+        return s;
+    }
+
     function modalIsOpen(modalDOM) {
         return (modalDOM.data('bs.modal') || {}).isShown;
     }
@@ -161,7 +169,11 @@
             let data = result.results[i];
             data.dateString = moment.unix(data.timestamp).format('L');
             data.timeString = moment.unix(data.timestamp).format('LT');
-            data.durationString = isNaN(data.duration) ? '?' : moment.unix(data.duration - 3600).format('mm:ss');
+
+            let durationMoment = moment.duration(data.duration, 'seconds');
+            let minutes = (durationMoment.hours() * 60 + durationMoment.minutes()).pad(2);
+            let seconds = durationMoment.seconds().pad(2);
+            data.durationString = isNaN(data.duration) ? '?' : (minutes + ':' + seconds);
 
             mediathekTable.row.add(data);
         }
