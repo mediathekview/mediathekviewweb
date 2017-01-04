@@ -176,6 +176,7 @@ class MediathekIndexer extends EventEmitter {
                         mvw_index_analyzer: {
                             type: 'custom',
                             tokenizer: 'mvw_tokenizer',
+                            char_filter: ['toLatin'],
                             filter: [
                                 'lowercase',
                                 'asciifolding'
@@ -184,6 +185,7 @@ class MediathekIndexer extends EventEmitter {
                         mvw_search_analyzer: {
                             type: 'custom',
                             tokenizer: 'standard',
+                            char_filter: ['toLatin'],
                             filter: [
                                 'lowercase',
                                 'asciifolding'
@@ -192,7 +194,7 @@ class MediathekIndexer extends EventEmitter {
                     },
                     tokenizer: {
                         mvw_tokenizer: {
-                            type: 'ngram',
+                            type: 'edge_ngram',
                             min_gram: 1,
                             max_gram: 25,
                             token_chars: [
@@ -205,6 +207,32 @@ class MediathekIndexer extends EventEmitter {
                         asciifoldingpreserveorig: {
                             type: 'asciifolding',
                             'preserve_original': true
+                        }
+                    },
+                    char_filter: {
+                        toLatin: {
+                            type: 'mapping',
+                            mappings: [
+                                'ä => ae',
+                                'ö => oe',
+                                'ü => ue',
+                                'ù => u',
+                                'û => u',
+                                'ÿ => y',
+                                'à => a',
+                                'â => a',
+                                'æ => ae',
+                                'ç => c',
+                                'é => e',
+                                'è => e',
+                                'ê => e',
+                                'ë => e',
+                                'ï => i',
+                                'î => i',
+                                'ô => o',
+                                'œ => oe',
+                                'ß => ss'
+                            ]
                         }
                     }
                 }
