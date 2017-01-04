@@ -194,7 +194,7 @@ class MediathekIndexer extends EventEmitter {
                         mvw_tokenizer: {
                             type: 'ngram',
                             min_gram: 1,
-                            max_gram: 12,
+                            max_gram: 25,
                             token_chars: [
                                 'letter',
                                 'digit'
