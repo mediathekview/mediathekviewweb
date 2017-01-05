@@ -464,11 +464,16 @@
         $('#videooverlay').hide(200);
     }
 
+    function openContactsModal() {
+        contactModal.modal('show');
+        track('contact');
+    }
+
     function returnEmptyString() {
         return '';
     }
 
-    $(function() {
+    $(() => {
         connectingModal = $('#connectingModal');
         connectingModal.modal({
             backdrop: 'static',
@@ -480,6 +485,13 @@
         indexingModal.modal({
             backdrop: 'static',
             keyboard: false,
+            show: false
+        });
+
+        contactModal = $('#contactModal');
+        contactModal.modal({
+            backdrop: true,
+            keyboard: true,
             show: false
         });
 
@@ -571,6 +583,11 @@
             }
         });
 
+        $('#contactButton').click(() => openContactsModal());
+        $('#githubButton').click(() => track('github'));
+        $('#impressumButton').click(() => track('impressum'));
+        $('#datenschutzButton').click(() => track('datenschutz'));
+
         query();
     });
 </script>
@@ -589,14 +606,15 @@
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li><a target="_blank" href="/impressum">Impressum</a></li>
-                <li><a target="_blank" href="/datenschutz">Datenschutz</a></li>
+                <li><a id="contactButton" href="mailto:kontakt@mediathekviewweb.de" onclick="return false;">Kontakt</a></li>
+                <li><a id="githubButton" target="_blank" href="https://github.com/bagbag/mediathekviewweb">GitHub</a></li>
+                <li><a id="impressumButton" target="_blank" href="/impressum">Impressum</a></li>
+                <li><a id="datenschutzButton" target="_blank" href="/datenschutz">Datenschutz</a></li>
             </ul>
         </div>
     </nav>
 
     <div class="container">
-
         <div class="input-group" id="queryField">
             <span class="input-group-addon">Suche</span>
             <input type="text" style="min-width:13em" class="form-control" id="queryInput">
@@ -655,7 +673,6 @@
             </div>
         </div>
 
-
         <div id="connectingModal" class="modal fade" role="dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -699,10 +716,24 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <script type="text/javascript">
-    </script>
+        <div id="contactModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Kontakt</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die <a target="_blank" href="https://github.com/bagbag/mediathekviewweb/issues">Issues auf GitHub</a></p>
+                        <p>Für alles andere oder im Fall, dass du kein GitHub Account hast/willst, schreibe mir eine Mail: <a target="_blank" href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a></p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
 </body>
 
 </html>
