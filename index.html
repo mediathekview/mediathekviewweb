@@ -474,6 +474,8 @@
     }
 
     $(() => {
+        $('#browserWarning').remove();
+
         connectingModal = $('#connectingModal');
         connectingModal.modal({
             backdrop: 'static',
@@ -671,6 +673,10 @@
                 <ul id="pagination" class="pagination paginationstyle">
                 </ul>
             </div>
+        </div>
+
+        <div id="browserWarning" class="showafter1s" style="border: 3px solid red; padding: 10px; margin: 15px">
+            <span><a target="_blank" href="https://github.com/bagbag/mediathekviewweb/issues/8">Dein Browser wird nicht unterstützt</a> oder Javascript ist deaktiviert</span>
         </div>
 
         <div id="connectingModal" class="modal fade" role="dialog">

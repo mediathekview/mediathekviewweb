@@ -21,6 +21,22 @@
     }
 }
 
+.showafter1s {
+    animation: show 1s;
+}
+
+@keyframes show {
+    0% {
+        opacity: 0;
+    }
+    99% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .hidden {
     display: none;
 }
@@ -37,7 +53,7 @@ span.glyph-margin-left {
     margin-left: 0.25em;
 }
 
-.paginationstyle{
+.paginationstyle {
     margin: 0 !important;
     float: right;
 }
