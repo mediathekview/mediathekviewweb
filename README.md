@@ -1,4 +1,4 @@
-# MediathekViewWeb -> [https://mediathekviewweb.batrick.de](https://mediathekviewweb.batrick.de)
+# MediathekViewWeb -> [https://mediathekviewweb.batrick.de](https://mediathekviewweb.de/)
 
 MediathekViewWeb ist eine simple, alternative Oberfläche für die Filmlisten des [MediathekView Projekts](https://mediathekview.de/).
 
