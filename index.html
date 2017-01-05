@@ -186,8 +186,8 @@
 
         createPagination(shownPagesCount);
 
-        $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, zeige Treffer ' + (currentPage * itemsPerPage + 1) +
-            ' bis ' + ((currentPage + 1) * itemsPerPage) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.');
+        $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
+            ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.');
     }
 
     function createPaginationButton(text, active, enabled, callback) {
