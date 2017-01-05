@@ -114,8 +114,11 @@ io.on('connection', (socket) => {
         }
 
         if (!!piwik) {
-            let host = URL.parse(data.href).hostname;
+            if (!(typeof data.href === 'string' || data.href instanceof String)) {
+                return;
+            }
 
+            let host = URL.parse(data.href).hostname;
             if (!config.piwik.allowedHosts.includes(host)) {
                 return;
             }
