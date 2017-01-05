@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const https = require('https');
+const URL = require('url');
 const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
@@ -113,9 +114,15 @@ io.on('connection', (socket) => {
         }
 
         if (!!piwik) {
+            let host = URL.parse(data.href).hostname;
+
+            if (!config.piwik.allowedHosts.includes(host)) {
+                return;
+            }
+
             piwik.track({
                 token_auth: config.piwik.token_auth,
-                url: config.piwik.websiteUrl,
+                url: data.href,
                 uid: socketUid,
                 cip: clientIp,
 

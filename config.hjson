@@ -24,14 +24,17 @@
 
   piwik: {
     enabled: false
-    websiteUrl: "https://example.de"
+    allowedHosts: [
+      example.de
+      example2.com
+    ]
     piwikUrl: "https://piwik.example.de/piwik.php"
     token_auth: "abc123"
     siteId: 1
   }
 
   postgres: {
-    enabled: true
+    enabled: false
     user: "mediathekviewweb"
     database: "mediathekviewweb"
     password: ""
