@@ -148,7 +148,7 @@ class SearchEngine {
         if (!includeFuture) {
             filter.range = {
                 timestamp: {
-                    lte: Math.floor(Date.now() / 1000)
+                    to: 'now+1h/h'
                 }
             }
         }

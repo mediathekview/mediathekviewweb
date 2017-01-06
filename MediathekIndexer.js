@@ -133,16 +133,17 @@ class MediathekIndexer extends EventEmitter {
                         search_analyzer: 'mvw_search_analyzer'
                     },
                     timestamp: {
-                        type: 'long',
-                        index: 'not_analyzed',
+                        type: 'date',
+                        format: 'epoch_second',
+                        index: 'true',
                     },
                     duration: {
                         type: 'long',
-                        index: 'no'
+                        index: 'false'
                     },
                     size: {
                         type: 'long',
-                        index: 'no'
+                        index: 'false'
                     },
                     url_video: {
                         type: 'string',
