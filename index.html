@@ -26,6 +26,7 @@
     var indexingModal;
     var uid;
     var pv_id = randomString(6);
+    var playingInterval;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
@@ -108,7 +109,7 @@
         if (socket.connected) {
             track('heartbeat');
         }
-    }, 3 * 60 * 1000); //every 3 minutes
+    }, 20 * 60 * 1000); //every 20 minutes
 
     socket.on('indexState', (state) => {
         let parsingProgress = (state.parserProgress * 100).toFixed(0);
@@ -456,12 +457,21 @@
             });
         }).focus();
 
+        clearInterval(playingInterval); //in case it wasn't stopped for any reason
+        playingInterval = setInterval(() => {
+            if (socket.connected) {
+                track('playing');
+            }
+        }, 2 * 60 1000); //every 2 minutes
+
         track('play');
     }
 
     function closeVideo() {
         $('#videocontent').empty();
         $('#videooverlay').hide(200);
+
+        clearInterval(playingInterval);
     }
 
     function openContactsModal() {
