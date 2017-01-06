@@ -365,15 +365,6 @@ class MediathekIndexer extends EventEmitter {
     }
 
     indexComplete() {
-        let state = {
-            parserProgress: 1,
-            indexingProgress: 1,
-            totalEntries: this.totalEntries,
-            entries: this.totalEntries,
-            time: Date.now() - this.indexBegin,
-            done: true
-        };
-
         this.redis.batch().set('indexTimestamp', Math.floor(Date.now() / 1000))
             .set('indexCompleted', true)
             .exec((err, replies) => {
