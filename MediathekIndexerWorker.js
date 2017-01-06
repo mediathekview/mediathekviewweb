@@ -125,6 +125,7 @@ function processEntry() {
         size: parseInt(parsed[6]) * 1000000, //MB to bytes
         url_video: parsed[8],
         url_website: parsed[9],
+        url_subtitle: parsed[10],
         url_video_low: createUrlFromBase(parsed[8], parsed[12]),
         url_video_hd: createUrlFromBase(parsed[8], parsed[14])
     };

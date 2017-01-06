@@ -54,7 +54,8 @@
     }
 
     function formatBytes(bytes, decimals) {
-        if (bytes == 0) return '0 Byte';
+        if (isNaN(parseInt(bytes))) return '?';
+        else if (bytes == 0) return '0 Byte';
         var k = 1000;
         var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
         var i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -239,7 +240,28 @@
         });
     }
 
-    function createTableRow(text, url, videoTitle, filename, filesize) {
+    function createSubtitleRow(text, url, filename, filesize) {
+        let tableRow = $('<tr>');
+
+        let downloadButton = $('<a>', {
+            target: '_blank',
+            href: url,
+            download: filename
+        });
+
+        let downloadIcon = $('<span>').addClass('glyphicon glyphicon-save glyph-big');
+        downloadButton.append(downloadIcon);
+
+        let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2));
+
+        tableRow.append($('<td>').text(text));
+        tableRow.append(filesizeCell);
+        tableRow.append($('<td>').append(downloadButton));
+
+        return tableRow;
+    }
+
+    function createVideoRow(text, url, videoTitle, filename, filesize) {
         let tableRow = $('<tr>');
 
         let watchButton = $('<a>', {
@@ -269,7 +291,6 @@
         tableRow.append($('<td>').text(text));
         tableRow.append(filesizeCell);
         tableRow.append($('<td>').append(watchButton).append(downloadButton));
-        //tableRow.append($('<td>').append(downloadButton));
 
         return tableRow;
     }
@@ -314,21 +335,25 @@
         let tableHead = $('<thead>');
         let tableBody = $('<tbody>');
 
-        let filename = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + entry.timestamp;
+        let filenamebase = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + moment.unix(entry.timestamp).format('DD.MM.YYYY HH:mm');
 
-        let lowRow, midRow, highRow;
+        let lowRow, midRow, highRow, subtitleRow;
 
         if (entry.url_video_hd) {
-            highRow = createTableRow('Hoch', entry.url_video_hd, entry.title, filename);
+            highRow = createVideoRow('Hoch', entry.url_video_hd, entry.title, filenamebase + entry.url_video_hd.split('.').pop());
             tableBody.append(highRow);
         }
         if (entry.url_video) {
-            midRow = createTableRow('Mittel', entry.url_video, entry.title, filename, entry.size);
+            midRow = createVideoRow('Mittel', entry.url_video, entry.title, filenamebase + entry.url_video.split('.').pop(), entry.size);
             tableBody.append(midRow);
         }
         if (entry.url_video_low) {
-            lowRow = createTableRow('Niedrig', entry.url_video_low, entry.title, filename);
+            lowRow = createVideoRow('Niedrig', entry.url_video_low, entry.title, filenamebase + entry.url_video_low.split('.').pop());
             tableBody.append(lowRow);
+        }
+        if (entry.url_subtitle) {
+            subtitleRow = createSubtitleRow('UT', entry.url_subtitle, filenamebase + entry.url_subtitle.split('.').pop());
+            tableBody.append(subtitleRow);
         }
 
         table.append(tableBody);
@@ -370,6 +395,11 @@
                 if (lowRow) {
                     getContentLength(entry.url_video_low, (bytes) => {
                         lowRow.find('td:eq(1)').text(formatBytes(bytes, 2));
+                    });
+                }
+                if (subtitleRow) {
+                    getContentLength(entry.url_subtitle, (bytes) => {
+                        subtitleRow.find('td:eq(1)').text(formatBytes(bytes, 2));
                     });
                 }
             }
