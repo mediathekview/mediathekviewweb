@@ -113,7 +113,6 @@ function processEntry() {
     entryCounter++;
 
     let parsed = JSON.parse(filmlisteBuffer.pop());
-    let index = parsed[20];
 
     durationSplit = parsed[5].split(':');
 
@@ -133,8 +132,7 @@ function processEntry() {
     buffer.push({
         index: {
             _index: searchIndex,
-            _type: 'entries',
-            _id: index
+            _type: 'entries'
         }
     });
     buffer.push(entry);

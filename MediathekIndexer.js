@@ -20,18 +20,23 @@ class MediathekIndexer extends EventEmitter {
         this.options.redisSettings = redisSettings;
         this.options.elasticsearchSettings = JSON.stringify(elasticsearchSettings);
 
-
-
         this.redis = REDIS.createClient(this.options.redisSettings);
         this.searchClient = new elasticsearch.Client(JSON.parse(this.options.elasticsearchSettings));
 
+        this.handleStateInterval = null;
+        this.emitStateInterval = null;
+
+        this.indexingCompleteCallback = null;
+    }
+
+    init() {
         this.indexers = [];
         this.indexersState = new Array(this.options.workerCount);
         this.totalEntries = 0;
         this.parserProgress = 0;
         this.indexBegin = 0;
-
-        this.indexingCompleteCallback = null;
+        this.workersState = {};
+        this.indexingDone = false;
     }
 
     getLastIndexTimestamp(callback) {
@@ -59,9 +64,14 @@ class MediathekIndexer extends EventEmitter {
             throw new Error('already indexing');
         }
 
+        this.init();
+
         this.file = file;
         this.indexingCompleteCallback = indexingCompleteCallback;
         this.indexBegin = Date.now();
+
+        this.emitStateInterval = setInterval(() => this.emitState(), 500);
+        this.handleStateInterval = setInterval(() => this.handleState(), 500);
 
         this.searchClient.indices.delete({
             index: 'filmliste'
@@ -94,7 +104,6 @@ class MediathekIndexer extends EventEmitter {
                                                     console.error(err);
                                                 } else {
                                                     this.redis.flushdb(() => this.startWorkers());
-                                                    this.emitState();
                                                 }
                                             });
                                         }
@@ -172,6 +181,7 @@ class MediathekIndexer extends EventEmitter {
         this.searchClient.indices.putSettings({
             index: 'filmliste',
             body: {
+                refresh_interval: '-1',
                 analysis: {
                     analyzer: {
                         mvw_index_analyzer: {
@@ -292,67 +302,99 @@ class MediathekIndexer extends EventEmitter {
 
         ipcIndexer.on('state', (state) => {
             this.indexersState[indexerIndex] = state;
-            this.emitState();
         });
 
         this.indexers.push({
             indexer: indexer,
-            progress: 0,
             entries: 0,
             time: 0,
             done: false
         });
     }
 
-    emitState() {
-        this.emitState = lodash.throttle(() => {
-            var progress = 0;
-            var entries = 0;
-            var done = true;
+    combineWorkerStates() {
+        let entries = 0;
+        let done = true;
 
-            for (var i = 0; i < this.indexersState.length; i++) {
-                if (this.indexersState[i] != undefined) {
-                    progress += this.indexersState[i].progress;
-                    entries += this.indexersState[i].entries;
+        for (let i = 0; i < this.indexersState.length; i++) {
+            if (this.indexersState[i] != undefined) {
+                entries += this.indexersState[i].entries;
 
-                    if (this.indexersState[i].done == false) {
-                        done = false;
-                    }
-                } else {
+                if (this.indexersState[i].done == false) {
                     done = false;
                 }
-            }
-
-            if (done) {
-                this.indexers = [];
-                this.indexersState = new Array(this.options.workerCount);
-
-                let batch = this.redis.batch();
-
-                batch.set('indexTimestamp', Math.floor(Date.now() / 1000))
-                    .set('indexCompleted', true)
-                    .exec((err, replies) => {
-                        this._emitState(entries, done);
-                        if (typeof(this.indexingCompleteCallback) == 'function') {
-                            this.indexingCompleteCallback();
-                        }
-                    });
             } else {
-                this._emitState(entries, done);
+                done = false;
             }
+        }
 
-        }, 500);
-        this.emitState();
+        return {
+            entries: entries,
+            done: done
+        };
     }
 
-    _emitState(entries, done) {
+    handleState() {
+        this.workersState = this.combineWorkerStates();
+        let workersDone = this.workersState.done && (this.parserProgress == 1);
+
+        if (workersDone) {
+            clearInterval(this.handleStateInterval);
+
+            this.searchClient.indices.putSettings({
+                index: 'filmliste',
+                body: {
+                    refresh_interval: '5s'
+                }
+            }, (err, resp, status) => {
+                if (err) {
+                    console.error(err);
+                } else {
+                    this.searchClient.indices.refresh({
+                        index: 'filmliste'
+                    }, (err, resp, status) => {
+                        if (err) {
+                            console.error(err);
+                        } else {
+                            this.indexComplete();
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    indexComplete() {
+        let state = {
+            parserProgress: 1,
+            indexingProgress: 1,
+            totalEntries: this.totalEntries,
+            entries: this.totalEntries,
+            time: Date.now() - this.indexBegin,
+            done: true
+        };
+
+        this.redis.batch().set('indexTimestamp', Math.floor(Date.now() / 1000))
+            .set('indexCompleted', true)
+            .exec((err, replies) => {
+                clearInterval(this.emitStateInterval);
+                this.indexingDone = true;
+                this.emitState();
+
+                if (typeof(this.indexingCompleteCallback) == 'function') {
+                    this.indexingCompleteCallback();
+                }
+            });
+    }
+
+    emitState() {
         this.emit('state', {
             parserProgress: this.parserProgress,
-            indexingProgress: entries / (this.totalEntries / this.parserProgress),
+            indexingProgress: this.workersState.entries / (this.totalEntries / this.parserProgress),
             totalEntries: this.totalEntries,
-            entries: entries,
+            entries: this.workersState.entries,
             time: Date.now() - this.indexBegin,
-            done: done
+            done: this.indexingDone
         });
     }
 }
