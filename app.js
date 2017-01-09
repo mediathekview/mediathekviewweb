@@ -208,6 +208,10 @@ mediathekIndexer.on('state', (state) => {
     console.log('\tentries: ' + state.entries);
     console.log('\tdone: ' + state.done);
     console.log('\ttime: ' + (state.time / 1000) + ' seconds');
+    if (state.errorMessage) {
+        console.log('\terror: ' + state.errorMessage);
+    }
+
 
     if (state.done) {
         console.log();
@@ -253,9 +257,9 @@ function downloadFilmliste(mirror, successCallback, errCallback) {
     });
 }
 
-function indexMediathek(callback) {
+function indexMediathek(callback, errorCallback) {
     indexing = true;
-    mediathekIndexer.indexFile(config.filmliste, callback);
+    mediathekIndexer.indexFile(config.filmliste, callback, errorCallback);
 }
 
 function updateLoop() {
@@ -271,6 +275,10 @@ function updateLoop() {
                 indexMediathek(() => {
                     indexing = false;
                     console.log('indexing done');
+                    setTimeout(updateLoop, 3 * 60 * 1000);
+                }, () => {
+                    indexing = false;
+                    console.log('indexing error');
                     setTimeout(updateLoop, 3 * 60 * 1000);
                 });
             }, (err) => {

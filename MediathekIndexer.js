@@ -28,6 +28,21 @@ class MediathekIndexer extends EventEmitter {
         this.emitStateInterval = null;
 
         this.indexingCompleteCallback = null;
+        this.indexingErrorCallback = null;
+        this.errorMessage = null;
+    }
+
+    handleError(error) {
+        clearInterval(this.handleStateInterval);
+        clearInterval(this.emitStateInterval);
+
+        console.error(error);
+        this.errorMessage = error.message;
+        this.emitState();
+
+        if (typeof(this.indexingErrorCallback) == 'function') {
+            this.indexingErrorCallback();
+        }
     }
 
     init() {
@@ -98,7 +113,7 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    indexFile(file, indexingCompleteCallback) {
+    indexFile(file, indexingCompleteCallback, indexingErrorCallback) {
         if (this.indexing) {
             throw new Error('already indexing');
         }
@@ -107,6 +122,7 @@ class MediathekIndexer extends EventEmitter {
 
         this.file = file;
         this.indexingCompleteCallback = indexingCompleteCallback;
+        this.indexingErrorCallback = indexingErrorCallback;
         this.indexBegin = Date.now();
 
         this.emitStateInterval = setInterval(() => this.emitState(), 500);
@@ -115,44 +131,47 @@ class MediathekIndexer extends EventEmitter {
         this.searchClient.indices.delete({
             index: 'filmliste'
         }, (err, resp, status) => {
-
-            this.searchClient.indices.create({
-                index: 'filmliste'
-            }, (err, resp, status) => {
-                if (err) {
-                    console.error(err);
-                } else {
-                    this.searchClient.indices.close({
-                        index: 'filmliste'
-                    }, (err, resp, status) => {
-                        if (err) {
-                            console.error(err);
-                        } else {
-                            this.putSettings((err, resp, status) => {
-                                if (err) {
-                                    console.error(err);
-                                } else {
-                                    this.putMapping((err, resp, status) => {
-                                        if (err) {
-                                            console.error(err);
-                                        } else {
-                                            this.searchClient.indices.open({
-                                                index: 'filmliste'
-                                            }, (err, resp, status) => {
-                                                if (err) {
-                                                    console.error(err);
-                                                } else {
-                                                    this.redis.flushdb(() => this.startWorkers());
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            });
+            if (err) {
+                this.handleError(err);
+            } else {
+                this.searchClient.indices.create({
+                    index: 'filmliste'
+                }, (err, resp, status) => {
+                    if (err) {
+                        this.handleError(err);
+                    } else {
+                        this.searchClient.indices.close({
+                            index: 'filmliste'
+                        }, (err, resp, status) => {
+                            if (err) {
+                                this.handleError(err);
+                            } else {
+                                this.putSettings((err, resp, status) => {
+                                    if (err) {
+                                        this.handleError(err);
+                                    } else {
+                                        this.putMapping((err, resp, status) => {
+                                            if (err) {
+                                                this.handleError(err);
+                                            } else {
+                                                this.searchClient.indices.open({
+                                                    index: 'filmliste'
+                                                }, (err, resp, status) => {
+                                                    if (err) {
+                                                        this.handleError(err);
+                                                    } else {
+                                                        this.redis.flushdb(() => this.startWorkers());
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
         });
     }
 
@@ -334,7 +353,7 @@ class MediathekIndexer extends EventEmitter {
         });
 
         ipcIndexer.on('error', (err) => {
-            this.emit('error', err);
+            this.handleError(err);
         });
 
         let indexerIndex = this.indexers.length;
@@ -387,13 +406,13 @@ class MediathekIndexer extends EventEmitter {
                 }
             }, (err, resp, status) => {
                 if (err) {
-                    console.error(err);
+                    this.handleError(err);
                 } else {
                     this.searchClient.indices.refresh({
                         index: 'filmliste'
                     }, (err, resp, status) => {
                         if (err) {
-                            console.error(err);
+                            handleError(err);
                         } else {
                             this.indexComplete();
                         }
@@ -424,7 +443,8 @@ class MediathekIndexer extends EventEmitter {
             totalEntries: this.totalEntries,
             entries: this.workersState.entries,
             time: Date.now() - this.indexBegin,
-            done: this.indexingDone
+            done: this.indexingDone,
+            error: this.errorMessage
         });
     }
 }
