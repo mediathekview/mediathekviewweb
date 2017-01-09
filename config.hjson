@@ -9,11 +9,20 @@
   #number of indexing workers to fork or auto to set it to cpu count
   workerCount: auto
 
+  #indexing
   redis: {
     host: "127.0.0.1"
     port: 6379
     password: ""
     db: 2
+  }
+
+  #caching
+  redis2: {
+    host: "127.0.0.1"
+    port: 6379
+    password: ""
+    db: 3
   }
 
   elasticsearch: {

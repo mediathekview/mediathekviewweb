@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
 const SearchEngine = require('./SearchEngine.js');
+const REDIS = require('redis');
 const MediathekIndexer = require('./MediathekIndexer.js');
 const Hjson = require('hjson');
 const exec = require('child_process').exec;
@@ -18,6 +19,14 @@ config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60
 if (config.redis.password === '') {
     delete config.redis.password; //to prevent warning message
 }
+if (config.redis2.password === '') {
+    delete config.redis2.password; //to prevent warning message
+}
+
+var redis = REDIS.createClient(config.redis2);
+redis.on('error', (err) => {
+    console.error(err);
+});
 
 var sql;
 if (config.postgres.enabled) {
@@ -72,9 +81,20 @@ io.on('connection', (socket) => {
     }
 
     socket.on('getContentLength', (url, callback) => {
-        request.head(url, (error, response, body) => {
-            let contentLength = response.headers['content-length'];
-            callback(contentLength);
+        redis.get(url, (err, result) => {
+            if (result) {
+                callback(result);
+            } else {
+                request.head(url, (error, response, body) => {
+                    let contentLength = response.headers['content-length'];
+                    if (!contentLength) {
+                        contentLength = -1;
+                    }
+
+                    callback(contentLength);
+                    redis.set(url, contentLength);
+                });
+            }
         });
     });
 
