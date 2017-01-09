@@ -5,8 +5,6 @@
   webserverPort: 8000
 
   index: true
-  #Update Mediathek every N minutes
-  mediathekUpdateInterval: 60
 
   #number of indexing workers to fork or auto to set it to cpu count
   workerCount: auto

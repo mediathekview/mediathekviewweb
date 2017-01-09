@@ -35,10 +35,13 @@ function parseFilmliste(file, redisSettings) {
     lineReader.eachLine(fileStream, (line, last, getNext) => {
         currentLine++;
 
-        //if (currentLine == 20000)
-        //    last = true;
+        if (currentLine == 2) {
+            let regex = /".*?",\s"(\d+)\.(\d+)\.(\d+),\s?(\d+):(\d+)"/;
+            let match = regex.exec(line);
+            let timestamp = Math.floor(Date.UTC(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), parseInt(match[4]), parseInt(match[5])) / 1000);
 
-        if (currentLine >= 4 && !last) {
+            redis.set('filmlisteTimestamp', timestamp);
+        } else if (currentLine >= 4 && !last) {
             if (line[line.length - 1] == ',') {
                 line = line.slice(8, -1);
             } else {

@@ -190,28 +190,9 @@ mediathekIndexer.on('state', (state) => {
     console.log('\ttime: ' + (state.time / 1000) + ' seconds');
 
     if (state.done) {
-        indexing = false;
         console.log();
     }
 });
-
-function getRandomFilmlisteMirror(callback) {
-    request.get('https://res.mediathekview.de/akt.xml', (error, response, body) => {
-        if (!error && response.statusCode == 200) {
-            let filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
-            let urlMatches = [];
-
-            let match;
-            while ((match = filmlisteUrlRegex.exec(body)) !== null) {
-                urlMatches.push(match);
-            }
-
-            let url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
-
-            callback(url);
-        }
-    });
-}
 
 function deleteFileIfExist(file, callback) {
     fs.stat(file, (err, stats) => {
@@ -225,29 +206,27 @@ function deleteFileIfExist(file, callback) {
     });
 }
 
-function downloadFilmliste(successCallback, errCallback) {
-    getRandomFilmlisteMirror((url) => {
-        let file = config.filmliste + '.xz';
+function downloadFilmliste(mirror, successCallback, errCallback) {
+    let file = config.filmliste + '.xz';
 
-        deleteFileIfExist(file, () => {
-            let req = request.get(url);
-            req.on('error', function(err) {
-                errCallback(err);
-            });
+    deleteFileIfExist(file, () => {
+        let req = request.get(mirror);
+        req.on('error', function(err) {
+            errCallback(err);
+        });
 
-            let fileStream = fs.createWriteStream(file);
-            req.pipe(fileStream);
+        let fileStream = fs.createWriteStream(file);
+        req.pipe(fileStream);
 
-            fileStream.on('error', (error) => {
-                req.abort();
-                errCallback(error);
-            });
+        fileStream.on('error', (error) => {
+            req.abort();
+            errCallback(error);
+        });
 
-            req.on('end', () => {
-                deleteFileIfExist(config.filmliste, () => {
-                    exec('unxz ' + config.filmliste + '.xz').on('exit', () => {
-                        successCallback();
-                    });
+        req.on('end', () => {
+            deleteFileIfExist(config.filmliste, () => {
+                exec('unxz ' + config.filmliste + '.xz').on('exit', () => {
+                    successCallback();
                 });
             });
         });
@@ -259,35 +238,20 @@ function indexMediathek(callback) {
     mediathekIndexer.indexFile(config.filmliste, callback);
 }
 
-function checkUpdateNeeded(callback) {
-    mediathekIndexer.getLastIndexHasCompleted((completed) => {
-        if (completed) {
-            mediathekIndexer.getLastIndexTimestamp((result) => {
-                if ((parseInt(result) + config.mediathekUpdateInterval) <= (Date.now() / 1000)) {
-                    callback(true);
-                } else {
-                    callback(false);
-                }
-            });
-        } else {
-            callback(true);
-        }
-    });
-}
-
 function updateLoop() {
     if (!config.index) {
         return;
     }
 
-    checkUpdateNeeded((updateNeeded) => {
-        if (updateNeeded) {
+    mediathekIndexer.checkUpdateAvailable((updateAvailable, mirror) => {
+        if (updateAvailable) {
             console.log('downloading filmliste...');
-            downloadFilmliste(() => {
+            downloadFilmliste(mirror, () => {
                 console.log('indexing filmliste...');
                 indexMediathek(() => {
+                    indexing = false;
                     console.log('indexing done');
-                    setTimeout(updateLoop, 60 * 1000);
+                    setTimeout(updateLoop, 3 * 60 * 1000);
                 });
             }, (err) => {
                 console.error('download error: ' + err.message);
@@ -296,8 +260,9 @@ function updateLoop() {
                 setTimeout(updateLoop, 15 * 1000);
             });
         } else {
-            setTimeout(updateLoop, 60 * 1000);
+            setTimeout(updateLoop, 3 * 60 * 1000);
         }
     });
 }
+
 setImmediate(updateLoop);

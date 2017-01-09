@@ -7,6 +7,7 @@ const moment = require('moment');
 const lodash = require('lodash');
 const lineReader = require('line-reader');
 const elasticsearch = require('elasticsearch');
+const request = require('request');
 
 const cpuCount = os.cpus().length;
 const workerArgs = process.execArgv.concat(['--optimize_for_size', '--memory-reducer']);
@@ -39,8 +40,8 @@ class MediathekIndexer extends EventEmitter {
         this.indexingDone = false;
     }
 
-    getLastIndexTimestamp(callback) {
-        this.redis.get('indexTimestamp', (err, reply) => {
+    getFilmlisteTimestamp(callback) {
+        this.redis.get('filmlisteTimestamp', (err, reply) => {
             if (!err) {
                 callback(reply);
             } else {
@@ -49,12 +50,50 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    getLastIndexHasCompleted(callback) {
+    getIndexCompleted(callback) {
         this.redis.get('indexCompleted', (err, reply) => {
             if (!err) {
                 callback(reply === 'true');
             } else {
                 callback(false);
+            }
+        });
+    }
+
+    checkUpdateAvailable(callback) {
+        this.getIndexCompleted((indexCompleted) => {
+            this.getRandomFilmlisteMirror((mirror) => {
+                if (!indexCompleted) {
+                    callback(true, mirror);
+                } else {
+                    this.getFilmlisteTimestamp((filmlisteTimestamp) => {
+                        request.head(mirror, (error, response, body) => {
+                            var lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
+                            let tolerance = 15 * 60; //15 minutes
+                            callback((lastModified - filmlisteTimestamp) >= tolerance, mirror);
+                        });
+                    });
+                }
+            });
+        });
+    }
+
+    getRandomFilmlisteMirror(callback) {
+        request.get('https://res.mediathekview.de/akt.xml', (error, response, body) => {
+            if (!error && response.statusCode == 200) {
+                let filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
+                let urlMatches = [];
+
+                let match;
+                while ((match = filmlisteUrlRegex.exec(body)) !== null) {
+                    urlMatches.push(match);
+                }
+
+                let url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
+
+                callback(url);
+            } else {
+                callback(null);
             }
         });
     }
@@ -261,13 +300,13 @@ class MediathekIndexer extends EventEmitter {
         let parserIpc = new IPC(filmlisteParser);
 
         parserIpc.on('ready', () => {
-            parserIpc.send('parseFilmliste', {
-                file: this.file,
-                redisSettings: this.options.redisSettings
-            });
             parserIpc.on('state', (state) => {
                 this.totalEntries = state.entries;
                 this.parserProgress = state.progress;
+            });
+            parserIpc.send('parseFilmliste', {
+                file: this.file,
+                redisSettings: this.options.redisSettings
             });
 
             for (let i = 0; i < this.options.workerCount; i++) {
