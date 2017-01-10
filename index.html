@@ -108,7 +108,7 @@
     }
 
     setInterval(() => {
-        if (socket.connected) {
+        if (socket.connected && !isVideoPlaying()) {
             track('heartbeat');
         }
     }, 20 * 60 * 1000); //every 20 minutes
@@ -145,7 +145,6 @@
     function query() {
         query = _.throttle(() => {
             let queryString = $('#queryInput').val().trim();
-            //let searchTopic = $('#queryField input:radio:checked').val();
             let future = !!$('#futureCheckbox').prop('checked');
             let fuzzy = !!$('#fuzzyCheckbox').prop('checked');
 
@@ -457,12 +456,24 @@
     }
 
     function getVideo() {
-        return $('#videocontent > video')[0];;
+        return $('#videocontent > video')[0];
+    }
+
+    function isVideoPlaying() {
+        let video = getVideo();
+
+        if (!video) {
+            return false;
+        } else {
+            return !video.paused;
+        }
     }
 
     function toggleVideoPause() {
         let video = getVideo();
-        video.paused ? video.play() : video.pause();
+        if (video) {
+            video.paused ? video.play() : video.pause();
+        }
     }
 
     function playVideo(title, url) {
@@ -496,9 +507,13 @@
         clearInterval(playingInterval); //in case it wasn't stopped for any reason
         playingInterval = setInterval(() => {
             if (socket.connected) {
-                track('playing');
+                if (isVideoPlaying()) {
+                    track('playing');
+                } else {
+                    track('paused');
+                }
             }
-        }, 2 * 60 * 1000); //every 2 minutes
+        }, 1 * 60 * 1000); //every minute
 
         track('play');
     }
