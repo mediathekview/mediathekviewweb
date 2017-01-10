@@ -121,7 +121,6 @@
         $('#indexingMessage').text(state.entries);
         $('#indexingTimeLabel').text((state.time / 1000).toFixed(0) + ' Sekunden');
 
-        console.log(state);
         if (!state.done && !state.error) {
             if (!modalIsOpen(indexingModal)) {
                 indexingModal.modal('show');
