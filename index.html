@@ -27,6 +27,7 @@
     var uid;
     var pv_id = randomString(6);
     var playingInterval;
+    var lastQueryString = null;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
@@ -142,9 +143,13 @@
         trackQuery();
     }
 
+    function getQueryString() {
+        return $('#queryInput').val().trim();
+    }
+
     function query() {
         query = _.throttle(() => {
-            let queryString = $('#queryInput').val().trim();
+            let queryString = getQueryString();
             let future = !!$('#futureCheckbox').prop('checked');
             let fuzzy = !!$('#fuzzyCheckbox').prop('checked');
 
@@ -631,7 +636,14 @@
             query();
         };
 
-        $('#queryInput').on('input', () => newQuery());
+        $('#queryInput').on('input', () => {
+            let currentQueryString = getQueryString();
+
+            if (currentQueryString != lastQueryString) {
+                newQuery();
+                lastQueryString = currentQueryString;
+            }
+        });
         $('#queryField input:radio').change(() => newQuery());
         $('#queryField input:checkbox').change(() => newQuery());
 
@@ -693,18 +705,6 @@
         <div class="input-group" id="queryField">
             <span class="input-group-addon">Suche</span>
             <input type="text" style="min-width:13em" class="form-control" id="queryInput">
-
-            <!--<span class="input-group-addon">
-              <input type="radio" name="searchmode" value="true"> Titel &amp; Thema</input>
-            </span>
-
-            <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="false"> Titel</input>
-            </span>
-
-            <span class="input-group-addon">
-              <input type="radio" name="searchmode" value="auto" checked> Auto</input>
-            </span>-->
 
             <span class="input-group-addon">
               <input type="checkbox" name="fuzzy" id="fuzzyCheckbox"> Ähnlich</input>
