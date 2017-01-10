@@ -253,6 +253,8 @@
             download: filename
         });
 
+        downloadButton.click(() => track('download-subtitle'));
+
         let downloadIcon = $('<span>').addClass('glyphicon glyphicon-save glyph-big');
         downloadButton.append(downloadIcon);
 
@@ -286,11 +288,12 @@
             download: filename
         });
 
+        downloadButton.click(() => track('download-video'));
+
         let downloadIcon = $('<span>').addClass('glyphicon glyphicon-save glyph-big glyph-margin-left');
         downloadButton.append(downloadIcon);
 
         let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2));
-
 
         tableRow.append($('<td>').text(text));
         tableRow.append(filesizeCell);
