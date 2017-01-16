@@ -312,6 +312,9 @@
             if (popover.length) {
                 if (!popover.is(':hover') && !button.is(':hover')) {
                     button.popover('hide');
+                    button.removeClass('text-warning');
+                    button.children().first().removeClass('glpyh-extra-big');
+                    button.clicked = false;
                 }
             }
         }, 150);
@@ -324,7 +327,14 @@
             target: '_blank',
             href: entry.url_video,
             click: () => {
-                playVideo(entry.title, highestQualityUrl);
+                if (!button.clicked) {
+                    button.clicked = true;
+                    button.addClass('text-warning');
+                    button.children().first().addClass('glpyh-extra-big');
+                } else {
+                    playVideo(entry.title, highestQualityUrl);
+                }
+
                 return false;
             }
         });

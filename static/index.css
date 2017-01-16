@@ -42,7 +42,13 @@
 }
 
 span.glyph-big {
-    font-size: 1.3em;
+    font-size: 1.2em;
+    transition: all 0.25s ease-in-out;
+}
+
+span.glpyh-extra-big {
+    font-size: 1.6em !important;
+    transition: all 0.25s ease-in-out;
 }
 
 span.glyph-margin-right {
