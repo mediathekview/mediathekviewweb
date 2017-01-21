@@ -82,7 +82,7 @@
         });
     }
 
-    if (typeof(Storage) !== "undefined") {
+    if (typeof(Storage) !== "undefined" && localStorage != null) {
         uid = localStorage.getItem('uid');
     }
     if (!!uid) {
@@ -97,7 +97,9 @@
         track('index');
     } else {
         socket.on('uid', (_uid) => {
-            localStorage.setItem('uid', _uid);
+            if (typeof(Storage) !== "undefined" && localStorage != null) {
+                localStorage.setItem('uid', _uid);
+            }
             Cookies.set('uid', _uid, {
                 expires: 99999
             });
