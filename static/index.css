@@ -1,23 +1,23 @@
-.glyphicon.spinning {
-    animation: spin 1s infinite linear;
-    -webkit-animation: spin2 1s infinite linear;
+.spinning {
+    animation: spin 2s infinite linear;
+    -webkit-animation: spin2 2s infinite linear;
 }
 
 @keyframes spin {
     from {
-        transform: scale(1) rotate(0deg);
+        transform: scale(1) rotate(360deg);
     }
     to {
-        transform: scale(1) rotate(360deg);
+        transform: scale(1) rotate(0deg);
     }
 }
 
 @-webkit-keyframes spin2 {
     from {
-        -webkit-transform: rotate(0deg);
+        -webkit-transform: rotate(360deg);
     }
     to {
-        -webkit-transform: rotate(360deg);
+        -webkit-transform: rotate(0deg);
     }
 }
 
@@ -41,22 +41,12 @@
     display: none;
 }
 
-span.glyph-big {
-    font-size: 1.2em;
-    transition: all 0.25s ease-in-out;
+.margin-left {
+    margin-left: 0.2em;
 }
 
-span.glpyh-extra-big {
-    font-size: 1.6em !important;
-    transition: all 0.25s ease-in-out;
-}
-
-span.glyph-margin-right {
-    margin-right: 0.25em;
-}
-
-span.glyph-margin-left {
-    margin-left: 0.25em;
+.margin-right {
+    margin-right: 0.2em;
 }
 
 .paginationstyle {
@@ -66,6 +56,38 @@ span.glyph-margin-left {
 
 .initiallyHidden {
     display: none;
+}
+
+.floatRight {
+    float: right;
+}
+
+.floatLeft {
+    float: left;
+}
+
+.watchDownloadField {
+    min-width: 3.8em;
+}
+
+.filesizeCell {
+    min-width: 6.2em;
+}
+
+.material-icons {
+    font-size: 1em;
+    vertical-align: middle;
+    line-height: 0 !important;
+    transition: all 0.25s ease-in-out;
+}
+
+td {
+  vertical-align: middle !important;
+}
+
+.icon-big {
+    font-size: 2em !important;
+    transition: all 0.25s ease-in-out;
 }
 
 .overlay {

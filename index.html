@@ -5,6 +5,8 @@
     <title>MediathekViewWeb</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/static/favicon.png" sizes="96x96">
+
     <link rel="stylesheet" href="../../static/index.css">
     <link rel="stylesheet" href="../../static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../../static/DataTables/datatables.min.css" />
@@ -15,6 +17,14 @@
     <script src="../../static/moment-with-locales.min.js"></script>
     <script src="../../static/DataTables/datatables.min.js"></script>
     <script src="../../static/lodash.min.js"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <style>
+        html * {
+            font-family: 'Roboto';
+        }
+    </style>
 </head>
 
 <script>
@@ -260,7 +270,7 @@
 
         downloadButton.click(() => track('download-subtitle'));
 
-        let downloadIcon = $('<span>').addClass('glyphicon glyphicon-save glyph-big');
+        let downloadIcon = $('<i>').addClass('material-icons floatRight').text('save');
         downloadButton.append(downloadIcon);
 
         let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2));
@@ -284,8 +294,8 @@
             }
         });
 
-        let eyeIcon = $('<span>').addClass('glyphicon glyphicon-eye-open glyph-big glyph-margin-right');
-        watchButton.append(eyeIcon);
+        let watchIcon = $('<i>').addClass('material-icons floatLeft').text('ondemand_video');
+        watchButton.append(watchIcon);
 
         let downloadButton = $('<a>', {
             target: '_blank',
@@ -295,14 +305,14 @@
 
         downloadButton.click(() => track('download-video'));
 
-        let downloadIcon = $('<span>').addClass('glyphicon glyphicon-save glyph-big glyph-margin-left');
+        let downloadIcon = $('<i>').addClass('material-icons floatRight').text('save');
         downloadButton.append(downloadIcon);
 
-        let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2));
+        let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2)).addClass('filesizeCell');
 
         tableRow.append($('<td>').text(text));
         tableRow.append(filesizeCell);
-        tableRow.append($('<td>').append(watchButton).append(downloadButton));
+        tableRow.append($('<td>').append($('<div>').append(watchButton).append(downloadButton).addClass('watchDownloadField')));
 
         return tableRow;
     }
@@ -315,7 +325,7 @@
                 if (!popover.is(':hover') && !button.is(':hover')) {
                     button.popover('hide');
                     button.removeClass('text-warning');
-                    button.children().first().removeClass('glpyh-extra-big');
+                    button.children().first().removeClass('icon-big');
                     button.clicked = false;
                 }
             }
@@ -332,7 +342,7 @@
                 if (!button.clicked) {
                     button.clicked = true;
                     button.addClass('text-warning');
-                    button.children().first().addClass('glpyh-extra-big');
+                    button.children().first().addClass('icon-big');
                 } else {
                     playVideo(entry.title, highestQualityUrl);
                 }
@@ -341,7 +351,7 @@
             }
         });
 
-        let icon = $('<span>').addClass('glyphicon glyphicon-film glyph-big');
+        let icon = $('<i>').addClass('material-icons').text('movie');
         button.append(icon);
 
         let table = $('<table>').addClass('table-condensed');
@@ -768,10 +778,10 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title">Keine Verbindung...</h4>
+                        <h4 class="modal-title">Keine Verbindung</h4>
                     </div>
                     <div class="modal-body">
-                        <span class="glyphicon glyphicon-repeat spinning"></span> Verbinden...
+                        <i class="material-icons spinning" style="display: inline-flex; vertical-align: middle; font-size: 2.5em;">sync</i> <span style="font-size:1.2em; vertical-align: middle;">Verbinde...</span>
                     </div>
                 </div>
 
