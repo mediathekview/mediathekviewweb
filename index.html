@@ -175,8 +175,8 @@
                 size: itemsPerPage
             };
 
-            socket.emit('queryEntry', queryObj, (result) => {
-                handleQueryResult(result);
+            socket.emit('queryEntries', queryObj, (message) => {
+                handleQueryResult(message.result, message.err);
             });
 
             trackQuery();
@@ -184,8 +184,17 @@
         query();
     }
 
-    function handleQueryResult(result) {
+    function handleQueryResult(result, err) {
         mediathekTable.clear();
+        mediathekTable.draw();
+
+        if (err) {
+
+            $('#queryInfoLabel').html('Fehler:<br/>' + err.join('<br/>'));
+            $('#pagination').empty();
+
+            return;
+        }
 
         for (var i = 0; i < result.results.length; i++) {
             let data = result.results[i];
