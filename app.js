@@ -71,6 +71,9 @@ app.get('/datenschutz', function(req, res) {
 });
 
 app.get('/api', (req, res) => {
+
+    res.header('Access-Control-Allow-Origin', '*');
+
     if (req.query.action == 'search') {
         let begin = process.hrtime();
         searchEngine.search(req.query, (result, err) => {
