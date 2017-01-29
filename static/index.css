@@ -82,7 +82,15 @@
 }
 
 td {
-  vertical-align: middle !important;
+    vertical-align: middle !important;
+}
+
+#mediathek {
+    width: 100% !important;
+}
+
+.smallMarginTop {
+    margin-top: 0.3em;
 }
 
 .icon-big {

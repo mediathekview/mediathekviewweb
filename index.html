@@ -198,8 +198,8 @@
 
         for (var i = 0; i < result.results.length; i++) {
             let data = result.results[i];
-            data.dateString = moment.unix(data.timestamp).format('L');
-            data.timeString = moment.unix(data.timestamp).format('LT');
+            data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
+            data.timeString = moment.unix(data.timestamp).format('HH:MM');
 
             let durationMoment = moment.duration(data.duration, 'seconds');
             let minutes = (durationMoment.hours() * 60 + durationMoment.minutes()).pad(2);
@@ -620,7 +620,7 @@
 
         mediathekTable = $('#mediathek').DataTable({
             columns: [{ //Sender
-                width: '6%',
+                width: '6ch',
                 data: null,
                 render: returnEmptyString,
                 createdCell: (td, cellData, rowData, row, col) => {
@@ -632,21 +632,22 @@
                     $(td).append(link);
                 }
             }, { //Thema
-                width: '16%',
+                width: '30%',
                 data: 'topic'
             }, { //Title
+                width: '70%',
                 data: 'title'
             }, { //Date
-                width: '8%',
+                width: '7ch',
                 data: 'dateString'
             }, { //Time
-                width: '7%',
+                width: '5ch',
                 data: 'timeString'
-            }, { //Duration
-                width: '5%',
+            },{ //Duration
+                width: '1%',
                 data: 'durationString'
             }, { //Video
-                width: '4%',
+                width: '1%',
                 data: null,
                 render: returnEmptyString,
                 createdCell: (td, cellData, rowData, row, col) => {
@@ -659,7 +660,8 @@
             searching: false,
             ordering: false,
             info: false,
-            paging: false
+            paging: false,
+            scrollX: true
         });
 
         let newQuery = () => {
@@ -675,8 +677,8 @@
                 lastQueryString = currentQueryString;
             }
         });
-        $('#queryField input:radio').change(() => newQuery());
-        $('#queryField input:checkbox').change(() => newQuery());
+        $('#queryParameters input:radio').change(() => newQuery());
+        $('#queryParameters input:checkbox').change(() => newQuery());
 
         $('#videocloseButton').click(() => {
             closeVideo();
@@ -719,38 +721,53 @@
     <nav class="navbar navbar-default">
         <div class="container-fluid">
             <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
                 <a class="navbar-brand" href="#">MediathekViewWeb</a>
             </div>
-            <ul class="nav navbar-nav">
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-                <li><a id="contactButton" href="mailto:kontakt@mediathekviewweb.de" onclick="return false;">Kontakt</a></li>
-                <li><a id="githubButton" target="_blank" href="https://github.com/bagbag/mediathekviewweb">GitHub</a></li>
-                <li><a id="impressumButton" target="_blank" href="/impressum">Impressum</a></li>
-                <li><a id="datenschutzButton" target="_blank" href="/datenschutz">Datenschutz</a></li>
-            </ul>
+            <div class="collapse navbar-collapse" id="navbar">
+                <ul class="nav navbar-nav">
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a id="contactButton" href="mailto:kontakt@mediathekviewweb.de" onclick="return false;">Kontakt</a></li>
+                    <li><a id="githubButton" target="_blank" href="https://github.com/bagbag/mediathekviewweb">GitHub</a></li>
+                    <li><a id="impressumButton" target="_blank" href="/impressum">Impressum</a></li>
+                    <li><a id="datenschutzButton" target="_blank" href="/datenschutz">Datenschutz</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <div class="container">
-        <div class="input-group" id="queryField">
-            <span class="input-group-addon">Suche</span>
-            <input type="text" style="min-width:13em" class="form-control" id="queryInput">
 
-            <span class="input-group-addon">
-              <input type="checkbox" name="fuzzy" id="fuzzyCheckbox"> Ähnlich</input>
-            </span>
+        <div class="row">
+            <div class="col-lg-9 col-md-8 col-sm-7">
+                <div class="input-group">
+                    <span class="input-group-addon">Suche</span>
+                    <input type="text" style="min-width:13em;" class="form-control" id="queryInput">
+                </div>
+            </div>
 
-            <span class="input-group-addon">
-              <input type="checkbox" name="future" id="futureCheckbox"> Zukunft</input>
-            </span>
+            <div class="col-lg-3 col-md-4 col-sm-5">
+                <div class="input-group" id="queryParameters">
+                    <span class="input-group-addon">
+                          <input type="checkbox" name="fuzzy" id="fuzzyCheckbox"> Ähnlich</input>
+                        </span>
 
-            <span class="input-group-btn">
-              <button onclick="window.open('https://github.com/bagbag/mediathekviewweb', '_blank');" class="btn btn-default" type="button">Hilfe!</button>
-            </span>
+                    <span class="input-group-addon">
+                          <input type="checkbox" name="future" id="futureCheckbox"> Zukunft</input>
+                        </span>
+
+                    <span class="input-group-btn">
+                          <button onclick="window.open('https://github.com/bagbag/mediathekviewweb', '_blank');" class="btn btn-default" type="button">Hilfe!</button>
+                        </span>
+                </div>
+            </div>
         </div>
 
-        <br>
         <br>
 
         <table id="mediathek" class="table table-striped table-hover">
@@ -769,13 +786,13 @@
             </tbody>
         </table>
 
-        <div class="row">
-            <div class="col-sm-7">
-                <label id="queryInfoLabel"></label>
-            </div>
-            <div class="col-sm-5">
+        <div class="smallMarginTop">
+            <div class="floatRight">
                 <ul id="pagination" class="pagination paginationstyle">
                 </ul>
+            </div>
+            <div class="floatLeft">
+                <label id="queryInfoLabel"></label>
             </div>
         </div>
 
