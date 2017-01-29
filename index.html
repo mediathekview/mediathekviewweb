@@ -189,10 +189,13 @@
         mediathekTable.draw();
 
         if (err) {
-
             $('#queryInfoLabel').html('Fehler:<br/>' + err.join('<br/>'));
             $('#pagination').empty();
 
+            return;
+        }
+
+        if (!result) {
             return;
         }
 
@@ -643,7 +646,7 @@
             }, { //Time
                 width: '5ch',
                 data: 'timeString'
-            },{ //Duration
+            }, { //Duration
                 width: '1%',
                 data: 'durationString'
             }, { //Video
@@ -715,7 +718,15 @@
 <body>
     <div id="videooverlay" class="overlay initiallyHidden" tabindex="0">
         <a href="#" id="videocloseButton" class="closeButton">&times;</a>
-        <div id="videocontent" class="overlay-content"></div>
+
+        <div class="row overlay-content">
+            <div class="col-lg-3 col-md-2 col-sm-2 col-xs-1"></div>
+            <div class="col-lg-6 col-md-8 col-sm-8 col-xs-10 noPadding">
+                <div id="videocontent"></div>
+            </div>
+            <div class="col-lg-3 col-md-2 col-sm-2 col-xs-1"></div>
+        </div>
+
     </div>
 
     <nav class="navbar navbar-default">

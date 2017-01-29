@@ -98,6 +98,10 @@ td {
     transition: all 0.25s ease-in-out;
 }
 
+.noPadding {
+    padding: 0 !important;
+}
+
 .overlay {
     position: fixed;
     height: 100%;
@@ -111,9 +115,9 @@ td {
 
 .overlay-content {
     position: relative;
-    top: 15%;
-    width: 50%;
-    margin: auto;
+    top: 20%;
+    width: 100%;
+    margin: 0;
     text-align: center;
 }
 
