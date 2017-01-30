@@ -74,10 +74,12 @@
     min-width: 6.2em;
 }
 
+.movie-icon {
+  line-height: 0 !important;
+}
+
 .material-icons {
-    font-size: 1em;
     vertical-align: middle;
-    line-height: 0 !important;
     transition: all 0.25s ease-in-out;
 }
 

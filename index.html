@@ -223,10 +223,10 @@
             ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.');
     }
 
-    function createPaginationButton(text, active, enabled, callback) {
+    function createPaginationButton(html, active, enabled, callback) {
         let button = $('<li>').addClass(active ? 'active' : '').addClass(enabled ? '' : 'disabled').append($('<a>', {
             href: '#',
-            text: text
+            html: html
         }));
 
         if (enabled && !active) {
@@ -243,7 +243,7 @@
         let pagination = $('#pagination');
         pagination.empty();
 
-        let backButton = createPaginationButton('Zurück', false, currentPage > 0, () => {
+        let backButton = createPaginationButton('<i class="material-icons" style="margin: -6px;">arrow_left</i>', false, currentPage > 0, () => {
             currentPage--;
         });
         pagination.append(backButton);
@@ -258,7 +258,7 @@
             pagination.append(button);
         }
 
-        let nextButton = createPaginationButton('Nächste', false, currentPage < (totalPages - 1), () => {
+        let nextButton = createPaginationButton('<i class="material-icons" style="margin: -6px">arrow_right</i>', false, currentPage < (totalPages - 1), () => {
             currentPage++;
         });
         pagination.append(nextButton);
@@ -363,7 +363,7 @@
             }
         });
 
-        let icon = $('<i>').addClass('material-icons').text('movie');
+        let icon = $('<i>').addClass('material-icons movie-icon').text('movie');
         button.append(icon);
 
         let table = $('<table>').addClass('table-condensed');
@@ -517,6 +517,7 @@
 
     function playVideo(title, url) {
         $('#videooverlay').show(200, () => {
+
             let videoplayer = $('<video>', {
                 controls: '',
                 width: '100%'
