@@ -44,7 +44,7 @@ class SearchEngine {
         }
 
         if (this.isIntegerString(q.from)) {
-          q.from = parseInt(q.from);
+            q.from = parseInt(q.from);
         }
         if (q.from !== undefined && typeof q.from != 'number') {
             queryErrors.push('type of from must be number');
@@ -53,7 +53,7 @@ class SearchEngine {
         }
 
         if (this.isIntegerString(q.size)) {
-          q.size = parseInt(q.size);
+            q.size = parseInt(q.size);
         }
         if (q.size !== undefined && typeof q.size != 'number') {
             queryErrors.push('type of size must be number');
@@ -61,13 +61,15 @@ class SearchEngine {
             queryErrors.push('value of size must be an integer');
         }
 
-        if (this.isIntegerString(q.size)) {
-          q.size = parseInt(q.size);
+        if (this.isBooleanString(q.includeDescription)) {
+            if (q.includeDescription === 'true') {
+                q.includeDescription = true;
+            } else if (q.includeDescription === 'false') {
+                q.includeDescription = false;
+            }
         }
-        if (q.size !== undefined && typeof q.size != 'number') {
-            queryErrors.push('type of size must be number');
-        } else if (q.size !== undefined && (q.size % 1) != 0) {
-            queryErrors.push('value of size must be an integer');
+        if (q.includeDescription !== undefined && typeof q.includeDescription != 'boolean') {
+            queryErrors.push('type of includeDescription must be boolean');
         }
 
         if (this.isBooleanString(q.fuzzy)) {
@@ -91,6 +93,7 @@ class SearchEngine {
             searchTopic: (q.searchTopic === undefined) ? 'auto' : q.searchTopic,
             future: (q.future === undefined) ? true : q.future,
             from: (q.from === undefined) ? 0 : q.from,
+            includeDescription: (q.includeDescription === undefined) ? false : q.includeDescription,
             size: (q.size === undefined) ? 10 : q.size,
             fuzzy: (q.fuzzy === undefined) ? false : q.fuzzy
         }
@@ -98,6 +101,11 @@ class SearchEngine {
         let parsedQueryString = this.parseQuery(query.queryString);
         let musts = [];
         let elasticQuery = {};
+        let excludes = [];
+
+        if (!query.includeDescription) {
+            excludes.push('description');
+        }
 
         if (query.searchTopic == 'auto') {
             if (parsedQueryString.topics.length == 0) {
@@ -202,6 +210,9 @@ class SearchEngine {
             from: query.from,
             size: query.size,
             body: {
+                _source: {
+                    excludes: excludes
+                },
                 query: elasticQuery,
                 sort: {
                     timestamp: {

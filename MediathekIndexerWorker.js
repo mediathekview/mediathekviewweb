@@ -120,6 +120,7 @@ function processEntry() {
         channel: parsed[0],
         topic: parsed[1],
         title: parsed[2],
+        description: parsed[7],
         timestamp: parseInt(parsed[16]),
         duration: (parseInt(durationSplit[0]) * 60 * 60) + (parseInt(durationSplit[1]) * 60) + parseInt(durationSplit[2]),
         size: parseInt(parsed[6]) * 1000000, //MB to bytes
