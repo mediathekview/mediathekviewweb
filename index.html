@@ -202,7 +202,7 @@
         for (var i = 0; i < result.results.length; i++) {
             let data = result.results[i];
             data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
-            data.timeString = moment.unix(data.timestamp).format('HH:MM');
+            data.timeString = moment.unix(data.timestamp).format('HH:mm');
 
             let durationMoment = moment.duration(data.duration, 'seconds');
             let minutes = (durationMoment.hours() * 60 + durationMoment.minutes()).pad(2);
