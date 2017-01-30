@@ -19,6 +19,23 @@ class SearchEngine {
         return /^\d+$/.test(str);
     }
 
+    getDescription(id, callback) {
+        this.searchClient.get({
+            index: 'filmliste',
+            type: 'entries',
+            id: id
+        }, (err, response) => {
+            if (!response.found) {
+                callback('document not found');
+            } else if (err) {
+                callback('error: ' + response);
+                console.error(response);
+            } else {
+                callback(response._source.description);
+            }
+        });
+    }
+
     search(q, callback) {
         let queryErrors = [];
 
@@ -230,7 +247,10 @@ class SearchEngine {
                 let result = [];
 
                 for (let i = 0; i < response.hits.hits.length; i++) {
-                    result.push(response.hits.hits[i]._source);
+                    let entry = response.hits.hits[i]._source;
+                    entry.id = response.hits.hits[i]._id;
+
+                    result.push(entry);
                 }
 
                 callback({

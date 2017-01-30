@@ -144,6 +144,15 @@ io.on('connection', (socket) => {
         });
     });
 
+    socket.on('getDescription', (id, callback) => {
+        if (indexing) {
+            callback('cannot get description while indexing');
+            return;
+        }
+
+        searchEngine.getDescription(id, callback);
+    });
+
     socket.on('queryEntries', (query, callback) => {
         if (indexing) {
             callback(null, ['cannot query while indexing']);
