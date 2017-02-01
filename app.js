@@ -155,7 +155,10 @@ io.on('connection', (socket) => {
 
     socket.on('queryEntries', (query, callback) => {
         if (indexing) {
-            callback(null, ['cannot query while indexing']);
+            callback({
+                result: null,
+                err: ['cannot query while indexing']
+            });
             return;
         }
 

@@ -242,7 +242,7 @@ class SearchEngine {
             }
         }, (error, response, status) => {
             if (error) {
-                callback(null, [error]);
+                callback(null, ['Elasticsearch: ' + error.message]);
             } else {
                 let result = [];
 
