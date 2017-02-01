@@ -201,7 +201,6 @@
 
         for (var i = 0; i < result.results.length; i++) {
             let data = result.results[i];
-            console.log(data);
             data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
             data.timeString = moment.unix(data.timestamp).format('HH:mm');
 
@@ -910,7 +909,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title">Datenbank wird aktualisiert...</h4>
+                            <h4 class="modal-title">Server aktualisiert Datenbank...</h4>
                         </div>
                         <div class="modal-body">
                             <div class="progress">
