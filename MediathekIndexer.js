@@ -200,8 +200,10 @@ class MediathekIndexer extends EventEmitter {
                         search_analyzer: 'mvw_search_analyzer'
                     },
                     description: {
-                        type: 'string',
-                        index: 'no'
+                        type: 'text',
+                        index: 'true',
+                        analyzer: 'mvw_index_analyzer',
+                        search_analyzer: 'mvw_search_analyzer'
                     },
                     timestamp: {
                         type: 'date',

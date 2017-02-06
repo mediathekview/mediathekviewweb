@@ -136,7 +136,7 @@ class SearchEngine {
             query.searchTopic = false;
         }
 
-        if (parsedQueryString.channels.length == 0 && parsedQueryString.topics.length == 0 && parsedQueryString.titleParts.length == 0) {
+        if (parsedQueryString.channels.length == 0 && parsedQueryString.topics.length == 0 && parsedQueryString.titleParts.length == 0 && parsedQueryString.descriptions.length == 0) {
             elasticQuery = this.createFilter(query.future);
         } else {
             let filter = this.createFilter(query.future);
@@ -174,6 +174,24 @@ class SearchEngine {
             musts.push({
                 bool: {
                     should: topicMatches
+                }
+            });
+
+            let descriptionMatches = [];
+            for (let i = 0; i < parsedQueryString.descriptions.length; i++) {
+                descriptionMatches.push({
+                    match: {
+                        description: {
+                            query: parsedQueryString.descriptions[i].join(' '),
+                            operator: 'and'
+                        }
+                    }
+                });
+            }
+
+            musts.push({
+                bool: {
+                    should: descriptionMatches
                 }
             });
 
@@ -278,6 +296,7 @@ class SearchEngine {
     parseQuery(query) {
         let channels = [];
         let topics = [];
+        let descriptions = [];
         let titleParts = [];
 
         let splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
@@ -301,6 +320,13 @@ class SearchEngine {
                 if (t.length > 0) {
                     topics.push(t);
                 }
+            } else if (split[0] == '*') {
+                let d = split.slice(1, split.length).split(',').filter((split) => {
+                    return (split.length > 0);
+                });
+                if (d.length > 0) {
+                    descriptions.push(d);
+                }
             } else {
                 titleParts = titleParts.concat(split.split(/\s+/));
             }
@@ -309,6 +335,7 @@ class SearchEngine {
         return {
             channels: channels,
             topics: topics,
+            descriptions: descriptions,
             titleParts: titleParts
         }
     }
