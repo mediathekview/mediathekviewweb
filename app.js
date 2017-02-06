@@ -168,7 +168,7 @@ io.on('connection', (socket) => {
                 err: err
             });
 
-            if (config.postgres.enabled) {
+            if (!err && config.postgres.enabled) {
                 sql.addQueryRow(query.queryString, result.queryInfo.searchEngineTime);
             }
         });
