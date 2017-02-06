@@ -33,4 +33,4 @@ MediathekViewWeb ist eine simple, alternative Oberfläche für die Filmlisten de
 
 ##### In den **allermeisten** Fällen reicht es jedoch, wenn du einfach nur das eingibst, was du suchst
 
-- "planet wissen" zeigt alle Beiträge, in denen Planet und Wissen im Titel (oder je nach Einstellunge auch im Thema) vorkommt.
+- "planet wissen" zeigt alle Beiträge, in denen Planet und Wissen im *Titel* (oder bei Voranstellen des `#`-Zeichens im *Thema*) vorkommt.
