@@ -21,16 +21,16 @@ MediathekViewWeb ist eine simple, alternative Oberfläche für die Filmlisten de
 
 - "!ard" zeigt alle Beiträge von ARD.
 
-- "#sport" zeigt alle Beiträge aller Sender zum Thema Sport.
+- "#sport" zeigt alle Beiträge aller Sender zum Thema "Sport".
 
-- "!ard #wetter" zeigt alle Beiträge von ARD zum Thema Wetter.
+- "!ard #wetter" zeigt alle Beiträge von ARD zum Thema "Wetter".
 
-- "#doku weltall" zeigt alle Beiträge aller Sender im Thema Doku, die im Titel Weltall enhalten.
+- "#doku weltall" zeigt alle Beiträge aller Sender im Thema "Doku", die im Titel "Weltall" enhalten.
 
 ##### Es lassen sich auch mehrere Sender und/oder Themen Angeben.
 
-- "!ard !ndr #sturm,der,liebe #rote,rosen" zeigt Sturm der Liebe und Rote Rosen von ARD und ZDF
+- "!ard !ndr #sturm,der,liebe #rote,rosen" zeigt "Sturm der Liebe" und "Rote Rosen" von ARD und ZDF.
 
 ##### In den **allermeisten** Fällen reicht es jedoch, wenn du einfach nur das eingibst, was du suchst
 
-- "planet wissen" zeigt alle Beiträge, in denen Planet und Wissen im *Titel* (oder bei Voranstellen des `#`-Zeichens im *Thema*) vorkommt.
+- "planet wissen" zeigt alle Beiträge, in denen "Planet" und "Wissen" im Titel oder im Thema vorkommen.
