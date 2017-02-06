@@ -38,6 +38,7 @@
     var pv_id = randomString(6);
     var playingInterval;
     var lastQueryString = null;
+    var ignoreNextHashChange = false;
 
     var locale = window.navigator.userLanguage || window.navigator.language;
     moment.locale(locale);
@@ -159,12 +160,94 @@
         return $('#queryInput').val().trim();
     }
 
+    function setQueryFromURIHash() {
+        let props = parseURIHash(window.location.hash);
+
+        if (props['query']) {
+            $('#queryInput').val(props['query']);
+        } else {
+            $('#queryInput').val('');
+        }
+
+        if (props['fuzzy'] === 'true') {
+            $('#fuzzyCheckbox').prop('checked', true);
+        } else {
+            $('#fuzzyCheckbox').prop('checked', false);
+        }
+
+        if (props['future'] === 'true') {
+            $('#futureCheckbox').prop('checked', true);
+        } else {
+            $('#futureCheckbox').prop('checked', false);
+        }
+
+        if (!isNaN(parseInt(props['page']))) {
+            currentPage = parseInt(props['page']) - 1;
+        } else {
+            currentPage = 0;
+        }
+    }
+
+    function parseURIHash(hash) {
+        if (hash[0] == '#') {
+            hash = hash.slice(1);
+        }
+
+        let props = hash.split('&');
+        let elements = {};
+
+        for (let i = 0; i < props.length; i++) {
+            let element = props[i].split('=');
+            elements[element[0]] = decodeURIComponent(element[1]);
+        }
+
+        return elements;
+    }
+
+    function createURIHash(elements) {
+        let props = [];
+
+        for (let prop in elements) {
+            props.push(prop + '=' + encodeURIComponent(elements[prop].toString()));
+        }
+
+        return props.join('&');
+    }
+
     function query() {
         query = _.throttle(() => {
             let queryString = getQueryString();
             let future = !!$('#futureCheckbox').prop('checked');
             let fuzzy = !!$('#fuzzyCheckbox').prop('checked');
+            currentPage = Math.min(currentPage, Math.floor(10000 / itemsPerPage - 1));
 
+            let elements = {};
+
+            if (queryString.length > 0) {
+                elements['query'] = queryString;
+            }
+            if (fuzzy === true) {
+                elements['fuzzy'] = true;
+            }
+            if (future === true) {
+                elements['future'] = true;
+            }
+            if (currentPage > 0) {
+                elements['page'] = currentPage + 1;
+            }
+
+
+            let oldHash = window.location.hash;
+            if (oldHash[0] == '#') {
+                oldHash = oldHash.slice(1);
+            }
+
+            let newHash = createURIHash(elements);
+
+            if (oldHash !== newHash) {
+                ignoreNextHashChange = true;
+                window.location.hash = newHash;
+            }
 
             let queryObj = {
                 queryString: queryString,
@@ -226,15 +309,15 @@
     function createPaginationButton(html, active, enabled, callback) {
         let button = $('<li>').addClass(active ? 'active' : '').addClass(enabled ? '' : 'disabled').append($('<a>', {
             href: '#',
-            html: html
+            html: html,
+            click: () => {
+                if (enabled && !active) {
+                    callback();
+                    query();
+                    return false;
+                }
+            }
         }));
-
-        if (enabled && !active) {
-            button.click(() => {
-                callback();
-                query();
-            });
-        }
 
         return button;
     }
@@ -791,6 +874,16 @@
             newDomainModal.modal('show');
         }
 
+        window.addEventListener("hashchange", () => {
+            if (!ignoreNextHashChange) {
+                setQueryFromURIHash();
+                query();
+            } else {
+                ignoreNextHashChange = false;
+            }
+        }, false);
+
+        setQueryFromURIHash();
         query();
     });
 </script>
