@@ -35,3 +35,7 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+#compiled index.js
+static/index-compiled.min.js
+static/index-compiled.min.js.map
