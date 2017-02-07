@@ -285,8 +285,9 @@ function createPaginationButton(html, active, enabled, callback) {
             if (enabled && !active) {
                 callback();
                 query();
-                return false;
             }
+
+            return false;
         }
     }));
 
