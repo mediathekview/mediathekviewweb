@@ -4,7 +4,6 @@ var itemsPerPage = 15;
 var mediathekTable;
 var connectingModal;
 var contactModal;
-var newDomainModal;
 var indexingModal;
 var uid;
 var pv_id = randomString(6);
@@ -725,13 +724,6 @@ $(() => {
         show: false
     });
 
-    newDomainModal = $('#newDomainModal');
-    newDomainModal.modal({
-        backdrop: true,
-        keyboard: true,
-        show: false
-    });
-
     socket.on('connect', () => {
         connectingModal.modal('hide');
     });
@@ -840,11 +832,6 @@ $(() => {
     $('#githubButton').click(() => track('github'));
     $('#impressumButton').click(() => track('impressum'));
     $('#datenschutzButton').click(() => track('datenschutz'));
-    $('#newDomainLink').click(() => track('newdomainlink'));
-
-    if (window.location.hostname == "mediathekviewweb.batrick.de") {
-        newDomainModal.modal('show');
-    }
 
     window.addEventListener("hashchange", () => {
         if (!ignoreNextHashChange) {
