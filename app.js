@@ -13,6 +13,7 @@ const exec = require('child_process').exec;
 const PiwikTracker = require('piwik-tracker');
 const utils = require('./utils.js');
 const request = require('request');
+const compression = require('compression');
 
 const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
 config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60;
@@ -58,6 +59,7 @@ if (!!piwik) {
     });
 }
 
+app.use(compression());
 app.use('/static', express.static('static'));
 
 app.get('/', function(req, res) {
