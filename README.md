@@ -20,7 +20,7 @@ Da die Abfragen auf dem Server durchgeführt werden, sind die Anforderungen an d
 
 
 
-# Erweitertes Suchen
+# Erweiterte Suche
 ##### Die Suchzeile unterstützt das Durchsuchen nach Sender, Thema, Titel und Beschreibung. Ein paar Beispiele werden am besten verdeutlichen, wie es funktioniert
 
 - "!ard" zeigt alle Beiträge von ARD.
@@ -35,10 +35,10 @@ Da die Abfragen auf dem Server durchgeführt werden, sind die Anforderungen an d
 
 - "#tagesschau \*trump" zeigt alle Beiträge der "Tagesschau", die "Trump" in der Beschreibung enthalten.
 
-##### Es lassen sich auch mehrere Sender und/oder Themen Angeben.
+##### Es lassen sich auch gleichzeitig mehrere Sender und/oder Themen angeben:
 
 - "!ard !ndr #sturm,der,liebe #rote,rosen" zeigt "Sturm der Liebe" und "Rote Rosen" von ARD und ZDF.
 
-##### In den *allermeisten* Fällen reicht es jedoch, wenn du einfach nur das eingibst, was du suchst
+##### In den *allermeisten* Fällen reicht die Eingabe aussagekräftiger Begriffe aus Titel oder Thema:
 
 - "planet wissen" zeigt alle Beiträge, in denen "Planet" und "Wissen" im Titel oder im Thema vorkommen.
