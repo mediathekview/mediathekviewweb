@@ -1,29 +1,29 @@
 # MediathekViewWeb -> [mediathekviewweb.de](https://mediathekviewweb.de/)
 
-MediathekViewWeb ist eine simple, alternative Oberfläche für die Filmlisten des [MediathekView Projekts](https://mediathekview.de/).
+MediathekViewWeb ist eine einfache Browser-Oberfläche für den Zugriff auf die Filmliste des [MediathekView Projekts](https://mediathekview.de/).
 
-Im Gegensatz zu MediathekView muss man hier jedoch keine Filmliste herunterladen, die Suche steht also sofort zur Verfügung.
-Da die Abfragen auf dem Server durchgeführt werden, sind die Anforderungen an das Endgerät minimal - in Kombination mit dem Wegfall von Java lässt sich die Website auch auf bspw. Smartphones und Tablets nutzen. 
+Im Gegensatz zu MediathekView muss bei MediatheViewWeb weder ein Programm installiert noch eine Filmliste heruntergeladen werden, die Suche steht deshalb augenblicklich im Browser zur Verfügung.
+Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endgerät (Browser) minimal sind, und weil kein Java installiert werden muss, lässt sich die Website auch auf Smartphones und Tablets nutzen.
 
 ![MediathekViewWeb](https://abload.de/img/mediathekviewwebnqrq7.png)
 
 
-##### 1. Einfach das, was man anschauen möchte in die Suchleiste tippen.
-##### 2. Ein Doppelklick auf das Videosymbol um die Sendung sofort in der besten verfügbaren Qualität zu starten oder mit der Maus drübergehen, um das Menü zu öffnen.
+##### 1. In die Suchliste eintippen, was man anschauen möchte.
+##### 2. Doppelklick auf das Videosymbol, um die Sendung sofort in der besten verfügbaren Qualität zu starten, oder mit der Maus drübergehen, um das Menü zu öffnen.
 
 ![Popover](https://abload.de/img/popoverx1ojl.png)
-##### Ein klick auf das Abspielsymbol bei der gewünschten Qualität um das Video zu starten oder auf das Diskettensymbol klicken, um das Video herunterzuladen *(nicht von allen Browsern unterstützt - hier dann per Rechtsklick -> Speichern Unter das Video herunterladen)*.
+##### Ein Klick auf das Abspielsymbol startet das Video in der gewünschten Qualität. Ein Klick auf das Diskettensymbol startet den Download der Videodatei *(Achtung: dies wird nicht von allen Browsern (z.B. Firefox) unterstützt - hier dann per Rechtsklick -> "Ziel speichern unter" bzw. "Save target as" das Video herunterladen)*.
 
 
-##### Im geöffneten Player das X oben rechts oder Escape drücken um es zu schließen. 
+##### Im geöffneten Player das X oben rechts oder Escape drücken, um den Player zu schließen. Dadurch wird auch das Abspielen beendet. 
 ![Overlay](https://abload.de/img/videooverlayzxqh9.png)
 
 
 
 # Erweiterte Suche
-##### Die Suchzeile unterstützt das Durchsuchen nach Sender, Thema, Titel und Beschreibung. Ein paar Beispiele werden am besten verdeutlichen, wie es funktioniert
+##### Die Suchzeile unterstützt das Durchsuchen nach Sender, Thema, Titel und Beschreibung. Hier einige Beispiele:
 
-- "!ard" zeigt alle Beiträge von ARD.
+- "!ard" zeigt alle Beiträge der ARD.
 
 - "#sport" zeigt alle Beiträge aller Sender zum Thema "Sport".
 
@@ -33,7 +33,11 @@ Da die Abfragen auf dem Server durchgeführt werden, sind die Anforderungen an d
 
 - "#doku weltall" zeigt alle Beiträge aller Sender im Thema "Doku", die im Titel "Weltall" enhalten.
 
-- "#tagesschau \*trump" zeigt alle Beiträge der "Tagesschau", die "Trump" in der Beschreibung enthalten.
+- "#tagesschau \*klima" zeigt alle Beiträge der "Tagesschau", die "Klima" in der Beschreibung enthalten.
+
+##### Das Komma ist der "und" Operator
+
+- \*diane,kruger zeigt alle Beiträge, die "Diane" und "Kruger" in der Beschreibung enthalten.
 
 ##### Es lassen sich auch gleichzeitig mehrere Sender und/oder Themen angeben:
 
