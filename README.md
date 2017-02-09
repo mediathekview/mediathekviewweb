@@ -2,8 +2,8 @@
 
 MediathekViewWeb ist eine einfache Browser-Oberfläche für den Zugriff auf die Filmliste des [MediathekView Projekts](https://mediathekview.de/).
 
-Im Gegensatz zu MediathekView muss bei MediatheViewWeb weder ein Programm installiert noch eine Filmliste heruntergeladen werden: die Suche steht deshalb augenblicklich im Browser zur Verfügung.
-Da die Abfragen auf dem Server durchgeführt werden, sind die Anforderungen an das Endgerät (Browser) minimal - da kein Java installiert werden muss, lässt sich die Website auch auf Smartphones und Tablets nutzen. 
+Im Gegensatz zu MediathekView muss bei MediatheViewWeb weder ein Programm installiert noch eine Filmliste heruntergeladen werden, die Suche steht deshalb augenblicklich im Browser zur Verfügung.
+Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endgerät (Browser) minimal sind, und weil kein Java installiert werden muss, lässt sich die Website auch auf Smartphones und Tablets nutzen.
 
 ![MediathekViewWeb](https://abload.de/img/mediathekviewwebnqrq7.png)
 
@@ -12,10 +12,10 @@ Da die Abfragen auf dem Server durchgeführt werden, sind die Anforderungen an d
 ##### 2. Doppelklick auf das Videosymbol, um die Sendung sofort in der besten verfügbaren Qualität zu starten, oder mit der Maus drübergehen, um das Menü zu öffnen.
 
 ![Popover](https://abload.de/img/popoverx1ojl.png)
-##### Ein Klick auf das Abspielsymbol startet das Video in der gewünschten Qualität. Ein Klick auf das Diskettensymbol startet den Download der Videodatei *(Achtung: dies wird nicht von allen Browsern (z.B. nicht von Firefox) unterstützt - hier dann per Rechtsklick -> "Ziel speichern unter" bzw. "Save target as" das Video herunterladen)*.
+##### Ein Klick auf das Abspielsymbol startet das Video in der gewünschten Qualität. Ein Klick auf das Diskettensymbol startet den Download der Videodatei *(Achtung: dies wird nicht von allen Browsern (z.B. Firefox) unterstützt - hier dann per Rechtsklick -> "Ziel speichern unter" bzw. "Save target as" das Video herunterladen)*.
 
 
-##### Im geöffneten Player das X oben rechts, oder Escape drücken, um das Abspielen zu beenden. 
+##### Im geöffneten Player das X oben rechts oder Escape drücken, um den Player zu schließen. Dadurch wird auch das Abspielen beendet. 
 ![Overlay](https://abload.de/img/videooverlayzxqh9.png)
 
 
