@@ -37,7 +37,7 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 
 ##### Das Komma ist der "und" Operator
 
-- \*diane,kruger zeigt alle Beiträge, die "Diane" und "Kruger" in der Beschreibung enthalten.
+- "\*diane,kruger" zeigt alle Beiträge, die "Diane" und "Kruger" in der Beschreibung enthalten.
 
 ##### Es lassen sich auch gleichzeitig mehrere Sender und/oder Themen angeben:
 
