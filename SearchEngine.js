@@ -36,229 +36,91 @@ class SearchEngine {
         });
     }
 
-    search(q, callback) {
+    search(query, callback) {
         let queryErrors = [];
 
-        if (q.queryString !== undefined && typeof q.queryString != 'string') {
-            queryErrors.push('type of queryString must be string');
-        }
-
-        if (q.searchTopic !== undefined && typeof q.searchTopic != 'string' && typeof q.searchTopic != 'boolean') {
-            queryErrors.push('type of searchTopic must be string or boolean');
-        } else if (q.searchTopic !== undefined && typeof q.searchTopic == 'string' && /^(false|true|auto)$/.test(q.searchTopic) == false) {
-            queryErrors.push('value of searchTopic must be \'true\', \'false\', \'auto\' or a boolean');
-        }
-
-        if (this.isBooleanString(q.future)) {
-            if (q.future === 'true') {
-                q.future = true;
-            } else if (q.future === 'false') {
-                q.future = false;
-            }
-        }
-        if (q.future !== undefined && typeof q.future != 'boolean') {
-            queryErrors.push('type of future must be boolean');
-        }
-
-        if (this.isIntegerString(q.from)) {
-            q.from = parseInt(q.from);
-        }
-        if (q.from !== undefined && typeof q.from != 'number') {
-            queryErrors.push('type of from must be number');
-        } else if (q.from !== undefined && (q.from % 1) != 0) {
-            queryErrors.push('value of from must be an integer');
-        }
-
-        if (this.isIntegerString(q.size)) {
-            q.size = parseInt(q.size);
-        }
-        if (q.size !== undefined && typeof q.size != 'number') {
-            queryErrors.push('type of size must be number');
-        } else if (q.size !== undefined && (q.size % 1) != 0) {
-            queryErrors.push('value of size must be an integer');
-        }
-
-        if (this.isBooleanString(q.includeDescription)) {
-            if (q.includeDescription === 'true') {
-                q.includeDescription = true;
-            } else if (q.includeDescription === 'false') {
-                q.includeDescription = false;
-            }
-        }
-        if (q.includeDescription !== undefined && typeof q.includeDescription != 'boolean') {
-            queryErrors.push('type of includeDescription must be boolean');
-        }
-
-        if (this.isBooleanString(q.fuzzy)) {
-            if (q.fuzzy === 'true') {
-                q.fuzzy = true;
-            } else if (q.fuzzy === 'false') {
-                q.fuzzy = false;
-            }
-        }
-        if (q.fuzzy !== undefined && typeof q.fuzzy != 'boolean') {
-            queryErrors.push('type of fuzzy must be boolean');
-        }
-
-        if (queryErrors.length > 0) {
-            callback(null, queryErrors);
-            return;
-        }
-
-        let query = {
-            queryString: (q.queryString === undefined) ? '' : q.queryString,
-            searchTopic: (q.searchTopic === undefined) ? 'auto' : q.searchTopic,
-            future: (q.future === undefined) ? true : q.future,
-            from: (q.from === undefined) ? 0 : q.from,
-            includeDescription: (q.includeDescription === undefined) ? false : q.includeDescription,
-            size: (q.size === undefined) ? 10 : q.size,
-            fuzzy: (q.fuzzy === undefined) ? false : q.fuzzy
-        }
-
-        let parsedQueryString = this.parseQuery(query.queryString);
-        let musts = [];
-        let elasticQuery = {};
-        let excludes = [];
-
-        if (!query.includeDescription) {
-            excludes.push('description');
-        }
-
-        if (query.searchTopic == 'auto') {
-            if (parsedQueryString.topics.length == 0) {
-                query.searchTopic = true;
-            } else {
-                query.searchTopic = false;
-            }
-        } else if (query.searchTopic == 'true') {
-            query.searchTopic = true;
-        } else if (query.searchTopic == 'false') {
-            query.searchTopic = false;
-        }
-
-        if (parsedQueryString.channels.length == 0 && parsedQueryString.topics.length == 0 && parsedQueryString.titleParts.length == 0 && parsedQueryString.descriptions.length == 0) {
-            elasticQuery = this.createFilter(query.future);
-        } else {
-            let filter = this.createFilter(query.future);
-            let channelMatches = [];
-            for (let i = 0; i < parsedQueryString.channels.length; i++) {
-                channelMatches.push({
-                    match: {
-                        channel: {
-                            query: parsedQueryString.channels[i].join(' '),
-                            operator: 'and'
-                        }
-                    }
-                });
-            }
-
-            musts.push({
-                bool: {
-                    should: channelMatches
-                }
-            });
-
-            let topicMatches = [];
-            for (let i = 0; i < parsedQueryString.topics.length; i++) {
-                topicMatches.push({
-                    match: {
-                        topic: {
-                            query: parsedQueryString.topics[i].join(' '),
-                            operator: 'and',
-                            fuzziness: query.fuzzy ? 'auto' : 0
-                        }
-                    }
-                });
-            }
-
-            musts.push({
-                bool: {
-                    should: topicMatches
-                }
-            });
-
-            let descriptionMatches = [];
-            for (let i = 0; i < parsedQueryString.descriptions.length; i++) {
-                descriptionMatches.push({
-                    match: {
-                        description: {
-                            query: parsedQueryString.descriptions[i].join(' '),
-                            operator: 'and'
-                        }
-                    }
-                });
-            }
-
-            musts.push({
-                bool: {
-                    should: descriptionMatches
-                }
-            });
-
-            if (parsedQueryString.titleParts.length > 0) {
-                if (query.searchTopic) {
-                    musts.push({
-                        bool: {
-                            should: [{
-                                match: {
-                                    title: {
-                                        query: parsedQueryString.titleParts.join(' '),
-                                        operator: 'and',
-                                        fuzziness: query.fuzzy ? 'auto' : 0
-                                    }
-                                }
-                            }, {
-                                match: {
-                                    topic: {
-                                        query: parsedQueryString.titleParts.join(' '),
-                                        operator: 'and',
-                                        fuzziness: query.fuzzy ? 'auto' : 0
-                                    }
-                                }
-                            }]
-                        }
-                    });
-                } else {
-                    musts.push({
-                        match: {
-                            title: {
-                                query: parsedQueryString.titleParts.join(' '),
-                                operator: 'and',
-                                fuzziness: query.fuzzy ? 'auto' : 0
-                            }
-                        }
-                    });
-                }
-            }
-
-            elasticQuery = {
-                bool: {
-                    must: musts,
-                    filter: filter
-                }
-            };
-        }
-
-        this.searchClient.search({
+        let elasticQuery = {
             index: 'filmliste',
             type: 'entries',
-            from: query.from,
-            size: query.size,
+            from: query.offset || 0,
+            size: query.size || 15,
             body: {
-                _source: {
-                    excludes: excludes
+                query: {
+                    bool: {
+                        must: [],
+                        filter: []
+                    }
                 },
-                query: elasticQuery,
-                sort: {
-                    timestamp: {
-                        order: "desc"
-                    },
-                    _score: {
-                        order: "desc"
+                sort: {}
+            }
+        };
+
+        let queries = query.queries;
+
+        if (queries == undefined) {
+            elasticQuery.body.query.bool.must.push({
+                match_all: {}
+            });
+        } else {
+            let fieldsBasedQueries = [];
+
+            for (var i = 0; i < queries.length; i++) {
+                let match = this.createMultiMatch(queries[i].fields, queries[i].query, 'and');
+
+                let found = false;
+                for (var j = 0; j < fieldsBasedQueries.length; j++) {
+                    if (utils.arraysHasSameElements(queries[i].fields, fieldsBasedQueries[j].fields)) {
+                        fieldsBasedQueries[j].matches.push(match);
+                        found = true;
+                        break;
                     }
                 }
+
+                if (!found) {
+                    fieldsBasedQueries.push({
+                        fields: queries[i].fields,
+                        matches: [match]
+                    });
+                }
             }
-        }, (error, response, status) => {
+
+            for (let i = 0; i < fieldsBasedQueries.length; i++) {
+                let boolQuery = {
+                    bool: {
+                        should: []
+                    }
+                };
+
+                for (let j = 0; j < fieldsBasedQueries[i].matches.length; j++) {
+                    boolQuery.bool.should.push(fieldsBasedQueries[i].matches[j]);
+                }
+
+                elasticQuery.body.query.bool.must.push(boolQuery);
+            }
+        }
+
+        if (query.future === false) {
+            let rangeFilter = {
+                range: {
+                    timestamp: {
+                        to: 'now+1h/h'
+                    }
+                }
+            };
+
+            elasticQuery.body.query.bool.filter.push(rangeFilter);
+        }
+
+        if (typeof query.sortBy == 'string' && query.sortBy.length > 0) {
+            let sort = {};
+            sort[query.sortBy] = {
+                order: query.sortOrder
+            };
+
+            elasticQuery.body.sort = sort;
+        }
+
+        this.searchClient.search(elasticQuery, (error, response, status) => {
             if (error) {
                 callback(null, ['Elasticsearch: ' + error.message]);
             } else {
@@ -279,65 +141,15 @@ class SearchEngine {
         });
     }
 
-    createFilter(includeFuture) {
-        let filter = {};
-
-        if (!includeFuture) {
-            filter.range = {
-                timestamp: {
-                    to: 'now+1h/h'
-                }
-            }
-        }
-
-        return filter;
-    }
-
-    parseQuery(query) {
-        let channels = [];
-        let topics = [];
-        let descriptions = [];
-        let titleParts = [];
-
-        let splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
-            return (split.length > 0);
-        });
-
-        for (let i = 0; i < splits.length; i++) {
-            let split = splits[i];
-
-            if (split[0] == '!') {
-                let c = split.slice(1, split.length).split(',').filter((split) => {
-                    return (split.length > 0);
-                });
-                if (c.length > 0) {
-                    channels.push(c);
-                }
-            } else if (split[0] == '#') {
-                let t = split.slice(1, split.length).split(',').filter((split) => {
-                    return (split.length > 0);
-                });
-                if (t.length > 0) {
-                    topics.push(t);
-                }
-            } else if (split[0] == '*') {
-                let d = split.slice(1, split.length).split(',').filter((split) => {
-                    return (split.length > 0);
-                });
-                if (d.length > 0) {
-                    descriptions.push(d);
-                }
-            } else {
-                titleParts = titleParts.concat(split.split(/\s+/));
-            }
-        }
-
+    createMultiMatch(fields, query, operator) {
         return {
-            channels: channels,
-            topics: topics,
-            descriptions: descriptions,
-            titleParts: titleParts
-        }
+            multi_match: {
+                query: query,
+                type: 'cross_fields',
+                fields: fields,
+                operator: operator
+            }
+        };
     }
 }
 

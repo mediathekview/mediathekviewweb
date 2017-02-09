@@ -48,6 +48,62 @@ function formatBytes(bytes, decimals) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
 }
 
+function parseQuery(query) {
+    let channels = [];
+    let topics = [];
+    let titles = [];
+    let descriptions = [];
+    let generics = [];
+
+    let splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
+        return (split.length > 0);
+    });
+
+    for (let i = 0; i < splits.length; i++) {
+        let split = splits[i];
+
+        if (split[0] == '!') {
+            let c = split.slice(1, split.length).split(',').filter((split) => {
+                return (split.length > 0);
+            });
+            if (c.length > 0) {
+                channels.push(c);
+            }
+        } else if (split[0] == '#') {
+            let t = split.slice(1, split.length).split(',').filter((split) => {
+                return (split.length > 0);
+            });
+            if (t.length > 0) {
+                topics.push(t);
+            }
+        } else if (split[0] == '+') {
+            let t = split.slice(1, split.length).split(',').filter((split) => {
+                return (split.length > 0);
+            });
+            if (t.length > 0) {
+                titles.push(t);
+            }
+        } else if (split[0] == '*') {
+            let d = split.slice(1, split.length).split(',').filter((split) => {
+                return (split.length > 0);
+            });
+            if (d.length > 0) {
+                descriptions.push(d);
+            }
+        } else {
+            generics = generics.concat(split.split(/\s+/));
+        }
+    }
+
+    return {
+        channels: channels,
+        topics: topics,
+        titles: titles,
+        descriptions: descriptions,
+        generics: generics
+    }
+}
+
 function track(action) {
     let date = new Date();
     socket.emit('track', {
@@ -142,10 +198,10 @@ function setQueryFromURIHash() {
         $('#queryInput').val('');
     }
 
-    if (props['fuzzy'] === 'true') {
-        $('#fuzzyCheckbox').prop('checked', true);
+    if (props['everywhere'] === 'true') {
+        $('#everywhereCheckbox').prop('checked', true);
     } else {
-        $('#fuzzyCheckbox').prop('checked', false);
+        $('#everywhereCheckbox').prop('checked', false);
     }
 
     if (props['future'] === 'true') {
@@ -191,7 +247,7 @@ function query() {
     query = _.throttle(() => {
         let queryString = getQueryString();
         let future = !!$('#futureCheckbox').prop('checked');
-        let fuzzy = !!$('#fuzzyCheckbox').prop('checked');
+        let everywhere = !!$('#everywhereCheckbox').prop('checked');
         currentPage = Math.min(currentPage, Math.floor(10000 / itemsPerPage - 1));
 
         let elements = {};
@@ -199,8 +255,8 @@ function query() {
         if (queryString.length > 0) {
             elements['query'] = queryString;
         }
-        if (fuzzy === true) {
-            elements['fuzzy'] = true;
+        if (everywhere === true) {
+            elements['everywhere'] = true;
         }
         if (future === true) {
             elements['future'] = true;
@@ -208,7 +264,6 @@ function query() {
         if (currentPage > 0) {
             elements['page'] = currentPage + 1;
         }
-
 
         let oldHash = window.location.hash;
         if (oldHash[0] == '#') {
@@ -222,16 +277,54 @@ function query() {
             window.location.hash = newHash;
         }
 
-        let queryObj = {
-            queryString: queryString,
-            searchTopic: 'auto',
+        let parsedQuery = parseQuery(queryString);
+        let queries = [];
+
+        for (let i = 0; i < parsedQuery.channels.length; i++) {
+            queries.push({
+                fields: ['channel'],
+                query: parsedQuery.channels[i].join(' ')
+            });
+        }
+
+        for (let i = 0; i < parsedQuery.topics.length; i++) {
+            queries.push({
+                fields: ['topic'],
+                query: parsedQuery.topics[i].join(' ')
+            });
+        }
+
+        for (let i = 0; i < parsedQuery.titles.length; i++) {
+            queries.push({
+                fields: ['title'],
+                query: parsedQuery.titles[i].join(' ')
+            });
+        }
+
+        for (let i = 0; i < parsedQuery.descriptions.length; i++) {
+            queries.push({
+                fields: ['description'],
+                query: parsedQuery.descriptions[i].join(' ')
+            });
+        }
+
+        if (parsedQuery.generics.length > 0) {
+            queries.push({
+                fields: everywhere ? ['channel', 'topic', 'title', 'description'] : ((parsedQuery.topics.length == 0) ? ['topic', 'title'] : ['title']),
+                query: parsedQuery.generics.join(' ')
+            });
+        }
+
+        let testQuery = {
+            queries: queries,
+            sortBy: 'timestamp',
+            sortOrder: 'desc',
             future: future,
-            fuzzy: fuzzy,
-            from: currentPage * itemsPerPage,
+            offset: currentPage * itemsPerPage,
             size: itemsPerPage
         };
 
-        socket.emit('queryEntries', queryObj, (message) => {
+        socket.emit('queryEntries', testQuery, (message) => {
             handleQueryResult(message.result, message.err);
         });
 

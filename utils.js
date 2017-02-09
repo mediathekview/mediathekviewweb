@@ -12,10 +12,21 @@ function formatBytes(bytes, decimals) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
 }
 
-function createGoodSplits(str) {
-    return replaceBadChars(str.trim().toLowerCase()).split(/\s+/).filter((split) => {
-        return !!split;
-    });
+function arraysHasSameElements(arr1, arr2) {
+    if (arr1.length != arr2.length) {
+        return false;
+    }
+
+    arr1 = arr1.sort();
+    arr2 = arr2.sort();
+
+    for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 var latinDictionary = {
@@ -51,22 +62,9 @@ function translateToLatin(str) {
     return str;
 }
 
-function replaceBadChars(str, replacementChar = ' ') {
-    return str.replace(/[^a-zA-Z0-9]/g, (v) => {
-        let latinReplacement = latinDictionary[v];
-
-        if (latinReplacement != undefined) {
-            return latinReplacement;
-        } else {
-            return replacementChar;
-        }
-    });
-}
-
 module.exports = {
     randomValueBase64: randomValueBase64,
     formatBytes: formatBytes,
-    createGoodSplits: createGoodSplits,
+    arraysHasSameElements: arraysHasSameElements,
     latinDictionary: latinDictionary,
-    replaceBadChars: replaceBadChars
 };

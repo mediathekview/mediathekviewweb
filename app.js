@@ -275,8 +275,6 @@ function queryEntries(query, callback) {
             results: result.result,
             queryInfo: queryInfo
         }, err);
-
-        console.log(moment().format('HH:mm') + ' - querying "' + query.queryString + '" took ' + searchEngineTime + ' ms');
     });
 }
 
