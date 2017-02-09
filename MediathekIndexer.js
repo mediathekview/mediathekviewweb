@@ -75,7 +75,7 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    checkUpdateAvailable(callback) {
+    checkUpdateAvailable(callback, tries = 3) {
         this.getIndexCompleted((indexCompleted) => {
             this.getRandomFilmlisteMirror((mirror) => {
                 if (!indexCompleted) {
@@ -83,9 +83,19 @@ class MediathekIndexer extends EventEmitter {
                 } else {
                     this.getFilmlisteTimestamp((filmlisteTimestamp) => {
                         request.head(mirror, (error, response, body) => {
-                            var lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
-                            let tolerance = 15 * 60; //15 minutes
-                            callback((lastModified - filmlisteTimestamp) >= tolerance, mirror);
+                            if (error) {
+                                console.error(error);
+                                if (tries > 0) {
+                                    checkUpdateAvailable(callback, tries - 1);
+                                } else {
+                                    callback(false);
+                                }
+                            }
+                            if (!error) {
+                                var lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
+                                let tolerance = 15 * 60; //15 minutes
+                                callback((lastModified - filmlisteTimestamp) >= tolerance, mirror);
+                            }
                         });
                     });
                 }
