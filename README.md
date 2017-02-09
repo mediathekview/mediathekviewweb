@@ -1,8 +1,8 @@
-# MediathekViewWeb -> [mediathekviewweb.de](https://mediathekviewweb.de/)
+# MediathekViewWeb → [mediathekviewweb.de](https://mediathekviewweb.de/)
 
 MediathekViewWeb ist eine einfache Browser-Oberfläche für den Zugriff auf die Filmliste des [MediathekView Projekts](https://mediathekview.de/).
 
-Im Gegensatz zu MediathekView muss bei MediatheViewWeb weder ein Programm installiert noch eine Filmliste heruntergeladen werden, die Suche steht deshalb augenblicklich im Browser zur Verfügung.
+Im Gegensatz zu MediathekView muss bei MediathekViewWeb weder ein Programm installiert noch eine Filmliste heruntergeladen werden, die Suche steht deshalb augenblicklich im Browser zur Verfügung.
 Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endgerät (Browser) minimal sind, und weil kein Java installiert werden muss, lässt sich die Website auch auf Smartphones und Tablets nutzen.
 
 ![MediathekViewWeb](https://abload.de/img/mediathekviewwebnqrq7.png)
