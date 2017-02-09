@@ -10,6 +10,8 @@ var pv_id = randomString(6);
 var playingInterval;
 var lastQueryString = null;
 var ignoreNextHashChange = false;
+var impressum = null;
+var datenschutz = null;
 
 var locale = window.navigator.userLanguage || window.navigator.language;
 moment.locale(locale);
@@ -831,8 +833,47 @@ $(() => {
 
     $('#contactButton').click(() => openContactsModal());
     $('#githubButton').click(() => track('github'));
-    $('#impressumButton').click(() => track('impressum'));
-    $('#datenschutzButton').click(() => track('datenschutz'));
+
+    $('#datenschutzButton').click(() => {
+        track('datenschutz');
+
+        $('#main-view').hide(250);
+        $('#generic-html-view').show(250);
+
+        if (datenschutz == null) {
+            socket.emit('getDatenschutz', (response) => {
+                datenschutz = response;
+                $('#genericHtmlContent').html(response);
+            });
+        } else {
+            $('#genericHtmlContent').html(datenschutz);
+        }
+
+        return false;
+    });
+
+    $('#impressumButton').click(() => {
+        track('impressum');
+
+        $('#main-view').hide(250);
+        $('#generic-html-view').show(250);
+
+        if (impressum == null) {
+            socket.emit('getImpressum', (response) => {
+                impressum = response;
+                $('#genericHtmlContent').html(response);
+            });
+        } else {
+            $('#genericHtmlContent').html(impressum);
+        }
+
+        return false;
+    });
+
+    $('#genericHtmlViewBackButton').click(() => {
+        $('#generic-html-view').hide(250);
+        $('#main-view').show(250);
+    });
 
     window.addEventListener("hashchange", () => {
         if (!ignoreNextHashChange) {

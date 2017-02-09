@@ -226,6 +226,26 @@ io.on('connection', (socket) => {
             });
         }
     });
+
+    socket.on('getImpressum', (callback) => {
+        fs.readFile('impressum.html', 'utf-8', (err, data) => {
+            if (err) {
+                callback(err.message);
+            } else {
+                callback(data);
+            }
+        });
+    });
+
+    socket.on('getDatenschutz', (callback) => {
+        fs.readFile('datenschutz.html', 'utf-8', (err, data) => {
+            if (err) {
+                callback(err.message);
+            } else {
+                callback(data);
+            }
+        });
+    });
 });
 
 httpServer.listen(config.webserverPort, () => {
