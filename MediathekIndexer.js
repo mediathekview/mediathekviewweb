@@ -356,7 +356,8 @@ class MediathekIndexer extends EventEmitter {
                                 'Ç => c',
                                 'œ => oe',
                                 'Œ => oe',
-                                'ß => ss'
+                                'ß => ss',
+                                '& => und'
                             ]
                         }
                     }
