@@ -1,4 +1,5 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const http = require('http');
 const https = require('https');
 const URL = require('url');
@@ -61,6 +62,7 @@ if (!!piwik) {
 
 app.use(compression());
 app.use('/static', express.static('static'));
+app.use('/api', bodyParser.text());
 
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
@@ -72,50 +74,56 @@ app.get('/datenschutz', function(req, res) {
     res.sendFile(path.join(__dirname + '/datenschutz.html'));
 });
 
-app.get('/api', (req, res) => {
-
+app.post('/api/query', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
 
-    if (req.query.action == 'search') {
-        let begin = process.hrtime();
-        searchEngine.search(req.query, (result, err) => {
-            let end = process.hrtime(begin);
+    let query;
+    try {
+        query = JSON.parse(req.body);
+    } catch (e) {
+        res.status(400).json({
+            result: null,
+            err: [e.message]
+        });
+        return;
+    }
 
-            if (err) {
-                if (err[0] == 'cannot query while indexing') {
-                    res.status(503);
-                } else {
-                    res.status(500);
-                }
+    let begin = process.hrtime();
+    searchEngine.search(query, (result, err) => {
+        let end = process.hrtime(begin);
 
-                res.json({
-                    result,
-                    err
-                });
-                return;
+        if (err) {
+            if (err[0] == 'cannot query while indexing') {
+                res.status(503);
+            } else {
+                res.status(500);
             }
 
-            let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
-
-            let queryInfo = {
-                searchEngineTime: searchEngineTime,
-                resultCount: result.result.length,
-                totalResults: result.totalResults
-            };
-
-            res.status(200).json({
-                result: {
-                    results: result.result,
-                    queryInfo: queryInfo
-                },
-                err: null
+            res.json({
+                result: result,
+                err: err
             });
+            return;
+        }
 
-            console.log(moment().format('HH:mm') + ' - api used');
+        let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
+
+        let queryInfo = {
+            searchEngineTime: searchEngineTime,
+            resultCount: result.result.length,
+            totalResults: result.totalResults
+        };
+
+        res.status(200).json({
+            result: {
+                results: result.result,
+                queryInfo: queryInfo
+            },
+            err: null
         });
-    } else {
-        res.status(400).end();
-    }
+
+        console.log(moment().format('HH:mm') + ' - api used');
+    });
 });
 
 io.on('connection', (socket) => {

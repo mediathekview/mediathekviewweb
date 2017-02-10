@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.16.0",
     "bootstrap": ">=3.3.7 <4",
     "compression": "^1.6.2",
     "elasticsearch": "^12.1.3",
