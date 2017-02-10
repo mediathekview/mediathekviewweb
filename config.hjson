@@ -39,15 +39,4 @@
     token_auth: "abc123"
     siteId: 1
   }
-
-  postgres: {
-    enabled: false
-    user: "mediathekviewweb"
-    database: "mediathekviewweb"
-    password: ""
-    host: "localhost"
-    port: 5432
-    max: 3 //number of connections
-    idleTimeoutMillis: 30000
-  }
 }

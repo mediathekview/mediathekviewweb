@@ -30,13 +30,6 @@ redis.on('error', (err) => {
     console.error(err);
 });
 
-var sql;
-if (config.postgres.enabled) {
-    sql = require('./postgres.js');
-    sql.init(config.postgres);
-    sql.createQueriesTable();
-}
-
 if (config.piwik.enabled) {
     var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
 }
@@ -56,7 +49,7 @@ var lastIndexingState;
 
 if (!!piwik) {
     piwik.on('error', function(err) {
-        console.log('piwik: error tracking request: ', err)
+        console.error('piwik: error tracking request: ', err)
     });
 }
 
@@ -177,10 +170,6 @@ io.on('connection', (socket) => {
                 result: result,
                 err: err
             });
-
-            if (!err && config.postgres.enabled) {
-                sql.addQueryRow(query.queryString, result.queryInfo.searchEngineTime);
-            }
         });
     });
 

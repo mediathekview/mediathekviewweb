@@ -24,7 +24,6 @@
     "line-reader": "^0.4.0",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
-    "pg": "^6.1.2",
     "piwik-tracker": "^1.0.0",
     "redis": "^2.6.5",
     "request": "^2.79.0",
