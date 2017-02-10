@@ -111,6 +111,12 @@ td {
     vertical-align: middle !important;
 }
 
+label {
+    vertical-align: middle;
+    top: 50%;
+    line-height: 0;
+}
+
 #queryInputGroup {
     width: 100%;
 }
