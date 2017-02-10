@@ -60,10 +60,6 @@
     }
 }
 
-.hidden {
-    display: none;
-}
-
 .margin-left {
     margin-left: 0.2em;
 }
@@ -113,6 +109,22 @@
 
 td {
     vertical-align: middle !important;
+}
+
+#queryInputGroup {
+    width: 100%;
+}
+
+#queryInputClearButton {
+    position: absolute;
+    font-size: 18px;
+    right: 0.3em;
+    top: 50%;
+    line-height: 0;
+    opacity: 0;
+    height: auto;
+    cursor: pointer;
+    z-index: 3;
 }
 
 #mediathek {

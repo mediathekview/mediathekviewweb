@@ -902,6 +902,23 @@ $(() => {
             newQuery();
             lastQueryString = currentQueryString;
         }
+
+        let clearButton = $('#queryInputClearButton');
+        if (currentQueryString.length == 0) {
+            clearButton.animate({
+                opacity: 0
+            }, {
+                easing: 'swing',
+                duration: 100
+            });
+        } else {
+            clearButton.animate({
+                opacity: 1
+            }, {
+                easing: 'swing',
+                duration: 100
+            });
+        }
     });
     $('#queryParameters input:radio').change(() => newQuery());
     $('#queryParameters input:checkbox').change(() => newQuery());
@@ -922,6 +939,10 @@ $(() => {
             toggleVideoPause();
             e.preventDefault();
         }
+    });
+
+    $('#queryInputClearButton').click(function() {
+        $('#queryInput').val('').trigger('input');
     });
 
     $('#contactButton').click(() => openContactsModal());
