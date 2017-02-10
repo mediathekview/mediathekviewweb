@@ -949,6 +949,13 @@ $(() => {
     $('#githubButton').click(() => track('github'));
     $('#forumButton').click(() => track('forum'));
 
+    $('#logo').click(() => {
+        $('#generic-html-view').hide(250);
+        $('#main-view').show(250);
+
+        return false;
+    });
+
     $('#datenschutzButton').click(() => {
         track('datenschutz');
 
