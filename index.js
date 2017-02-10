@@ -839,7 +839,7 @@ $(() => {
 
     mediathekTable = $('#mediathek').DataTable({
         columns: [{ //Sender
-            width: '1',
+            width: '1%',
             data: null,
             render: returnEmptyString,
             createdCell: (td, cellData, rowData, row, col) => {
@@ -857,23 +857,23 @@ $(() => {
             width: '70%',
             data: 'title'
         }, { //Description
-            width: '1',
+            width: '1%',
             data: null,
             render: returnEmptyString,
             createdCell: (td, cellData, rowData, row, col) => {
                 $(td).append(createDescriptionButton(rowData));
             }
         }, { //Date
-            width: '1',
+            width: '1%',
             data: 'dateString'
         }, { //Time
-            width: '1',
+            width: '1%',
             data: 'timeString'
         }, { //Duration
-            width: '1',
+            width: '1%',
             data: 'durationString'
         }, { //Video
-            width: '1',
+            width: '1%',
             data: null,
             render: returnEmptyString,
             createdCell: (td, cellData, rowData, row, col) => {
