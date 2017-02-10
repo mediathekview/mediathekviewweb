@@ -947,6 +947,7 @@ $(() => {
 
     $('#contactButton').click(() => openContactsModal());
     $('#githubButton').click(() => track('github'));
+    $('#forumButton').click(() => track('forum'));
 
     $('#datenschutzButton').click(() => {
         track('datenschutz');
