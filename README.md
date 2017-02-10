@@ -27,22 +27,29 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 
 - "#sport" zeigt alle Beiträge aller Sender zum Thema "Sport".
 
+- "+gebärdensprache" zeigt alle Beiträge, die "Gebärdensprache" im Titel enthalten.
+
 - "\*norwegen" zeigt alle Beiträge aller Sender, die "Norwegen" in der Beschreibung enthalten.
 
 - "!ard #wetter" zeigt alle Beiträge von ARD zum Thema "Wetter".
 
-- "#doku weltall" zeigt alle Beiträge aller Sender im Thema "Doku", die im Titel "Weltall" enhalten.
+- "#doku +weltall" zeigt alle Beiträge aller Sender im Thema "Doku", die im Titel "Weltall" enhalten.
 
 - "#tagesschau \*klima" zeigt alle Beiträge der "Tagesschau", die "Klima" in der Beschreibung enthalten.
+
 
 ##### Das Komma ist der "und" Operator
 
 - "\*diane,kruger" zeigt alle Beiträge, die "Diane" und "Kruger" in der Beschreibung enthalten.
 
-##### Es lassen sich auch gleichzeitig mehrere Sender und/oder Themen angeben:
+##### Es lassen sich auch gleichzeitig mehrere Sender, Themen, Titel oder Beschreibungen angeben:
 
-- "!ard !ndr #sturm,der,liebe #rote,rosen" zeigt "Sturm der Liebe" und "Rote Rosen" von ARD und ZDF.
+- "!ard !ndr #sturm,der,liebe #rote,rosen" zeigt Themen "Sturm der Liebe" und "Rote Rosen" von ARD und NDR.
 
 ##### In den *allermeisten* Fällen reicht die Eingabe aussagekräftiger Begriffe aus Titel oder Thema:
 
 - "planet wissen" zeigt alle Beiträge, in denen "Planet" und "Wissen" im Titel oder im Thema vorkommen.
+
+##### Überall suchen
+
+- Wenn "Überall" aktiviert ist, werden alle Begriffe, die **kein** !, #, + oder * davor haben in **allen** Feldern gesucht. Zusätzlich kann man jedoch auch hier noch nach Sender, Thema, Titel und Beschreibung filtern.
