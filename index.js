@@ -12,6 +12,7 @@ var lastQueryString = null;
 var ignoreNextHashChange = false;
 var impressum = null;
 var datenschutz = null;
+var queryInputClearButtonState = 'hidden';
 
 var locale = window.navigator.userLanguage || window.navigator.language;
 moment.locale(locale);
@@ -193,9 +194,9 @@ function setQueryFromURIHash() {
     let props = parseURIHash(window.location.hash);
 
     if (props['query']) {
-        $('#queryInput').val(props['query']);
+        $('#queryInput').val(props['query']).trigger('input');
     } else {
-        $('#queryInput').val('');
+        $('#queryInput').val('').trigger('input');
     }
 
     if (props['everywhere'] === 'true') {
@@ -904,20 +905,22 @@ $(() => {
         }
 
         let clearButton = $('#queryInputClearButton');
-        if (currentQueryString.length == 0) {
+        if (currentQueryString.length == 0 && queryInputClearButtonState == 'shown') {
             clearButton.animate({
                 opacity: 0
             }, {
                 easing: 'swing',
-                duration: 100
+                duration: 20
             });
-        } else {
+            queryInputClearButtonState = 'hidden';
+        } else if (currentQueryString.length > 0 && queryInputClearButtonState == 'hidden' ) {
             clearButton.animate({
                 opacity: 1
             }, {
                 easing: 'swing',
-                duration: 100
+                duration: 20
             });
+            queryInputClearButtonState = 'shown';
         }
     });
     $('#queryParameters input:radio').change(() => newQuery());
@@ -942,7 +945,7 @@ $(() => {
     });
 
     $('#queryInputClearButton').click(function() {
-        $('#queryInput').val('').trigger('input');
+        $('#queryInput').val('').trigger('input').focus();
     });
 
     $('#contactButton').click(() => openContactsModal());

@@ -124,7 +124,7 @@ label {
 #queryInputClearButton {
     position: absolute;
     font-size: 18px;
-    right: 0.3em;
+    right: 1.3em;
     top: 50%;
     line-height: 0;
     opacity: 0;
