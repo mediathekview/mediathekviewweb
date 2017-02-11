@@ -141,7 +141,7 @@ class MediathekIndexer extends EventEmitter {
         this.searchClient.indices.delete({
             index: 'filmliste'
         }, (err, resp, status) => {
-            if (err) {
+            if (err && err.status != 404) { //404 (index not found) is fine, as we'll create the index in next step.
                 this.handleError(err);
             } else {
                 this.searchClient.indices.create({
