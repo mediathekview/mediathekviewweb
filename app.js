@@ -54,11 +54,14 @@ if (!!piwik) {
 }
 
 app.use(compression());
-app.use('/static', express.static('static'));
+app.use('/static', express.static(__dirname + '/static'));
 app.use('/api', bodyParser.text());
 
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
+});
+app.get('/donate', function(req, res) {
+    res.sendFile(path.join(__dirname + '/donate.html'));
 });
 app.get('/impressum', function(req, res) {
     res.sendFile(path.join(__dirname + '/impressum.html'));
@@ -222,6 +225,16 @@ io.on('connection', (socket) => {
                 rand: data.rand
             });
         }
+    });
+
+    socket.on('getDonate', (callback) => {
+        fs.readFile('donate.html', 'utf-8', (err, data) => {
+            if (err) {
+                callback(err.message);
+            } else {
+                callback(data);
+            }
+        });
     });
 
     socket.on('getImpressum', (callback) => {

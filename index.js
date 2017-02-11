@@ -12,6 +12,7 @@ var lastQueryString = null;
 var ignoreNextHashChange = false;
 var impressum = null;
 var datenschutz = null;
+var donate = null;
 var queryInputClearButtonState = 'hidden';
 
 var locale = window.navigator.userLanguage || window.navigator.language;
@@ -955,6 +956,24 @@ $(() => {
     $('#logo').click(() => {
         $('#generic-html-view').hide(250);
         $('#main-view').show(250);
+
+        return false;
+    });
+
+    $('#donateButton').click(() => {
+        track('donate');
+
+        $('#main-view').hide(250);
+        $('#generic-html-view').show(250);
+
+        if (donate == null) {
+            socket.emit('getDonate', (response) => {
+                donate = response;
+                $('#genericHtmlContent').html(response);
+            });
+        } else {
+            $('#genericHtmlContent').html(donate);
+        }
 
         return false;
     });
