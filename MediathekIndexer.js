@@ -86,7 +86,7 @@ class MediathekIndexer extends EventEmitter {
                             if (error) {
                                 console.error(error);
                                 if (tries > 0) {
-                                    checkUpdateAvailable(callback, tries - 1);
+                                    this.checkUpdateAvailable(callback, tries - 1);
                                 } else {
                                     callback(false);
                                 }
