@@ -1,6 +1,6 @@
 {
   #path to filmliste, can be absolute and relative
-  filmliste: ../filmliste
+  filmliste: data/filmliste
 
   webserverPort: 8000
 
