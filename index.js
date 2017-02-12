@@ -370,8 +370,10 @@ function handleQueryResult(result, err) {
 
     createPagination(shownPagesCount);
 
-    $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
-        ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.');
+    let filmlisteMoment = moment.unix(result.queryInfo.filmlisteTimestamp);
+
+    $('#queryInfoLabel').html('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
+        ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.</br>Filmliste zuletzt um ' + filmlisteMoment.format('HH:mm') + ' Uhr aktualisiert.');
 }
 
 function createPaginationButton(html, active, enabled, callback) {

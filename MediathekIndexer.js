@@ -93,7 +93,7 @@ class MediathekIndexer extends EventEmitter {
                             }
                             if (!error) {
                                 var lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
-                                let tolerance = 15 * 60; //15 minutes
+                                let tolerance = 15 * 60; //15 minutes, as not all mirrors update at same time
                                 callback((lastModified - filmlisteTimestamp) >= tolerance, mirror);
                             }
                         });

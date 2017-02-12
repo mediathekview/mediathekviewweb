@@ -46,6 +46,11 @@ var websiteNames = [];
 
 var indexing = false;
 var lastIndexingState;
+var filmlisteTimestamp = 0;
+
+mediathekIndexer.getFilmlisteTimestamp((timestamp) => {
+    filmlisteTimestamp = timestamp;
+});
 
 if (!!piwik) {
     piwik.on('error', function(err) {
@@ -105,6 +110,7 @@ app.post('/api/query', (req, res) => {
         let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
         let queryInfo = {
+            filmlisteTimestamp: filmlisteTimestamp,
             searchEngineTime: searchEngineTime,
             resultCount: result.result.length,
             totalResults: result.totalResults
@@ -276,6 +282,7 @@ function queryEntries(query, callback) {
         let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
         let queryInfo = {
+            filmlisteTimestamp: filmlisteTimestamp,
             searchEngineTime: searchEngineTime,
             resultCount: result.result.length,
             totalResults: result.totalResults
@@ -290,7 +297,7 @@ function queryEntries(query, callback) {
 
 mediathekIndexer.on('state', (state) => {
     lastIndexingState = state;
-    io.sockets.emit('indexState', state);
+
 
     console.log();
     console.log('\tpprogress: ' + (state.parserProgress * 100).toFixed(2) + '%');
@@ -303,10 +310,15 @@ mediathekIndexer.on('state', (state) => {
         console.log('\terror: ' + state.errorMessage);
     }
 
-
     if (state.done) {
         console.log();
+
+        mediathekIndexer.getFilmlisteTimestamp((timestamp) => {
+            filmlisteTimestamp = timestamp;
+        });
     }
+
+    io.sockets.emit('indexState', state);
 });
 
 function deleteFileIfExist(file, callback) {
