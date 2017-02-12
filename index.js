@@ -370,7 +370,7 @@ function handleQueryResult(result, err) {
 
     createPagination(shownPagesCount);
 
-    $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime + ' ms, zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
+    $('#queryInfoLabel').text('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
         ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.');
 }
 
@@ -914,7 +914,7 @@ $(() => {
                 duration: 20
             });
             queryInputClearButtonState = 'hidden';
-        } else if (currentQueryString.length > 0 && queryInputClearButtonState == 'hidden' ) {
+        } else if (currentQueryString.length > 0 && queryInputClearButtonState == 'hidden') {
             clearButton.animate({
                 opacity: 1
             }, {
