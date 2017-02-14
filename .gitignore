@@ -39,3 +39,6 @@ jspm_packages
 #compiled index.js
 static/index-compiled.min.js
 static/index-compiled.min.js.map
+
+#files in data directory
+data/*
