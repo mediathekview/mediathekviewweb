@@ -1030,6 +1030,8 @@ $(() => {
         }
     }, false);
 
+    $('#searchSpan').popover();
+
     setQueryFromURIHash();
     query();
 });
