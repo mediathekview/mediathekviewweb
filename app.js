@@ -137,7 +137,7 @@ io.on('connection', (socket) => {
     }
 
     socket.on('getContentLength', (url, callback) => {
-        redis.get(url, (err, result) => {
+        redis.hget('mvw:contentLengthCache', url, (err, result) => {
             if (result) {
                 callback(result);
             } else {
@@ -148,7 +148,7 @@ io.on('connection', (socket) => {
                     }
 
                     callback(contentLength);
-                    redis.set(url, contentLength);
+                    redis.hset('mvw:contentLengthCache', url, contentLength);
                 });
             }
         });
