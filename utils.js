@@ -1,7 +1,13 @@
-var crypto = require('crypto');
+const crypto = require('crypto');
+const os = require('os');
 
 function randomValueBase64(len) {
     return crypto.randomBytes(Math.ceil(len * 3 / 4)).toString('base64').slice(0, len).replace(/\+/g, '0').replace(/\//g, '0');
+}
+
+function getUniqueID() {
+    //a hopefully unique ID.
+    return Math.floor(Math.random() * 10000000).toString() + process.pid.toString() + os.freemem().toString() + Date.now().toString() + Math.floor(os.uptime()).toString();
 }
 
 function formatBytes(bytes, decimals) {
@@ -64,6 +70,7 @@ function translateToLatin(str) {
 
 module.exports = {
     randomValueBase64: randomValueBase64,
+    getUniqueID: getUniqueID,
     formatBytes: formatBytes,
     arraysHasSameElements: arraysHasSameElements,
     latinDictionary: latinDictionary,

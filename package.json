@@ -15,6 +15,7 @@
   "dependencies": {
     "body-parser": "^1.16.0",
     "bootstrap": ">=3.3.7 <4",
+    "command-line-args": "^4.0.1",
     "compression": "^1.6.2",
     "elasticsearch": "^12.1.3",
     "express": "^4.14.0",
@@ -23,10 +24,12 @@
     "js-cookie": "^2.1.3",
     "line-reader": "^0.4.0",
     "lodash": "^4.17.4",
+    "lzma-native": "^1.5.2",
     "moment": "^2.17.1",
     "piwik-tracker": "^1.0.0",
     "redis": "^2.6.5",
     "request": "^2.79.0",
+    "request-progress": "^3.0.0",
     "socket.io": "^1.7.2"
   },
   "devDependencies": {

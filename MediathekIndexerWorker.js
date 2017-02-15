@@ -1,89 +1,96 @@
 const REDIS = require('redis');
-const fs = require('fs');
-const lineReader = require('line-reader');
-const moment = require('moment');
 const IPC = require('./IPC.js');
-const utils = require('./utils.js');
 const elasticsearch = require('elasticsearch');
+const config = require('./config.js');
+const crypto = require('crypto');
 
 var ipc = new IPC(process);
 
-var redis;
-var searchClient;
-var searchIndex;
-var error = false;
-var noNewFilme = false;
-var buffer = [];
+var redis = REDIS.createClient(config.redis);
+var searchClient = new elasticsearch.Client(config.elasticsearch);
+
+redis.on('error', (err) => handleError(err));
+
+const bufferLength = 150,
+    fillLength = 50,
+    flushLength = 75;
+
+var addedBuffer = [],
+    removedBuffer = [],
+    outBuffer = [];
+
+var noNewAdded = false,
+    noNewRemoved = false;
+
+var fillPending = false;
+
 var bufferFlushPending = false;
 var isFlushing = false;
-var filmlisteBuffer = [];
-var entryCounter = 0;
 var notifyInterval;
-var indexBegin;
+var error = false;
 
-ipc.on('init', (data) => {
-    init(data.redisSettings, data.elasticsearchSettings, data.index);
-});
+var addedEntries = 0,
+    removedEntries = 0;
 
-ipc.on('index', () => {
-    index();
-});
-
-function init(redisSettings, elasticsearchSettings, index) {
-    redis = REDIS.createClient(redisSettings);
-    searchIndex = index;
-
-    redis.on('error', (err) => handleError(err));
-    redis.on('ready', () => emitInitialized());
-
-    searchClient = new elasticsearch.Client(elasticsearchSettings);
-}
+var filmlisteTimestamp = 0;
 
 function handleError(err) {
     error = true;
-    ipc.send('error', err);
+    ipc.send('error', err.message);
     redis.quit();
-}
-
-var initCounter = 0;
-
-function emitInitialized() {
-    ipc.send('initialized');
-}
-
-function createUrlFromBase(baseUrl, newUrl) {
-    let newSplit = newUrl.split('|');
-    if (newSplit.length == 2) {
-        return baseUrl.substr(0, newSplit[0]) + newSplit[1];
-    } else {
-        return '';
-    }
+    setTimeout(() => process.exit(1), 500);
 }
 
 function index() {
-    indexBegin = Date.now();
-    notifyInterval = setInterval(() => notifyState(), 500);
-
-    fillBuffer();
-    processEntry();
+    fillInBuffer();
+    redis.get('mediathekIndexer:newFilmlisteTimestamp', (err, timestamp) => {
+        if (err) {
+            handleError(err);
+        } else {
+            filmlisteTimestamp = timestamp;
+            processEntry();
+        }
+    });
 }
 
-function fillBuffer() {
-    let parsingDone = false;
-    let llen = 0;
-    redis.multi()
-        .lrange('entries', -250, -1, (err, result) => {
-            filmlisteBuffer = filmlisteBuffer.concat(result);
-        }).ltrim('entries', 0, -251)
-        .get('parsingDone', (err, result) => {
-            parsingDone = result;
-        }).llen('entries', (err, result) => {
-            llen = result;
-        }).exec((err, result) => {
-            if (parsingDone && llen == 0) {
-                noNewFilme = true;
+function fillInBuffer() {
+    if (noNewAdded && noNewRemoved) {
+        return;
+    }
+
+    if (noNewAdded == false && addedBuffer.length < fillLength) {
+        let addedBufferSpace = bufferLength - addedBuffer.length;
+        redis.spop('mediathekIndexer:addedEntries', addedBufferSpace, (err, result) => {
+            if (err) {
+                handleError(err);
+            } else {
+                if (result.length > 0) {
+                    addedBuffer = addedBuffer.concat(result);
+                } else if (addedBufferSpace > 0) {
+                    noNewAdded = true;
+                }
             }
         });
+    }
+
+    if (noNewRemoved == false && removedBuffer.length < fillLength) {
+        let removedBufferSpace = bufferLength - removedBuffer.length;
+        redis.spop('mediathekIndexer:removedEntries', removedBufferSpace, (err, result) => {
+            if (err) {
+                handleError(err);
+            } else {
+                if (result.length > 0) {
+                    removedBuffer = removedBuffer.concat(result);
+                } else if (removedBufferSpace > 0) {
+                    noNewRemoved = true;
+                }
+            }
+        });
+    }
+}
+
+function md5(stringOrBuffer) {
+    return crypto.createHash('sha256').update(stringOrBuffer).digest('base64');
 }
 
 function processEntry() {
@@ -91,82 +98,86 @@ function processEntry() {
         return;
     }
 
-    if (filmlisteBuffer.length < 50 && !noNewFilme) {
-        fillBuffer();
-    }
+    fillInBuffer();
 
-    if (filmlisteBuffer.length == 0) {
-        if (!noNewFilme) {
-            setTimeout(() => processEntry(), 10);
+    if (addedBuffer.length == 0 && removedBuffer.length == 0) {
+        if (noNewAdded && noNewRemoved) {
+            finalize();
             return;
         } else {
-            finalize();
+            setTimeout(() => processEntry(), 10); //wait for fresh data
             return;
         }
     }
 
-    if (buffer.length > 500) {
+    if (outBuffer.length >= bufferLength) {
         setTimeout(() => processEntry(), 10);
         return;
     }
 
-    entryCounter++;
+    if (addedBuffer.length > 0) {
+        let rawEntry = addedBuffer.pop();
+        let parsedEntry = JSON.parse(rawEntry);
+        parsedEntry.filmlisteTimestamp = filmlisteTimestamp;
 
-    let parsed = JSON.parse(filmlisteBuffer.pop());
+        outBuffer.push({
+            index: {
+                _index: 'filmliste',
+                _type: 'entries',
+                _id: md5(rawEntry)
+            }
+        });
+        outBuffer.push(parsedEntry);
+        addedEntries++;
+    } else if (removedBuffer.length > 0) {
+        let rawEntry = removedBuffer.pop();
 
-    durationSplit = parsed[5].split(':');
+        outBuffer.push({
+            delete: {
+                _index: 'filmliste',
+                _type: 'entries',
+                _id: md5(rawEntry)
+            }
+        });
+        removedEntries++;
+    }
 
-    let entry = {
-        channel: parsed[0],
-        topic: parsed[1],
-        title: parsed[2],
-        description: parsed[7],
-        timestamp: parseInt(parsed[16]),
-        duration: (parseInt(durationSplit[0]) * 60 * 60) + (parseInt(durationSplit[1]) * 60) + parseInt(durationSplit[2]),
-        size: parseInt(parsed[6]) * 1000000, //MB to bytes
-        url_video: parsed[8],
-        url_website: parsed[9],
-        url_subtitle: parsed[10],
-        url_video_low: createUrlFromBase(parsed[8], parsed[12]),
-        url_video_hd: createUrlFromBase(parsed[8], parsed[14])
-    };
-
-    buffer.push({
-        index: {
-            _index: searchIndex,
-            _type: 'entries'
-        }
-    });
-    buffer.push(entry);
-
-    if (buffer.length >= 350) {
-        flushBuffer();
+    if (outBuffer.length >= flushLength) {
+        flushOutBuffer();
     }
 
     setImmediate(() => processEntry());
 }
 
 function finalize() {
-    clearInterval(notifyInterval);
-    flushBuffer();
+    flushOutBuffer();
 
-    notifyState(true);
-    redis.quit(() => exitProcess());
+    redis.quit(() => {
+        done();
+    });
 }
 
-var exitCounter = 0;
-
-function exitProcess() {
-    setTimeout(() => process.exit(0), 500);
+function done() {
+    if (isFlushing == false && bufferFlushPending == false) {
+        ipc.send('done');
+        setTimeout(process.exit(0), 500);
+    } else {
+        setTimeout(() => done(), 10);
+    }
 }
 
-function flushBuffer() {
+function flushOutBuffer() {
+    if (outBuffer.length == 0) {
+        bufferFlushPending = false;
+        return;
+    }
+
     if (!isFlushing) {
         bufferFlushPending = false;
         isFlushing = true;
 
         searchClient.bulk({
-            body: buffer
+            body: outBuffer
         }, (err, resp) => {
             if (err) {
                 handleError(err);
@@ -175,22 +186,23 @@ function flushBuffer() {
             isFlushing = false;
 
             if (bufferFlushPending) {
-                setImmediate(() => flushBuffer(), 10);
+                setImmediate(() => flushOutBuffer(), 10);
             }
+
+            notifyState();
         });
 
-        buffer = [];
+        outBuffer = [];
     } else if (!bufferFlushPending) {
         bufferFlushPending = true;
     }
 }
 
-function notifyState(done = false) {
+function notifyState() {
     ipc.send('state', {
-        entries: entryCounter,
-        time: Date.now() - indexBegin,
-        done: done
+        addedEntries: addedEntries,
+        removedEntries: removedEntries
     });
 }
 
-ipc.send('ready');
+index();

@@ -1,6 +1,6 @@
 {
-  #path to filmliste, can be absolute and relative
-  filmliste: data/filmliste
+  #path for storing data, can be absolute and relative
+  dataDirectory: data/
 
   webserverPort: 8000
 
@@ -9,20 +9,14 @@
   #number of indexing workers to fork or auto to set it to cpu count
   workerCount: auto
 
+  workerArgs: ["--optimize_for_size", "--memory-reducer"]
+
   #indexing
   redis: {
     host: "127.0.0.1"
     port: 6379
     password: ""
     db: 2
-  }
-
-  #caching
-  redis2: {
-    host: "127.0.0.1"
-    port: 6379
-    password: ""
-    db: 3
   }
 
   elasticsearch: {

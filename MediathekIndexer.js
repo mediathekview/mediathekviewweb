@@ -1,176 +1,162 @@
 const EventEmitter = require('events');
 const cp = require('child_process');
-const os = require('os');
 const IPC = require('./IPC.js');
 const REDIS = require('redis');
-const moment = require('moment');
-const lodash = require('lodash');
-const lineReader = require('line-reader');
 const elasticsearch = require('elasticsearch');
-const request = require('request');
-
-const cpuCount = os.cpus().length;
-const workerArgs = process.execArgv.concat(['--optimize_for_size', '--memory-reducer']);
+const config = require('./config.js');
+const elasticsearchDefinitions = require('./ElasticsearchDefinitions.js');
+const StateEmitter = require('./StateEmitter.js');
 
 class MediathekIndexer extends EventEmitter {
-    constructor(workerCount, redisSettings, elasticsearchSettings) {
+    constructor() {
         super();
 
-        this.options = {};
-        this.options.workerCount = workerCount == 'auto' ? cpuCount : workerCount;
-        this.options.redisSettings = redisSettings;
-        this.options.elasticsearchSettings = JSON.stringify(elasticsearchSettings);
+        this.redis = REDIS.createClient(config.redis);
+        this.searchClient = new elasticsearch.Client(config.elasticsearch);
 
-        this.redis = REDIS.createClient(this.options.redisSettings);
-        this.searchClient = new elasticsearch.Client(JSON.parse(this.options.elasticsearchSettings));
-
-        this.handleStateInterval = null;
-        this.emitStateInterval = null;
-
-        this.indexingCompleteCallback = null;
-        this.indexingErrorCallback = null;
-        this.errorMessage = null;
+        this.stateEmitter = new StateEmitter(this);
     }
 
-    handleError(error) {
-        clearInterval(this.handleStateInterval);
-        clearInterval(this.emitStateInterval);
-
-        console.error(error);
-        this.errorMessage = error.message;
-        this.emitState();
-
-        if (typeof(this.indexingErrorCallback) == 'function') {
-            this.indexingErrorCallback();
-        }
-    }
-
-    init() {
-        this.indexers = [];
-        this.indexersState = new Array(this.options.workerCount);
-        this.totalEntries = 0;
-        this.parserProgress = 0;
-        this.indexBegin = 0;
-        this.workersState = {};
-        this.indexingDone = false;
-    }
-
-    getFilmlisteTimestamp(callback) {
-        this.redis.get('filmlisteTimestamp', (err, reply) => {
-            if (!err) {
-                callback(reply);
+    //path.join(config.dataDirectory, 'newFilmliste')
+    indexFilmliste(file, callback) {
+        this.stateEmitter.setState('step', 'indexFilmliste');
+        this.hasCurrentState((err, hasCurrentState) => {
+            if (err) {
+                callback(err);
             } else {
-                callback(0);
-            }
-        });
-    }
-
-    getIndexCompleted(callback) {
-        this.redis.get('indexCompleted', (err, reply) => {
-            if (!err) {
-                callback(reply === 'true');
-            } else {
-                callback(false);
-            }
-        });
-    }
-
-    checkUpdateAvailable(callback, tries = 3) {
-        this.getIndexCompleted((indexCompleted) => {
-            this.getRandomFilmlisteMirror((mirror) => {
-                if (!indexCompleted) {
-                    callback(true, mirror);
-                } else {
-                    this.getFilmlisteTimestamp((filmlisteTimestamp) => {
-                        request.head(mirror, (error, response, body) => {
-                            if (error) {
-                                console.error(error);
-                                if (tries > 0) {
-                                    this.checkUpdateAvailable(callback, tries - 1);
+                if (hasCurrentState) {
+                    this.deltaIndexFilmliste(file, (err) => {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            this.finalize((err) => {
+                                if (err) {
+                                    callback(err);
                                 } else {
-                                    callback(false);
+                                    callback(null);
                                 }
-                            }
-                            if (!error) {
-                                var lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
-                                let tolerance = 15 * 60; //15 minutes, as not all mirrors update at same time
-                                callback((lastModified - filmlisteTimestamp) >= tolerance, mirror);
-                            }
-                        });
+                            });
+                        }
+                    });
+                } else {
+                    this.fullIndexFilmliste(file, (err) => {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            this.finalize((err) => {
+                                if (err) {
+                                    callback(err);
+                                } else {
+                                    callback(null);
+                                }
+                            });
+                        }
                     });
                 }
-            });
-        });
-    }
-
-    getRandomFilmlisteMirror(callback) {
-        request.get('https://res.mediathekview.de/akt.xml', (error, response, body) => {
-            if (!error && response.statusCode == 200) {
-                let filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
-                let urlMatches = [];
-
-                let match;
-                while ((match = filmlisteUrlRegex.exec(body)) !== null) {
-                    urlMatches.push(match);
-                }
-
-                let url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
-
-                callback(url);
-            } else {
-                callback(null);
             }
         });
     }
 
-    indexFile(file, indexingCompleteCallback, indexingErrorCallback) {
-        if (this.indexing) {
-            throw new Error('already indexing');
-        }
+    finalize(callback) {
+        this.stateEmitter.setState('step', 'finalize');
+        this.redis.multi()
+            .rename('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste')
+            .rename('mediathekIndexer:newFilmlisteTimestamp', 'mediathekIndexer:currentFilmlisteTimestamp')
+            .del('mediathekIndexer:addedEntries')
+            .del('mediathekIndexer:removedEntries')
+            .exec((err, replies) => {
+                if (err) {
+                    callback(err);
+                } else {
+                    callback(null);
+                }
+            });
 
-        this.init();
+        this.emit('done');
+        this.stateEmitter.setState('step', 'waiting');
+    }
 
-        this.file = file;
-        this.indexingCompleteCallback = indexingCompleteCallback;
-        this.indexingErrorCallback = indexingErrorCallback;
-        this.indexBegin = Date.now();
+    hasCurrentState(callback) {
+        this.redis.exists('mediathekIndexer:currentFilmliste', (err, reply) => {
+            if (err) {
+                callback(err, null);
+            } else {
+                callback(null, reply);
+            }
+        });
+    }
 
-        this.emitStateInterval = setInterval(() => this.emitState(), 500);
-        this.handleStateInterval = setInterval(() => this.handleState(), 500);
+    fullIndexFilmliste(file, callback) {
+        this.stateEmitter.setState('step', 'fullIndexFilmliste');
+        this.reCreateESIndex((err) => {
+            if (err) {
+                callback(err);
+            } else {
+                this.parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp', (err) => {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:none', (err) => {
+                            if (err) {
+                                callback(err);
+                            } else {
+                                this.indexDelta((err) => {
+                                    if (err) {
+                                        callback(err);
+                                    } else {
+                                        callback(null);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
 
+    reCreateESIndex(callback) {
+        this.stateEmitter.setState('step', 'reCreateESIndex');
         this.searchClient.indices.delete({
             index: 'filmliste'
         }, (err, resp, status) => {
             if (err && err.status != 404) { //404 (index not found) is fine, as we'll create the index in next step.
-                this.handleError(err);
+                callback(err);
             } else {
                 this.searchClient.indices.create({
                     index: 'filmliste'
                 }, (err, resp, status) => {
                     if (err) {
-                        this.handleError(err);
+                        callback(err);
                     } else {
                         this.searchClient.indices.close({
                             index: 'filmliste'
                         }, (err, resp, status) => {
                             if (err) {
-                                this.handleError(err);
+                                callback(err);
                             } else {
-                                this.putSettings((err, resp, status) => {
+                                this.searchClient.indices.putSettings({
+                                    index: 'filmliste',
+                                    body: elasticsearchDefinitions.settings
+                                }, (err, resp, status) => {
                                     if (err) {
-                                        this.handleError(err);
+                                        callback(err);
                                     } else {
-                                        this.putMapping((err, resp, status) => {
+                                        this.searchClient.indices.putMapping({
+                                            index: 'filmliste',
+                                            type: 'entries',
+                                            body: elasticsearchDefinitions.mapping
+                                        }, (err, resp, status) => {
                                             if (err) {
-                                                this.handleError(err);
+                                                callback(err);
                                             } else {
                                                 this.searchClient.indices.open({
                                                     index: 'filmliste'
                                                 }, (err, resp, status) => {
                                                     if (err) {
-                                                        this.handleError(err);
+                                                        callback(err);
                                                     } else {
-                                                        this.redis.flushdb(() => this.startWorkers());
+                                                        callback(null);
                                                     }
                                                 });
                                             }
@@ -185,323 +171,147 @@ class MediathekIndexer extends EventEmitter {
         });
     }
 
-    putMapping(callback) {
-        this.searchClient.indices.putMapping({
-            index: 'filmliste',
-            type: 'entries',
-            body: {
-                properties: {
-                    channel: {
-                        type: 'text',
-                        index: 'true',
-                        analyzer: 'mvw_index_analyzer',
-                        search_analyzer: 'mvw_search_analyzer'
-                    },
-                    topic: {
-                        type: 'text',
-                        index: 'true',
-                        analyzer: 'mvw_index_analyzer',
-                        search_analyzer: 'mvw_search_analyzer'
-                    },
-                    title: {
-                        type: 'text',
-                        index: 'true',
-                        analyzer: 'mvw_index_analyzer',
-                        search_analyzer: 'mvw_search_analyzer'
-                    },
-                    description: {
-                        type: 'text',
-                        index: 'true',
-                        analyzer: 'mvw_index_analyzer',
-                        search_analyzer: 'mvw_search_analyzer'
-                    },
-                    timestamp: {
-                        type: 'date',
-                        format: 'epoch_second',
-                        index: 'true',
-                    },
-                    duration: {
-                        type: 'long',
-                        index: 'false'
-                    },
-                    size: {
-                        type: 'long',
-                        index: 'false'
-                    },
-                    url_video: {
-                        type: 'string',
-                        index: 'no'
-                    },
-                    url_website: {
-                        type: 'string',
-                        index: 'no'
-                    },
-                    url_video_low: {
-                        type: 'string',
-                        index: 'no'
-                    },
-                    url_video_hd: {
-                        type: 'string',
-                        index: 'no'
-                    }
-                }
-            }
-        }, (err, resp, status) => {
-            callback(err, resp, status);
-        });
-    }
-
-    putSettings(callback) {
-        this.searchClient.indices.putSettings({
-            index: 'filmliste',
-            body: {
-                refresh_interval: '-1',
-                analysis: {
-                    analyzer: {
-                        mvw_index_analyzer: {
-                            type: 'custom',
-                            tokenizer: 'mvw_tokenizer',
-                            char_filter: ['toLatin'],
-                            filter: [
-                                'lowercase',
-                                'asciifolding'
-                            ]
-                        },
-                        mvw_search_analyzer: {
-                            type: 'custom',
-                            tokenizer: 'standard',
-                            char_filter: ['toLatin'],
-                            filter: [
-                                'lowercase',
-                                'asciifolding'
-                            ]
-                        }
-                    },
-                    tokenizer: {
-                        mvw_tokenizer: {
-                            type: 'edge_ngram',
-                            min_gram: 1,
-                            max_gram: 25,
-                            token_chars: [
-                                'letter',
-                                'digit'
-                            ]
-                        }
-                    },
-                    filter: {
-                        asciifoldingpreserveorig: {
-                            type: 'asciifolding',
-                            'preserve_original': true
-                        }
-                    },
-                    char_filter: {
-                        toLatin: {
-                            type: 'mapping',
-                            mappings: [
-                                'à => a',
-                                'À => a',
-                                'á => a',
-                                'Á => a',
-                                'â => a',
-                                'Â => a',
-                                'ä => ae',
-                                'Ä => ae',
-                                'ã => a',
-                                'Ã => a',
-                                'å => a',
-                                'Å => a',
-                                'æ => ae',
-                                'Æ => ae',
-                                'è => e',
-                                'È => e',
-                                'é => e',
-                                'É => e',
-                                'ê => e',
-                                'Ê => e',
-                                'ë => e',
-                                'Ë => e',
-                                'ì => i',
-                                'Ì => i',
-                                'í => i',
-                                'Í => i',
-                                'î => i',
-                                'Î => i',
-                                'ï => i',
-                                'Ï => i',
-                                'ò => o',
-                                'Ò => o',
-                                'Ó => o',
-                                'ó => o',
-                                'ô => o',
-                                'Ô => o',
-                                'ö => oe',
-                                'Ö => oe',
-                                'õ => o',
-                                'Õ => ö',
-                                'ø => o',
-                                'Ø => o',
-                                'ù => u',
-                                'Ù => u',
-                                'ú => u',
-                                'Ú => u',
-                                'û => u',
-                                'Û => u',
-                                'ü => ue',
-                                'Ü => ue',
-                                'ý => y',
-                                'Ý => y',
-                                'ÿ => y',
-                                'Ÿ => y',
-                                'ç => c',
-                                'Ç => c',
-                                'œ => oe',
-                                'Œ => oe',
-                                'ß => ss',
-                                '& => und'
-                            ]
-                        }
-                    }
-                }
-            }
-        }, (err, resp, status) => {
-            callback(err, resp, status);
-        });
-    }
-
-    startWorkers() {
-        let filmlisteParser = cp.fork('./FilmlisteParser.js', {
-            execArgv: workerArgs
-        });
-
-        let parserIpc = new IPC(filmlisteParser);
-
-        parserIpc.on('ready', () => {
-            parserIpc.on('state', (state) => {
-                this.totalEntries = state.entries;
-                this.parserProgress = state.progress;
-            });
-            parserIpc.send('parseFilmliste', {
-                file: this.file,
-                redisSettings: this.options.redisSettings
-            });
-
-            for (let i = 0; i < this.options.workerCount; i++) {
-                this.startIndexer();
-            }
-        });
-    }
-
-    startIndexer() {
-        let indexer = cp.fork('./MediathekIndexerWorker.js', {
-            execArgv: workerArgs
-        });
-        var ipcIndexer = new IPC(indexer);
-
-        ipcIndexer.on('ready', () => {
-            ipcIndexer.send('init', {
-                redisSettings: this.options.redisSettings,
-                elasticsearchSettings: JSON.parse(this.options.elasticsearchSettings),
-                index: 'filmliste'
-            });
-        });
-
-        ipcIndexer.on('initialized', () => {
-            ipcIndexer.send('index');
-        });
-
-        ipcIndexer.on('error', (err) => {
-            this.handleError(err);
-        });
-
-        let indexerIndex = this.indexers.length;
-
-        ipcIndexer.on('state', (state) => {
-            this.indexersState[indexerIndex] = state;
-        });
-
-        this.indexers.push({
-            indexer: indexer,
-            entries: 0,
-            time: 0,
-            done: false
-        });
-    }
-
-    combineWorkerStates() {
-        let entries = 0;
-        let done = true;
-
-        for (let i = 0; i < this.indexersState.length; i++) {
-            if (this.indexersState[i] != undefined) {
-                entries += this.indexersState[i].entries;
-
-                if (this.indexersState[i].done == false) {
-                    done = false;
-                }
+    deltaIndexFilmliste(file, callback) {
+        this.stateEmitter.setState('step', 'deltaIndexFilmliste');
+        this.parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp', (err) => {
+            if (err) {
+                callback(err);
             } else {
-                done = false;
+                this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste', (err) => {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        this.indexDelta((err) => {
+                            if (err) {
+                                callback(err);
+                            } else {
+                                callback(null);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    createDelta(newSet, currentSet, callback) {
+        this.stateEmitter.setState('step', 'createDelta');
+
+        let added = 0;
+        let removed = 0;
+        this.redis.multi()
+            .sdiffstore('mediathekIndexer:addedEntries', newSet, currentSet)
+            .sdiffstore('mediathekIndexer:removedEntries', currentSet, newSet)
+            .scard('mediathekIndexer:addedEntries', (err, reply) => {
+                added = reply;
+            })
+            .scard('mediathekIndexer:removedEntries', (err, reply) => {
+                removed = reply;
+            })
+            .exec((err, replies) => {
+                if (err) {
+                    callback(err);
+                } else {
+                    this.stateEmitter.updateState({
+                        added: added,
+                        removed: removed
+                    });
+                    callback(null);
+                }
+            });
+    }
+
+    combineWorkerStates(workerStates) {
+        let addedEntries = 0,
+            removedEntries = 0;
+
+        for (let i = 0; i < workerStates.length; i++) {
+            if (workerStates[i] != undefined) {
+                addedEntries += workerStates[i].addedEntries;
+                removedEntries += workerStates[i].removedEntries;
             }
         }
 
         return {
-            entries: entries,
-            done: done
+            addedEntries: addedEntries,
+            removedEntries: removedEntries
         };
     }
 
-    handleState() {
-        this.workersState = this.combineWorkerStates();
-        let workersDone = this.workersState.done && (this.parserProgress == 1);
+    indexDelta(callback) {
+        this.stateEmitter.setState('step', 'indexDelta');
 
-        if (workersDone) {
-            clearInterval(this.handleStateInterval);
+        let indexerWorkers = [config.workerCount];
+        let indexerWorkersState = [config.workerCount];
 
-            this.searchClient.indices.putSettings({
-                index: 'filmliste',
-                body: {
-                    refresh_interval: '5s'
+        let workersDone = 0;
+        let lastStatsUpdate = 0;
+
+        for (let i = 0; i < config.workerCount; i++) {
+            let indexerWorker = cp.fork('./MediathekIndexerWorker.js', {
+                execArgv: config.workerArgs
+            });
+
+            indexerWorkers[i] = indexerWorker;
+
+            let ipc = new IPC(indexerWorker);
+
+            ipc.on('state', (state) => {
+                indexerWorkersState[i] = state;
+
+                if ((Date.now() - lastStatsUpdate) > 500) { //wait atleast 500ms
+                    this.stateEmitter.updateState(this.combineWorkerStates(indexerWorkersState));
+                    lastStatsUpdate = Date.now();
                 }
-            }, (err, resp, status) => {
-                if (err) {
-                    this.handleError(err);
-                } else {
-                    this.searchClient.indices.refresh({
-                        index: 'filmliste'
-                    }, (err, resp, status) => {
-                        if (err) {
-                            handleError(err);
-                        } else {
-                            this.indexComplete();
-                        }
-                    });
+            });
+            ipc.on('done', () => {
+                workersDone++;
+
+                if (workersDone == config.workerCount) {
+                    this.stateEmitter.updateState(this.combineWorkerStates(indexerWorkersState));
+                    callback(null);
                 }
+            });
+            ipc.on('error', (err) => {
+                callback(new Error(err));
             });
         }
     }
 
-    indexComplete() {
-        this.redis.batch().set('indexTimestamp', Math.floor(Date.now() / 1000))
-            .set('indexCompleted', true)
-            .exec((err, replies) => {
-                clearInterval(this.emitStateInterval);
-                this.indexingDone = true;
-                this.emitState();
+    parseFilmliste(file, setKey, timestampKey, callback) {
+        this.stateEmitter.setState('step', 'parseFilmliste');
+        let filmlisteParser = cp.fork('./FilmlisteParser.js', {
+            execArgv: config.workerArgs
+        });
 
-                if (typeof(this.indexingCompleteCallback) == 'function') {
-                    this.indexingCompleteCallback();
-                }
-            });
-    }
+        let ipc = new IPC(filmlisteParser);
 
-    emitState() {
-        this.emit('state', {
-            parserProgress: this.parserProgress,
-            indexingProgress: this.workersState.entries / (this.totalEntries / this.parserProgress),
-            totalEntries: this.totalEntries,
-            entries: this.workersState.entries,
-            time: Date.now() - this.indexBegin,
-            done: this.indexingDone,
-            error: this.errorMessage
+        ipc.on('error', (errMessage) => {
+            callback(new Error(errMessage));
+        });
+
+        let lastState = null;
+        let lastStatsUpdate = 0;
+
+
+        ipc.on('state', (state) => {
+            lastState = state;
+
+            if ((Date.now() - lastStatsUpdate) > 500) { //wait atleast 500ms
+                this.stateEmitter.updateState(lastState);
+                lastStatsUpdate = Date.now();
+            }
+        });
+
+        ipc.on('done', () => {
+            this.stateEmitter.updateState(lastState);
+            callback(null);
+        });
+
+        ipc.send('parseFilmliste', {
+            file: file,
+            setKey: setKey,
+            timestampKey: timestampKey
         });
     }
 }

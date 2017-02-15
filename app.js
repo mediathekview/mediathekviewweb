@@ -8,24 +8,16 @@ const fs = require('fs');
 const moment = require('moment');
 const SearchEngine = require('./SearchEngine.js');
 const REDIS = require('redis');
-const MediathekIndexer = require('./MediathekIndexer.js');
+const MediathekManager = require('./MediathekManager.js');
 const Hjson = require('hjson');
 const exec = require('child_process').exec;
 const PiwikTracker = require('piwik-tracker');
 const utils = require('./utils.js');
 const request = require('request');
 const compression = require('compression');
+const config = require('./config.js');
 
-const config = Hjson.parse(fs.readFileSync('config.hjson', 'utf8'));
-config.mediathekUpdateInterval = parseFloat(config.mediathekUpdateInterval) * 60;
-if (config.redis.password === '') {
-    delete config.redis.password; //to prevent warning message
-}
-if (config.redis2.password === '') {
-    delete config.redis2.password; //to prevent warning message
-}
-
-var redis = REDIS.createClient(config.redis2);
+var redis = REDIS.createClient(config.redis);
 redis.on('error', (err) => {
     console.error(err);
 });
@@ -40,15 +32,21 @@ var io = require('socket.io')(httpServer);
 
 var elasticsearchSettings = JSON.stringify(config.elasticsearch);
 
-var searchEngine = new SearchEngine(JSON.parse(elasticsearchSettings));
-var mediathekIndexer = new MediathekIndexer(config.workerCount, config.redis, JSON.parse(elasticsearchSettings));
+var searchEngine = new SearchEngine();
+var mediathekManager = new MediathekManager();
 var websiteNames = [];
 
 var indexing = false;
 var lastIndexingState;
 var filmlisteTimestamp = 0;
 
-mediathekIndexer.getFilmlisteTimestamp((timestamp) => {
+mediathekManager.on('state', (state) => {
+    console.log();
+    console.log(state);
+    console.log();
+});
+
+mediathekManager.getCurrentFilmlisteTimestamp((timestamp) => {
     filmlisteTimestamp = timestamp;
 });
 
@@ -295,105 +293,21 @@ function queryEntries(query, callback) {
     });
 }
 
-mediathekIndexer.on('state', (state) => {
-    lastIndexingState = state;
-
-
-    console.log();
-    console.log('\tpprogress: ' + (state.parserProgress * 100).toFixed(2) + '%');
-    console.log('\tiprogress: ' + (state.indexingProgress * 100).toFixed(2) + '%');
-    console.log('\ttotalEntries: ' + state.totalEntries);
-    console.log('\tentries: ' + state.entries);
-    console.log('\tdone: ' + state.done);
-    console.log('\ttime: ' + (state.time / 1000) + ' seconds');
-    if (state.errorMessage) {
-        console.log('\terror: ' + state.errorMessage);
-    }
-
-    if (state.done) {
-        console.log();
-
-        mediathekIndexer.getFilmlisteTimestamp((timestamp) => {
-            filmlisteTimestamp = timestamp;
-        });
-    }
-
-    io.sockets.emit('indexState', state);
-});
-
-function deleteFileIfExist(file, callback) {
-    fs.stat(file, (err, stats) => {
-        if (!err) {
-            fs.unlink(file, () => {
-                callback();
-            });
-        } else {
-            callback();
-        }
-    });
-}
-
-function downloadFilmliste(mirror, successCallback, errCallback) {
-    let file = config.filmliste + '.xz';
-
-    deleteFileIfExist(file, () => {
-        let req = request.get(mirror);
-        req.on('error', function(err) {
-            errCallback(err);
-        });
-
-        let fileStream = fs.createWriteStream(file);
-        req.pipe(fileStream);
-
-        fileStream.on('error', (error) => {
-            req.abort();
-            errCallback(error);
-        });
-
-        req.on('end', () => {
-            deleteFileIfExist(config.filmliste, () => {
-                exec('unxz ' + config.filmliste + '.xz').on('exit', () => {
-                    successCallback();
-                });
-            });
-        });
-    });
-}
-
-function indexMediathek(callback, errorCallback) {
-    indexing = true;
-    mediathekIndexer.indexFile(config.filmliste, callback, errorCallback);
-}
-
 function updateLoop() {
-    if (!config.index) {
-        return;
-    }
-
-    mediathekIndexer.checkUpdateAvailable((updateAvailable, mirror) => {
-        if (updateAvailable) {
-            console.log('downloading filmliste...');
-            downloadFilmliste(mirror, () => {
-                console.log('indexing filmliste...');
-                indexMediathek(() => {
-                    indexing = false;
-                    console.log('indexing done');
-                    setTimeout(updateLoop, 3 * 60 * 1000);
-                }, () => {
-                    indexing = false;
-                    console.log('indexing error');
-                    setTimeout(updateLoop, 3 * 60 * 1000);
-                });
-            }, (err) => {
-                console.error('download error: ' + err.message);
-                console.log('download failed...');
-                console.log('trying again in 15 seconds');
-                setTimeout(updateLoop, 15 * 1000);
-            });
+    console.log('loop');
+    mediathekManager.updateFilmlisteIfUpdateAvailable((err) => {
+        if (err) {
+            console.error(err);
         } else {
-            setTimeout(updateLoop, 3 * 60 * 1000);
+            mediathekManager.getCurrentFilmlisteTimestamp((timestamp) => {
+                filmlisteTimestamp = timestamp;
+            });
         }
+
+        setTimeout(() => updateLoop(), 2 * 60 * 1000);
     });
 }
 
-setImmediate(updateLoop);
+if (config.index) {
+    setImmediate(() => updateLoop());
+}
