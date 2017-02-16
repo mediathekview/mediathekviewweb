@@ -14,6 +14,7 @@ var impressum = null;
 var datenschutz = null;
 var donate = null;
 var queryInputClearButtonState = 'hidden';
+var video;
 
 var locale = window.navigator.userLanguage || window.navigator.language;
 moment.locale(locale);
@@ -718,24 +719,17 @@ function exitFullscreen() {
     }
 }
 
-function getVideo() {
-    return $('#videocontent > video')[0];
-}
-
 function isVideoPlaying() {
-    let video = getVideo();
-
     if (!video) {
         return false;
     } else {
-        return !video.paused;
+        return !video.paused();
     }
 }
 
 function toggleVideoPause() {
-    let video = getVideo();
     if (video) {
-        video.paused ? video.play() : video.pause();
+        video.paused() ? video.play() : video.pause();
     }
 }
 
@@ -743,24 +737,26 @@ function playVideo(title, url) {
     $('#videooverlay').show(200, () => {
         $('#blur').addClass('blur');
 
-        let videoplayer = $('<video>', {
+        let vid = $('<video>', {
+            class: 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9',
+            id: 'video-player',
+            preload: 'auto',
             controls: '',
             width: '100%'
-        }).append($('<source>', {
-            src: url
-        }));
-
-        $('#videocontent').append(videoplayer);
-
-        let video = videoplayer[0];
-
-        videoplayer.click((e) => {
-            if (e.offsetY < video.clientHeight * 0.92) { //to prevent pausing when clicking player controls
-                toggleVideoPause();
-            }
         });
+        let source = $('<source>', {
+            src: url
+        });
+        if (url.endsWith('m3u8')) {
+            source.attr('type', 'application/x-mpegURL');
+        }
+        vid.append(source);
 
-        videoplayer.dblclick(() => {
+        $('#videocontent').append(vid);
+
+        video = videojs('video-player', {});
+
+        vid.dblclick(() => {
             if (isFullscreen()) {
                 exitFullscreen();
             } else {
@@ -784,6 +780,7 @@ function playVideo(title, url) {
 }
 
 function closeVideo() {
+    video.dispose();
     $('#videocontent').empty();
     $('#videooverlay').hide(200);
     $('#blur').removeClass('blur');
