@@ -25,6 +25,30 @@ XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
     this.baseOpen(method, url, async, user, password);
 }
 
+function isWDR(url) {
+    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/ww\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
+
+    return regex.test(url);
+}
+
+function WDRm3u8ToMP4s(url) {
+    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/ww\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
+    let match = regex.exec(url);
+
+    if (match == null) {
+        return url;
+    }
+
+    let qualities = match[4].split(',');
+    let mp4s = [];
+
+    for (var i = 0; i < qualities.length; i++) {
+        mp4s.push(`http://ondemand-ww.wdr.de/medp/${match[1]}/${match[2]}/${match[3]}/${qualities[i]}.mp4`);
+    }
+
+    return mp4s;
+}
+
 //polyfill for stupid internet explorer
 if (!String.prototype.endsWith) {
     String.prototype.endsWith = function(searchString, position) {
@@ -375,6 +399,15 @@ function handleQueryResult(result, err) {
 
     for (var i = 0; i < result.results.length; i++) {
         let data = result.results[i];
+
+        if (isWDR(data.url_video)) {
+            let mp4s = WDRm3u8ToMP4s(data.url_video);
+
+            data.url_video_low = mp4s[0];
+            data.url_video = mp4s[1];
+            data.url_video_hd = mp4s[2];
+        }
+
         data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
         data.timeString = moment.unix(data.timestamp).format('HH:mm');
 
