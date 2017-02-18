@@ -16,17 +16,26 @@ var donate = null;
 var queryInputClearButtonState = 'hidden';
 var video;
 
+XMLHttpRequest.prototype.baseOpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+    if (url.startsWith('http://srfvodhd-vh.akamaihd.net')) {
+        url = 'https' + url.slice(4);
+    }
+
+    this.baseOpen(method, url, async, user, password);
+}
+
 //polyfill for stupid internet explorer
 if (!String.prototype.endsWith) {
-  String.prototype.endsWith = function(searchString, position) {
-      var subjectString = this.toString();
-      if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-        position = subjectString.length;
-      }
-      position -= searchString.length;
-      var lastIndex = subjectString.indexOf(searchString, position);
-      return lastIndex !== -1 && lastIndex === position;
-  };
+    String.prototype.endsWith = function(searchString, position) {
+        var subjectString = this.toString();
+        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+            position = subjectString.length;
+        }
+        position -= searchString.length;
+        var lastIndex = subjectString.indexOf(searchString, position);
+        return lastIndex !== -1 && lastIndex === position;
+    };
 }
 
 var locale = window.navigator.userLanguage || window.navigator.language;
