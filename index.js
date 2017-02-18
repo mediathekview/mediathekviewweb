@@ -408,8 +408,12 @@ function handleQueryResult(result, err) {
             data.url_video_hd = mp4s[2];
         }
 
-        data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
-        data.timeString = moment.unix(data.timestamp).format('HH:mm');
+        if (data.timestamp == 0) {
+            data.dateString = data.timeString = '?';
+        } else {
+            data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
+            data.timeString = moment.unix(data.timestamp).format('HH:mm');
+        }
 
         let durationMoment = moment.duration(data.duration, 'seconds');
         let minutes = (durationMoment.hours() * 60 + durationMoment.minutes()).pad(2);

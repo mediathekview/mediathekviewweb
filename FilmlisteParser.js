@@ -92,7 +92,7 @@ function parseFilmliste(file, setKey, timestampKey) {
                                 topic: parsed[1],
                                 title: parsed[2],
                                 description: parsed[7],
-                                timestamp: parseInt(parsed[16]),
+                                timestamp: parseInt(parsed[16]) | 0,
                                 duration: (parseInt(durationSplit[0]) * 60 * 60) + (parseInt(durationSplit[1]) * 60) + parseInt(durationSplit[2]),
                                 size: parseInt(parsed[6]) * 1000000, //MB to bytes
                                 url_website: parsed[9],
