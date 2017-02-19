@@ -26,24 +26,24 @@ XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
 }
 
 function isWDR(url) {
-    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/ww\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
+    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/(ww|de)\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
 
     return regex.test(url);
 }
 
 function WDRm3u8ToMP4s(url) {
-    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/ww\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
+    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/(ww|de)\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
     let match = regex.exec(url);
 
     if (match == null) {
         return url;
     }
 
-    let qualities = match[4].split(',');
+    let qualities = match[5].split(',');
     let mp4s = [];
 
     for (var i = 0; i < qualities.length; i++) {
-        mp4s.push(`http://ondemand-ww.wdr.de/medp/${match[1]}/${match[2]}/${match[3]}/${qualities[i]}.mp4`);
+        mp4s.push(`http://ondemand-${match[1]}.wdr.de/medp/${match[2]}/${match[3]}/${match[4]}/${qualities[i]}.mp4`);
     }
 
     return mp4s;
