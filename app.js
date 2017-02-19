@@ -73,6 +73,10 @@ app.get('/datenschutz', function(req, res) {
     res.sendFile(path.join(__dirname + '/datenschutz.html'));
 });
 
+app.get('/stats', function(req, res) {
+    res.send(`Socket.io connections: ${io.engine.clientsCount}`);
+});
+
 app.post('/api/query', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
 
