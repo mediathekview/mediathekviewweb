@@ -8,7 +8,7 @@
   },
   "main": "app.js",
   "scripts": {
-    "build": "babel index.js --out-file ./static/index-compiled.min.js --source-maps"
+    "build": "babel ./client/index.js --out-file ./static/index-compiled.min.js --source-maps"
   },
   "author": "",
   "license": "ISC",

@@ -1,0 +1,189 @@
+.spin-left {
+    animation: spinleft 2s infinite linear;
+    -webkit-animation: spinleft2 2s infinite linear;
+}
+
+.spin-right {
+    animation: spinright 2s infinite linear;
+    -webkit-animation: spinright2 2s infinite linear;
+}
+
+@keyframes spinleft {
+    from {
+        transform: scale(1) rotate(360deg);
+    }
+    to {
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@-webkit-keyframes spinleft2 {
+    from {
+        -webkit-transform: rotate(360deg);
+    }
+    to {
+        -webkit-transform: rotate(0deg);
+    }
+}
+
+@keyframes spinright {
+    from {
+        transform: scale(1) rotate(0deg);
+    }
+    to {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+@-webkit-keyframes spinright2 {
+    from {
+        -webkit-transform: rotate(0deg);
+    }
+    to {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+.showafter1s {
+    animation: show 1s;
+}
+
+@keyframes show {
+    0% {
+        opacity: 0;
+    }
+    99% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.margin-left {
+    margin-left: 0.2em;
+}
+
+.margin-right {
+    margin-right: 0.2em;
+}
+
+.paginationstyle {
+    margin: 0 !important;
+    float: right;
+}
+
+.initiallyHidden {
+    display: none;
+}
+
+.floatRight {
+    float: right;
+}
+
+.rotateLeft {
+    -webkit-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+}
+
+.floatLeft {
+    float: left;
+}
+
+.watchDownloadField {
+    min-width: 4.2em;
+}
+
+.filesizeCell {
+    min-width: 6em;
+}
+
+.movie-icon {
+    line-height: 0 !important;
+}
+
+.material-icons {
+    vertical-align: middle;
+    transition: all 0.25s ease-in-out;
+}
+
+td {
+    vertical-align: middle !important;
+}
+
+label {
+    vertical-align: middle;
+    top: 50%;
+    line-height: 0;
+}
+
+#queryInputGroup {
+    width: 100%;
+}
+
+#queryInputClearButton {
+    position: absolute;
+    font-size: 18px;
+    right: 1.3em;
+    top: 50%;
+    line-height: 0;
+    opacity: 0;
+    height: auto;
+    cursor: pointer;
+    z-index: 3;
+}
+
+#mediathek {
+    width: 100% !important;
+}
+
+.smallMarginTop {
+    margin-top: 0.3em;
+}
+
+.icon-big {
+    font-size: 2em !important;
+    transition: all 0.25s ease-in-out;
+}
+
+.noPadding {
+    padding: 0 !important;
+}
+
+.blur {
+    -webkit-filter: blur(3px) !important;
+    filter: blur(3px) !important;
+    transition: all 0.4s ease-in-out;
+}
+
+.no-filter {
+    -webkit-filter: none;
+    filter: none;
+    transition: all 0.4s ease-in-out;
+}
+
+.overlay {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    overflow-x: hidden;
+}
+
+.overlay-content {
+    position: absolute;
+    top: 20%;
+    width: 100%;
+    margin: 0;
+    text-align: center;
+}
+
+.overlay .closeButton {
+    position: absolute;
+    top: 20px;
+    right: 45px;
+    font-size: 60px;
+}

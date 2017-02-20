@@ -57,20 +57,20 @@ if (!!piwik) {
 }
 
 app.use(compression());
-app.use('/static', express.static(__dirname + '/static'));
+app.use('/static', express.static(path.join(__dirname , '/static')));
 app.use('/api', bodyParser.text());
 
 app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname + '/index.html'));
+    res.sendFile(path.join(__dirname , '/client/index.html'));
 });
 app.get('/donate', function(req, res) {
-    res.sendFile(path.join(__dirname + '/donate.html'));
+    res.sendFile(path.join(__dirname, '/client/donate.html'));
 });
 app.get('/impressum', function(req, res) {
-    res.sendFile(path.join(__dirname + '/impressum.html'));
+    res.sendFile(path.join(__dirname ,'/client/impressum.html'));
 });
 app.get('/datenschutz', function(req, res) {
-    res.sendFile(path.join(__dirname + '/datenschutz.html'));
+    res.sendFile(path.join(__dirname, '/client/datenschutz.html'));
 });
 
 app.get('/stats', function(req, res) {
@@ -236,7 +236,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('getDonate', (callback) => {
-        fs.readFile('donate.html', 'utf-8', (err, data) => {
+        fs.readFile(path.join(__dirname, '/client/donate.html'), 'utf-8', (err, data) => {
             if (err) {
                 callback(err.message);
             } else {
@@ -246,7 +246,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('getImpressum', (callback) => {
-        fs.readFile('impressum.html', 'utf-8', (err, data) => {
+        fs.readFile(path.join(__dirname, '/client/impressum.html'), 'utf-8', (err, data) => {
             if (err) {
                 callback(err.message);
             } else {
@@ -256,7 +256,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('getDatenschutz', (callback) => {
-        fs.readFile('datenschutz.html', 'utf-8', (err, data) => {
+        fs.readFile(path.join(__dirname, '/client/datenschutz.html'), 'utf-8', (err, data) => {
             if (err) {
                 callback(err.message);
             } else {
