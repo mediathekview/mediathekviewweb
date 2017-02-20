@@ -53,3 +53,18 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 ##### Überall suchen
 
 - Wenn "Überall" aktiviert ist, werden alle Begriffe, die **kein** !, #, + oder * davor haben in **allen** Feldern gesucht. Zusätzlich kann man jedoch auch hier noch nach Sender, Thema, Titel und Beschreibung filtern.
+
+
+
+# Verwendete Programme, Bibliotheken etc. (zumindest die wichtigsten) (siehe [package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/package.json) für mehr)
+### Server
+- Node
+- Redis
+- Elasticsearch
+
+### Client
+- bootstrap
+- jQuery
+
+### Beides
+- Socket.io
