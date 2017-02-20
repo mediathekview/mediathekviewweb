@@ -49,7 +49,7 @@ function WDRm3u8ToMP4s(url) {
     return mp4s;
 }
 
-//polyfill for stupid internet explorer
+/*polyfill for stupid internet explorer*/
 if (!String.prototype.endsWith) {
     String.prototype.endsWith = function(searchString, position) {
         var subjectString = this.toString();
@@ -203,7 +203,7 @@ setInterval(() => {
     if (socket.connected && !isVideoPlaying()) {
         track('heartbeat');
     }
-}, 20 * 60 * 1000); //every 20 minutes
+}, 20 * 60 * 1000); /*every 20 minutes*/
 
 socket.on('indexState', (state) => {
     let parsingProgress = (state.parserProgress * 100).toFixed(0);
@@ -824,7 +824,7 @@ function playVideo(title, url) {
         });
     }).focus();
 
-    clearInterval(playingInterval); //in case it wasn't stopped for any reason
+    clearInterval(playingInterval); /*in case it wasn't stopped for any reason*/
     playingInterval = setInterval(() => {
         if (socket.connected) {
             if (isVideoPlaying()) {
@@ -833,7 +833,7 @@ function playVideo(title, url) {
                 track('paused');
             }
         }
-    }, 1 * 60 * 1000); //every minute
+    }, 1 * 60 * 1000); /*every minute*/
 
     track('play');
 }
@@ -898,7 +898,7 @@ $(() => {
     }
 
     mediathekTable = $('#mediathek').DataTable({
-        columns: [{ //Sender
+        columns: [{ /*Sender*/
             width: '1%',
             data: null,
             render: returnEmptyString,
@@ -910,29 +910,29 @@ $(() => {
                 });
                 $(td).append(link);
             }
-        }, { //Thema
+        }, { /*Thema*/
             width: '30%',
             data: 'topic'
-        }, { //Title
+        }, { /*Title*/
             width: '70%',
             data: 'title'
-        }, { //Description
+        }, { /*Description*/
             width: '1%',
             data: null,
             render: returnEmptyString,
             createdCell: (td, cellData, rowData, row, col) => {
                 $(td).append(createDescriptionButton(rowData));
             }
-        }, { //Date
+        }, { /*Date*/
             width: '1%',
             data: 'dateString'
-        }, { //Time
+        }, { /*Time*/
             width: '1%',
             data: 'timeString'
-        }, { //Duration
+        }, { /*Duration*/
             width: '1%',
             data: 'durationString'
-        }, { //Video
+        }, { /*Video*/
             width: '1%',
             data: null,
             render: returnEmptyString,
@@ -997,7 +997,7 @@ $(() => {
                 closeVideo();
             }
             e.preventDefault();
-        } else if (e.key === ' ' || e.keyCode == 32) { //Space
+        } else if (e.key === ' ' || e.keyCode == 32) { /*32 = Space*/
             toggleVideoPause();
             e.preventDefault();
         }
