@@ -364,7 +364,7 @@ function query() {
             });
         }
 
-        let testQuery = {
+        let queryObj = {
             queries: queries,
             sortBy: 'timestamp',
             sortOrder: 'desc',
@@ -373,7 +373,7 @@ function query() {
             size: itemsPerPage
         };
 
-        socket.emit('queryEntries', testQuery, (message) => {
+        socket.emit('queryEntries', queryObj, (message) => {
             handleQueryResult(message.result, message.err);
         });
 

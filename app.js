@@ -298,7 +298,6 @@ function queryEntries(query, callback) {
 }
 
 function updateLoop() {
-    console.log('loop');
     mediathekManager.updateFilmlisteIfUpdateAvailable((err) => {
         if (err) {
             console.error(err);
