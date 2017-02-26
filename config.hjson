@@ -25,10 +25,7 @@
 
   piwik: {
     enabled: false
-    allowedHosts: [
-      example.de
-      example2.com
-    ]
+    siteUrl: "http://domain.tld"
     piwikUrl: "https://piwik.example.de/piwik.php"
     token_auth: "abc123"
     siteId: 1

@@ -146,6 +146,11 @@ label {
     transition: all 0.25s ease-in-out;
 }
 
+.icon-small {
+    font-size: 1.3em !important;
+    transition: all 0.25s ease-in-out;
+}
+
 .noPadding {
     padding: 0 !important;
 }

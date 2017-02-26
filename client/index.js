@@ -950,6 +950,10 @@ $(() => {
         scrollX: true
     });
 
+    $('#rssFeedButton').click(() => {
+        window.open(window.location.href.replace('#', 'feed?'), '_blank');
+    });
+
     let newQuery = () => {
         currentPage = 0;
         query();

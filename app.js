@@ -16,6 +16,7 @@ const utils = require('./utils.js');
 const request = require('request');
 const compression = require('compression');
 const config = require('./config.js');
+const RSSFeedGenerator = require('./RSSFeedGenerator.js');
 
 var redis = REDIS.createClient(config.redis);
 redis.on('error', (err) => {
@@ -34,6 +35,7 @@ var elasticsearchSettings = JSON.stringify(config.elasticsearch);
 
 var searchEngine = new SearchEngine();
 var mediathekManager = new MediathekManager();
+var rssFeedGenerator = new RSSFeedGenerator(searchEngine);
 var websiteNames = [];
 
 var indexing = false;
@@ -57,17 +59,17 @@ if (!!piwik) {
 }
 
 app.use(compression());
-app.use('/static', express.static(path.join(__dirname , '/static')));
+app.use('/static', express.static(path.join(__dirname, '/static')));
 app.use('/api', bodyParser.text());
 
 app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname , '/client/index.html'));
+    res.sendFile(path.join(__dirname, '/client/index.html'));
 });
 app.get('/donate', function(req, res) {
     res.sendFile(path.join(__dirname, '/client/donate.html'));
 });
 app.get('/impressum', function(req, res) {
-    res.sendFile(path.join(__dirname ,'/client/impressum.html'));
+    res.sendFile(path.join(__dirname, '/client/impressum.html'));
 });
 app.get('/datenschutz', function(req, res) {
     res.sendFile(path.join(__dirname, '/client/datenschutz.html'));
@@ -75,6 +77,25 @@ app.get('/datenschutz', function(req, res) {
 
 app.get('/stats', function(req, res) {
     res.send(`Socket.io connections: ${io.engine.clientsCount}`);
+});
+
+app.get('/feed', function(req, res) {
+    rssFeedGenerator.createFeed(req.protocol + '://' + req.get('host') + req.originalUrl, (err, result) => {
+        if (err) {
+            res.status(500).send(err.message);
+        } else {
+            res.send(result);
+
+            if (!!piwik) {
+                piwik.track({
+                    token_auth: config.piwik.token_auth,
+                    url: config.piwik.siteUrl + config.piwik.siteUrl.endsWith('/') ? '' : '/',
+                    uid: 'feed',
+                    action_name: 'feed'
+                });
+            }
+        }
+    });
 });
 
 app.post('/api/query', (req, res) => {
@@ -125,6 +146,15 @@ app.post('/api/query', (req, res) => {
             },
             err: null
         });
+
+        if (!!piwik) {
+            piwik.track({
+                token_auth: config.piwik.token_auth,
+                url: config.piwik.siteUrl + config.piwik.siteUrl.endsWith('/') ? '' : '/',
+                uid: 'api',
+                action_name: 'api-query'
+            });
+        }
 
         console.log(moment().format('HH:mm') + ' - api used');
     });
@@ -211,7 +241,8 @@ io.on('connection', (socket) => {
             }
 
             let host = URL.parse(data.href).hostname;
-            if (!config.piwik.allowedHosts.includes(host)) {
+            let siteHost = URL.parse(config.piwik.siteUrl).hostname;
+            if (siteHost != host) {
                 return;
             }
 
