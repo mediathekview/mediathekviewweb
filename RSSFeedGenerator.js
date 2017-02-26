@@ -74,7 +74,7 @@ class RSSFeedGenerator {
                 });
 
                 let rss = new RSS({
-                    title: 'MediathekViewWeb',
+                    title: 'MVW - ' + urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
                     ttl: 75,
                     description: urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
                     feed_url: requestUrl,
