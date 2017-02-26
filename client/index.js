@@ -951,7 +951,8 @@ $(() => {
     });
 
     $('#rssFeedButton').click(() => {
-        window.open(window.location.href.replace('#', 'feed?'), '_blank');
+        let search = window.location.hash.replace('#', '');
+        window.open(window.location.origin + window.location.pathname + 'feed' + (search.length > 0 ? '?' : '') + search, '_blank');
         track('feed-create');
     });
 
