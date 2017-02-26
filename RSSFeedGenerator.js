@@ -11,7 +11,7 @@ class RSSFeedGenerator {
         let url = URL.parse(requestUrl);
         let urlQuery = querystring.parse(url.query);
 
-        let parsedQuery = this.parseQuery(urlQuery.query);
+        let parsedQuery = this.parseQuery(urlQuery.query || '');
         let queries = [];
 
         for (let i = 0; i < parsedQuery.channels.length; i++) {
