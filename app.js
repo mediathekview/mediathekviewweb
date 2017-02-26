@@ -89,7 +89,7 @@ app.get('/feed', function(req, res) {
             if (!!piwik) {
                 piwik.track({
                     token_auth: config.piwik.token_auth,
-                    url: config.piwik.siteUrl + config.piwik.siteUrl.endsWith('/') ? '' : '/',
+                    url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
                     uid: 'feed',
                     action_name: 'feed'
                 });
@@ -150,7 +150,7 @@ app.post('/api/query', (req, res) => {
         if (!!piwik) {
             piwik.track({
                 token_auth: config.piwik.token_auth,
-                url: config.piwik.siteUrl + config.piwik.siteUrl.endsWith('/') ? '' : '/',
+                url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
                 uid: 'api',
                 action_name: 'api-query'
             });

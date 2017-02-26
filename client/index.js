@@ -952,6 +952,7 @@ $(() => {
 
     $('#rssFeedButton').click(() => {
         window.open(window.location.href.replace('#', 'feed?'), '_blank');
+        track('feed-create');
     });
 
     let newQuery = () => {
