@@ -84,6 +84,7 @@ app.get('/feed', function(req, res) {
         if (err) {
             res.status(500).send(err.message);
         } else {
+            res.set('Content-Type', 'application/rss+xml');
             res.send(result);
 
             if (!!piwik) {
