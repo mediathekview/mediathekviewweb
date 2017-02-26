@@ -53,7 +53,7 @@ class RSSFeedGenerator {
             queries: queries,
             sortBy: 'timestamp',
             sortOrder: 'desc',
-            future: urlQuery.future,
+            future: urlQuery.future || false,
             offset: 0,
             size: 10
         };
