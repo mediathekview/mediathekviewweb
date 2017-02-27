@@ -49,7 +49,7 @@ function WDRm3u8ToMP4s(url) {
     return mp4s;
 }
 
-/*polyfill for stupid internet explorer*/
+/*polyfills for stupid internet explorer*/
 if (!String.prototype.endsWith) {
     String.prototype.endsWith = function(searchString, position) {
         var subjectString = this.toString();
@@ -60,6 +60,12 @@ if (!String.prototype.endsWith) {
         var lastIndex = subjectString.indexOf(searchString, position);
         return lastIndex !== -1 && lastIndex === position;
     };
+}
+if (!String.prototype.startsWith) {
+  String.prototype.startsWith = function(searchString, position) {
+    position = position || 0;
+    return this.indexOf(searchString, position) === position;
+  };
 }
 
 var locale = window.navigator.userLanguage || window.navigator.language;
