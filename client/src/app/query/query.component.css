@@ -1,0 +1,11 @@
+.dropdown-toggle:after {
+  display: none;
+}
+
+label {
+  margin: 0;
+}
+
+.dropdown-menu {
+  left: -6rem;
+}
