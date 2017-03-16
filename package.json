@@ -33,6 +33,7 @@
     "rss": "^1.2.2",
     "socket.io": "^1.7.3",
     "video.js": "^5.19.0",
+    "videojs-chromecast": "^2.0.8",
     "videojs-contrib-hls": "^5.3.3"
   },
   "devDependencies": {

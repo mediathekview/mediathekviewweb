@@ -87,10 +87,10 @@ if (!String.prototype.endsWith) {
     };
 }
 if (!String.prototype.startsWith) {
-  String.prototype.startsWith = function(searchString, position) {
-    position = position || 0;
-    return this.indexOf(searchString, position) === position;
-  };
+    String.prototype.startsWith = function(searchString, position) {
+        position = position || 0;
+        return this.indexOf(searchString, position) === position;
+    };
 }
 
 var locale = window.navigator.userLanguage || window.navigator.language;
@@ -437,8 +437,7 @@ function handleQueryResult(result, err) {
             data.url_video_low = mp4s[0];
             data.url_video = mp4s[1];
             data.url_video_hd = mp4s[2];
-        }
-        else if (isBRm3u8(data.url_video)) {
+        } else if (isBRm3u8(data.url_video)) {
             let mp4s = BRm3u8ToMP4s(data.url_video);
 
             data.url_video_low = mp4s[2];
@@ -851,7 +850,12 @@ function playVideo(title, url) {
 
         $('#videocontent').append(vid);
 
-        video = videojs('video-player', {});
+        video = videojs('video-player', {
+            chromecast: {
+                appId: 'MediathekViewWeb',
+                title: title
+            }
+        });
 
         vid.dblclick(() => {
             if (isFullscreen()) {
