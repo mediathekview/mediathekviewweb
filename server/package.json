@@ -8,7 +8,7 @@
     "build:live": "nodemon --exec ./node_modules/.bin/ts-node -- ./src/app.ts"
   },
   "author": "bagbag",
-  "license": "ISC",
+  "license": "GPLv3",
   "devDependencies": {
     "@types/node": "^7.0.8",
     "@types/socket.io": "^1.4.28",

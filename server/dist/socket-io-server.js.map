@@ -1,0 +1,1 @@
+{"version":3,"file":"socket-io-server.js","sourceRoot":"","sources":["../src/socket-io-server.ts"],"names":[],"mappings":";;AAAA,sCAAsC;AAKtC;IAGI;IAEA,CAAC;IAED,KAAK,CAAC,UAAuB;QACzB,IAAI,CAAC,EAAE,GAAG,QAAQ,CAAC,UAAU,CAAC,CAAC;IACnC,CAAC;CACJ;AAVD,wCAUC"}
