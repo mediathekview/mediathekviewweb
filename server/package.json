@@ -10,6 +10,7 @@
   "author": "bagbag",
   "license": "GPLv3",
   "devDependencies": {
+    "@types/byline": "^4.2.31",
     "@types/node": "^7.0.8",
     "@types/socket.io": "^1.4.28",
     "nodemon": "^1.11.0",
@@ -17,6 +18,7 @@
     "typescript": "^2.2.1"
   },
   "dependencies": {
+    "byline": "^5.0.0",
     "socket.io": "^1.7.3"
   }
 }
