@@ -11,14 +11,20 @@
   "license": "GPLv3",
   "devDependencies": {
     "@types/byline": "^4.2.31",
+    "@types/line-reader": "0.0.28",
     "@types/node": "^7.0.8",
+    "@types/redis": "^0.12.36",
+    "@types/request": "0.0.41",
     "@types/socket.io": "^1.4.28",
     "nodemon": "^1.11.0",
-    "ts-node": "^2.1.0",
+    "ts-node": "^3.0.2",
     "typescript": "^2.2.1"
   },
   "dependencies": {
     "byline": "^5.0.0",
+    "line-reader": "^0.4.0",
+    "redis": "^2.7.1",
+    "request": "^2.81.0",
     "socket.io": "^1.7.3"
   }
 }

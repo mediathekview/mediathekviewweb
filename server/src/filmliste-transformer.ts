@@ -1,15 +1,10 @@
+import { IUrlRewriter, WDRRewriter } from './url-rewriter';
 import * as Model from './model';
-import * as FS from 'fs';
-import * as Byline from 'byline';
 import * as Stream from 'stream';
 import * as Crypto from 'crypto';
-import { IUrlRewriter, WDRRewriter } from './url-rewriter';
 
 
-export class FilmlisteReader extends Stream.Readable {
-    size: number;
-    fileStream: FS.ReadStream;
-    lineStream: Byline.LineStream;
+export class FilmlisteTransformer extends Stream.Transform {
     urlRewriters: IUrlRewriter[];
 
     private currentLine: number = 0;
@@ -17,44 +12,23 @@ export class FilmlisteReader extends Stream.Readable {
     private currentTopic: string = '';
     private headerRegex = /".*?",\s"(\d+)\.(\d+)\.(\d+),\s?(\d+):(\d+)"/;
 
-    constructor(file: string, ...urlRewriters: IUrlRewriter[]) {
-        super({ objectMode: true, highWaterMark: 100 });
+    constructor(...urlRewriters: IUrlRewriter[]) {
+        super({ objectMode: true, readableObjectMode: true, writableObjectMode: true, highWaterMark: 100 });
         this.urlRewriters = urlRewriters;
-
-        FS.open(file, 'r', (err, fd) => {
-            if (err) {
-                this.emit('error', err);
-            }
-
-            FS.fstat(fd, (err, stats) => {
-                if (err) {
-                    this.emit('error', err);
-                }
-
-                this.size = stats.size;
-
-                this.fileStream = FS.createReadStream(null, { fd: fd, autoClose: true });
-                this.lineStream = Byline.createStream(this.fileStream, { highWaterMark: 100 });
-
-                this.emit('ready');
-            });
-        });
     }
 
-    _read() {
-        let line: string;
+    _transform(line: string, encoding, callback) {
+        this.currentLine++;
 
-        while (null !== (line = this.lineStream.read())) {
-            this.currentLine++;
-
-            if (this.currentLine > 4) {
-                super.push(this.parseLine(line));
-            } else if (this.currentLine == 2) {
-                let match = this.headerRegex.exec(line);
-                let timestamp = Math.floor(Date.UTC(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), parseInt(match[4]), parseInt(match[5])) / 1000);
-                this.emit('filmlisteTimestamp', timestamp);
-            }
+        if (this.currentLine > 4) {
+            super.push(this.parseLine(line));
+        } else if (this.currentLine == 2) {
+            let match = this.headerRegex.exec(line);
+            let timestamp = Math.floor(Date.UTC(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), parseInt(match[4]), parseInt(match[5])) / 1000);
+            this.emit('filmlisteTimestamp', timestamp);
         }
+
+        callback();
     }
 
     parseLine(line: string): Model.Entry {

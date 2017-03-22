@@ -1,0 +1,25 @@
+{
+  webserverPort: 8000
+
+  workerArgs: ["--optimize_for_size", "--memory-reducer"]
+
+  #indexing
+  redis: {
+    host: "127.0.0.1"
+    port: 6379
+    password: ""
+    db: 2
+  }
+
+  elasticsearch: {
+    host: "127.0.0.1:9200"
+  }
+
+  piwik: {
+    enabled: false
+    siteUrl: "http://domain.tld"
+    piwikUrl: "https://piwik.example.de/piwik.php"
+    token_auth: "abc123"
+    siteId: 1
+  }
+}
