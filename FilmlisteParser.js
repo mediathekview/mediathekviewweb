@@ -57,21 +57,21 @@ function parseFilmliste(file, setKey, timestampKey) {
                     let currentTopic;
                     let currentLine = 0;
 
-                    lineReader.eachLine(fileStream, (line, last, getNext) => {
+                    lineReader.eachLine(fileStream, {separator: /^{"Filmliste":|,"X":|}$/}, (line, last, getNext) => {
                         currentLine++;
 
                         if (currentLine == 2) {
-                            let regex = /".*?",\s"(\d+)\.(\d+)\.(\d+),\s?(\d+):(\d+)"/;
+                            let regex = /".*?","(\d+)\.(\d+)\.(\d+),\s?(\d+):(\d+)"/;
                             let match = regex.exec(line);
                             let timestamp = Math.floor(Date.UTC(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), parseInt(match[4]), parseInt(match[5])) / 1000);
 
                             redis.set(timestampKey, timestamp);
                         } else if (currentLine >= 4 && !last) {
-                            if (line[line.length - 1] == ',') {
-                                line = line.slice(8, -1); //8 is begin of array
+                            /*if (line[line.length - 1] == ',') {
+                                line = line.slice(0, -1); //8 is begin of array
                             } else {
                                 line = line.slice(8);
-                            }
+                            }*/
 
                             let parsed = JSON.parse(line);
 
