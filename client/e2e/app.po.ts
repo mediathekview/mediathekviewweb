@@ -6,6 +6,6 @@ export class MediathekviewwebClientPage {
   }
 
   getParagraphText() {
-    return element(by.css('app-root h1')).getText();
+    return element(by.css('mvw-root h1')).getText();
   }
 }

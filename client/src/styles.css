@@ -1,3 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
 
-@import "./assets/bootstrap.min.css";
+@import '~bootstrap/dist/css/bootstrap.css';
+.material-icons {
+  line-height: 0;
+  vertical-align: middle;
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+  transition: all 0.3s ease;
+}

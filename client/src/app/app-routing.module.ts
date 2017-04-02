@@ -6,14 +6,14 @@ import { QueryComponent } from './query/query.component';
 const routes: Routes = [
   {
     path: '',
-    component: QueryComponent,
-    children: []
+    children: [
+      { path: 'search', component: QueryComponent }
+    ]
   }
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
-  providers: []
+  exports: [RouterModule]
 })
 export class AppRoutingModule { }

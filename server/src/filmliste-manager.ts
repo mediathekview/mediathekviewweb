@@ -1,6 +1,8 @@
 import * as Request from 'request';
 import * as Redis from 'redis';
 import * as FS from 'fs';
+import * as request from 'request':
+import * as requestProgress from 'request-progress';
 
 class FilmlisteManager {
     redis: Redis.RedisClient;
@@ -79,7 +81,7 @@ class FilmlisteManager {
         });
     }
 
-    downloadFilmliste(mirror, file): Promise<void> {
+    downloadFilmliste(mirror: string, file: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             FS.open(file, 'w', (err, fd) => {
                 let fileStream = FS.createWriteStream(null, {
@@ -87,19 +89,19 @@ class FilmlisteManager {
                     autoClose: true
                 });
 
-                let req = requestProgress(request.get(mirror), {
+                let req: Request.Request = requestProgress(request.get(mirror), {
                     throttle: 500
                 });
 
                 fileStream.on('error', (err) => {
                     req.abort();
                     FS.close(fd);
-                    callback(err);
+                    reject(err);
                 });
 
                 req.on('error', (err) => {
                     FS.close(fd, () => {
-                        callback(err);
+                        reject(err);
                     });
                 });
 

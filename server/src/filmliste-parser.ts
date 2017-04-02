@@ -1,14 +1,14 @@
 import { FilmlisteTransformer } from './filmliste-transformer';
+import { StateEmitter } from './state-emitter';
 import * as FS from 'fs';
 import * as LineReader from 'line-reader';
-import { StateEmitter } from './state-emitter';
 import * as Redis from 'redis';
 
 export class FilmlisteParser extends StateEmitter {
     redis: Redis.RedisClient;
 
     constructor() {
-      super();      
+        super();
     }
 
     parseFilmliste(file: string = '/home/patrick/Documents/mediathekviewweb/server/src/liste'): Promise<void> {
@@ -42,7 +42,7 @@ export class FilmlisteParser extends StateEmitter {
                         this.updateState('parsedEntries', counter);
                     });
 
-                    let lineReader = LineReader.eachLine((fileStream as any), (line, last, getNext) => {
+                    LineReader.eachLine((fileStream as any), { separator: /^{"Filmliste":|,"X":|}$/ }, (line, last, getNext) => {
                         if (!last) {
                             filmlisteTransformer.write(line);
                         }

@@ -1,11 +1,64 @@
-.dropdown-toggle:after {
-  display: none;
+.collapse {
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transition: visibility 0s linear 0.3s, opacity 0.3s ease;
 }
 
-label {
+.collapse.show {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.collapse .card {
+  overflow: hidden;
+  max-height: none;
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
+  border-top-width: 0;
+  transition: all 0.3s ease;
+}
+
+.collapse:not(.show) .card {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: all 0.3s ease;
+}
+
+.search-label {
+  transition: border-bottom-left-radius 0.3s ease 0.3s;
+}
+
+.settings-button {
+  transition: border-bottom-right-radius 0.3s ease 0.3s;
+}
+
+.no-border-bottom-left-radius {
+  border-bottom-left-radius: 0;
+  transition: border-bottom-left-radius 0.3s ease 0s;
+}
+
+.no-border-bottom-right-radius {
+  border-bottom-right-radius: 0;
+  transition: border-bottom-right-radius 0.3s ease 0s;
+}
+
+.rotate {
+  transform: rotate(180deg);
+  transition-delay: 0.15s;
+}
+
+.settings-container {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 0;
   margin: 0;
 }
 
-.dropdown-menu {
-  left: -6rem;
+.settings-container * {
+  margin-left: 0.2rem;
+  margin-right: 0.2rem;
+  margin-bottom: 0;
 }

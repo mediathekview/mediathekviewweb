@@ -17,13 +17,13 @@ export class FilmlisteTransformer extends Stream.Transform {
         this.urlRewriters = urlRewriters;
     }
 
-    _transform(line: string, encoding, callback) {
+    _transform(rawEntry: string, encoding, callback) {
         this.currentLine++;
 
         if (this.currentLine > 4) {
-            super.push(this.parseLine(line));
+            super.push(this.parseLine(rawEntry));
         } else if (this.currentLine == 2) {
-            let match = this.headerRegex.exec(line);
+            let match = this.headerRegex.exec(rawEntry);
             let timestamp = Math.floor(Date.UTC(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), parseInt(match[4]), parseInt(match[5])) / 1000);
             this.emit('filmlisteTimestamp', timestamp);
         }
@@ -31,14 +31,8 @@ export class FilmlisteTransformer extends Stream.Transform {
         callback();
     }
 
-    parseLine(line: string): Model.Entry {
-        if (line[line.length - 1] == ',') {
-            line = line.slice(8, -1); //8 is begin of array
-        } else {
-            line = line.slice(8);
-        }
-
-        let parsed = JSON.parse(line);
+    parseLine(rawEntry: string): Model.Entry {
+        let parsed = JSON.parse(rawEntry);
 
         if (parsed[0].length == 0) {
             parsed[0] = this.currentChannel;

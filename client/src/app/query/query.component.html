@@ -1,38 +1,22 @@
 <div>
-  <div class="row">
-    <div class="col">
-      <div class="input-group">
-        <span class="input-group-addon">Suche</span>
-        <input type="text" class="form-control">
-      </div>
-    </div>
+  <div class="input-group">
+    <span class="input-group-addon search-label" [ngClass]="{ 'no-border-bottom-left-radius': showSettings }">Suche</span>
+    <input type="text" class="form-control" [(ngModel)]="text" (input)="query()">
+    <span class="input-group-btn settings-button">
+          <button type="button" class="btn btn-secondary" [ngClass]="{ 'no-border-bottom-right-radius': showSettings }" (click)="showSettings = !showSettings"><i class="material-icons" [ngClass]="{ rotate: showSettings}">expand_more</i></button>
+    </span>
+  </div>
 
-    <div class="col-md-auto">
-      <div class="input-group">
-        <span class="input-group-addon">
-          <div>
-            <label for="everywhereCheckbox">
-              <input id="everywhereCheckbox" type="checkbox"> Überall
-            </label>
-          </div>
-        </span>
+  <div class="collapse" [ngClass]="{ show: showSettings }">
+    <div class="card card-block">
+      <div class="settings-container">
+        <label [for]="'futureCheckbox' + instanceID">
+          <input [id]="'futureCheckbox' + instanceID" type="checkbox" [(ngModel)]="future" (change)="query()"> Zukünftige
+        </label>
 
-        <div class="input-group-btn">
-          <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">Mehr</button>
-          <div class="dropdown-menu">
-            <label for="futureCheckbox" class="dropdown-item">
-              <input id="futureCheckbox" type="checkbox"> Zukunft
-            </label>
-
-            <label for="blablaCheckbox" class="dropdown-item">
-              <input id="blablaCheckbox" type="checkbox"> Blabla
-            </label>
-
-            <div role="separator" class="dropdown-divider"></div>
-
-            <button type="button" class="btn btn-secondary dropdown-item">Als Standard speichern</button>
-          </div>
-        </div>
+        <label [for]="'everywhereCheckbox' + instanceID">
+          <input [id]="'everywhereCheckbox' + instanceID" type="checkbox" [(ngModel)]="everywhere" (change)="query()"> Überall
+        </label>
       </div>
     </div>
   </div>
