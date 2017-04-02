@@ -45,11 +45,6 @@
   transition: border-bottom-right-radius 0.3s ease 0s;
 }
 
-.rotate {
-  transform: rotate(180deg);
-  transition-delay: 0.15s;
-}
-
 .settings-container {
   display: inline-flex;
   flex-wrap: wrap;

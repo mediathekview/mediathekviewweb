@@ -4,7 +4,15 @@
 .material-icons {
   line-height: 0;
   vertical-align: middle;
-  margin-left: -0.25rem;
-  margin-right: -0.25rem;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
   transition: all 0.3s ease;
+}
+
+.rotate-180 {
+  transform: rotateX(180deg);
+}
+
+.center-text {
+  text-align: center;
 }

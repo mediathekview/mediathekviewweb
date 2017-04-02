@@ -1,7 +1,7 @@
 export interface Query {
   matches?: Match[] | Match;
   filters?: IFilter[] | IFilter;
-  sortField?: SortField;
+  sortField?: string;
   sortOrder?: SortOrder;
   offset?: number;
   size?: number;
@@ -13,6 +13,7 @@ export interface Match {
 }
 
 export interface IFilter {
+  field: string;
 }
 
 export interface RangeFilter extends IFilter {
@@ -27,12 +28,13 @@ export enum SortOrder {
   Descending
 }
 
-export enum SortField {
-  Channel,
-  Topic,
-  Title,
-  Timestamp,
-  Duration,
-  Size,
-  Description
-}
+export class Field {
+  static Channel = 'channel';
+  static Topic = 'topic';
+  static Title = 'title';
+  static Timestamp = 'timestamp';
+  static Duration = 'duration';
+  static Size = 'size';
+  static Description = 'description';
+  static Website = 'website';
+};

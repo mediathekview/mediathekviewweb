@@ -17,7 +17,7 @@ export interface QueryResponse extends IAPIResponse {
 
 export interface QueryInfo {
   time: number; //time required for query in milliseconds
-  totalResults: number; //as paging (Query.offset, Query.size) does not return all..
+  totalResults: number; //as paging (Query.offset, Query.size) does not return all
 }
 
 export interface GetServerStateResponse extends IAPIResponse {

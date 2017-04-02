@@ -1,0 +1,7 @@
+ul {
+  justify-content: flex-end;
+}
+
+li {
+  cursor: pointer;
+}

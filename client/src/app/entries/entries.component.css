@@ -1,0 +1,27 @@
+th {
+  border: none;
+  padding-bottom: 0.25rem;
+  padding-top: 0;
+}
+
+.auto-width {
+  white-space: nowrap;
+}
+
+.min-10-rem {
+  min-width: 10rem;
+}
+
+.max-15-rem {
+  max-width: 15rem;
+}
+
+.free-space {
+  width: 100%
+}
+
+mvw-entry {
+  display: table-row-group;
+vertical-align: middle;
+border-color: inherit;
+}
