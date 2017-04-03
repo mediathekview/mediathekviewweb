@@ -1,11 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import '~bootstrap/dist/css/bootstrap.css';
+@import '~video.js/dist/video-js.css';
+@import '~videojs-chromecast/dist/videojs-chromecast.css';
+
 .material-icons {
   line-height: 0;
   vertical-align: middle;
-  margin-left: -0.5rem;
-  margin-right: -0.5rem;
+  user-select: none;
   transition: all 0.3s ease;
 }
 

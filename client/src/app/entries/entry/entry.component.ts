@@ -1,5 +1,4 @@
-import { Component, Input } from '@angular/core';
-import { trigger, state, style, animate, transition, keyframes } from '@angular/animations';
+import { Component, Input, OnChanges } from '@angular/core';
 
 import { Entry } from '../../model';
 
@@ -8,14 +7,22 @@ import { Entry } from '../../model';
   templateUrl: './entry.component.html',
   styleUrls: ['./entry.component.css']
 })
-export class EntryComponent {
+export class EntryComponent implements OnChanges {
   @Input() entry: Entry;
+
+  bestVideoUrl: string;
 
   showDescription = false;
 
   constructor() { }
 
+  ngOnChanges() {
+    this.bestVideoUrl = this.entry.videos.sort((a, b) => b.quality - a.quality)[0].url;
+  }
+
   toggleDescription() {
     this.showDescription = !this.showDescription;
   }
+
+
 }

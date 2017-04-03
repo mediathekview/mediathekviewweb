@@ -3,7 +3,12 @@
   <td>{{entry.topic}}</td>
   <td>{{entry.title}}</td>
   <td><i class="material-icons description-expander" [ngClass]="{ 'rotate-180': showDescription }" (click)="toggleDescription()">expand_more</i></td>
-  <td>{{entry.videos[0].size}}
+  <td>{{entry.videos[0].size}}</td>
+  <td>
+    <div class="movie-icon-container">
+      <a [href]="bestVideoUrl"><i class="material-icons movie-icon" (click)="playVideo()">movie</i></a>
+    </div>
+  </td>
 </tr>
 
 <tr *ngIf="showDescription">

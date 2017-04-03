@@ -16,5 +16,7 @@
   <router-outlet></router-outlet>
   <br>
   <mvw-entries [entries]="entries"></mvw-entries>
-  <mvw-pagination></mvw-pagination>
+  <mvw-pagination [pageSize]="15" [totalItems]="50" [selectedIndex]="selectedIndex" (onNavigate)="onPaginationNavigate($event)"></mvw-pagination>
 </div>
+
+<mvw-video-player ></mvw-video-player>

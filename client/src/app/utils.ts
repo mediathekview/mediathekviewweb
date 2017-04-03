@@ -12,13 +12,16 @@ export class Utils {
     if (bytes == undefined || bytes == null) {
       return null;
     }
-
     if (bytes <= 1) {
-      return `${bytes} Byte`;
+      if (bytes < 0) {
+        return null;
+      } else {
+        return `${bytes} Byte`;
+      }
     }
 
     let dimension = Math.log10(bytes) / Math.log10(BYTE_MULTIPLIER);
     let result = Math.pow(BYTE_MULTIPLIER, dimension).toFixed(2);
-    return result + BYTE_UNITS[dimension];
+    return `${result} ${BYTE_UNITS[dimension]}`;
   }
 }

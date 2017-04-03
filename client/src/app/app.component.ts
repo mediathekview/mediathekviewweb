@@ -11,6 +11,8 @@ export class AppComponent {
   title = 'mvw works!';
   entries: Entry[] = [];
 
+  selectedIndex: number = 45;
+
   constructor() {
     let entry = {
       id: "tghz56o7zsr",
@@ -31,5 +33,10 @@ export class AppComponent {
     for (let i = 0; i < 10; i++) {
       this.entries.push(entry);
     }
+  }
+
+  onPaginationNavigate(index) {
+    console.log(index);
+    this.selectedIndex = index;
   }
 }

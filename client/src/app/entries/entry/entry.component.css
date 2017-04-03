@@ -1,5 +1,7 @@
 .description-expander {
   color: #0275d8;
   text-decoration: none;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
   cursor: pointer;
 }

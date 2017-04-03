@@ -10,6 +10,7 @@ import { QueryComponent } from './query/query.component';
 import { EntriesComponent } from './entries/entries.component';
 import { EntryComponent } from './entries/entry/entry.component';
 import { PaginationComponent } from './pagination/pagination.component';
+import { VideoPlayerComponent } from './video-player/video-player.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { PaginationComponent } from './pagination/pagination.component';
     QueryComponent,
     EntriesComponent,
     EntryComponent,
-    PaginationComponent
+    PaginationComponent,
+    VideoPlayerComponent
   ],
   imports: [
     BrowserModule,

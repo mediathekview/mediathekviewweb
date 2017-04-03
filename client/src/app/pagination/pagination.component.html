@@ -1,9 +1,9 @@
 <nav>
   <ul class="pagination justify-content-end">
-    <li class="page-item"><span class="page-link">&laquo;</span></li>
-    <li class="page-item"><span class="page-link">1</span></li>
-    <li class="page-item"><span class="page-link">2</span></li>
-    <li class="page-item"><span class="page-link">3</span></li>
-    <li class="page-item"><span class="page-link">&raquo;</span></li>
+    <li class="page-item" [ngClass]="{ disabled: canNavigateBackward === false }" (click)="navigateBackward()"><span class="page-link">&laquo;</span></li>
+    <ng-container *ngFor="let i of pages">
+      <li class="page-item" [ngClass]="{ active: i == currentPage }" (click)="navigateTo(i)"><span class="page-link">{{i+1}}</span></li>
+    </ng-container>
+    <li class="page-item" [ngClass]="{ disabled: canNavigateForward === false }" (click)="navigateForward()"><span class="page-link">&raquo;</span></li>
   </ul>
 </nav>
