@@ -1,7 +1,8 @@
-<div class="overlay" (keydown)="keydown($event)">
-  <div class="container">
-    <video [id]="videoID" class="video-js vjs-default-skin vjs-big-play-centered vjs-16-9" controls>
+<div class="overlay" [ngClass]="{ hide: hide }" (keydown)="keydown($event)">
+  <div class="container" (keydown)="keydown($event)">
+    <video [id]="videoID" class="video-js vjs-default-skin vjs-big-play-centered vjs-16-9" (keydown)="keydown($event)" preload="auto" controls>
       <source src="http://mediandr-a.akamaihd.net//progressive/2017/0403/TV-20170403-1910-1500.hq.mp4">
     </video>
   </div>
+  <i class="material-icons close-button" (click)="close()">close</i>
 </div>

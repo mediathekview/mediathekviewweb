@@ -1,5 +1,7 @@
-import { Component, Input, OnChanges, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import * as VideoJS from 'video.js';
+
+import { BroadcasterService } from '../broadcaster.service';
 
 import { Entry, Video } from '../model';
 import { Utils } from '../utils';
@@ -10,19 +12,21 @@ import { Utils } from '../utils';
   styleUrls: ['./video-player.component.css']
 })
 export class VideoPlayerComponent implements OnInit, OnDestroy {
-  @Input() entry: Entry;
+  entry: Entry;
 
   instanceID: number;
   videoID: string;
 
   video: VideoJS.Player;
+  hide: boolean = false;
 
-  constructor() {
+  constructor(private broadcaster: BroadcasterService) {
     this.instanceID = Utils.getInstanceID();
     this.videoID = `video-player-${this.instanceID}`;
   }
 
   ngOnInit() {
+    this.subscribe();
   }
 
   ngAfterViewInit() {
@@ -30,7 +34,7 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
       preload: 'auto',
       chromecast: {
         appId: 'MediathekViewWeb',
-        title: 'hi'//this.entry.title
+        title: 'MediathekViewWeb'
       }
     };
 
@@ -38,10 +42,26 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    //this.video.dispose();
+    this.video.dispose();
+  }
+
+  subscribe() {
+    this.broadcaster.onPlayVideo().subscribe((entry) => {
+      this.entry = entry;
+      this.playVideo();
+    });
+  }
+
+  playVideo() {
+    this.video.src(this.entry.videos[0]);
+    this.hide = false;
   }
 
   keydown(a) {
     console.log(a);
+  }
+
+  close() {
+    this.hide = true;
   }
 }

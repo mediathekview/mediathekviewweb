@@ -5,7 +5,8 @@
 @import '~videojs-chromecast/dist/videojs-chromecast.css';
 
 .material-icons {
-  line-height: 0;
+  line-height: 1.6rem;
+  font-size: 1.6rem;
   vertical-align: middle;
   user-select: none;
   transition: all 0.3s ease;

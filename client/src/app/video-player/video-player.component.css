@@ -4,7 +4,16 @@
   top: 0;
   width: 100vw;
   height: 100vh;
+  z-index: 10;
   background-color: rgba(0, 0, 0, 0.7);
+  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+}
+
+.hide {
+  overflow: hidden;
+  width: 0vw;
+  height: 0vw;
+  opacity: 0;
 }
 
 .container {
@@ -12,4 +21,19 @@
   height: 100%;
   justify-content: center;
   align-items: center;
+}
+
+.close-button {
+  position: absolute;
+  top: 4rem;
+  right: 2.5rem;
+  font-size: 5rem;
+  color: #025aa5;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #0275d8;
+  transform: scale(1.1);
 }

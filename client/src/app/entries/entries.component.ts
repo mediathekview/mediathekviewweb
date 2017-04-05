@@ -11,6 +11,6 @@ export class EntriesComponent {
   @Input() entries: Entry[];
 
   constructor() {
-    
+
   }
 }
