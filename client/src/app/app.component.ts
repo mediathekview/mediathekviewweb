@@ -21,7 +21,7 @@ export class AppComponent {
       title: 'Folge 1632',
       timestamp: Math.floor(Date.now() / 1000),
       duration: 60 * 60,
-      description: 'bla bla bla nobody cares about description',
+      description: 'Nora erzählt Werner von Barbaras Angebot: Sie soll eidesstattlich erklären, dass sie Barbara nicht beim Diebstahl beobachtet hat, dafür soll sie 100.000 Euro bekommen. Werner schlägt vor, zum Schein darauf einzugehen. So überreicht Nora Barbara den Umschlag mit dem vermeintlich unterschriebenen Papier, dafür bekommt sie das Geld. Doch Barbara hat sich zu früh gefreut...',
       website: 'http://ard.de',
       videos: [{
         quality: Quality.High,

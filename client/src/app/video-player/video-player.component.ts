@@ -18,7 +18,7 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
   videoID: string;
 
   video: VideoJS.Player;
-  hide: boolean = false;
+  hide: boolean = true;
 
   constructor(private broadcaster: BroadcasterService) {
     this.instanceID = Utils.getInstanceID();

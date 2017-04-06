@@ -11,11 +11,11 @@
     <div class="card card-block">
       <div class="settings-container">
         <label [for]="'futureCheckbox' + instanceID">
-          <input [id]="'futureCheckbox' + instanceID" type="checkbox" [(ngModel)]="future" (change)="query()"> Zukünftige
+          <input [id]="'futureCheckbox' + instanceID" type="checkbox" [(ngModel)]="settings.future" (change)="parametersChanged()"> Zukünftige
         </label>
 
         <label [for]="'everywhereCheckbox' + instanceID">
-          <input [id]="'everywhereCheckbox' + instanceID" type="checkbox" [(ngModel)]="everywhere" (change)="query()"> Überall
+          <input [id]="'everywhereCheckbox' + instanceID" type="checkbox" [(ngModel)]="settings.everywhere" (change)="parametersChanged()"> Überall
         </label>
       </div>
     </div>
