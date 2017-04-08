@@ -56,7 +56,10 @@ export class QueryComponent implements OnChanges {
   }
 
   query() {
-    console.log(JSON.stringify(this.buildQuery(), null, 1));
+    let query = this.buildQuery();
+    console.log(JSON.stringify(query, null, 1));
+
+    this.onQuery.emit(query);
   }
 
   buildQuery(): Query {

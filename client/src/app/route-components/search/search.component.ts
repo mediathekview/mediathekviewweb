@@ -35,7 +35,7 @@ export class SearchComponent {
     }
   }
 
-  onPaginationNavigate(index) {
+  onPaginationNavigate(index: number) {
     this.selectedIndex = index;
   }
 }

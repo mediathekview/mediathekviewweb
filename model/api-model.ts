@@ -1,8 +1,7 @@
-import * as DataModel from './data-model';
-import * as QueryModel from './query-model'
+import { Query, Entry } from './';
 
 export interface IMediathekViewWebAPI {
-  query(query: QueryModel.Query): Promise<QueryResponse>;
+  query(query: Query): Promise<QueryResponse>;
   getServerState(): Promise<GetServerStateResponse>;
 }
 
@@ -11,7 +10,7 @@ export interface IAPIResponse {
 }
 
 export interface QueryResponse extends IAPIResponse {
-  entries: DataModel.Entry[];
+  entries: Entry[];
   queryInfo: QueryInfo;
 }
 
