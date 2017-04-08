@@ -1,7 +1,7 @@
 import * as Request from 'request';
 import * as Redis from 'redis';
 import * as FS from 'fs';
-import * as request from 'request':
+import * as request from 'request';
 import * as requestProgress from 'request-progress';
 
 class FilmlisteManager {
