@@ -7,6 +7,8 @@ class SettingKeys {
   static Everywhere = 'everywhere';
   static Future = 'future';
   static PageSize = 'pageSize';
+  static MinDurationString = 'minDurationString';
+  static MaxDurationString = 'maxDurationString';
 }
 
 class DefaultSettings implements SettingsObject {
@@ -14,13 +16,19 @@ class DefaultSettings implements SettingsObject {
   future = false;
   defaultQuality = Quality.High;
   pageSize = 15;
+  minDurationString = '';
+  maxDurationString = '';
 }
+const DEFAULTS = new DefaultSettings();
 
 export interface SettingsObject {
   everywhere: boolean;
   future: boolean;
   defaultQuality: number;
   pageSize: number;
+  minDurationString: string;
+  maxDurationString: string;
+
   save?(): void;
 }
 
@@ -31,7 +39,7 @@ export class Settings {
     if (Settings.cache[namespace].hasOwnProperty(key) == false) {
       let storedValue = StoreJS.get(namespace + '_' + key);
       if (storedValue == undefined) {
-        storedValue = DefaultSettings[key];
+        storedValue = DEFAULTS[key];
       }
       Settings.cache[namespace][key] = storedValue;
     }
@@ -81,6 +89,20 @@ export class Settings {
       },
       set defaultQuality(value: number) {
         Settings.set(namespace, SettingKeys.DefaultQuality, value);
+      },
+
+      get minDurationString(): string {
+        return Settings.get<string>(namespace, SettingKeys.MinDurationString);
+      },
+      set minDurationString(value: string) {
+        Settings.set(namespace, SettingKeys.MinDurationString, value.trim());
+      },
+
+      get maxDurationString(): string {
+        return Settings.get<string>(namespace, SettingKeys.MaxDurationString);
+      },
+      set maxDurationString(value: string) {
+        Settings.set(namespace, SettingKeys.MaxDurationString, value.trim());
       },
 
       save(): void {

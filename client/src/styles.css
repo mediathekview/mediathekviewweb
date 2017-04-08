@@ -16,6 +16,39 @@
   transform: rotateX(180deg);
 }
 
-.center-text {
-  text-align: center;
+.icon-button {
+  color: #0275d8;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: #014c8c;
+}
+
+@keyframes click-animation {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.clicked {
+  animation-name: click-animation;
+  animation-duration: 0.15s;
+  animation-iteration-count: 1;
+  animation-timing-function: ease-in-out;
+}
+
+.flex-vertical-center {
+  align-self: center;
+}
+
+.horizontal-spacer {
+  height: 1rem;
 }

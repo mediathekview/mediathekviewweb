@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import * as VideoJS from 'video.js';
 
-import { BroadcasterService } from '../broadcaster.service';
+import { BroadcasterService } from '../../broadcaster.service';
 
-import { Entry, Video } from '../model';
-import { Utils } from '../utils';
+import { Entry, Video } from '../../model';
+import { Utils } from '../../utils';
 
 @Component({
   selector: 'mvw-video-player',

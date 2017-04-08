@@ -1,0 +1,16 @@
+<tr>
+  <td><a [href]="entry.website">{{entry.channel}}</a></td>
+  <td>{{entry.topic}}</td>
+  <td>{{entry.title}}</td>
+  <td><i class="material-icons description-expander icon-button" [ngClass]="{ 'rotate-180': showDescription }" (click)="toggleDescription()">expand_more</i></td>
+  <td>{{entry.videos[0].size}}</td>
+  <td>
+    <div class="movie-icon-container">
+      <a [href]="bestVideoUrl"><i class="material-icons movie-icon" [ngClass]="{ 'clicked': playButtonClicked }" (click)="playVideo()" onclick="return false;">movie</i></a>
+    </div>
+  </td>
+</tr>
+
+<tr *ngIf="showDescription">
+  <td class="center-text" colspan="5">{{entry.description}}</td>
+</tr>

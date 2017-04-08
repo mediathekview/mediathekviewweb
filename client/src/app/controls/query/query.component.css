@@ -46,14 +46,27 @@
 }
 
 .settings-container {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   padding: 0;
   margin: 0;
 }
 
 .settings-container * {
-  margin-left: 0.2rem;
-  margin-right: 0.2rem;
   margin-bottom: 0;
+}
+
+.settings-item {
+  display: inline;
+  align-self: center;
+  margin-right: 0.75rem;
+}
+
+.settings-item div {
+  display: inline;
+}
+
+.form-group input {
+  display: inline;
+  max-width: 8rem;
 }

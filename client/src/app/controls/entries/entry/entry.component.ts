@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges } from '@angular/core';
 
-import { BroadcasterService } from '../../broadcaster.service';
+import { BroadcasterService } from '../../../broadcaster.service';
 
-import { Entry } from '../../model';
+import { Entry } from '../../../model';
 
 @Component({
   selector: 'mvw-entry',
@@ -15,6 +15,7 @@ export class EntryComponent implements OnChanges {
   bestVideoUrl: string;
 
   showDescription = false;
+  playButtonClicked = false;
 
   constructor(private broadcaster: BroadcasterService) { }
 
@@ -28,5 +29,7 @@ export class EntryComponent implements OnChanges {
 
   playVideo() {
     this.broadcaster.playVideo(this.entry);
+    this.playButtonClicked = false;
+    setTimeout(() => this.playButtonClicked = true, 50);
   }
 }

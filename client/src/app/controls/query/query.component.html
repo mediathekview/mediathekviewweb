@@ -1,0 +1,46 @@
+<div>
+  <div class="input-group">
+    <span class="input-group-addon search-label" [ngClass]="{ 'no-border-bottom-left-radius': showSettings }">Suche</span>
+    <input type="text" class="form-control" [(ngModel)]="text" (input)="query()">
+    <span class="input-group-btn settings-button">
+          <button type="button" class="btn btn-secondary" [ngClass]="{ 'no-border-bottom-right-radius': showSettings }" (click)="showSettings = !showSettings"><i class="material-icons" [ngClass]="{ 'rotate-180': showSettings }">expand_more</i></button>
+    </span>
+  </div>
+
+  <div class="collapse" [ngClass]="{ show: showSettings }">
+    <div class="card card-block">
+      <div class="row">
+        <div class="col">
+          <div class="settings-container">
+
+            <div class="settings-item">
+              <label [for]="'futureCheckbox' + instanceID">Zukünftige</label>
+              <input class="flex-vertical-center" [id]="'futureCheckbox' + instanceID" type="checkbox" [(ngModel)]="settings.future" (change)="parametersChanged()">
+            </div>
+
+            <div class="settings-item">
+              <label [for]="'everywhereCheckbox' + instanceID">Überall</label>
+              <input class="flex-vertical-center" [id]="'everywhereCheckbox' + instanceID" type="checkbox" [(ngModel)]="settings.everywhere" (change)="parametersChanged()">
+            </div>
+
+            <div class="settings-item">
+              <div class="form-group">
+                <label [for]="'minLength_'+instanceID">Dauer</label>
+                <span class="d-inline-block">
+                  <input type="text" class="form-control form-control-sm" [(ngModel)]="settings.minDurationString" [id]="'minDuration_'+instanceID" (input)="query()" placeholder="0.5h">
+                  <span>-</span>
+                  <input type="text" class="form-control form-control-sm" [(ngModel)]="settings.maxDurationString" [id]="'maxDuration_'+instanceID" (input)="query()" placeholder="1 hour 45m">
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="col col-auto">
+          <i class="material-icons icon-button" [ngClass]="{ 'clicked': saveButtonClicked }" (click)="save()">save</i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

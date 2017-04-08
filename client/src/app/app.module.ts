@@ -7,11 +7,13 @@ import { BroadcasterService } from './broadcaster.service';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { QueryComponent } from './query/query.component';
-import { EntriesComponent } from './entries/entries.component';
-import { EntryComponent } from './entries/entry/entry.component';
-import { PaginationComponent } from './pagination/pagination.component';
-import { VideoPlayerComponent } from './video-player/video-player.component';
+import { QueryComponent } from './controls/query/query.component';
+import { EntriesComponent } from './controls/entries/entries.component';
+import { EntryComponent } from './controls/entries/entry/entry.component';
+import { PaginationComponent } from './controls/pagination/pagination.component';
+import { VideoPlayerComponent } from './controls/video-player/video-player.component';
+
+import { SearchComponent } from './route-components/search/search.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +22,8 @@ import { VideoPlayerComponent } from './video-player/video-player.component';
     EntriesComponent,
     EntryComponent,
     PaginationComponent,
-    VideoPlayerComponent
+    VideoPlayerComponent,
+    SearchComponent
   ],
   imports: [
     BrowserModule,
