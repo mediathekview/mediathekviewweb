@@ -3,6 +3,7 @@ import * as StoreJS from 'store';
 import { Quality } from './model';
 
 class SettingKeys {
+  static QueryText = 'queryText';
   static DefaultQuality = 'defaultQuality';
   static Everywhere = 'everywhere';
   static Future = 'future';
@@ -12,6 +13,7 @@ class SettingKeys {
 }
 
 class DefaultSettings implements SettingsObject {
+  queryText = '';
   everywhere = false;
   future = false;
   defaultQuality = Quality.High;
@@ -22,6 +24,7 @@ class DefaultSettings implements SettingsObject {
 const DEFAULTS = new DefaultSettings();
 
 export interface SettingsObject {
+  queryText: string,
   everywhere: boolean;
   future: boolean;
   defaultQuality: number;
@@ -29,13 +32,17 @@ export interface SettingsObject {
   minDurationString: string;
   maxDurationString: string;
 
+  reset?(): void;
   save?(): void;
+  getQueryObj?(): object;
+  setQueryObj?(value: object);
 }
 
 export class Settings {
   private static cache: { [key: string]: { [key: string]: any } } = {};
 
   private static get<T>(namespace: string, key: string): T {
+    console.log('get', key)
     if (Settings.cache[namespace].hasOwnProperty(key) == false) {
       let storedValue = StoreJS.get(namespace + '_' + key);
       if (storedValue == undefined) {
@@ -63,6 +70,13 @@ export class Settings {
     }
 
     return {
+      get queryText(): string {
+        return Settings.get<string>(namespace, SettingKeys.QueryText);
+      },
+      set queryText(value: string) {
+        Settings.set(namespace, SettingKeys.QueryText, value.trim());
+      },
+
       get everywhere(): boolean {
         return Settings.get<boolean>(namespace, SettingKeys.Everywhere);
       },
@@ -105,8 +119,37 @@ export class Settings {
         Settings.set(namespace, SettingKeys.MaxDurationString, value.trim());
       },
 
+      reset(): void {
+        for (var property in DEFAULTS) {
+          this[property] = DEFAULTS[property];
+        }
+      },
+
       save(): void {
         Settings.save(namespace);
+      },
+
+      getQueryObj(): object {
+        let queryObj = {};
+
+        for (let property in this) {
+          let value = this[property];
+          if (typeof value != 'function' && DEFAULTS[property] != value) {
+            queryObj[property] = value;
+          }
+        }
+
+        return queryObj;
+      },
+
+      setQueryObj(obj: Object) {
+        for (let property in obj) {
+          let value = obj[property];
+
+          if (typeof value != 'function' && this.hasOwnProperty(property)) {
+            this[property] = value;
+          }
+        }
       }
     }
   }

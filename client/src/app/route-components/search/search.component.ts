@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { MVWAPIService } from '../../mvw-api.service';
+import { Settings, SettingsObject } from '../../settings';
 
 import { Query, Entry, Video, Quality } from '../../model/';
 
@@ -10,41 +12,37 @@ import { Query, Entry, Video, Quality } from '../../model/';
   styleUrls: ['./search.component.css']
 })
 export class SearchComponent {
+  settings: SettingsObject;
+
   entries: Entry[] = [];
+  totalItems: number = 0;
+  selectedIndex: number = 0;
 
-  selectedIndex: number = 45;
+  constructor(private api: MVWAPIService, private router: Router, private route: ActivatedRoute) {
+    this.settings = Settings.getNamespace('search');
 
-  constructor(private api: MVWAPIService) {
-    let entry = {
-      id: "tghz56o7zsr",
-      channel: 'ARD',
-      topic: 'Sturm der Liebe',
-      title: 'Folge 1632',
-      timestamp: Math.floor(Date.now() / 1000),
-      duration: 60 * 60,
-      description: 'Nora erzählt Werner von Barbaras Angebot: Sie soll eidesstattlich erklären, dass sie Barbara nicht beim Diebstahl beobachtet hat, dafür soll sie 100.000 Euro bekommen. Werner schlägt vor, zum Schein darauf einzugehen. So überreicht Nora Barbara den Umschlag mit dem vermeintlich unterschriebenen Papier, dafür bekommt sie das Geld. Doch Barbara hat sich zu früh gefreut...',
-      website: 'http://ard.de',
-      videos: [{
-        quality: Quality.High,
-        url: 'http://arteptweb-a.akamaihd.net/am/ptweb/072000/072300/072318-012-A_EQ_0_VA_02981663_MP4-1500_AMM-PTWEB_jistRYPD1.mp4',
-        size: 500 * 1000 * 1000
-      }]
-    };
-
-    for (let i = 0; i < 10; i++) {
-      this.entries.push(entry);
-    }
+    route.queryParams.subscribe((queryParams) => { console.log(queryParams); this.settings.setQueryObj(queryParams); });
   }
 
   onPaginationNavigate(index: number) {
     this.selectedIndex = index;
+    this.settings.future = false;
+  }
+
+  setQueryParams() {
+    console.log('query');
+    let queryObj = this.settings.getQueryObj();
+
+    this.router.navigate([], { queryParams: queryObj, relativeTo: this.route, replaceUrl: true });
   }
 
   async onQuery(query: Query) {
+    this.setQueryParams();
+
     try {
       let response = await this.api.query(query);
       this.entries = response.entries;
-      console.log(this.entries);
+      this.totalItems = response.queryInfo.totalResults;
     }
     catch (error) {
       console.error(error);

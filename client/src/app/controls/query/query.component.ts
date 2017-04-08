@@ -14,18 +14,16 @@ import { Query, Match, IFilter, Field, SortOrder, RangeFilter } from '../../mode
 })
 export class QueryComponent implements OnChanges {
   @Input() settingsNamespace: string;
-  @Input() offset: number;
+  @Input() offset: number = 0;
 
   @Output() onQuery = new EventEmitter();
+  @Output() onQueryTextChanged = new EventEmitter();
 
   settings: SettingsObject;
 
   instanceID: number;
   showSettings: boolean = false;
   saveButtonClicked: boolean = false;
-
-  text: string = '';
-  minLengthText: string = '';
 
   constructor() {
     this.instanceID = Utils.getInstanceID();
@@ -36,7 +34,6 @@ export class QueryComponent implements OnChanges {
     if (changes['settingsNamespace']) {
       this.settings = Settings.getNamespace(this.settingsNamespace);
       this.showSettings = false;
-      this.text = '';
     }
 
     if (changes['offset']) {
@@ -51,25 +48,30 @@ export class QueryComponent implements OnChanges {
     setTimeout(() => this.saveButtonClicked = true, 50);
   }
 
+  textChanged() {
+    this.onQueryTextChanged.emit(this.settings.queryText);
+
+    this.parametersChanged();
+  }
+
   parametersChanged() {
     this.query();
   }
 
   query() {
     let query = this.buildQuery();
-    console.log(JSON.stringify(query, null, 1));
 
     this.onQuery.emit(query);
   }
 
   buildQuery(): Query {
     let query: Query = {
-      matches: QueryHelper.createMatches(this.text.trim(), this.settings),
+      matches: QueryHelper.createMatches(this.settings.queryText, this.settings),
       filters: QueryHelper.createFilters(this.settings),
       sortField: Field.Timestamp,
       sortOrder: SortOrder.Descending,
       offset: this.offset,
-      size: 15
+      size: this.settings.pageSize
     }
 
     return query;

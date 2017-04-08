@@ -1,7 +1,7 @@
 <div>
   <div class="input-group">
     <span class="input-group-addon search-label" [ngClass]="{ 'no-border-bottom-left-radius': showSettings }">Suche</span>
-    <input type="text" class="form-control" [(ngModel)]="text" (input)="query()">
+    <input type="text" class="form-control" [(ngModel)]="settings.queryText" (input)="textChanged()">
     <span class="input-group-btn settings-button">
           <button type="button" class="btn btn-secondary" [ngClass]="{ 'no-border-bottom-right-radius': showSettings }" (click)="showSettings = !showSettings"><i class="material-icons" [ngClass]="{ 'rotate-180': showSettings }">expand_more</i></button>
     </span>
@@ -27,9 +27,9 @@
               <div class="form-group">
                 <label [for]="'minLength_'+instanceID">Dauer</label>
                 <span class="d-inline-block">
-                  <input type="text" class="form-control form-control-sm" [(ngModel)]="settings.minDurationString" [id]="'minDuration_'+instanceID" (input)="query()" placeholder="0.5h">
+                  <input type="text" class="form-control form-control-sm" [(ngModel)]="settings.minDurationString" [id]="'minDuration_'+instanceID" (input)="parametersChanged()" placeholder="0.5h">
                   <span>-</span>
-                  <input type="text" class="form-control form-control-sm" [(ngModel)]="settings.maxDurationString" [id]="'maxDuration_'+instanceID" (input)="query()" placeholder="1 hour 45m">
+                  <input type="text" class="form-control form-control-sm" [(ngModel)]="settings.maxDurationString" [id]="'maxDuration_'+instanceID" (input)="parametersChanged()" placeholder="1 hour 45m">
                 </span>
               </div>
             </div>

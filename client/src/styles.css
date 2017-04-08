@@ -52,3 +52,7 @@
 .horizontal-spacer {
   height: 1rem;
 }
+
+.entries-container{
+  overflow: auto;
+}
