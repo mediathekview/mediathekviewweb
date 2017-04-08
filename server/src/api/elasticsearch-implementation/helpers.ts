@@ -1,6 +1,6 @@
 import * as Elasticsearch from 'elasticsearch';
 
-import { Query, Match, IFilter, FilterType, RangeFilter } from '../../model';
+import { Query, Match, IFilter, FilterType, RangeFilter, SortOrder } from '../../model';
 
 export class ElasticsearchHelpers {
     static buildElasticsearchQuery(query: Query, index: string, type: string): Elasticsearch.SearchParams {
@@ -28,6 +28,8 @@ export class ElasticsearchHelpers {
         if (esFilters != null) {
             esQuery.body.query.bool['filter'] = esFilters;
         }
+
+        esQuery.body.sort[query.sortField] = query.sortOrder == SortOrder.Ascending ? 'asc' : 'desc';
 
         return esQuery;
     }

@@ -2,7 +2,7 @@ import { IMediathekViewWebAPI, IAPIResponse, QueryResponse, QueryInfo, GetServer
 
 import { ISearchEngine } from './search-engine';
 
-export class MVWAPIService implements IMediathekViewWebAPI {
+export class MVWAPI implements IMediathekViewWebAPI {
     searchEngine: ISearchEngine;
 
     constructor(searchEngine: ISearchEngine) {
@@ -10,6 +10,10 @@ export class MVWAPIService implements IMediathekViewWebAPI {
     }
 
     query(query: Query): Promise<QueryResponse> {
+        if (query.size > 100) {
+            query.size = 100;
+        }
+
         return this.searchEngine.query(query);
     }
 

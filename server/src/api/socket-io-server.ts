@@ -2,12 +2,12 @@ import * as SocketIO from 'socket.io';
 import * as HTTP from 'http';
 
 import * as Model from '../model';
+import { MVWAPI } from './mvw-api';
 
 export class SocketIOServer {
     io: SocketIO.Server;
-    httpServer: HTTP.Server;
 
-    constructor(httpServer: HTTP.Server) {
+    constructor(private httpServer: HTTP.Server, private mvwAPI: MVWAPI) {
         this.init();
     }
 
@@ -15,29 +15,23 @@ export class SocketIOServer {
         this.io = SocketIO(this.httpServer);
 
         this.io.on('connection', (socket: SocketIO.Socket) => {
-            socket.on('query', (query: Model.Query, ack: (queryResponse: Model.QueryResponse) => void) => {
-                this.query(query).then((response) => {
+            socket.on('query', async (query: Model.Query, ack: (queryResponse: Model.QueryResponse) => void) => {
+                try {
+                    let response = await this.mvwAPI.query(query);
                     ack(response);
-                }).catch((error) => {
+                } catch (error) {
+                    ack(error)
+                };
+            });
+
+            socket.on('getServerState', async (ack: (response: Model.GetServerStateResponse) => void) => {
+                try {
+                    let response = await this.mvwAPI.getServerState();
+                    ack(response);
+                } catch (error) {
                     ack(error);
-                });
+                }
             });
-
-            socket.on('getServerState', (ack: (response: Model.GetServerStateResponse) => void) => {
-
-            });
-        });
-    }
-
-    async query(request: Model.Query): Promise<Model.QueryResponse> {
-        return new Promise<Model.QueryResponse>((resolve, reject) => {
-
-        });
-    }
-
-    async getServerState(): Promise<Model.GetServerStateResponse> {
-        return new Promise<Model.GetServerStateResponse>((resolve, reject) => {
-
         });
     }
 }

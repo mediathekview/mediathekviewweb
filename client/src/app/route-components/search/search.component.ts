@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 
-import { Entry, Video, Quality } from '../../model/';
+import { MVWAPIService } from '../../mvw-api.service';
+
+import { Query, Entry, Video, Quality } from '../../model/';
 
 @Component({
   selector: 'mvw-search',
@@ -8,12 +10,11 @@ import { Entry, Video, Quality } from '../../model/';
   styleUrls: ['./search.component.css']
 })
 export class SearchComponent {
-
   entries: Entry[] = [];
 
   selectedIndex: number = 45;
 
-  constructor() {
+  constructor(private api: MVWAPIService) {
     let entry = {
       id: "tghz56o7zsr",
       channel: 'ARD',
@@ -37,5 +38,16 @@ export class SearchComponent {
 
   onPaginationNavigate(index: number) {
     this.selectedIndex = index;
+  }
+
+  async onQuery(query: Query) {
+    try {
+      let response = await this.api.query(query);
+      this.entries = response.entries;
+      console.log(this.entries);
+    }
+    catch (error) {
+      console.error(error);
+    }
   }
 }

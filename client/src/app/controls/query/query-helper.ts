@@ -1,4 +1,4 @@
-import { Match, IFilter, Field, RangeFilter } from '../../model';
+import { Match, IFilter, FilterType, Field, RangeFilter } from '../../model';
 import { SettingsObject } from '../../settings';
 
 const DURATION_REGEX = /([\d,\.]+)\s*([A-Za-z]*)/g;
@@ -79,7 +79,7 @@ export class QueryHelper {
     let filters: IFilter[] = [];
 
     if (!settings.future == false) {
-      let timestampFilter: RangeFilter = { field: Field.Timestamp, lte: Math.floor(Date.now() / 1000) };
+      let timestampFilter: RangeFilter = { type: FilterType.RangeFilter, field: Field.Timestamp, lte: Math.floor(Date.now() / 1000) };
       filters.push(timestampFilter);
     }
 
@@ -87,7 +87,7 @@ export class QueryHelper {
     let maxDuration = this.parseDuration(settings.maxDurationString);
 
     if (minDuration > 0 || maxDuration > 0) {
-      let durationFilter: RangeFilter = { field: Field.Duration };
+      let durationFilter: RangeFilter = { type: FilterType.RangeFilter, field: Field.Duration };
 
       if (minDuration > 0) {
         durationFilter.gte = minDuration;

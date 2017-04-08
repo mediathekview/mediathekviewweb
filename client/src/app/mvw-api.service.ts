@@ -8,7 +8,7 @@ export class MVWAPIService implements IMediathekViewWebAPI {
   socket: SocketIOClient.Socket;
 
   constructor() {
-    this.socket = SocketIO('10.222.100.128:8080');
+    this.socket = SocketIO('127.0.0.1:7777');
   }
 
   query(query: Query): Promise<QueryResponse> {
@@ -19,7 +19,7 @@ export class MVWAPIService implements IMediathekViewWebAPI {
     return this.emit<GetServerStateResponse>('getServerState');
   }
 
-  emit<T extends IAPIResponse>(event: string, data?: any): Promise<T> {
+  private emit<T extends IAPIResponse>(event: string, data?: any): Promise<T> {
     return new Promise<T>((resolve, reject: (reason: Error) => void) => {
       this.socket.emit(event, data, (response: T) => {
         if (response.error) {

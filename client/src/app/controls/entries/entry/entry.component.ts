@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 
 import { BroadcasterService } from '../../../broadcaster.service';
+import { Utils } from '../../../utils';
 
 import { Entry } from '../../../model';
 
@@ -11,6 +12,8 @@ import { Entry } from '../../../model';
 })
 export class EntryComponent implements OnChanges {
   @Input() entry: Entry;
+
+  utils = Utils;
 
   bestVideoUrl: string;
 

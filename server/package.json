@@ -4,8 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "npm run build:live",
-    "build:live": "nodemon --exec ./node_modules/.bin/ts-node -- ./src/app.ts"
+    "start:api": "npm run build:api-live",
+    "build:api-live": "nodemon --exec ./node_modules/.bin/ts-node -- ./src/api/app.ts"
   },
   "author": "bagbag",
   "license": "GPLv3",

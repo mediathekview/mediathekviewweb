@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
 import { BroadcasterService } from './broadcaster.service';
+import { MVWAPIService } from './mvw-api.service';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -31,7 +32,7 @@ import { SearchComponent } from './route-components/search/search.component';
     HttpModule,
     AppRoutingModule
   ],
-  providers: [BroadcasterService],
+  providers: [BroadcasterService, MVWAPIService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
