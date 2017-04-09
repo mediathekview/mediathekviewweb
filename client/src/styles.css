@@ -3,9 +3,8 @@
 @import '~bootstrap/dist/css/bootstrap.css';
 @import '~video.js/dist/video-js.css';
 @import '~videojs-chromecast/dist/videojs-chromecast.css';
-
 .material-icons {
-  line-height: 1.6rem;
+  line-height: 1rem;
   font-size: 1.6rem;
   vertical-align: middle;
   user-select: none;
@@ -53,6 +52,19 @@
   height: 1rem;
 }
 
-.entries-container{
+.entries-container {
   overflow: auto;
+}
+
+.table {
+  font-size: 0.9rem;
+}
+
+.time-column.time-column.time-column {
+  padding-left: 0;
+}
+
+.description-expander-column.description-expander-column.description-expander-column  {
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
 }

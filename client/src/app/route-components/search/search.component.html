@@ -1,6 +1,6 @@
-<mvw-query [settingsNamespace]="'search'" [offset]="selectedIndex" (onQuery)="onQuery($event)"></mvw-query>
+<mvw-query [settingsNamespace]="'search'" [offset]="offset" (onQuery)="onQuery($event)"></mvw-query>
 <div class="horizontal-spacer"></div>
 <div class="entries-container">
   <mvw-entries [entries]="entries"></mvw-entries>
 </div>
-<mvw-pagination [pageSize]="settings.pageSize" [totalItems]="totalItems" [selectedIndex]="selectedIndex" (onNavigate)="onPaginationNavigate($event)"></mvw-pagination>
+<mvw-pagination [pageSize]="settings.pageSize" [totalItems]="totalItems" [offset]="offset" (onNavigate)="onPaginationNavigate($event)"></mvw-pagination>

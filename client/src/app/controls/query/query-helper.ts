@@ -15,6 +15,10 @@ const TIME_UNITS: { regex: RegExp, seconds: number }[] = [
 
 export class QueryHelper {
   static createMatches(text: string, settings: SettingsObject): Match[] {
+    if (text == undefined || text.length == 0) {
+      return null;
+    }
+
     let matches: Match[] = [];
 
     let textSplits = text.split(/\s/).filter((s) => s.length > 0);
@@ -78,7 +82,7 @@ export class QueryHelper {
   static createFilters(settings: SettingsObject): IFilter[] {
     let filters: IFilter[] = [];
 
-    if (!settings.future == false) {
+    if (settings.future == false) {
       let timestampFilter: RangeFilter = { type: FilterType.RangeFilter, field: Field.Timestamp, lte: Math.floor(Date.now() / 1000) };
       filters.push(timestampFilter);
     }

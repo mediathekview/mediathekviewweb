@@ -20,8 +20,6 @@ th {
   width: 100%
 }
 
-mvw-entry {
-  display: table-row-group;
-vertical-align: middle;
-border-color: inherit;
+tr {
+  vertical-align: middle;
 }

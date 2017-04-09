@@ -8,7 +8,7 @@ export class MVWAPIService implements IMediathekViewWebAPI {
   socket: SocketIOClient.Socket;
 
   constructor() {
-    this.socket = SocketIO('192.168.1.226:7777');
+    this.socket = SocketIO('37.209.7.7:7777');
   }
 
   query(query: Query): Promise<QueryResponse> {

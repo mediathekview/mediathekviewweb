@@ -6,7 +6,7 @@ import { Utils } from '../../../utils';
 import { Entry } from '../../../model';
 
 @Component({
-  selector: 'mvw-entry',
+  selector: '[mvw-entry]',
   templateUrl: './entry.component.html',
   styleUrls: ['./entry.component.css']
 })
@@ -15,7 +15,7 @@ export class EntryComponent implements OnChanges {
 
   utils = Utils;
 
-  bestVideoUrl: string;
+  bestVideoUrl: string = null;
 
   showDescription = false;
   playButtonClicked = false;
@@ -23,7 +23,9 @@ export class EntryComponent implements OnChanges {
   constructor(private broadcaster: BroadcasterService) { }
 
   ngOnChanges() {
-    this.bestVideoUrl = this.entry.videos.sort((a, b) => b.quality - a.quality)[0].url;
+    if (this.entry.videos.length > 0) {
+      this.bestVideoUrl = this.entry.videos.sort((a, b) => b.quality - a.quality)[0].url;
+    }
   }
 
   toggleDescription() {

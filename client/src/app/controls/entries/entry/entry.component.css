@@ -1,3 +1,11 @@
 .description-expander {
   margin-right: -0.5rem;
 }
+
+td {
+  vertical-align: middle;
+  height: 2.5rem;
+  line-height: 1.1rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+}

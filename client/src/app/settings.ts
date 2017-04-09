@@ -2,7 +2,7 @@ import * as StoreJS from 'store';
 
 import { Quality } from './model';
 
-class SettingKeys {
+export class SettingKeys {
   static QueryText = 'queryText';
   static DefaultQuality = 'defaultQuality';
   static Everywhere = 'everywhere';
@@ -42,7 +42,6 @@ export class Settings {
   private static cache: { [key: string]: { [key: string]: any } } = {};
 
   private static get<T>(namespace: string, key: string): T {
-    console.log('get', key)
     if (Settings.cache[namespace].hasOwnProperty(key) == false) {
       let storedValue = StoreJS.get(namespace + '_' + key);
       if (storedValue == undefined) {

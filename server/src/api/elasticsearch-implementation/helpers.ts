@@ -39,7 +39,7 @@ export class ElasticsearchHelpers {
 
         let matches: Match[] = [];
 
-        if (query.matches == undefined) {
+        if (query.matches == undefined || query.matches == null) {
             musts.push({ match_all: {} });
         } else {
             matches = Array.isArray(query.matches) ? query.matches : [query.matches];

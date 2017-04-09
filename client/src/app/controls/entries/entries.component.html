@@ -4,13 +4,16 @@
       <th class="auto-width">Sender</th>
       <th class="auto-width min-10-rem max-15-rem">Thema</th>
       <th class="free-space">Titel</th>
-      <th class="auto-width"><!-- description icon --></th>
+      <th class="auto-width description-expander-column">
+        <!-- description icon -->
+      </th>
       <th class="auto-width">Datum</th>
-      <th class="auto-width">Zeit</th>
+      <th class="auto-width time-column">Zeit</th>
       <th class="auto-width">Video</th>
     </tr>
   </thead>
-
-  <mvw-entry *ngFor="let entry of entries" [entry]="entry"></mvw-entry>
+  <tbody>
+    <tr mvw-entry *ngFor="let entry of entries" [entry]="entry"></tr>
+  </tbody>
 
 </table>

@@ -7,7 +7,7 @@ import { Component, Input, OnChanges, Output, EventEmitter } from '@angular/core
 })
 export class PaginationComponent implements OnChanges {
   @Input() pageSize: number;
-  @Input() selectedIndex: number;
+  @Input() offset: number;
   @Input() totalItems: number;
 
   @Output() onNavigate = new EventEmitter();
@@ -24,11 +24,11 @@ export class PaginationComponent implements OnChanges {
 
   ngOnChanges() {
     let totalPages = Math.ceil(this.totalItems / this.pageSize);
-    let currentPage = Math.floor(this.selectedIndex / this.pageSize);
+    let currentPage = Math.floor(this.offset / this.pageSize);
     let pagingStart = Math.max(0, currentPage - 2 - (2 - Math.min(2, totalPages - (currentPage + 1))));
     let pagingEnd = Math.min(totalPages, pagingStart + 5);
-    let canNavigateBackward = this.selectedIndex >= this.pageSize;
-    let canNavigateForward = ((totalPages * this.pageSize) - this.selectedIndex) > this.pageSize;
+    let canNavigateBackward = this.offset >= this.pageSize;
+    let canNavigateForward = ((totalPages * this.pageSize) - this.offset) > this.pageSize;
 
     let pages: number[] = [];
     for (let i = pagingStart; i < pagingEnd; i++) {
