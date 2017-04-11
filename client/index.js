@@ -899,6 +899,8 @@ function returnEmptyString() {
 }
 
 $(() => {
+    $.fn.dataTable.ext.errMode = 'none';
+
     $('#browserWarning').remove();
 
     connectingModal = $('#connectingModal');
