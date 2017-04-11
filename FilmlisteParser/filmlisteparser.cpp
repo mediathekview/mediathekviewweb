@@ -1,9 +1,9 @@
 #include "filmlisteparser.h"
 
-#include <QFile>
-#include <QIODevice>
+#include <node/node.h>
+#include <node/v8.h>
+
 #include <QString>
-#include <QTextStream>
 
 FilmlisteParser::FilmlisteParser(QObject *parent) : QObject(parent)
 {

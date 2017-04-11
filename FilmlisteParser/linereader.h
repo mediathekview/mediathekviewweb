@@ -1,12 +1,9 @@
 #ifndef LINEREADER_H
 #define LINEREADER_H
 
-#include <QFile>
-#include <QMutex>
+#include "concurrentqueue.h"
 #include <QObject>
-#include <QQueue>
 #include <QString>
-#include <QTextStream>
 #include <QThread>
 
 class LineReader : public QObject {
@@ -16,10 +13,10 @@ class LineReader : public QObject {
 
 public:
     explicit LineReader(QObject* parent = 0);
-    ~LineReader();
+    virtual ~LineReader();
 
 signals:
-    void readFile(const QString file, const QString pattern, QQueue<QString>* outQueue, QMutex* queueMutex);
+    void readFile(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue);
     void done();
 
 public slots:

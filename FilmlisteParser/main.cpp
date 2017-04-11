@@ -1,10 +1,12 @@
 #include "linereader.h"
 #include "sleeper.h"
+#include "concurrentqueue.h"
 #include <QCoreApplication>
-#include <QMutex>
+#include <QTextStream>
 #include <QString>
-#include <QQueue>
 #include <QThread>
+#include <QJsonDocument>
+#include <QJsonArray>
 
 QTextStream &write()
 {
@@ -16,18 +18,34 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    QMutex queueMutex;
-    QQueue<QString> queue;
+    ConcurrentQueue<QString> queue;
 
     LineReader lineReader;
 
-    lineReader.readFile("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", &queue, &queueMutex);
+    lineReader.readFile("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", &queue);
+
+    int processed = 0;
 
     while(true) {
-        queueMutex.lock();
-            write() << queue.length() << endl << endl;
-        queueMutex.unlock();
-        Sleeper::msleep(100);
+        write() << queue.length() << endl;
+
+        QString line;
+        if(!queue.isEmpty()) {
+            line = queue.dequeue();
+        }
+
+        if(line.length() == 0)
+            continue;
+
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(line.toUtf8());
+
+        QJsonArray jsonArray = jsonDocument.array();
+        processed++;
+
+        if(processed % 10000 == 0)
+        write() << processed << endl;
+
+        //Sleeper::msleep(100);
     }
 
     return a.exec();

@@ -1,10 +1,11 @@
 #ifndef FILMLISTEPARSER_H
 #define FILMLISTEPARSER_H
 
-#include <QFile>
+#include <node/node.h>
+#include <node/v8.h>
+
 #include <QObject>
 #include <QString>
-#include <QTextStream>
 
 class FilmlisteParser : public QObject {
 

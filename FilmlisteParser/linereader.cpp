@@ -1,8 +1,5 @@
 #include "linereader.h"
 #include "linereaderworker.h"
-#include <QFile>
-#include <QMutex>
-#include <QQueue>
 
 LineReader::LineReader(QObject *parent) : QObject(parent) {
     LineReaderWorker *worker = new LineReaderWorker;

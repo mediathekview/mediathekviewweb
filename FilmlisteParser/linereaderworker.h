@@ -1,10 +1,10 @@
 #ifndef LINEREADERWORKER_H
 #define LINEREADERWORKER_H
 
+#include "concurrentqueue.h"
+
 #include <QFile>
-#include <QMutex>
 #include <QObject>
-#include <QQueue>
 #include <QString>
 #include <QTextStream>
 
@@ -19,13 +19,13 @@ public:
     ~LineReaderWorker();
 
     void openFile(const QString file);
-    void readFileLineByLine(const QString file, const QString pattern, QQueue<QString>* outQueue, QMutex* queueMutex);
+    void readFileLineByLine(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue);
 
 signals:
     void done();
 
 public slots:
-    void readFile(const QString file, const QString pattern, QQueue<QString>* outQueue, QMutex* queueMutex);
+    void readFile(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue);
 };
 
 #endif // LINEREADERWORKER_H

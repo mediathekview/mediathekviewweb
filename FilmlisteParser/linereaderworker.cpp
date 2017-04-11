@@ -1,8 +1,7 @@
 #include "linereaderworker.h"
+#include "concurrentqueue.h"
 #include "sleeper.h"
 #include <QString>
-#include <QMutex>
-#include <QQueue>
 #include <QFile>
 #include <QTextStream>
 #include <QRegularExpression>
@@ -18,26 +17,20 @@ void LineReaderWorker::openFile(const QString file) {
     textStream.setDevice(&fileStream);
 }
 
-void LineReaderWorker::readFileLineByLine(const QString file, const QString pattern, QQueue<QString> *outQueue, QMutex *queueMutex) {
+void LineReaderWorker::readFileLineByLine(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue) {
     openFile(file);
 
     QRegularExpression regex(pattern);
-    if (regex.isValid() == false){
-        throw "Regex not Valid!";
-    }
 
     regex.optimize();
 
     QString buffer;
 
     while (textStream.atEnd() == false) {
-        queueMutex->lock();
         if (outQueue->length() >= 1000) {
-            queueMutex->unlock();
             Sleeper::msleep(10);
             continue;
         }
-        queueMutex->unlock();
 
         QString readData = textStream.read(1024);
         buffer.append(readData);
@@ -49,16 +42,12 @@ void LineReaderWorker::readFileLineByLine(const QString file, const QString patt
             QString line = buffer.left(match.capturedStart());
             buffer = buffer.mid(match.capturedStart() + matchLength);
 
-            queueMutex->lock();
-            outQueue->append(line);
-            queueMutex->unlock();
+            outQueue->enqueue(line);
         }
     }
 
     if (buffer.length() > 0) {
-        queueMutex->lock();
-        outQueue->append(buffer);
-        queueMutex->unlock();
+        outQueue->enqueue(buffer);
     }
 
     fileStream.close();
@@ -66,6 +55,6 @@ void LineReaderWorker::readFileLineByLine(const QString file, const QString patt
     emit done();
 }
 
-void LineReaderWorker::readFile(const QString file, const QString pattern, QQueue<QString> *outQueue, QMutex *queueMutex) {
-    readFileLineByLine(file, pattern, outQueue, queueMutex);
+void LineReaderWorker::readFile(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue) {
+    readFileLineByLine(file, pattern, outQueue);
 }
