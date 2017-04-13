@@ -14,7 +14,8 @@ SOURCES += main.cpp \
     linereader.cpp \
     linereaderworker.cpp \
     concurrentqueue.cpp \
-    addon.cpp
+    addon.cpp \
+    filmlisteparserworker.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -32,7 +33,9 @@ HEADERS +=  \
     linereader.h \
     linereaderworker.h \
     sleeper.h \
-    concurrentqueue.h
+    concurrentqueue.h \
+    model.h \
+    filmlisteparserworker.h
 
 
 INCLUDEPATH +=  $$PWD/node_modules/nan \

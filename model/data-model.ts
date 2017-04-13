@@ -12,7 +12,7 @@ export interface Entry {
 
 export interface Video {
     url: string;
-    quality: Quality; // for example "High", "Mid" & "Low"
+    quality: Quality;
     size: number;
 }
 

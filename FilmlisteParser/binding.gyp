@@ -7,6 +7,7 @@
             "addon.cpp",
             "linereader.cpp",
             "linereaderworker.cpp",
+            "filmlisteparser.cpp",
             '<!(moc filmlisteparser.h -o moc_filmlisterparser.cpp && echo moc_filmlisterparser.cpp)',
             '<!(moc linereader.h -o moc_linereader.cpp && echo moc_linereader.cpp)',
             '<!(moc linereaderworker.h -o moc_linereaderworker.cpp && echo moc_linereaderworker.cpp)'

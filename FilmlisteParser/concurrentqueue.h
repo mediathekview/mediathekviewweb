@@ -20,12 +20,17 @@ public:
         mutex.unlock();
     }
 
-    T dequeue() {
+    bool dequeue(T *item) {
         mutex.lock();
-        T item = queue.dequeue();
-        mutex.unlock();
 
-        return item;
+        if (!queue.isEmpty()) {
+            T item = queue.dequeue();
+            mutex.unlock();
+            return true;
+        } else {
+            mutex.unlock();
+            return false;
+        }
     }
 
     int length() {

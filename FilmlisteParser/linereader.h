@@ -16,7 +16,7 @@ public:
     virtual ~LineReader();
 
 signals:
-    void readFile(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue);
+    void readFile(const QString file, const QString splitPattern, ConcurrentQueue<QString> *outQueue);
     void done();
 
 public slots:

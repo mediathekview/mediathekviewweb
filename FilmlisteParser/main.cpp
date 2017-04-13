@@ -30,11 +30,9 @@ int main(int argc, char *argv[])
         write() << queue.length() << endl;
 
         QString line;
-        if(!queue.isEmpty()) {
-            line = queue.dequeue();
-        }
+        bool success = queue.dequeue(&line);
 
-        if(line.length() == 0)
+        if(!success || line.length() == 0)
             continue;
 
         QJsonDocument jsonDocument = QJsonDocument::fromJson(line.toUtf8());
@@ -43,7 +41,7 @@ int main(int argc, char *argv[])
         processed++;
 
         if(processed % 10000 == 0)
-        write() << processed << endl;
+            write() << processed << endl;
 
         //Sleeper::msleep(100);
     }

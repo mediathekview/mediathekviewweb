@@ -17,11 +17,10 @@ void LineReaderWorker::openFile(const QString file) {
     textStream.setDevice(&fileStream);
 }
 
-void LineReaderWorker::readFileLineByLine(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue) {
+void LineReaderWorker::readFile(const QString file, const QString splitPattern, ConcurrentQueue<QString> *outQueue) {
     openFile(file);
 
-    QRegularExpression regex(pattern);
-
+    QRegularExpression regex(splitPattern);
     regex.optimize();
 
     QString buffer;
@@ -53,8 +52,4 @@ void LineReaderWorker::readFileLineByLine(const QString file, const QString patt
     fileStream.close();
 
     emit done();
-}
-
-void LineReaderWorker::readFile(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue) {
-    readFileLineByLine(file, pattern, outQueue);
 }

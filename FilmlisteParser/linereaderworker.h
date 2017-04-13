@@ -3,8 +3,8 @@
 
 #include "concurrentqueue.h"
 
-#include <QFile>
 #include <QObject>
+#include <QFile>
 #include <QString>
 #include <QTextStream>
 
@@ -19,13 +19,12 @@ public:
     ~LineReaderWorker();
 
     void openFile(const QString file);
-    void readFileLineByLine(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue);
 
 signals:
     void done();
 
 public slots:
-    void readFile(const QString file, const QString pattern, ConcurrentQueue<QString> *outQueue);
+    void readFile(const QString file, const QString splitPattern, ConcurrentQueue<QString> *outQueue);
 };
 
 #endif // LINEREADERWORKER_H
