@@ -1,4 +1,6 @@
 #include "filmlisteparser.h"
+#include "concurrentqueue.h"
+#include "model.h"
 
 #include <nan.h>
 #include <QString>
@@ -6,29 +8,51 @@
 #include <QObject>
 
 using namespace v8;
-
-void parseFilmliste(const FunctionCallbackInfo<Value>& info) {
-
-    Nan::Utf8String arg0(info[0]);
-
-    QString filename = "You passed: " + QString::fromUtf8(*arg0, arg0.length());
+using namespace Nan;
 
 
-    Nan::Callback *callback = new  Nan::Callback(info[1].As<v8::Function>());
+class NativeFilmlisteParser : public AsyncWorker {
+    Callback *callback;
 
+public:
+    NativeFilmlisteParser(Callback *callback, int points) : AsyncWorker(callback) {
+        this->callback = callback;
+    }
+
+
+
+    ~NativeFilmlisteParser() {}
+};
+
+
+void parseFilmliste(const v8::FunctionCallbackInfo<Value>& info) {
+    Utf8String arg0(info[0]);
+    Utf8String arg1(info[1]);
+    Callback *callback = new Callback(info[2].As<Function>());
+
+    QString filename = QString::fromUtf8(*arg0, arg0.length());
+    QString splitPattern = QString::fromUtf8(*arg1, arg1.length());
+
+
+
+
+
+    ConcurrentQueue<Entry> entryQueue;
 
     FilmlisteParser parser;
+    parser.parseFile(filename, splitPattern, &entryQueue);
 
-   // QObject::connect(parser, batchReady(TypVomBatch), this,[](TypVomBatch batch) {
 
-        //batch to v8 jsonarray
+    // QObject::connect(parser, batchReady(TypVomBatch), this,[](TypVomBatch batch) {
 
-        v8::Local<v8::Value> argv[] = {
-            Nan::New<v8::String>(filename.toStdString()).ToLocalChecked()
-        };
+    //batch to v8 jsonarray
 
-        callback->Call(sizeof(argv)/sizeof(v8::Local<v8::Value>), argv);
-        callback->Call(sizeof(argv)/sizeof(v8::Local<v8::Value>), argv);
+    Local<Value> argv[] = {
+        New<String>(filename.toStdString()).ToLocalChecked()
+    };
+
+    callback->Call(sizeof(argv)/sizeof(Local<Value>), argv);
+    callback->Call(sizeof(argv)/sizeof(Local<Value>), argv);
 
 
 
@@ -41,7 +65,7 @@ void parseFilmliste(const FunctionCallbackInfo<Value>& info) {
 
 
 
-   /*QEventLoop ev;
+    /*QEventLoop ev;
 
    QObject::connect(filmlisteparser, finished, ev, quit);
 
@@ -50,6 +74,8 @@ void parseFilmliste(const FunctionCallbackInfo<Value>& info) {
    ev.exec();*/
 
 }
+
+
 
 void Init(Local<Object> exports, Local<Object> module) {
     NODE_SET_METHOD(module, "exports", parseFilmliste);

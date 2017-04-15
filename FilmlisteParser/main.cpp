@@ -12,16 +12,12 @@ int main(int argc, char *argv[])
 
     qDebug() << "main" << QThread::currentThreadId();
 
-    QElapsedTimer timer;
-    timer.start();
-
     ConcurrentQueue<Entry> entryQueue;
 
     FilmlisteParser parser;
     parser.parseFile("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", &entryQueue);
 
     bool isLast = false;
-
     while(!isLast) {
         Entry entry;
         bool success = entryQueue.dequeue(entry, isLast);
