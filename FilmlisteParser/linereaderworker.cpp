@@ -27,7 +27,7 @@ void LineReaderWorker::readFile(const QString file, const QString splitPattern, 
 
     while (textStream.atEnd() == false) {
         if (outQueue->length() >= 1000) {
-            Sleeper::msleep(10);
+            Sleeper::msleep(1);
             continue;
         }
 
@@ -45,11 +45,7 @@ void LineReaderWorker::readFile(const QString file, const QString splitPattern, 
         }
     }
 
-    if (buffer.length() > 0) {
-        outQueue->enqueue(buffer);
-    }
+    outQueue->enqueue(buffer, true);
 
     fileStream.close();
-
-    emit done();
 }

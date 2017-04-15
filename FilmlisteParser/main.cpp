@@ -1,49 +1,35 @@
-#include "linereader.h"
+#include "filmlisteparser.h"
 #include "sleeper.h"
 #include "concurrentqueue.h"
+#include "model.h"
 #include <QCoreApplication>
-#include <QTextStream>
 #include <QString>
-#include <QThread>
-#include <QJsonDocument>
-#include <QJsonArray>
-
-QTextStream &write()
-{
-    static QTextStream ts(stdout);
-    return ts;
-}
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    ConcurrentQueue<QString> queue;
+    qDebug() << "main" << QThread::currentThreadId();
 
-    LineReader lineReader;
+    QElapsedTimer timer;
+    timer.start();
 
-    lineReader.readFile("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", &queue);
+    ConcurrentQueue<Entry> entryQueue;
 
-    int processed = 0;
+    FilmlisteParser parser;
+    parser.parseFile("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", &entryQueue);
 
-    while(true) {
-        write() << queue.length() << endl;
+    bool isLast = false;
 
-        QString line;
-        bool success = queue.dequeue(&line);
+    while(!isLast) {
+        Entry entry;
+        bool success = entryQueue.dequeue(entry, isLast);
 
-        if(!success || line.length() == 0)
+        if (!success) {
+            Sleeper::msleep(1);
             continue;
-
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(line.toUtf8());
-
-        QJsonArray jsonArray = jsonDocument.array();
-        processed++;
-
-        if(processed % 10000 == 0)
-            write() << processed << endl;
-
-        //Sleeper::msleep(100);
+        }
     }
 
     return a.exec();

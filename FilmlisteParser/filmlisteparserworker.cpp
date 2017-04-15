@@ -5,46 +5,45 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QStringList>
+#include <QString>
 
-
-FilmlisteParserWorker::FilmlisteParserWorker(QObject *parent) : QObject(parent)
-{
-
-}
-
-void FilmlisteParserWorker::noMoreLines() {
-    endWhenEmpty = true;
-}
+FilmlisteParserWorker::FilmlisteParserWorker(QObject *parent) : QObject(parent) { }
 
 
 void FilmlisteParserWorker::parseLines(ConcurrentQueue<QString> *lineInQueue, ConcurrentQueue<Entry> *entryOutQueue) {
-    while(lineInQueue->length() > 0 || endWhenEmpty == false) {
+    bool isLast = false;
+
+    while(!isLast) {
         if (entryOutQueue->length() >= 1000) {
             Sleeper::msleep(1);
             continue;
         }
 
         QString line;
-        bool success = lineInQueue->dequeue(&line);
+        bool success = lineInQueue->dequeue(line, isLast);
 
         if (!success) {
             Sleeper::msleep(1);
             continue;
         }
 
-        if(line.length() == 0)
+        if (isLast) {
+            line.chop(1);
+        }
+
+        currentLine++;
+
+        if(currentLine <= 3)
             continue;
 
         Entry entry = parseLine(line);
 
-        entryOutQueue->enqueue(entry);
+        entryOutQueue->enqueue(entry, isLast);
     }
-
-    emit done();
 }
 
 
-Entry FilmlisteParserWorker::parseLine(QString line) {
+Entry FilmlisteParserWorker::parseLine(const QString &line) {
     QJsonDocument jsonDocument = QJsonDocument::fromJson(line.toUtf8());
 
     //["Sender", "Thema", "Titel", "Datum", "Zeit", "Dauer", "Größe [MB]", "Beschreibung", "Url", "Website", "Url Untertitel", "Url RTMP", "Url Klein", "Url RTMP Klein", "Url HD", "Url RTMP HD", "DatumL", "Url History", "Geo", "neu"]
@@ -61,7 +60,10 @@ Entry FilmlisteParserWorker::parseLine(QString line) {
     }
 
     QStringList durationSplit = parsed[5].toString().split(":");
-    int duration = (durationSplit[0].toInt() * 60 * 60) + (durationSplit[1].toInt() * 60) + durationSplit[2].toInt();
+    int duration = -1;
+    if (durationSplit.length() == 3) {
+        duration = (durationSplit[0].toInt() * 60 * 60) + (durationSplit[1].toInt() * 60) + durationSplit[2].toInt();
+    }
 
     QList<Video> videos;
 

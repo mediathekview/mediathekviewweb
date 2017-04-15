@@ -10,27 +10,54 @@ class ConcurrentQueue
 {
     QMutex mutex;
     QQueue<T> queue;
+    volatile bool closed = false;
 
 public:
     explicit ConcurrentQueue() {}
 
-    void enqueue(T item) {
+    bool enqueue(T item, bool isLast = false) {
+        bool success = false;
+
         mutex.lock();
-        queue.enqueue(item);
+
+        if (!closed) {
+            queue.enqueue(item);
+            success = true;
+        }
+
+        if (isLast) {
+            closed = true;
+        }
+
         mutex.unlock();
+
+        return success;
     }
 
-    bool dequeue(T *item) {
+    bool dequeue(T &item, bool &isLast) {
+        bool success = false;
+
         mutex.lock();
 
         if (!queue.isEmpty()) {
-            T item = queue.dequeue();
-            mutex.unlock();
-            return true;
-        } else {
-            mutex.unlock();
-            return false;
+            item = queue.dequeue();
+            success = true;
+            isLast = closed && queue.isEmpty();
         }
+
+        mutex.unlock();
+
+        return success;
+    }
+
+    bool isOpen() {
+        bool isOpen;
+
+        mutex.lock();
+        isOpen = !closed;
+        mutex.unlock();
+
+        return isOpen;
     }
 
     int length() {

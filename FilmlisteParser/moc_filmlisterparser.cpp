@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_FilmlisteParser_t {
-    QByteArrayData data[12];
-    char stringdata0[147];
+    QByteArrayData data[11];
+    char stringdata0[137];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -41,15 +41,13 @@ QT_MOC_LITERAL(6, 90, 13), // "entryOutQueue"
 QT_MOC_LITERAL(7, 104, 4), // "done"
 QT_MOC_LITERAL(8, 109, 9), // "parseFile"
 QT_MOC_LITERAL(9, 119, 4), // "file"
-QT_MOC_LITERAL(10, 124, 12), // "splitPattern"
-QT_MOC_LITERAL(11, 137, 9) // "chunkSize"
+QT_MOC_LITERAL(10, 124, 12) // "splitPattern"
 
     },
     "FilmlisteParser\0parseLines\0\0"
     "ConcurrentQueue<QString>*\0lineInQueue\0"
     "ConcurrentQueue<Entry>*\0entryOutQueue\0"
-    "done\0parseFile\0file\0splitPattern\0"
-    "chunkSize"
+    "done\0parseFile\0file\0splitPattern"
 };
 #undef QT_MOC_LITERAL
 
@@ -71,14 +69,14 @@ static const uint qt_meta_data_FilmlisteParser[] = {
        7,    0,   34,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       8,    3,   35,    2, 0x0a /* Public */,
+       8,    2,   35,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void, 0x80000000 | 3, 0x80000000 | 5,    4,    6,
     QMetaType::Void,
 
  // slots: parameters
-    QMetaType::Void, QMetaType::QString, QMetaType::QString, QMetaType::Int,    9,   10,   11,
+    QMetaType::Void, QMetaType::QString, QMetaType::QString,    9,   10,
 
        0        // eod
 };
@@ -91,7 +89,7 @@ void FilmlisteParser::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
         switch (_id) {
         case 0: _t->parseLines((*reinterpret_cast< ConcurrentQueue<QString>*(*)>(_a[1])),(*reinterpret_cast< ConcurrentQueue<Entry>*(*)>(_a[2]))); break;
         case 1: _t->done(); break;
-        case 2: _t->parseFile((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
+        case 2: _t->parseFile((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {

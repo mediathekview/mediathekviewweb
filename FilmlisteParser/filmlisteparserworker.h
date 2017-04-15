@@ -12,22 +12,19 @@ class FilmlisteParserWorker : public QObject
 
     QString currentChannel;
     QString currentTopic;
-
-    bool endWhenEmpty = false;
+    int currentLine = 0;
 
 private:
-    Entry parseLine(QString line);
+    Entry parseLine(const QString &line);
     QString createUrlFromBase(QString base, QString appendix);
 
 public:
     explicit FilmlisteParserWorker(QObject *parent = 0);
 
 signals:
-    void done();
 
 public slots:
     void parseLines(ConcurrentQueue<QString> *lineInQueue, ConcurrentQueue<Entry> *entryOutQueue);
-    void noMoreLines();
 };
 
 #endif // FILMLISTEPARSERWORKER_H

@@ -15,23 +15,20 @@ class FilmlisteParser : public QObject {
     QThread workerThread;
     FilmlisteParserWorker *worker = new FilmlisteParserWorker();
 
-    bool workerIsDone = false;
-
     LineReader lineReader;
     ConcurrentQueue<QString> lineQueue;
-    ConcurrentQueue<Entry> entryQueue;
 
 public:
     explicit FilmlisteParser(QObject* parent = 0);
     virtual ~FilmlisteParser();
 
+    void parseFile(QString file, QString splitPattern, ConcurrentQueue<Entry> *entryOutQueue);
+
 
 signals:
     void parseLines(ConcurrentQueue<QString> *lineInQueue, ConcurrentQueue<Entry> *entryOutQueue);
-    void done();
 
 public slots:
-    void parseFile(QString file, QString splitPattern);
 };
 
 #endif // FILMLISTEPARSER_H

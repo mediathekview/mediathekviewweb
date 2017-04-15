@@ -21,7 +21,6 @@ public:
     void openFile(const QString file);
 
 signals:
-    void done();
 
 public slots:
     void readFile(const QString file, const QString splitPattern, ConcurrentQueue<QString> *outQueue);

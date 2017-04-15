@@ -13,8 +13,7 @@ SOURCES += main.cpp \
     filmlisteparser.cpp \
     linereader.cpp \
     linereaderworker.cpp \
-    concurrentqueue.cpp \
-    addon.cpp \
+    #addon.cpp \
     filmlisteparserworker.cpp
 
 # The following define makes your compiler emit warnings if you use
