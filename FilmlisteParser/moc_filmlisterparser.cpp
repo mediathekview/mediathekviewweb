@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_FilmlisteParser_t {
-    QByteArrayData data[11];
-    char stringdata0[137];
+    QByteArrayData data[7];
+    char stringdata0[104];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -37,17 +37,12 @@ QT_MOC_LITERAL(2, 27, 0), // ""
 QT_MOC_LITERAL(3, 28, 25), // "ConcurrentQueue<QString>*"
 QT_MOC_LITERAL(4, 54, 11), // "lineInQueue"
 QT_MOC_LITERAL(5, 66, 23), // "ConcurrentQueue<Entry>*"
-QT_MOC_LITERAL(6, 90, 13), // "entryOutQueue"
-QT_MOC_LITERAL(7, 104, 4), // "done"
-QT_MOC_LITERAL(8, 109, 9), // "parseFile"
-QT_MOC_LITERAL(9, 119, 4), // "file"
-QT_MOC_LITERAL(10, 124, 12) // "splitPattern"
+QT_MOC_LITERAL(6, 90, 13) // "entryOutQueue"
 
     },
     "FilmlisteParser\0parseLines\0\0"
     "ConcurrentQueue<QString>*\0lineInQueue\0"
-    "ConcurrentQueue<Entry>*\0entryOutQueue\0"
-    "done\0parseFile\0file\0splitPattern"
+    "ConcurrentQueue<Entry>*\0entryOutQueue"
 };
 #undef QT_MOC_LITERAL
 
@@ -57,26 +52,18 @@ static const uint qt_meta_data_FilmlisteParser[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       3,   14, // methods
+       1,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       2,       // signalCount
+       1,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    2,   29,    2, 0x06 /* Public */,
-       7,    0,   34,    2, 0x06 /* Public */,
-
- // slots: name, argc, parameters, tag, flags
-       8,    2,   35,    2, 0x0a /* Public */,
+       1,    2,   19,    2, 0x06 /* Public */,
 
  // signals: parameters
     QMetaType::Void, 0x80000000 | 3, 0x80000000 | 5,    4,    6,
-    QMetaType::Void,
-
- // slots: parameters
-    QMetaType::Void, QMetaType::QString, QMetaType::QString,    9,   10,
 
        0        // eod
 };
@@ -88,8 +75,6 @@ void FilmlisteParser::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
         Q_UNUSED(_t)
         switch (_id) {
         case 0: _t->parseLines((*reinterpret_cast< ConcurrentQueue<QString>*(*)>(_a[1])),(*reinterpret_cast< ConcurrentQueue<Entry>*(*)>(_a[2]))); break;
-        case 1: _t->done(); break;
-        case 2: _t->parseFile((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -99,13 +84,6 @@ void FilmlisteParser::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
             typedef void (FilmlisteParser::*_t)(ConcurrentQueue<QString> * , ConcurrentQueue<Entry> * );
             if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&FilmlisteParser::parseLines)) {
                 *result = 0;
-                return;
-            }
-        }
-        {
-            typedef void (FilmlisteParser::*_t)();
-            if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&FilmlisteParser::done)) {
-                *result = 1;
                 return;
             }
         }
@@ -137,13 +115,13 @@ int FilmlisteParser::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 3)
+        if (_id < 1)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 3;
+        _id -= 1;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 3)
+        if (_id < 1)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 3;
+        _id -= 1;
     }
     return _id;
 }
@@ -153,12 +131,6 @@ void FilmlisteParser::parseLines(ConcurrentQueue<QString> * _t1, ConcurrentQueue
 {
     void *_a[] = { Q_NULLPTR, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);
-}
-
-// SIGNAL 1
-void FilmlisteParser::done()
-{
-    QMetaObject::activate(this, &staticMetaObject, 1, Q_NULLPTR);
 }
 QT_WARNING_POP
 QT_END_MOC_NAMESPACE

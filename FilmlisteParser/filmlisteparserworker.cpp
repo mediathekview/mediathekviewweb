@@ -6,6 +6,8 @@
 #include <QJsonValue>
 #include <QStringList>
 #include <QString>
+#include <QCryptographicHash>
+#include <QByteArray>
 
 FilmlisteParserWorker::FilmlisteParserWorker(QObject *parent) : QObject(parent) { }
 
@@ -81,15 +83,18 @@ Entry FilmlisteParserWorker::parseLine(const QString &line) {
         videos.append(Video(url_video_hd, Quality::High));
     }
 
+    QString id = QString(QCryptographicHash::hash(line.toUtf8(), QCryptographicHash::Md5)
+                         .toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 
     Entry entry;
+    entry.id = id;
     entry.channel = currentChannel;
     entry.topic = currentTopic;
     entry.title = parsed[2].toString();
     entry.description = parsed[7].toString();
     entry.timestamp = parsed[16].toInt(-1);
     entry.duration = duration;
-    entry.videos = videos;
+    //entry.videos = videos;
     entry.website = parsed[9].toString();
 
     return entry;

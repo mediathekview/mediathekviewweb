@@ -5,27 +5,37 @@
 #include <QCoreApplication>
 #include <QString>
 #include <QDebug>
+#include <QElapsedTimer>
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    qDebug() << "main" << QThread::currentThreadId();
+    while(true) {
+        QElapsedTimer timer;
+        timer.start();
 
-    ConcurrentQueue<Entry> entryQueue;
+        ConcurrentQueue<Entry> entryQueue;
 
-    FilmlisteParser parser;
-    parser.parseFile("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", &entryQueue);
+        FilmlisteParser parser;
+        parser.parseFile("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", &entryQueue);
 
-    bool isLast = false;
-    while(!isLast) {
-        Entry entry;
-        bool success = entryQueue.dequeue(entry, isLast);
+        int currentLine = 0;
 
-        if (!success) {
-            Sleeper::msleep(1);
-            continue;
+        bool isLast = false;
+        while(!isLast) {
+            Entry entry;
+            bool success = entryQueue.dequeue(entry, isLast);
+
+            if (!success) {
+                Sleeper::msleep(1);
+                continue;
+            }
+
+            // qDebug() << ++currentLine << entry.id;
         }
+
+        qDebug() << timer.elapsed();
     }
 
     return a.exec();
