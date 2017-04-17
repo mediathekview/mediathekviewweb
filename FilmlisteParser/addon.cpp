@@ -10,19 +10,14 @@
 #include <QObject>
 #include <QList>
 #include <QDebug>
+#include <QTimer>
 
 using namespace v8;
 using namespace Nan;
 
-#define BATCH_SIZE 100
+typedef QList<Entry>* EntryBatch;
 
-struct EntryBatch {
-    int length;
-    Entry entries[BATCH_SIZE];
-};
-
-
-class NativeFilmlisteParser : public AsyncProgressWorkerBase<EntryBatch> {
+class NativeFilmlisteParserOLD : public AsyncProgressWorkerBase<EntryBatch> {
     Callback *progressCallback;
     Callback *endCallback;
     QString file;
@@ -30,7 +25,7 @@ class NativeFilmlisteParser : public AsyncProgressWorkerBase<EntryBatch> {
     int batchSize;
 
 public:
-    NativeFilmlisteParser(Callback *progressCallback, Callback *endCallback, QString file, QString splitPattern, int batchSize) : AsyncProgressWorkerBase<EntryBatch>(callback) {
+    NativeFilmlisteParser(Callback *progressCallback, Callback *endCallback, QString file, QString splitPattern, int batchSize) : AsyncProgressWorkerBase<EntryBatch>(endCallback) {
         this->progressCallback = progressCallback;
         this->endCallback = endCallback;
         this->file = file;
@@ -44,94 +39,210 @@ public:
         int argc;
         char *argv;
 
-        QCoreApplication a(argc, &argv);
+        QCoreApplication app(argc, &argv);
 
-        ConcurrentQueue<Entry> entryQueue;
-        FilmlisteParser parser;
-        parser.parseFile(file, splitPattern, &entryQueue);
+        QTimer::singleShot(0,[&](){
+            ConcurrentQueue<Entry> entryQueue;
+            FilmlisteParser parser;
+            parser.parseFile(file, splitPattern, &entryQueue);
 
-        bool isLast = false;
-        while(!isLast) {
-            EntryBatch entryBatch;
+            bool isLast = false;
+            while(!isLast) {
+                EntryBatch entryBatch = new QList<Entry>();
+                Q_ASSERT(entryBatch!=nullptr);
 
-            while (!isLast && entryBatch.length < BATCH_SIZE) {
-                Entry entry;
-                bool success = entryQueue.dequeue(entry, isLast);
 
-                if (!success) {
-                    Sleeper::msleep(1);
-                    continue;
+                while (!isLast && entryBatch->length() < this->batchSize) {
+                    Entry entry;
+                    bool success = entryQueue.dequeue(entry, isLast);
+
+                    if (!success) {
+                        Sleeper::msleep(1);
+                        continue;
+                    }
+
+                    entryBatch->append(entry);
                 }
 
-                entryBatch.entries[entryBatch.length++] = entry;
+                progress.Send(&entryBatch, sizeof(EntryBatch));
             }
 
-            qDebug() << "lets see...";
-            progress.Send(&entryBatch, sizeof(EntryBatch));
-            qDebug() << "works";
-        }
+            app.quit();
+        });
 
-        a.exec();
+        app.exec();
     }
 
-    void HandleProgressCallback(const EntryBatch *entryBatch, size_t size) {
-        //TODO:
-        //Check using debugger if data points to entry (line 38). if so. make entry line38 a pointer, and free it here.
-        //kapiert? ja -> weil sonst das memory bereits wieder überschrieben würde... (in der while oben)
-
-        qDebug() << 1;
+    void HandleProgressCallback(const EntryBatch* entryBatch, size_t size) {
+        Q_ASSERT(entryBatch!=nullptr);
         Nan::HandleScope scope;
 
-        /*int count = entryBatch->length();
+        QScopedPointer<QList<Entry>> batch(*entryBatch);
 
+        int count = batch->length();
         v8::Local<v8::Array> results = Nan::New<v8::Array>(count);
 
         for (int i = 0; i < count; i++) {
-            Entry entry = entryBatch->at(i);
+            Entry entry = batch->at(i);
 
-            Local<Object> obj = Nan::New<Object>();
-            Nan::Set(obj, Nan::New("id").ToLocalChecked(), New<v8::String>(entry.id.toStdString()).ToLocalChecked());
+            Local<Object> entryObj = Nan::New<Object>();
+            Nan::Set(entryObj, Nan::New("id").ToLocalChecked(), New<v8::String>(entry.id.toStdString()).ToLocalChecked());
+            Nan::Set(entryObj, Nan::New("channel").ToLocalChecked(), New<v8::String>(entry.channel.toStdString()).ToLocalChecked());
+            Nan::Set(entryObj, Nan::New("topic").ToLocalChecked(), New<v8::String>(entry.topic.toStdString()).ToLocalChecked());
+            Nan::Set(entryObj, Nan::New("title").ToLocalChecked(), New<v8::String>(entry.title.toStdString()).ToLocalChecked());
+            Nan::Set(entryObj, Nan::New("timestamp").ToLocalChecked(), New<v8::Int32>(entry.timestamp));
+            Nan::Set(entryObj, Nan::New("duration").ToLocalChecked(), New<v8::Int32>(entry.duration));
+            Nan::Set(entryObj, Nan::New("description").ToLocalChecked(), New<v8::String>(entry.description.toStdString()).ToLocalChecked());
+            Nan::Set(entryObj, Nan::New("website").ToLocalChecked(), New<v8::String>(entry.website.toStdString()).ToLocalChecked());
 
-            Nan::Set(results, i, obj);
-        }*/
+
+            int videoCount = entry.videos.length();
+            v8::Local<v8::Array> videoArray = Nan::New<v8::Array>(videoCount);
+            for (int j = 0; j < videoCount; j++) {
+                Video video = entry.videos.at(j);
+
+                Local<Object> videoObj = Nan::New<Object>();
+                Nan::Set(videoObj, Nan::New("url").ToLocalChecked(), New<v8::String>(video.url.toStdString()).ToLocalChecked());
+                Nan::Set(videoObj, Nan::New("quality").ToLocalChecked(), New<v8::Int32>(static_cast<int>(video.quality)));
+                Nan::Set(videoObj, Nan::New("size").ToLocalChecked(), New<v8::Int32>(video.size));
+
+                Nan::Set(videoArray, j, videoObj);
+            }
+
+            Nan::Set(entryObj, Nan::New("videos").ToLocalChecked(), videoArray);
+
+            Nan::Set(results, i, entryObj);
+        }
 
         v8::Local<v8::Value> argv[] = {
-            Nan::New<v8::String>("entryBatch").ToLocalChecked()
+            results
+            //Nan::New<v8::String>("entryBatch").ToLocalChecked()
         };
 
-        callback->Call(sizeof(argv)/sizeof(v8::Local<v8::Value>), argv);
-
-        qDebug() << 2;
-        /*v8::Local<v8::Boolean> results = Nan::New<v8::Boolean>(entryBatch).ToLocalChecked();
-
-        qDebug() << 3;
-        Local<Value> argv[] = { results };
-
-        qDebug() << 4;
-        callback->Call(1, argv);
-        qDebug() << 5;*/
+        progressCallback->Call(sizeof(argv)/sizeof(v8::Local<v8::Value>), argv);
     }
 
     void WorkComplete() {
-
+        AsyncProgressWorkerBase<EntryBatch>::WorkComplete();
     }
 
     void HandleOKCallback() {
-        endCallback->Call(0, 0);
+        AsyncProgressWorkerBase<EntryBatch>::HandleOKCallback();
     }
 
     void HandleErrorCallback() {
-
+        AsyncProgressWorkerBase<EntryBatch>::HandleErrorCallback();
+        qDebug() << "ERROR";
     }
 
     void Destroy() {
+        delete this->progressCallback;
 
+        AsyncProgressWorkerBase<EntryBatch>::Destroy();
+    }
+
+};
+
+
+class NativeFilmlisteParser {
+    Callback *progressCallback;
+    Callback *endCallback;
+    QString file;
+    QString splitPattern;
+    int batchSize;
+    uv_async_t* async;
+    uv_work_t request;
+
+
+public:
+
+
+    static void AsyncExecute () {
+
+    }
+
+    static void AsyncProgress () {
+
+    }
+
+
+
+
+    NativeFilmlisteParser(Callback *progressCallback, Callback *endCallback, QString file, QString splitPattern, int batchSize) {
+        this->progressCallback = progressCallback;
+        this->endCallback = endCallback;
+        this->file = file;
+        this->splitPattern = splitPattern;
+        this->batchSize = batchSize;
+
+
+        async = new uv_async_t;
+            uv_async_init(
+                uv_default_loop()
+              , async
+              , AsyncProgress
+            );
+        async->data = this;
+
+
+        request.data = this;
+
+        uv_queue_work(
+              uv_default_loop()
+            , &request
+            , AsyncExecute
+            , reinterpret_cast<uv_after_work_cb>(AsyncExecuteComplete)
+          );
+
+
+
+    }
+
+
+    void start() {
+        int argc;
+        char *argv;
+
+        QCoreApplication app(argc, &argv);
+
+        QTimer::singleShot(0,[&](){
+            ConcurrentQueue<Entry> entryQueue;
+            FilmlisteParser parser;
+            parser.parseFile(file, splitPattern, &entryQueue);//async? ja geht dann direkt zum näcghsten
+
+          /*  bool isLast = false;
+            while(!isLast) {
+                EntryBatch entryBatch = new QList<Entry>();
+                Q_ASSERT(entryBatch!=nullptr);
+
+
+                while (!isLast && entryBatch->length() < this->batchSize) {
+                    Entry entry;
+                    bool success = entryQueue.dequeue(entry, isLast);
+
+                    if (!success) {
+                        Sleeper::msleep(1);
+                        continue;
+                    }
+
+                    entryBatch->append(entry);
+                }
+
+                progress.Send(&entryBatch, sizeof(EntryBatch));
+            }
+
+            app.quit();*/
+        });
+
+        app.exec();
     }
 };
 
+
+
 NAN_METHOD(DoProgress) {
-    Callback *progress = new Callback(info[2].As<v8::Function>());
-    Callback *callback = new Callback(info[3].As<v8::Function>());
+    Callback *progressCallback = new Callback(info[2].As<v8::Function>());
+    Callback *endCallback = new Callback(info[3].As<v8::Function>());
 
     Utf8String arg0(info[0]);
     Utf8String arg1(info[1]);
@@ -139,7 +250,7 @@ NAN_METHOD(DoProgress) {
     QString file = QString::fromUtf8(*arg0, arg0.length());
     QString splitPattern = QString::fromUtf8(*arg1, arg1.length());
 
-    AsyncQueueWorker(new NativeFilmlisteParser(progress, callback, file, splitPattern, 100));
+    AsyncQueueWorker(new NativeFilmlisteParser(progressCallback, endCallback, file, splitPattern, 100));
 }
 
 NAN_MODULE_INIT(Init) {

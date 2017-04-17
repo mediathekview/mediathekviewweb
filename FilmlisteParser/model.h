@@ -33,7 +33,7 @@ struct Entry {
     int duration;
     QString description;
     QString website;
-    //QList<Video> videos;
+    QList<Video> videos;
 };
 
 #endif // MODEL_H

@@ -43,6 +43,8 @@ public:
             item = queue.dequeue();
             success = true;
             isLast = closed && queue.isEmpty();
+        } else {
+            isLast = closed;
         }
 
         mutex.unlock();

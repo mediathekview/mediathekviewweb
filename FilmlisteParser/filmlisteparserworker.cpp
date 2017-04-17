@@ -8,6 +8,7 @@
 #include <QString>
 #include <QCryptographicHash>
 #include <QByteArray>
+#include <QDebug>
 
 FilmlisteParserWorker::FilmlisteParserWorker(QObject *parent) : QObject(parent) { }
 
@@ -94,7 +95,7 @@ Entry FilmlisteParserWorker::parseLine(const QString &line) {
     entry.description = parsed[7].toString();
     entry.timestamp = parsed[16].toInt(-1);
     entry.duration = duration;
-    //entry.videos = videos;
+    entry.videos = videos;
     entry.website = parsed[9].toString();
 
     return entry;
@@ -102,7 +103,10 @@ Entry FilmlisteParserWorker::parseLine(const QString &line) {
 
 QString FilmlisteParserWorker::createUrlFromBase(QString base, QString appendix) {
     QStringList appendixSplit = appendix.split("|");
+
+
     if (appendix.length() == 2) {
+        qDebug() << appendixSplit[0] << appendixSplit[1];
         return base.mid(0, appendixSplit[0].toInt()) + appendixSplit[1];
     } else {
         return "";
