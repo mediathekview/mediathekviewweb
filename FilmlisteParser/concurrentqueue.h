@@ -15,7 +15,7 @@ class ConcurrentQueue
 public:
     explicit ConcurrentQueue() {}
 
-    bool enqueue(T item, bool isLast = false) {
+    inline bool enqueue(T item, bool isLast = false) {
         bool success = false;
 
         mutex.lock();
@@ -34,7 +34,7 @@ public:
         return success;
     }
 
-    bool dequeue(T &item, bool &isLast) {
+    inline bool dequeue(T &item, bool &isLast) {
         bool success = false;
 
         mutex.lock();
@@ -52,7 +52,27 @@ public:
         return success;
     }
 
-    bool isOpen() {
+    inline bool dequeue(T &item, bool &isLast, bool &isClosed) {
+        bool success = false;
+
+        mutex.lock();
+
+        if (!queue.isEmpty()) {
+            item = queue.dequeue();
+            success = true;
+            isLast = closed && queue.isEmpty();
+        } else {
+            isLast = closed;
+        }
+
+        isClosed = closed;
+
+        mutex.unlock();
+
+        return success;
+    }
+
+    inline bool isOpen() {
         bool isOpen;
 
         mutex.lock();
@@ -62,7 +82,7 @@ public:
         return isOpen;
     }
 
-    int length() {
+    inline int length() {
         mutex.lock();
         int length = queue.length();
         mutex.unlock();
@@ -70,12 +90,20 @@ public:
         return length;
     }
 
-    bool isEmpty() {
+    inline bool isEmpty() {
         mutex.lock();
         bool isEmpty = queue.isEmpty();
         mutex.unlock();
 
         return isEmpty;
+    }
+
+    inline bool isFinished() {
+        mutex.lock();
+        bool isFinished = closed && queue.isEmpty();
+        mutex.unlock();
+
+        return isFinished;
     }
 };
 
