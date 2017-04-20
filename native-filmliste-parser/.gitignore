@@ -1,3 +1,6 @@
 moc_*.cpp
 *.pro.user
 *.pro.user*
+
+build
+node_modules
