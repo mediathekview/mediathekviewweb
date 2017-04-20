@@ -13,6 +13,7 @@
     "@types/elasticsearch": "^5.0.13",
     "@types/node": "^7.0.12",
     "@types/redis": "^0.12.36",
+    "@types/request": "0.0.42",
     "@types/socket.io": "^1.4.29",
     "nodemon": "^1.11.0",
     "ts-node": "^3.0.2",
@@ -21,6 +22,7 @@
   "dependencies": {
     "elasticsearch": "^13.0.0-rc2",
     "redis": "^2.7.1",
+    "request": "^2.81.0",
     "socket.io": "^1.7.3"
   }
 }
