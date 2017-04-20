@@ -330,7 +330,7 @@ public:
 
 
 
-NAN_METHOD(DoProgress) {
+NAN_METHOD(ParseFilmliste) {
     Utf8String arg0(info[0]);
     Utf8String arg1(info[1]);
 
@@ -348,8 +348,8 @@ NAN_METHOD(DoProgress) {
 
 NAN_MODULE_INIT(Init) {
     Nan::Set(target
-             , New<v8::String>("a").ToLocalChecked()
-             , New<v8::FunctionTemplate>(DoProgress)->GetFunction());
+             , New<v8::String>("parseFilmliste").ToLocalChecked()
+             , New<v8::FunctionTemplate>(ParseFilmliste)->GetFunction());
 }
 
 NODE_MODULE(asyncprogressworker, Init)

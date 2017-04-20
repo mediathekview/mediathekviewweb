@@ -1,11 +1,15 @@
-var a = require('./build/Release/filmliste-parser-native');
+var NativeFilmlisteParser = require('./build/Release/filmliste-parser-native');
 
 var count = 0;
 
 let begin = Date.now();
 
-a.a("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", 100, (val) =>  {
+
+NativeFilmlisteParser.parseFilmliste("/home/patrick/filmliste", "({|,)?\\\"(Filmliste|X)\\\":", 250, (val) => {
   count += val.length;
+  if (count % 5000 == 0) {
+    console.log(count);
+  }
 }, (end) => {
-    console.log('CALLBACK END', count, Date.now() - begin)
+  console.log('CALLBACK END', count, Date.now() - begin)
 });

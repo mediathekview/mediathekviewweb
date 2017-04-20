@@ -84,7 +84,7 @@ Entry FilmlisteParserWorker::parseLine(const QString &line) {
         videos.append(Video(url_video_hd, Quality::High));
     }
 
-    QString id = QString(QCryptographicHash::hash(line.toUtf8(), QCryptographicHash::Md5)
+    QString id = QString(QCryptographicHash::hash((line + currentChannel + currentTopic).toUtf8(), QCryptographicHash::Md5)
                          .toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 
     Entry entry;
@@ -105,8 +105,7 @@ QString FilmlisteParserWorker::createUrlFromBase(QString base, QString appendix)
     QStringList appendixSplit = appendix.split("|");
 
 
-    if (appendix.length() == 2) {
-        qDebug() << appendixSplit[0] << appendixSplit[1];
+    if (appendixSplit.length() == 2) {
         return base.mid(0, appendixSplit[0].toInt()) + appendixSplit[1];
     } else {
         return "";
