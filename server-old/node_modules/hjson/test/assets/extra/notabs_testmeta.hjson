@@ -1,5 +1,0 @@
-{ 
-  options: {
-    multiline: no-tabs
-  }
-}

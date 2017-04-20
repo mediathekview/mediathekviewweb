@@ -1,3 +1,0 @@
-var pkcs7 = window.pkcs7 || {};
-
-pkcs7.unpad = require('pkcs7').unpad;
