@@ -3,8 +3,10 @@ import { RedisService } from './redis-service';
 
 
 export class FilmlisteUtils {
+  redisService: RedisService;
 
   constructor() {
+    this.redisService = RedisService.getInstance();
   }
 
   getRandomFilmlisteMirror(): Promise<string> {
@@ -34,7 +36,7 @@ export class FilmlisteUtils {
   checkUpdateAvailable(tries: number): Promise<{ available: boolean, mirror: string }> {
     return new Promise<{ available: boolean, mirror: string }>((resolve, reject) => {
       this.getRandomFilmlisteMirror().then((mirror) => {
-        this.getCurrentFilmlisteTimestamp().then((filmlisteTimestamp) => {
+        this.redisService.getCurrentFilmlisteTimestamp().then((filmlisteTimestamp) => {
           Request.head(mirror, (err, response, body) => {
             if (err) {
               if (tries > 0) {

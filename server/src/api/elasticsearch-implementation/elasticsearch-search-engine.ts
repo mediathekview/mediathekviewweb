@@ -22,7 +22,6 @@ export class ElasticsearchSearchEngine implements ISearchEngine {
         return new Promise<QueryResponse>((resolve, reject) => {
             let esQuery = ElasticsearchHelpers.buildElasticsearchQuery(query, INDEX, TYPE);
 
-            console.log(JSON.stringify(esQuery, null, 1));
             this.elasticsearchClient.search<Entry>(esQuery, (err, response: Elasticsearch.SearchResponse<Entry>) => {
                 if (err) {
                     reject(err);

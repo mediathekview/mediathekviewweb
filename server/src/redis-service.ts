@@ -1,14 +1,28 @@
 import * as Redis from 'redis';
 
+import { Entry } from './model';
+
 class Keys {
   static TimestampHistoryList = 'filmliste:timestampHistory';
+  static EntriesToBeAddedSet = 'entries:toBeAdded';
+  static EntriesToBeRemovedSet = 'entries:toBeRemoved';
 }
 
-class _RedisService {
+export class RedisService {
+  private static _instance: RedisService;
+
   private redis: Redis.RedisClient;
 
-  constructor() {
+  private constructor() {
 
+  }
+
+  static getInstance(): RedisService {
+    if (this._instance == undefined) {
+      this._instance = new RedisService();
+    }
+
+    return this._instance;
   }
 
   getCurrentFilmlisteTimestamp(): Promise<number> {
@@ -41,6 +55,30 @@ class _RedisService {
       });
     });
   }
-}
 
-export const RedisService = new _RedisService();
+  getEntriesToBeAddedBatch(batchSize: number): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => {
+      this.redis.spop(Keys.EntriesToBeAddedSet, batchSize, (err, reply: string[]) => {
+        if (err) {
+          reject(err);
+        }
+        else {
+          resolve(reply);
+        }
+      });
+    });
+  }
+
+  getEntriesToBeRemovedBatch(batchSize: number): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => {
+      this.redis.spop(Keys.EntriesToBeRemovedSet, batchSize, (err, reply: string[]) => {
+        if (err) {
+          reject(err);
+        }
+        else {
+          resolve(reply);
+        }
+      });
+    });
+  }
+}

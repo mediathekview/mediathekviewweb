@@ -12,6 +12,11 @@ export interface Entry {
   description: string;
   website: string;
   videos: Video[];
+
+  info: {
+    added: number;
+    removed: number;
+  }
 }
 
 export interface Video {
