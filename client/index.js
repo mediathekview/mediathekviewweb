@@ -935,11 +935,13 @@ $(() => {
         }
     });
 
-    if (socket.disconnected) {
-        if (!modalIsOpen(connectingModal)) {
-            connectingModal.modal('show');
+    setInterval(() => {
+        if (socket.disconnected) {
+            if (!modalIsOpen(connectingModal)) {
+                connectingModal.modal('show');
+            }
         }
-    }
+    }, 1500);
 
     mediathekTable = $('#mediathek').DataTable({
         columns: [{ /*Sender*/
