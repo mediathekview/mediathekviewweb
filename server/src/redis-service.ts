@@ -14,7 +14,7 @@ export class RedisService {
   private redis: Redis.RedisClient;
 
   private constructor() {
-
+    this.redis = Redis.createClient();
   }
 
   static getInstance(): RedisService {

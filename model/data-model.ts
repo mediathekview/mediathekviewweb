@@ -13,10 +13,7 @@ export interface Entry {
   website: string;
   videos: Video[];
 
-  info: {
-    added: number;
-    removed: number;
-  }
+  removed: number;
 }
 
 export interface Video {
