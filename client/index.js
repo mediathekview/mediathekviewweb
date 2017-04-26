@@ -18,7 +18,7 @@ var video;
 
 XMLHttpRequest.prototype.baseOpen = XMLHttpRequest.prototype.open;
 XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
-    if (url.startsWith('http://srfvodhd-vh.akamaihd.net')) {
+    if (url.startsWith('http://srfvodhd-vh.akamaihd.net') || url.startsWith('http://hdvodsrforigin-f.akamaihd.net') {
         url = 'https' + url.slice(4);
     }
 
