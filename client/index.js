@@ -15,6 +15,7 @@ var datenschutz = null;
 var donate = null;
 var queryInputClearButtonState = 'hidden';
 var video;
+var debugResponse = false;
 
 XMLHttpRequest.prototype.baseOpen = XMLHttpRequest.prototype.open;
 XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
@@ -405,6 +406,9 @@ function query() {
         };
 
         socket.emit('queryEntries', queryObj, (message) => {
+            if (debugResponse) {
+                console.log(message);
+            }
             handleQueryResult(message.result, message.err);
         });
 
