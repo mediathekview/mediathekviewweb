@@ -66,7 +66,7 @@ function parseFilmliste(file, setKey, timestampKey) {
                             let timestamp = Math.floor(Date.UTC(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), parseInt(match[4]), parseInt(match[5])) / 1000);
 
                             redis.set(timestampKey, timestamp);
-                        } else if (currentLine >= 4 && !last) {
+                        } else if (currentLine >= 3 && !last) {
                             /*if (line[line.length - 1] == ',') {
                                 line = line.slice(0, -1); //8 is begin of array
                             } else {
