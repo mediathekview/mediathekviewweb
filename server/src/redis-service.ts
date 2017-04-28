@@ -1,9 +1,10 @@
-import * as Redis from 'redis';
+import * as Redis from 'ioredis';
 
+import { Utils } from './utils';
 import { Entry } from './model';
 
-class Keys {
-  static TimestampHistoryList = 'filmliste:timestampHistory';
+export class RedisKeys {
+  static FilmlisteTimestamp = 'filmliste:timestamp';
   static EntriesToBeAddedSet = 'entries:toBeAdded';
   static EntriesToBeRemovedSet = 'entries:toBeRemoved';
 }
@@ -11,10 +12,10 @@ class Keys {
 export class RedisService {
   private static _instance: RedisService;
 
-  private redis: Redis.RedisClient;
+  private redis: Redis.Redis;
 
   private constructor() {
-    this.redis = Redis.createClient();
+    this.redis = new Redis();
   }
 
   static getInstance(): RedisService {
@@ -25,40 +26,41 @@ export class RedisService {
     return this._instance;
   }
 
-  getCurrentFilmlisteTimestamp(): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      this.redis.lrange(Keys.TimestampHistoryList, -1, -1, (err, reply: number[]) => {
-        if (err) {
-          reject(err);
-        }
-        else {
-          if (reply.length == 0) {
-            resolve(-1);
-          }
-          else {
-            resolve(reply[0]);
-          }
-        }
-      });
-    });
-  }
-
-  pushNewFilmlisteTimestamp(timestamp: number): Promise<void> {
+  private set(key: string, value: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      this.redis.rpush(Keys.TimestampHistoryList, timestamp, (err, reply: number[]) => {
-        if (err) {
-          reject(err);
-        }
-        else {
+      this.redis.set(key, value, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
           resolve();
         }
       });
     });
   }
 
+  private get(key: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      this.redis.get(key, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(reply);
+        }
+      });
+    });
+  }
+
+  setFilmlisteTimestamp(timestamp: number): Promise<void> {
+    return this.set(RedisKeys.FilmlisteTimestamp, timestamp.toString());
+  }
+
+  getFilmlisteTimestamp(): Promise<number> {
+    return this.get(RedisKeys.FilmlisteTimestamp).then(Utils.parseIntAsync);
+  }
+
   getEntriesToBeAddedBatch(batchSize: number): Promise<string[]> {
     return new Promise<string[]>((resolve, reject) => {
-      this.redis.spop(Keys.EntriesToBeAddedSet, batchSize, (err, reply: string[]) => {
+      this.redis.spop(RedisKeys.EntriesToBeAddedSet, batchSize, (err, reply: string[]) => {
         if (err) {
           reject(err);
         }
@@ -71,7 +73,7 @@ export class RedisService {
 
   getEntriesToBeRemovedBatch(batchSize: number): Promise<string[]> {
     return new Promise<string[]>((resolve, reject) => {
-      this.redis.spop(Keys.EntriesToBeRemovedSet, batchSize, (err, reply: string[]) => {
+      this.redis.spop(RedisKeys.EntriesToBeRemovedSet, batchSize, (err, reply: string[]) => {
         if (err) {
           reject(err);
         }

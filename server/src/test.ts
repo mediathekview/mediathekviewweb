@@ -1,13 +1,3 @@
-let i = 0;
-let begin;
+import * as mod from 'lzma-native';
 
-function loop() {
-  setTimeout(() => loop(), -1);
-
-  if(++i == 1000) {
-    console.log((Date.now() - begin) / 1000);
-  }
-}
-
-begin = Date.now();
-loop();
+console.log(mod);
