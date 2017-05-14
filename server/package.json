@@ -12,19 +12,21 @@
   "devDependencies": {
     "@types/elasticsearch": "^5.0.13",
     "@types/ioredis": "0.0.23",
-    "@types/node": "^7.0.12",
-    "@types/request": "0.0.42",
+    "@types/node": "^7.0.18",
+    "@types/request": "0.0.43",
     "@types/socket.io": "^1.4.29",
     "nodemon": "^1.11.0",
-    "ts-node": "^3.0.2",
-    "typescript": "^2.2.2"
+    "ts-node": "^3.0.4",
+    "typescript": "^2.3.2"
   },
   "dependencies": {
-    "elasticsearch": "^13.0.0-rc2",
+    "elasticsearch": "^13.0.1",
     "ioredis": "^2.5.0",
     "lzma-native": "^2.0.1",
     "request": "^2.81.0",
     "request-progress": "^3.0.0",
-    "socket.io": "^1.7.3"
+    "socket.io": "^2.0.1",
+    "ts-node": "^3.0.4",
+    "typescript": "^2.3.2"
   }
 }

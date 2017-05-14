@@ -1,5 +1,10 @@
+import * as FS from 'fs';
+import * as LZMA from 'lzma-native';
 import * as Request from 'request';
+import * as RequestProgress from 'request-progress';
+
 import { RedisService } from './redis-service';
+import { Utils } from './utils';
 
 const TOLERANCE = 25 * 60; //25 minutes, as not all mirrors are updated at same time
 
@@ -47,7 +52,7 @@ export class FilmlisteUtils {
     });
   }
 
-  static async checkUpdateAvailable(tries: number): Promise<{ available: boolean, mirror: string }> {
+  static async checkUpdateAvailable(tries: number = 3): Promise<{ available: boolean, mirror: string }> {
     while (tries-- > 0) {
       try {
         let mirror = await this.getRandomFilmlisteMirror();
@@ -63,5 +68,54 @@ export class FilmlisteUtils {
         }
       }
     }
+  }
+
+  static async downloadFilmliste(file:string, mirror: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      FS.open(file, 'w', (error, fd) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        let fileStream = FS.createWriteStream(null, {
+          fd: fd,
+          autoClose: true
+        });
+
+        let req = RequestProgress(Request.get(mirror), {
+          throttle: 500
+        });
+
+        fileStream.on('error', (error) => {
+          req.abort();
+          FS.close(fd);
+          reject(error);
+        });
+
+        req.on('error', (error) => {
+          FS.close(fd, () => {
+            reject(error);
+          });
+        });
+
+        req.on('progress', (state) => {
+          let progress = {
+            progress: state.percent,
+            speed: Utils.formatBytes(state.speed) + '/s',
+            transferred: Utils.formatBytes(state.size.transferred) + ' / ' + Utils.formatBytes(state.size.total),
+            elapsed: state.time.elapsed + ' seconds',
+            remaining: state.time.remaining + ' seconds'
+          };
+        });
+
+        let decompressor = LZMA.createDecompressor();
+        req.pipe(decompressor).pipe(fileStream).on('finish', () => {
+          FS.close(fd, () => {
+            resolve();
+          });
+        });
+      });
+    });
   }
 }

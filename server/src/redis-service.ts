@@ -4,9 +4,13 @@ import { Utils } from './utils';
 import { Entry } from './model';
 
 export class RedisKeys {
-  static FilmlisteTimestamp = 'filmliste:timestamp';
-  static EntriesToBeAddedSet = 'entries:toBeAdded';
-  static EntriesToBeRemovedSet = 'entries:toBeRemoved';
+  static FilmlisteTimestamp = 'parser:filmlisteTimestamp';
+  static Entries = 'parser:entries';
+  static NewEntries = 'parser:newEntries';
+  static AddedEntries = 'parser:addedEntries';
+  static RemovedEntries = 'parser:removedEntries';
+  static EntriesToBeAddedSet = 'indexer:toBeAdded';
+  static EntriesToBeRemovedSet = 'indexer:toBeRemoved';
 }
 
 export class RedisService {
