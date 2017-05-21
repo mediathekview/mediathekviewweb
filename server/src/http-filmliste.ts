@@ -13,16 +13,23 @@ export class HTTPFilmliste implements IFilmliste {
     let response = await AsyncRequest.head('');
 
     if (response.statusCode == 200 && response.headers['last-modified'] != undefined) {
-      var lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
-      resolve(lastModified);
+      return Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
     } else if (response.statusCode != 200) {
-      reject(new Error(`statuscode ${response.statusCode}`));
+      throw new Error(`HTTP statuscode ${response.statusCode}`);
     } else if (response.headers['last-modified'] == undefined) {
-      reject(new Error(`no 'last-modified' header in response`));
+
     }
   }
 
   getEntries(): Promise<Readable> {
     throw 'not implemented';
+  }
+
+  pipe<T>(destination: T, options?: { end?: boolean }): T {
+    return AsyncRequest.get(this.url).pipe(destination, options);
+  }
+
+  get streamIsCompressed(): Promise<boolean> {
+    return Promise.resolve(this.url.endsWith('xz'));
   }
 }

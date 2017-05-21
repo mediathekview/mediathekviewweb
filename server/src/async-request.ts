@@ -1,25 +1,48 @@
-import * as request from 'request';
+import * as Stream from 'stream';
+import * as Request from 'request';
 
-export type Response = request.RequestResponse;
+export type Response = Request.RequestResponse;
+
+export interface IPipeablePromise<T> extends Promise<T> {
+  pipe<T2 extends Stream.Writable>(destination: T2, options?: { end?: boolean }): T2;
+}
+
+export class PipeablePromise<T> extends Promise<T> implements IPipeablePromise<T> {
+  private pipeFunction: (destination: any, options?: { end?: boolean }) => any;
+
+  setPipeFunction(pipeFunction: (destination: any, options?: { end?: boolean }) => any) {
+    this.pipeFunction = pipeFunction;
+  }
+
+  pipe<T2>(destination: T2, options?: { end?: boolean }): T2 {
+    return this.pipeFunction(destination, options);
+  }
+}
 
 export class AsyncRequest {
-  static get(url: string): Promise<Response> {
-    return this.asyncRequest(request.get, '');
+  static get(url: string): PipeablePromise<Response> {
+    return this.asyncRequest(Request.get, '');
   }
 
-  static head(url: string):Promise<Response> {
-    return this.asyncRequest(request.head, '');
+  static head(url: string): PipeablePromise<Response> {
+    return this.asyncRequest(Request.head, '');
   }
 
-  private static asyncRequest(func: (url: string, callback: (error: any, response: request.RequestResponse, body: string) => void) => request.Request, url: string) :Promise<Response>{
-    return new Promise<Response>((resolve, reject) => {
-      func(url, (error, response, body) => {
+  private static asyncRequest(func: (url: string, callback: (error: any, response: Request.RequestResponse, body: string) => void) => Request.Request, url: string): PipeablePromise<Response> {
+    let request: Request.Request;
+
+    let pipeablePromise = new PipeablePromise<Response>((resolve, reject) => {
+      request = func(url, (error, response, body) => {
         if (error) {
           reject(error);
         } else {
           resolve(response);
         }
       });
+
+      pipeablePromise.setPipeFunction(request.pipe);
     });
+
+    return pipeablePromise;
   }
 }

@@ -1,10 +1,10 @@
 import { IHTTPListing } from './interfaces/http-listing';
-import { NGINXListingReader } from './nginx-listing-reader';
+import { NGINXListing } from './nginx-listing';
 
-let reader: IHTTPListing = new NGINXListingReader();
+let listing: IHTTPListing = new NGINXListing();
 
 
-reader.getAllFiles('https://archiv.mediathekviewweb.de/', true).then((listings) => {
+listing.getAllFiles('https://archiv.mediathekviewweb.de/', true).then((listings) => {
   console.log('done');
   console.log(listings);
 });

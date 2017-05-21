@@ -15,8 +15,10 @@ export class MVWFilmlisteArchive implements IFilmlisteArchive {
     for (let i = 0; i < listings.length; i++) {
       let httpFilmliste = new HTTPFilmliste(listings[i].url);
 
-      filmlists.push(new )
+      filmlists.push(httpFilmliste);
     }
+
+    return filmlists;
   }
 
   async getLatest(): Promise<IFilmliste> {
