@@ -1,6 +1,7 @@
 import { IFilmliste } from './filmliste';
 
 export interface IFilmlisteArchive {
-  getEntries(): Promise<IFilmliste[]>;
+  getAll(): Promise<IFilmliste[]>;
+  getRange(timestampBegin: number, timestampEnd: number): Promise<IFilmliste[]>;
   getLatest(): Promise<IFilmliste>;
 }
