@@ -1,6 +1,6 @@
 import { IBag } from  './';
 
-export class RedisBag<T> implements IBag<T, string> {
+export class RedisBag<T> implements IBag<T> {
   namespace: string;
 
   constructor(namespace: string) {

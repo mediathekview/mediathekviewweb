@@ -15,7 +15,6 @@ export class RedisKeys {
 
 export class RedisService {
   private static _instance: RedisService;
-
   private redis: Redis.Redis;
 
   private constructor() {
@@ -30,7 +29,7 @@ export class RedisService {
     return this._instance;
   }
 
-  private set(key: string, value: string): Promise<void> {
+  set(key: string, value: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.redis.set(key, value, (error, reply) => {
         if (error) {
@@ -42,7 +41,7 @@ export class RedisService {
     });
   }
 
-  private get(key: string): Promise<string> {
+  get(key: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.redis.get(key, (error, reply) => {
         if (error) {
@@ -54,35 +53,39 @@ export class RedisService {
     });
   }
 
-  setFilmlisteTimestamp(timestamp: number): Promise<void> {
-    return this.set(RedisKeys.FilmlisteTimestamp, timestamp.toString());
-  }
-
-  getFilmlisteTimestamp(): Promise<number> {
-    return this.get(RedisKeys.FilmlisteTimestamp).then(Utils.parseIntAsync);
-  }
-
-  getEntriesToBeAddedBatch(batchSize: number): Promise<string[]> {
-    return new Promise<string[]>((resolve, reject) => {
-      this.redis.spop(RedisKeys.EntriesToBeAddedSet, batchSize, (err, reply: string[]) => {
-        if (err) {
-          reject(err);
-        }
-        else {
-          resolve(reply);
+  sadd(key: string, ...values: any[]): Promise<number> {
+    let args: any[] = [key].concat(values);
+    return new Promise<number>((resolve, reject) => {
+      this.redis.sadd(args, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
         }
       });
     });
   }
 
-  getEntriesToBeRemovedBatch(batchSize: number): Promise<string[]> {
-    return new Promise<string[]>((resolve, reject) => {
-      this.redis.spop(RedisKeys.EntriesToBeRemovedSet, batchSize, (err, reply: string[]) => {
-        if (err) {
-          reject(err);
+  sismember(key: string, value: any): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.redis.sismember(key, value, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result == 1);
         }
-        else {
-          resolve(reply);
+      });
+    });
+  }
+
+  srem(key: string, ...values: any[]): Promise<number> {
+    let args: any[] = [key].concat(values);
+    return new Promise<number>((resolve, reject) => {
+      this.redis.srem(args, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
         }
       });
     });

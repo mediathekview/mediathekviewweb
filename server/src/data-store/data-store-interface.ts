@@ -1,5 +1,6 @@
-import { IBag } from './';
+import { IBag, ISet } from './';
 
-export interface IDataStore<T> {
-  getBag<T2>(namespace: string): IBag<T2, T>;
+export interface IDataStore {
+  getBag<T>(key: string): IBag<T>;
+  getSet<T>(key: string): ISet<T>;
 }
