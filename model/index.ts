@@ -1,3 +1,3 @@
-export * from './data-model';
-export * from './query-model';
-export * from './api-model';
+export * from './data';
+export * from './query';
+export * from './api';
