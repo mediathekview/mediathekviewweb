@@ -54,9 +54,8 @@ export class RedisService {
   }
 
   sadd(key: string, ...values: any[]): Promise<number> {
-    let args: any[] = [key].concat(values);
     return new Promise<number>((resolve, reject) => {
-      this.redis.sadd(args, (error, result) => {
+      this.redis.sadd(key, values, (error, result) => {
         if (error) {
           reject(error);
         } else {
@@ -79,9 +78,20 @@ export class RedisService {
   }
 
   srem(key: string, ...values: any[]): Promise<number> {
-    let args: any[] = [key].concat(values);
     return new Promise<number>((resolve, reject) => {
-      this.redis.srem(args, (error, result) => {
+      this.redis.srem(key, values, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
+  spop(key: string, count: number = 1): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => {
+      this.redis.spop(key, count, (error, result) => {
         if (error) {
           reject(error);
         } else {

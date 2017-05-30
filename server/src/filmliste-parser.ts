@@ -1,4 +1,3 @@
-import { RedisService, RedisKeys } from './redis-service';
 import { FilmlisteUtils } from './filmliste-utils';
 import { IFilmliste, IFilmlisteArchive } from './interfaces';
 import { IDataStore, DataStoreProvider, IBag, ISet } from './data-store';
@@ -6,23 +5,21 @@ import { Utils } from './utils';
 import { Entry } from './model';
 
 class FilmlisteManager {
-  redisService: RedisService;
   filmlisteArchive: IFilmlisteArchive;
   dataStore: IDataStore;
   indexedFilmlists: ISet<number>;
+  entries: ISet<Entry>;
 
   constructor(filmlisteArchive: IFilmlisteArchive) {
-    this.redisService = RedisService.getInstance();
     this.filmlisteArchive = filmlisteArchive;
     this.dataStore = DataStoreProvider.getDataStore();
     this.indexedFilmlists = this.dataStore.getSet<number>('indexedFilmlists');
+    this.entries = this.dataStore.getSet<Entry>('entriesToBeIndexed');
   }
 
   async indexFilmliste(filmliste: IFilmliste) {
     filmliste.getEntries((entries) => {
-
-      
-
+      this.entries.add(...entries);
     }, async () => {
       let timestamp = await filmliste.getTimestamp();
       this.indexedFilmlists.add(timestamp);
@@ -42,11 +39,11 @@ class FilmlisteManager {
       let filmliste = filmlists[i];
       let timestamp = await filmliste.getTimestamp();
 
-      if (this.indexedFilmlists.has(timestamp)) {
+      if (await this.indexedFilmlists.has(timestamp)) {
         continue;
       }
 
-      this.indexFilmliste(filmliste);
+      await this.indexFilmliste(filmliste);
     }
   }
 

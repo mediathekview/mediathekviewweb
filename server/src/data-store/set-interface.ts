@@ -1,5 +1,6 @@
 export interface ISet<T> {
-  add(item: T): Promise<boolean>;
+  add(...items: T[]): Promise<boolean>;
   has(item: T): Promise<boolean>;
-  remove(item: T): Promise<boolean>;
+  remove(...items: T[]): Promise<boolean>;
+  pop(count: number): Promise<T[]>;
 }

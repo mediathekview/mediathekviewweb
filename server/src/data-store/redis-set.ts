@@ -10,15 +10,22 @@ export class RedisSet<T> implements ISet<T> {
     this.key = key;
   }
 
-  async add(item: T): Promise<boolean> {
-    return (await this.redis.sadd(this.key, item)) == 1;
+  async add(...items: T[]): Promise<boolean> {
+    let serializedItems = items.map((item) => JSON.stringify(item));
+    return (await this.redis.sadd(this.key, serializedItems)) == 1;
   }
 
   has(item: T): Promise<boolean> {
-    return this.redis.sismember(this.key, item);
+    return this.redis.sismember(this.key, JSON.stringify(item));
   }
 
-  async remove(item: T): Promise<boolean> {
-    return (await this.redis.srem(this.key, item)) == 1;
+  async remove(...items: T[]): Promise<boolean> {
+    let serializedItems = items.map((item) => JSON.stringify(item));
+    return (await this.redis.srem(this.key, serializedItems)) == 1;
+  }
+
+  async pop(count: number = 1): Promise<T[]> {
+    let items = await this.redis.spop(this.key, count);
+    return items.map((item) => JSON.parse(item) as T);
   }
 }
