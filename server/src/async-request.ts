@@ -21,16 +21,17 @@ export class PipeablePromise<T> extends Promise<T> implements IPipeablePromise<T
 
 export class AsyncRequest {
   static get(url: string): PipeablePromise<Response> {
-    return this.asyncRequest(Request.get, '');
+    return this.asyncRequest(Request.get, url);
   }
 
   static head(url: string): PipeablePromise<Response> {
-    return this.asyncRequest(Request.head, '');
+    return this.asyncRequest(Request.head, url);
   }
 
   private static asyncRequest(func: (url: string, callback: (error: any, response: Request.RequestResponse, body: string) => void) => Request.Request, url: string): PipeablePromise<Response> {
     let request: Request.Request;
 
+    let pipeFunction;
     let pipeablePromise = new PipeablePromise<Response>((resolve, reject) => {
       request = func(url, (error, response, body) => {
         if (error) {
@@ -40,8 +41,9 @@ export class AsyncRequest {
         }
       });
 
-      pipeablePromise.setPipeFunction(request.pipe);
+      pipeFunction = request.pipe;
     });
+    pipeablePromise.setPipeFunction(pipeFunction);
 
     return pipeablePromise;
   }

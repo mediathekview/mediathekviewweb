@@ -9,8 +9,8 @@ export class MVWArchiveFilmliste extends HTTPFilmliste implements IFilmliste {
   url: string;
   timestamp: number;
 
-  constructor(url: string) {
-    super(url);
+  constructor(url: string, cachable: boolean) {
+    super(url, cachable);
     this.url = url;
 
     let match = this.url.match(TIMESTAMP_PATTERN);

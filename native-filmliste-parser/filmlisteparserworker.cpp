@@ -68,20 +68,20 @@ Entry FilmlisteParserWorker::parseLine(const QString &line) {
         duration = (durationSplit[0].toInt() * 60 * 60) + (durationSplit[1].toInt() * 60) + durationSplit[2].toInt();
     }
 
-    QList<IMedia> media;
+    QList<Video> videos;
 
     QString url_video = parsed[8].toString();
     QString url_video_low = createUrlFromBase(url_video, parsed[12].toString());
     QString url_video_hd = createUrlFromBase(url_video, parsed[14].toString());
 
     if (url_video.length() > 0) {
-        media.append(Video(url_video, Quality::Medium));
+        videos.append(Video(url_video, Quality::Medium));
     }
     if (url_video_low.length() > 0) {
-        media.append(Video(url_video_low, Quality::Low));
+        videos.append(Video(url_video_low, Quality::Low));
     }
     if (url_video_hd.length() > 0) {
-        media.append(Video(url_video_hd, Quality::High));
+        videos.append(Video(url_video_hd, Quality::High));
     }
 
     QString id = QString(QCryptographicHash::hash((line + currentChannel + currentTopic).toUtf8(), QCryptographicHash::Md5)
@@ -95,7 +95,7 @@ Entry FilmlisteParserWorker::parseLine(const QString &line) {
     entry.description = parsed[7].toString();
     entry.timestamp = parsed[16].toInt(-1);
     entry.duration = duration;
-    entry.media = media;
+    entry.videos = videos;
     entry.website = parsed[9].toString();
 
     return entry;

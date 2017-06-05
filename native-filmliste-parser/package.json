@@ -6,6 +6,6 @@
   "license": "GPLv3",
   "gypfile": true,
   "dependencies": {
-    "nan": "^2.6.1"
+    "nan": "^2.6.2"
   }
 }

@@ -137,41 +137,20 @@ public:
             Nan::Set(entryObj, Nan::New("description").ToLocalChecked(), New<v8::String>(entry.description.toStdString()).ToLocalChecked());
             Nan::Set(entryObj, Nan::New("website").ToLocalChecked(), New<v8::String>(entry.website.toStdString()).ToLocalChecked());
 
-            int mediaCount = entry.media.length();
-            v8::Local<v8::Array> mediaArray = Nan::New<v8::Array>(mediaCount);
-            for (int j = 0; j < mediaCount; j++) {
-                IMedia media = entry.media.at(j);
-                IMedia* mediaPtr = &media;
+            int videoCount = entry.videos.length();
+            v8::Local<v8::Array> mediaArray = Nan::New<v8::Array>(videoCount);
+            for (int j = 0; j < videoCount; j++) {
+                Video video = entry.videos.at(j);
 
                 Local<Object> mediaObj = Nan::New<Object>();
-                Nan::Set(mediaObj, Nan::New("url").ToLocalChecked(), New<v8::String>(media.url.toStdString()).ToLocalChecked());
-                Nan::Set(mediaObj, Nan::New("size").ToLocalChecked(), New<v8::Int32>(media.size));
-
-
-                Video* video = NULL;
-                Audio* audio = NULL;
-
-                switch (media.type) {
-                case MediaType::Video:
-                    video = dynamic_cast<Video*>(mediaPtr);
-                    Nan::Set(mediaObj, Nan::New("quality").ToLocalChecked(), New<v8::Int32>(static_cast<int>(video->quality)));
-                    break;
-
-                case MediaType::Audio:
-                    audio = dynamic_cast<Audio*>(mediaPtr);
-                    Nan::Set(mediaObj, Nan::New("quality").ToLocalChecked(), New<v8::Int32>(static_cast<int>(audio->quality)));
-                    break;
-
-                    break;
-
-                case MediaType::Subtitle:
-                    //no additional fields
-                    break;
-                }
+                Nan::Set(mediaObj, Nan::New("url").ToLocalChecked(), New<v8::String>(video.url.toStdString()).ToLocalChecked());
+                Nan::Set(mediaObj, Nan::New("size").ToLocalChecked(), New<v8::Int32>(video.size));
+                Nan::Set(mediaObj, Nan::New("quality").ToLocalChecked(), New<v8::Int32>(static_cast<int>(video.quality)));
+                Nan::Set(mediaObj, Nan::New("type").ToLocalChecked(), New<v8::Int32>(static_cast<int>(video.type)));
 
                 Nan::Set(mediaArray, j, mediaObj);
             }
-            Nan::Set(entryObj, Nan::New("videos").ToLocalChecked(), mediaArray);
+            Nan::Set(entryObj, Nan::New("media").ToLocalChecked(), mediaArray);
 
             Nan::Set(v8Batch, i, entryObj);
         }

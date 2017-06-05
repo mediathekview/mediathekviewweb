@@ -19,12 +19,12 @@ export class MVWFilmlisteArchive implements IFilmlisteArchive {
         continue;
       }
 
-      let httpFilmliste = new MVWArchiveFilmliste(listings[i].url);
+      let httpFilmliste = new MVWArchiveFilmliste(listings[i].url, true);
 
       filmlists.push(httpFilmliste);
     }
 
-    filmlists.push(new HTTPFilmliste(LATEST_URL));
+    filmlists.push(new HTTPFilmliste(LATEST_URL, false));
 
     return filmlists;
   }
@@ -46,6 +46,6 @@ export class MVWFilmlisteArchive implements IFilmlisteArchive {
   }
 
   async getLatest(): Promise<IFilmliste> {
-    return new HTTPFilmliste(LATEST_URL);
+    return new HTTPFilmliste(LATEST_URL, false);
   }
 }

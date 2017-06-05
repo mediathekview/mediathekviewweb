@@ -48,6 +48,10 @@ export class NGINXListing implements IHTTPListing {
 
     let listings: Listing[] = [];
 
+    if (!url.endsWith('/')) {
+      url = url + '/';
+    }
+
     for (let i = 0; i < matches.length; i++) {
       let match = matches[i];
       listings.push({

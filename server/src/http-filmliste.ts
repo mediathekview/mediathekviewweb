@@ -1,15 +1,19 @@
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 import { AsyncRequest } from './async-request';
 import { IFilmliste } from './interfaces/filmliste';
+import { AsyncFS } from './async-fs';
 import { Entry } from './model';
+import { CacheManager } from './cache-manager';
 import { NativeFilmlisteParser } from './native-filmliste-parser';
 
 export class HTTPFilmliste implements IFilmliste {
   url: string;
+  cachable: boolean;
   timestamp: number;
 
-  constructor(url: string) {
+  constructor(url: string, cachable: boolean) {
     this.url = url;
+    this.cachable = cachable;
   }
 
   async getTimestamp(): Promise<number> {
@@ -30,18 +34,31 @@ export class HTTPFilmliste implements IFilmliste {
     return this.timestamp;
   }
 
+  private
+
   getEntries(): Observable<Entry[]> {
     let observable: Observable<Entry[]> = new Observable<Entry[]>((observer) => {
-      (async () => {
-        NativeFilmlisteParser.parseFilmliste('', '({|,)?"(Filmliste|X)":', 150, (batch) => {
-          observer.next(batch);
-        }, () => {
-          observer.complete();
-        });
-      })();
+      this.observerHandler(observer);
     });
 
     return observable;
+  }
+
+  private async observerHandler(observer: Subscriber<Entry[]>) {
+    let cache = CacheManager.get(this.url);
+
+    if (!cache.has()) {
+      let fd = await AsyncFS.open(cache.path, AsyncFS.Flags.WriteNonExist);
+      //TODO: DOWNLOAD FILE
+
+      await AsyncFS.close(fd);
+    }
+
+    NativeFilmlisteParser.parseFilmliste('', '({|,)?"(Filmliste|X)":', 150, (batch) => {
+      observer.next(batch);
+    }, () => {
+      observer.complete();
+    });
   }
 
   pipe<T>(destination: T, options?: { end?: boolean }): T {

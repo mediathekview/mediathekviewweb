@@ -1,29 +1,32 @@
 import { FilmlisteUtils } from './filmliste-utils';
 import { IFilmliste, IFilmlisteArchive } from './interfaces';
-import { IDataStore, DataStoreProvider, IBag, ISet } from './data-store';
+import { IDataStore, IBag, ISet } from './data-store';
+import { RedisKeys } from './redis-keys';
 import { Utils } from './utils';
 import { Entry } from './model';
 
-class FilmlisteManager {
-  filmlisteArchive: IFilmlisteArchive;
-  dataStore: IDataStore;
-  indexedFilmlists: ISet<number>;
-  entries: ISet<Entry>;
+export class FilmlisteManager {
+  private filmlisteArchive: IFilmlisteArchive;
+  private dataStore: IDataStore;
+  private indexedFilmlists: ISet<number>;
+  private entries: ISet<Entry>;
 
-  constructor(filmlisteArchive: IFilmlisteArchive) {
+  constructor(filmlisteArchive: IFilmlisteArchive, dataStore: IDataStore) {
     this.filmlisteArchive = filmlisteArchive;
-    this.dataStore = DataStoreProvider.getDataStore();
-    this.indexedFilmlists = this.dataStore.getSet<number>('indexedFilmlists');
-    this.entries = this.dataStore.getSet<Entry>('entriesToBeIndexed');
+    this.dataStore = dataStore;
+    this.indexedFilmlists = this.dataStore.getSet<number>(RedisKeys.IndexedFilmlists);
+    this.entries = this.dataStore.getSet<Entry>(RedisKeys.EntriesToBeIndexed);
   }
 
-  async indexFilmliste(filmliste: IFilmliste) {
-    filmliste.getEntries((entries) => {
-      this.entries.add(...entries);
-    }, async () => {
-      let timestamp = await filmliste.getTimestamp();
-      this.indexedFilmlists.add(timestamp);
-    });
+  async update() {
+    let filmliste = await this.filmlisteArchive.getLatest();
+    let timestamp = await filmliste.getTimestamp();
+
+    if (await this.indexedFilmlists.has(timestamp)) {
+      return;
+    }
+
+    await this.indexFilmliste(filmliste);
   }
 
   async buildArchive(days: number) {
@@ -33,7 +36,6 @@ class FilmlisteManager {
     let begin = Math.floor(date.getTime() / 1000);
 
     let filmlists = await this.sortFilmlistsDescending(await this.filmlisteArchive.getRange(begin, end));
-
 
     for (let i = 0; i < filmlists.length; i++) {
       let filmliste = filmlists[i];
@@ -47,7 +49,16 @@ class FilmlisteManager {
     }
   }
 
-  async sortFilmlistsDescending(filmlists: IFilmliste[]): Promise<IFilmliste[]> {
+  private async indexFilmliste(filmliste: IFilmliste) {
+    filmliste.getEntries((entries) => {
+      this.entries.add(...entries);
+    }, async () => {
+      let timestamp = await filmliste.getTimestamp();
+      this.indexedFilmlists.add(timestamp);
+    });
+  }
+
+  private async sortFilmlistsDescending(filmlists: IFilmliste[]): Promise<IFilmliste[]> {
     let sorted: { timestamp: number, filmliste: IFilmliste }[] = [];
 
     for (let i = 0; i < filmlists.length; i++) {
@@ -59,25 +70,4 @@ class FilmlisteManager {
 
     return sorted.map((i) => i.filmliste);
   }
-
-  async update() {
-
-  }
 }
-
-async function loop() {
-  try {
-    let update = await FilmlisteUtils.checkUpdateAvailable();
-
-    if (update.available) {
-
-    }
-  } catch (exception) {
-    console.error(exception);
-  }
-
-
-  setTimeout(() => loop(), 2000);
-}
-
-loop();

@@ -69,7 +69,9 @@ struct Entry {
     int duration;
     QString description;
     QString website;
-    QList<IMedia> media;
+    QList<Video> videos;
+    QList<Audio> audios;
+    QList<Subtitle> subtitles;
 };
 
 #endif // MODEL_H
