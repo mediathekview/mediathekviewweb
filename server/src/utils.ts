@@ -1,3 +1,5 @@
+import * as Stream from 'stream';
+
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 const BYTE_MULTIPLIER = 1000;
 
@@ -30,5 +32,20 @@ export class Utils {
     let result = (bytes / Math.pow(BYTE_MULTIPLIER, dimension)).toFixed(2);
 
     return `${result} ${BYTE_UNITS[dimension]}`;
+  }
+
+  static streamToPromise(stream: Stream.Writable | Stream.Readable): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (stream instanceof Stream.Writable) {
+        stream.on('finish', () => resolve());
+      } else if (stream instanceof Stream.Readable) {
+        stream.on('end', () => resolve());
+      } else {
+        throw new Error('stream type not supported');
+      }
+
+
+      stream.on('error', (error) => reject(error));
+    });
   }
 }

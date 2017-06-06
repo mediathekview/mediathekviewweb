@@ -4,6 +4,7 @@ import { IFilmliste } from './interfaces/filmliste';
 import { AsyncFS } from './async-fs';
 import { Entry } from './model';
 import { CacheManager } from './cache-manager';
+import { Utils } from './utils';
 import { NativeFilmlisteParser } from './native-filmliste-parser';
 
 export class HTTPFilmliste implements IFilmliste {
@@ -49,16 +50,19 @@ export class HTTPFilmliste implements IFilmliste {
 
     if (!cache.has()) {
       let fd = await AsyncFS.open(cache.path, AsyncFS.Flags.WriteNonExist);
-      //TODO: DOWNLOAD FILE
+
+      let pipeablePromise = AsyncRequest.get(this.url);
+
+      let fileStream = await AsyncFS.createWriteStream(null, { fd: fd });
+
+      await Utils.streamToPromise(pipeablePromise.pipe(fileStream));
 
       await AsyncFS.close(fd);
     }
 
-    NativeFilmlisteParser.parseFilmliste('', '({|,)?"(Filmliste|X)":', 150, (batch) => {
-      observer.next(batch);
-    }, () => {
-      observer.complete();
-    });
+    await NativeFilmlisteParser.parseFilmliste(cache.path, '({|,)?"(Filmliste|X)":', 150, (batch) => observer.next(batch));
+
+    observer.complete();
   }
 
   pipe<T>(destination: T, options?: { end?: boolean }): T {

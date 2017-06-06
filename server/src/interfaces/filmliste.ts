@@ -4,7 +4,7 @@ import { Entry } from '../model';
 
 export interface IFilmliste {
   getTimestamp(): Promise<number>;
-  getEntries(onBatch: (entries: Entry[]) => void, onEnd: () => void);
+  getEntries(): Observable<Entry[]>;
   pipe<T>(destination: T, options?: { end?: boolean }): T
   streamIsCompressed: Promise<boolean>;
 }

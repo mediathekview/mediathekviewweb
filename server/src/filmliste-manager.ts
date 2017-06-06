@@ -50,12 +50,21 @@ export class FilmlisteManager {
   }
 
   private async indexFilmliste(filmliste: IFilmliste) {
-    filmliste.getEntries((entries) => {
-      this.entries.add(...entries);
-    }, async () => {
-      let timestamp = await filmliste.getTimestamp();
-      this.indexedFilmlists.add(timestamp);
+    return new Promise<void>((resolve, reject) => {
+      filmliste.getEntries().subscribe({
+        next: async (batch) => await this.handleBatch(batch),
+        error: (error) => reject(error),
+        complete: async () => {
+          let timestamp = await filmliste.getTimestamp();
+          await this.indexedFilmlists.add(timestamp);
+          resolve();
+        }
+      });
     });
+  }
+
+  private async handleBatch(batch: Entry[]) {
+    await this.entries.add(...batch);
   }
 
   private async sortFilmlistsDescending(filmlists: IFilmliste[]): Promise<IFilmliste[]> {

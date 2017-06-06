@@ -1,12 +1,27 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "es6",
-        "outDir": "dist",
-        "noImplicitAny": false,
-        "sourceMap": true,
-        "lib": ["es6", "scripthost"]
-    },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules", "dist"]
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["es2017"],
+    "module": "commonjs",
+
+    "sourceMap": true,
+    "outDir": "dist",
+    "removeComments": true,
+
+    "strict": false,
+    "strictNullChecks": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
+
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+
+    "moduleResolution": "node",
+    "typeRoots": ["node_modules/@types"]
+  },
+
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts", "dist", "package.json"]
 }
