@@ -1,1 +1,1 @@
-export { NativeFilmlisteParser } from '../../native-filmliste-parser/native-filmliste-parser';
+export { NativeFilmlisteParser, BatchCallbackType } from '../../native-filmliste-parser/native-filmliste-parser';

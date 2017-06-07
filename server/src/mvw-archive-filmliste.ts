@@ -29,10 +29,6 @@ export class MVWArchiveFilmliste extends HTTPFilmliste implements IFilmliste {
     }
   }
 
-  pipe<T>(destination: T, options?: { end?: boolean }): T {
-    return AsyncRequest.get(this.url).pipe(destination, options);
-  }
-
   get streamIsCompressed(): Promise<boolean> {
     return Promise.resolve(true);
   }

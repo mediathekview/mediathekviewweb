@@ -1,8 +1,6 @@
-import { FilmlisteUtils } from './filmliste-utils';
-import { IFilmliste, IFilmlisteArchive } from './interfaces';
-import { IDataStore, IBag, ISet } from './data-store';
+import { IFilmliste, IFilmlisteArchive, BatchType } from './interfaces';
+import { IDataStore, ISet } from './data-store';
 import { RedisKeys } from './redis-keys';
-import { Utils } from './utils';
 import { Entry } from './model';
 
 export class FilmlisteManager {
@@ -19,6 +17,7 @@ export class FilmlisteManager {
   }
 
   async update() {
+    console.log('update');
     let filmliste = await this.filmlisteArchive.getLatest();
     let timestamp = await filmliste.getTimestamp();
 
@@ -30,6 +29,7 @@ export class FilmlisteManager {
   }
 
   async buildArchive(days: number) {
+    console.log('buildArchive');
     let date = new Date();
     let end = Math.floor(date.getTime() / 1000);
     date.setDate(date.getDate() - days);
@@ -50,6 +50,7 @@ export class FilmlisteManager {
   }
 
   private async indexFilmliste(filmliste: IFilmliste) {
+    console.log('indexFilmliste');
     return new Promise<void>((resolve, reject) => {
       filmliste.getEntries().subscribe({
         next: async (batch) => await this.handleBatch(batch),
@@ -63,11 +64,18 @@ export class FilmlisteManager {
     });
   }
 
-  private async handleBatch(batch: Entry[]) {
-    await this.entries.add(...batch);
+  added = 0;
+  private async handleBatch(batch: BatchType) {
+    this.added += batch.data.length;
+    console.log('parsed', this.added);
+
+    await this.entries.add(...batch.data)
+
+    batch.next();
   }
 
   private async sortFilmlistsDescending(filmlists: IFilmliste[]): Promise<IFilmliste[]> {
+    console.log('sortFilmlistsDescending');
     let sorted: { timestamp: number, filmliste: IFilmliste }[] = [];
 
     for (let i = 0; i < filmlists.length; i++) {

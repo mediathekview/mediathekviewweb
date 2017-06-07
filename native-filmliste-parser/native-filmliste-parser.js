@@ -1,7 +1,7 @@
 let nativeFilmlisteParser = require('./build/Release/native-filmliste-parser');
 
 module.exports.NativeFilmlisteParser = {
-  parseFilmliste: (file, regex, batchSize, batchCallback, endCallback) => {
+  parseFilmliste: function (file, regex, batchSize, batchCallback, endCallback) {
     if (endCallback != undefined) {
       nativeFilmlisteParser.parseFilmliste(file, regex, batchSize, batchCallback, endCallback);
     } else {

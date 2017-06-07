@@ -12,7 +12,6 @@ let loop = async () => {
 }
 
 (async () => {
-  console.log('buildArchive');
   await filmlisteManager.buildArchive(30);
 
   console.log('buildArchive end - loop');

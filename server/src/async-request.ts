@@ -10,8 +10,8 @@ export interface IPipeablePromise<T> extends Promise<T> {
 export class PipeablePromise<T> extends Promise<T> implements IPipeablePromise<T> {
   private pipeFunction: (destination: any, options?: { end?: boolean }) => any;
 
-  setPipeFunction(pipeFunction: (destination: any, options?: { end?: boolean }) => any) {
-    this.pipeFunction = pipeFunction;
+  setPipeFunction(pipeFunction: (destination: any, options?: { end?: boolean }) => any, binding: any) {
+    this.pipeFunction = pipeFunction.bind(binding);
   }
 
   pipe<T2>(destination: T2, options?: { end?: boolean }): T2 {
@@ -31,7 +31,6 @@ export class AsyncRequest {
   private static asyncRequest(func: (url: string, callback: (error: any, response: Request.RequestResponse, body: string) => void) => Request.Request, url: string): PipeablePromise<Response> {
     let request: Request.Request;
 
-    let pipeFunction;
     let pipeablePromise = new PipeablePromise<Response>((resolve, reject) => {
       request = func(url, (error, response, body) => {
         if (error) {
@@ -40,10 +39,8 @@ export class AsyncRequest {
           resolve(response);
         }
       });
-
-      pipeFunction = request.pipe;
     });
-    pipeablePromise.setPipeFunction(pipeFunction);
+    pipeablePromise.setPipeFunction(request.pipe, request);
 
     return pipeablePromise;
   }

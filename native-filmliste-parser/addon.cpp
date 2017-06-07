@@ -18,6 +18,12 @@ using namespace Nan;
 
 typedef QList<Entry>* EntryBatch;
 
+bool allowNext = true;
+
+void next(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+    allowNext = true;
+}
+
 class NativeFilmlisteParser {
     Callback* progressCallback;
     Callback* endCallback;
@@ -98,18 +104,31 @@ public:
     {
         //in v8 thread
 
+        if (!allowNext) {
+            uv_async_send(async);
+            return;
+        }
+
         QList<Entry> batch;
         bool isLast, isClosed;
         bool success = batchQueue.dequeue(batch, isLast, isClosed);
 
         if (!success) {
+            uv_async_send(async);
             return;
         }
 
-        Nan::HandleScope scope;
-        v8::Local<v8::Value> argv[] = { convertToV8Batch(batch) };
+        Nan::HandleScope scope;        
+
+        v8::Local<v8::FunctionTemplate> nextFunctionTemplate = Nan::New<v8::FunctionTemplate>(next);
+          v8::Local<v8::Function> nextFunction = nextFunctionTemplate->GetFunction();
+          nextFunction->SetName(Nan::New("next").ToLocalChecked());
+
+        v8::Local<v8::Value> argv[] = { convertToV8Batch(batch), nextFunction };
 
         progressCallback->Call(sizeof(argv) / sizeof(v8::Local<v8::Value>), argv);
+
+        allowNext = false;
 
         if (isLast) {
             Destroy();

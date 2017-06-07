@@ -16,7 +16,7 @@
     "@types/request": "0.0.43",
     "@types/socket.io": "^1.4.29",
     "nodemon": "^1.11.0",
-    "ts-node": "^3.0.4",
+    "ts-node": "^3.0.6",
     "typescript": "^2.3.2"
   },
   "dependencies": {

@@ -2,9 +2,11 @@ import { Readable } from 'stream';
 import { Observable } from 'rxjs';
 import { Entry } from '../model';
 
+export type BatchType = { data: Entry[], next: () => void };
+
 export interface IFilmliste {
   getTimestamp(): Promise<number>;
-  getEntries(): Observable<Entry[]>;
-  pipe<T>(destination: T, options?: { end?: boolean }): T
+  getEntries(): Observable<BatchType>;
+  pipe<T>(destination: T, options?: { end?: boolean }): T;
   streamIsCompressed: Promise<boolean>;
 }

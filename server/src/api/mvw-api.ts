@@ -1,6 +1,6 @@
 import { IMediathekViewWebAPI, IAPIResponse, QueryResponse, QueryInfo, GetServerStateResponse, Query } from '../model';
 
-import { ISearchEngine } from './search-engine';
+import { ISearchEngine } from '../search-engine/search-engine';
 
 export class MVWAPI implements IMediathekViewWebAPI {
     searchEngine: ISearchEngine;

@@ -1,5 +1,5 @@
 import * as HTTP from 'http';
-import { ElasticsearchSearchEngine } from './elasticsearch-implementation/elasticsearch-search-engine';
+import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch/elasticsearch-search-engine';
 import { MVWAPI } from './mvw-api';
 import { SocketIOServer } from './socket-io-server';
 

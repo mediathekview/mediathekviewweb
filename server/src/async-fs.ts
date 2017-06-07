@@ -73,7 +73,7 @@ export class AsyncFS {
   static access(path: string, mode: number = FS.constants.F_OK): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       FS.access(path, mode, (error) => {
-        resolve(!!error);
+        resolve(!error);
       });
     });
   }
@@ -88,5 +88,39 @@ export class AsyncFS {
         }
       });
     });
+  }
+
+  private static async _mkdir(path: string): Promise<void> {
+    if (path.length == 0) {
+      return;
+    }
+
+    let exist = await this.access(path);
+
+    if (exist) {
+      return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      FS.mkdir(path, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  static async mkdir(path: string, recursive: boolean = false): Promise<void> {
+    if (!recursive) {
+      return this._mkdir(path);
+    } else {
+      let splits = path.split('/');
+
+      for (let i = 0; i < splits.length; i++) {
+        await this._mkdir(splits.slice(0, i + 1).join('/'));
+      }
+    }
   }
 }

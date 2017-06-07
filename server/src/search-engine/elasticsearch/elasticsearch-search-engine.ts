@@ -4,7 +4,7 @@ import * as Process from 'process';
 import { ElasticsearchHelpers } from './helpers';
 
 import { ISearchEngine } from '../search-engine';
-import { Query, QueryResponse, Entry, Quality } from '../../model';
+import { Query, QueryResponse, Entry, Quality, IMedia, Video, MediaType } from '../../model';
 
 const INDEX = 'filmliste';
 const TYPE = 'entries';
@@ -67,18 +67,21 @@ export class ElasticsearchSearchEngine implements ISearchEngine {
     delete entry['url_website'];
     delete entry['url_subtitle'];
 
-    entry.videos = [];
+    entry.media = [];
     if (entry['url_video']) {
-      entry.videos.push({ quality: Quality.Medium, url: entry['url_video'], size: entry['size'] });
+      let video: Video = { type: MediaType.Video, quality: Quality.Medium, url: entry['url_video'], size: entry['size'] };
+      entry.media.push(video);
       delete entry['url_video'];
       delete entry['size'];
     }
     if (entry['url_video_low']) {
-      entry.videos.push({ quality: Quality.Low, url: entry['url_video_low'], size: null });
+      let video: Video = { type: MediaType.Video, quality: Quality.Low, url: entry['url_video_low'], size: null };
+      entry.media.push(video);
       delete entry['url_video_low'];
     }
     if (entry['url_video_hd']) {
-      entry.videos.push({ quality: Quality.High, url: entry['url_video_hd'], size: null });
+      let video: Video = { type: MediaType.Video, quality: Quality.High, url: entry['url_video_hd'], size: null };
+      entry.media.push(video);
       delete entry['url_video_hd'];
     }
   }
