@@ -64,12 +64,12 @@ export class FilmlisteManager {
     });
   }
 
-  added = 0;
-  private async handleBatch(batch: BatchType) {
-    this.added += batch.data.length;
-    console.log('parsed', this.added);
+  private async createDelta() {
 
-    await this.entries.add(...batch.data)
+  }
+
+  private async handleBatch(batch: BatchType) {
+    await this.entries.add(batch.data)
 
     batch.next();
   }

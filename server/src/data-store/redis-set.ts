@@ -1,5 +1,6 @@
 import { ISet } from './';
 import { RedisService } from '../redis-service';
+import { Utils } from '../utils';
 
 export class RedisSet<T> implements ISet<T> {
   redis: RedisService;
@@ -10,7 +11,8 @@ export class RedisSet<T> implements ISet<T> {
     this.key = key;
   }
 
-  async add(...items: T[]): Promise<number> {
+  async add(items: T[] | T): Promise<number> {
+    items = Utils.arrayize(items);
     let serializedItems = items.map((item) => JSON.stringify(item));
     return this.redis.sadd(this.key, serializedItems);
   }
@@ -19,7 +21,8 @@ export class RedisSet<T> implements ISet<T> {
     return this.redis.sismember(this.key, JSON.stringify(item));
   }
 
-  async remove(...items: T[]): Promise<number> {
+  async remove(items: T[] | T): Promise<number> {
+    items = Utils.arrayize(items);
     let serializedItems = items.map((item) => JSON.stringify(item));
     return this.redis.srem(this.key, serializedItems);
   }

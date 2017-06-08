@@ -53,7 +53,7 @@ export class RedisService {
     });
   }
 
-  sadd(key: string, ...values: any[]): Promise<number> {
+  sadd(key: string, values: any[]): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       this.redis.sadd(key, values, (error, result) => {
         if (error) {
@@ -77,7 +77,7 @@ export class RedisService {
     });
   }
 
-  srem(key: string, ...values: any[]): Promise<number> {
+  srem(key: string, values: any[]): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       this.redis.srem(key, values, (error, result) => {
         if (error) {
