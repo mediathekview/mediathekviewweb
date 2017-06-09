@@ -1,8 +1,8 @@
 import * as Mapper from './mapper';
 
-let intMapper = new Mapper.IntMapper({ source: '', maxDigits: 8 });
+let intMapper = new Mapper.IntMapper(8);
 
-let result:any = intMapper.map(50);
+let result: any = intMapper.map(50);
 console.log(result, result == '00000050')
 
 
