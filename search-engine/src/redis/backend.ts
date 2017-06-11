@@ -16,8 +16,7 @@ export class RedisBackend<T> implements ISearchEngineBackend<T> {
     this.autoMap = !!options.autoSerialize;
   }
 
-  index(items: IndexParameter[]): Promise<string[]> {
-    items[0].
+  index(items: IndexParameter<T>[]): Promise<string[]> {
     throw '';
   }
 
