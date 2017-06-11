@@ -1,7 +1,7 @@
 import { ITokenizer, TokenizerBase } from './';
 
 export class WordTokenizer extends TokenizerBase implements ITokenizer {
-  private splitRegex: RegExp = /[^\w\d']/;
+  private splitRegex: RegExp = /[^\w\döäü']/;
 
   tokenize(text: string): string[] {
     let tokens = text.split(this.splitRegex);

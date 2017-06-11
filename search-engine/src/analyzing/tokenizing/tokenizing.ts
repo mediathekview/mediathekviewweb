@@ -10,8 +10,8 @@ export abstract class TokenizerBase implements ITokenizer {
 
   abstract tokenize(text: string): string[];
 
-  addFilter(filter: ITokenFilter): ITokenizer {
-    this.filters.push(filter);
+  addFilter(...filters: ITokenFilter[]): ITokenizer {
+    this.filters = this.filters.concat(filters);
     return this;
   }
 
