@@ -8,7 +8,7 @@ interface IRedisQuery<T> extends IQuery<T> {
   transaction(transaction: Redis.Pipeline);
 }
 
-abstract class RedisQueryBase implements IRedisQuery<any> {
+abstract class RedisQueryBase<T> implements IRedisQuery<T> {
   private itemType: string;
   private _transaction: Redis.Pipeline;
 
@@ -16,25 +16,25 @@ abstract class RedisQueryBase implements IRedisQuery<any> {
     this.itemType = type;
   }
 
-  getKey(field: string, value: string = null) {
+  private getKey(field: string, value: string = null): string {
     return `${this.itemType}:${field}${(value != null) ? value : ''}`;
   }
 
   query(options: QueryOptions): Promise<QueryResponse<T>> {
     this.getResultSet(this._transaction);
 
-    this._transaction.spop
+    throw '';
   }
 
   transaction(transaction: Redis.Pipeline) {
     this._transaction = transaction;
   }
 
-  abstract getResultSet(transaction: Redis.Pipeline);
+  abstract getResultSet(transaction: Redis.Pipeline): string;
   abstract cleanUp(transaction: Redis.Pipeline);
 }
 
-export class RedisWordQuery<T> extends RedisQueryBase implements IRedisQuery<T>, IWordQuery<T> {
+export class RedisWordQuery<T> extends RedisQueryBase<T> implements IRedisQuery<T>, IWordQuery<T> {
   private _field: string;
 
   field(value: string): RedisWordQuery<T> {
@@ -47,7 +47,7 @@ export class RedisWordQuery<T> extends RedisQueryBase implements IRedisQuery<T>,
   }
 
   getResultSet(transaction: Redis.Pipeline): string {
-    throw;
+    throw '';
   }
 
   cleanUp(transaction: Redis.Pipeline) {
@@ -56,7 +56,7 @@ export class RedisWordQuery<T> extends RedisQueryBase implements IRedisQuery<T>,
 }
 
 
-export class RedisTextQuery<T> implements ITextQuery<T> {
+export class RedisTextQuery<T> extends RedisQueryBase<T> implements ITextQuery<T> {
   private _field: string;
 
   field(value: string): RedisTextQuery<T> {
@@ -82,13 +82,27 @@ export class RedisTextQuery<T> implements ITextQuery<T> {
 
     return this;
   }
+
+  getResultSet(transaction: Redis.Pipeline): string {
+    throw '';
+  }
+
+  cleanUp(transaction: Redis.Pipeline) {
+    transaction.del
+  }
 }
 
-export class RedisAndQuery implements IAndQuery<T> {
-  query() { }
-
-  add(...queries: IRedisQuery[]): RedisAndQuery {
+export class RedisAndQuery<T> extends RedisQueryBase<T> implements IAndQuery<T> {
+  add(...queries: IRedisQuery<T>[]): RedisAndQuery<T> {
 
     return this;
+  }
+
+  getResultSet(transaction: Redis.Pipeline): string {
+    throw '';
+  }
+
+  cleanUp(transaction: Redis.Pipeline) {
+    transaction.del
   }
 }

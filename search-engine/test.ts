@@ -9,11 +9,12 @@ let counter = 0;
 function loop() {
   let arr = [];
   for (let j = 0; j < 100; j++) {
-    arr.push(0);
-    arr.push(Math.floor(Math.random() * 1000000000));
+    arr.push(Math.floor(Math.random() * 10000000000000).toString());
   }
 
-  redis.zadd('key', ...arr);
+  redis.sadd('key', ...arr);
+
+  console.log(counter * 100);
 
   if (++counter < 5000)
     setTimeout(() => loop(), 0);
