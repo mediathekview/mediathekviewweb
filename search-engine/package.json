@@ -9,9 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ioredis": "^3.1.1"
+    "ioredis": "^3.1.1",
+    "natural": "^0.5.1",
+    "node-snowball": "^0.2.0"
   },
   "devDependencies": {
-    "@types/ioredis": "0.0.23"
+    "@types/ioredis": "0.0.23",
+    "@types/natural": "^0.2.32"
   }
 }

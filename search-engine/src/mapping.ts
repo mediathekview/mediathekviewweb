@@ -30,6 +30,12 @@ export abstract class MappingBase<T> implements IMapping, IMapper<T> {
   }
 }
 
+export class CloneMapping implements IMapping {
+  apply(source: object, destination: object): object {
+    return Object.assign(destination, source);
+  }
+}
+
 export class DirectMapping implements IMapping {
   properties: string[];
 

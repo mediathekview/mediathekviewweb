@@ -1,4 +1,4 @@
-import { ISearchEngineBackend, State } from './backend';
+import { ISearchEngineBackend, State, IndexParameter } from './backend';
 import * as Queries from './query';
 
 export class SearchEngine<T> {
@@ -9,7 +9,8 @@ export class SearchEngine<T> {
   }
 
   index(...items: T[]): Promise<void> {
-    return this.backend.index(items);
+    throw '';
+    //return this.backend.index(items);
   }
 
   state(): Promise<State> {
