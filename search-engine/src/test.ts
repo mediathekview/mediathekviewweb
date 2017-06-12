@@ -1,7 +1,8 @@
-import { LowerCaseTransformer, ASCIIFoldingTransformer } from './transforming';
-import { WordTokenizer } from './tokenizing';
-import { StemmingTokenFilter, EdgeNGramTokenFilter, ASCIIFoldingTokenFilter } from './tokenizing/filtering';
-import { Analyzer } from './analyzer';
+import { LowerCaseTransformer, ASCIIFoldingTransformer } from './analyzing/transforming';
+import { WordTokenizer } from './analyzing/tokenizing';
+import { StemmingTokenFilter, EdgeNGramTokenFilter, ASCIIFoldingTokenFilter } from './analyzing/tokenizing/filtering';
+import { Analyzer } from './analyzing/analyzer';
+import { TextMapper } from './mapping';
 
 let lowerCaseTransformer = new LowerCaseTransformer();
 let asciiFoldingTransformer = new ASCIIFoldingTransformer();
@@ -27,3 +28,17 @@ for (let i = 0; i < 10000; i++) {
 let duration = Date.now() - begin;
 
 console.log(tokens, duration);
+
+
+
+let a = {
+  'title': {
+    type: 'text',
+    mapper: new StringMapper(),
+    index_analyzer: analyzer
+  },
+  'hasHD': {
+    type: 'boolean',
+    mapper: new ArrayAnyMapper()
+  }
+}

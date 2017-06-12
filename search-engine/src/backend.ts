@@ -13,7 +13,7 @@ export interface IToken<T> {
 export type IndexParameter<T> = { tokens: IToken<any>, item?: T, id?: string };
 
 export interface ISearchEngineBackend<T> {
-  index(items: IndexParameter<T>[]): Promise<string[]>;
+  index(data: IndexParameter<T>[]): Promise<string[]>;
   state(): Promise<State>;
 
   getWordQuery(): Queries.IWordQuery<T>;

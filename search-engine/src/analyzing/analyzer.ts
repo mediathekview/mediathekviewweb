@@ -2,7 +2,11 @@ import { ITransformer } from './transforming';
 import { ITokenizer } from './tokenizing';
 import { ITokenFilter } from './tokenizing/filtering';
 
-export class Analyzer {
+export interface IAnalyzer {
+  analyze(text: string): string[];
+}
+
+export class Analyzer implements IAnalyzer {
   transformers: ITransformer[] = [];
   tokenizer: ITokenizer;
 
@@ -21,5 +25,11 @@ export class Analyzer {
     }
 
     return this.tokenizer.tokenize(text);
+  }
+}
+
+export class NoopAnalyzer implements IAnalyzer {
+  analyze(text: string): string[] {
+    return [text];
   }
 }

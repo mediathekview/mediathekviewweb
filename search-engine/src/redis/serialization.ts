@@ -1,9 +1,8 @@
-export interface ISerializer<T> {
-  serialize(value: T): string;
-  deserialize(value: string): T;
-}
+import { ISerializer } from '../serialization';
 
-export class StringSerializer implements ISerializer<string> {
+export abstract class RedisSerializerBase { }
+
+/*export class StringSerializer extends RedisSerializerBase implements ISerializer<string, string> {
   serialize(value: string): string {
     return value;
   }
@@ -11,12 +10,14 @@ export class StringSerializer implements ISerializer<string> {
   deserialize(value: string): string {
     return value;
   }
-}
+}*/
 
-export class IntSerializer implements ISerializer<number> {
+export class IntSerializer extends RedisSerializerBase implements ISerializer<number, string> {
   maxDigits: number;
 
   constructor(maxDigits: number) {
+    super();
+
     this.maxDigits = maxDigits;
   }
 
@@ -44,31 +45,12 @@ export class IntSerializer implements ISerializer<number> {
   }
 }
 
-export class BooleanSerializer implements ISerializer<boolean> {
+export class BooleanSerializer extends RedisSerializerBase implements ISerializer<boolean, string> {
   serialize(value: boolean): string {
     return value ? '1' : '0';
   }
 
   deserialize(value: string): boolean {
     return value === '1';
-  }
-}
-
-export class UniversalSerializer implements ISerializer<any> {
-  private static warned: boolean = false;
-
-  constructor() {
-    if (!UniversalSerializer.warned) {
-      console.warn('UniversalSerializer is slower and consumes more memory. Consider using a specific Serializer instead');
-      UniversalSerializer.warned = true;
-    }
-  }
-
-  serialize(value: any): string {
-    return JSON.stringify(value);
-  }
-
-  deserialize(value: string): any {
-    return JSON.parse(value);
   }
 }

@@ -1,32 +1,21 @@
 import { ISearchEngineBackend, State, IndexParameter } from '../backend';
-import { ISerializer, StringSerializer, IntSerializer, BooleanSerializer } from './serialization';
+import { RedisSerializerBase, IntSerializer, BooleanSerializer } from './serialization';
 
-export type Serialization = { [key: string]: ISerializer<any> };
+export type Serialization = { [key: string]: RedisSerializerBase };
 
 export class RedisBackend<T> implements ISearchEngineBackend<T> {
-  serializer: Serialization;
-  autoMap: boolean;
+  serialization: Object;
 
-  constructor(options: { serializer?: Serialization, autoSerialize?: boolean }) {
-    if (!options || !options.serializer || options.autoSerialize == undefined || options.autoSerialize == null) {
-      throw new Error('Either serializer must be specified, autoSerialize be true or both');
-    }
-
-    this.serializer = options.serializer ? options.serializer : {};
-    this.autoMap = !!options.autoSerialize;
+  constructor(serialization?: Serialization) {
+    this.serialization = serialization ? serialization : {};
   }
 
-  index(items: IndexParameter<T>[]): Promise<string[]> {
+  index(data: IndexParameter<T>): Promise<string[]> {
+    if (this.serialization.hasOwnProperty(data.))
     throw '';
   }
 
   state(): Promise<State> {
     throw '';
   }
-}
-
-let serialization: Serialization = {
-  'duration': new IntSerializer(5),
-  'title': new StringSerializer(),
-  'hasHD': new BooleanSerializer()
 }

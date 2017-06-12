@@ -1,71 +1,80 @@
 import * as Comperator from './comperator';
+import { Analyzer } from './analyzing/analyzer';
 import { Utils } from './utils';
 
-export interface IMapping {
-  apply(source: object, destination: object): object;
+export enum MapperType {
+  Text,
+  Int,
+  Boolean
 }
 
-export interface IMapper<T> {
-  map(value: any): T;
+export interface IMapper<T extends string[] | number | boolean> {
+  type: MapperType;
+  map(item: any): T;
 }
 
-export abstract class MappingBase<T> implements IMapping, IMapper<T> {
+export abstract class MapperBase<T extends string[] | number | boolean> implements IMapper<T> {
+  type: MapperType;
   sourceProperty: string;
-  destinationProperty: string;
 
-  constructor(sourceProperty: string, destinationProperty?: string) {
+  constructor(type: MapperType, sourceProperty: string) {
+    this.type = type;
     this.sourceProperty = sourceProperty;
-    this.destinationProperty = !!destinationProperty ? destinationProperty : sourceProperty;
   }
 
-  abstract map(value: any): T;
+  abstract map(item: any): T;
+}
 
-  apply(source: object, destination: object): object {
-    let value = Utils.getProperty<any[]>(source, this.sourceProperty);
+export class IntMapper extends MapperBase<number> implements IMapper<number> {
+  constructor(sourceProperty: string) {
+    super(MapperType.Int, sourceProperty);
+  }
 
-    let mappedValue = this.map(source);
-    Utils.setProperty(destination, this.destinationProperty, mappedValue);
-
-    return destination;
+  map(item: any): number {
+    return Utils.getProperty<number>(item, super.sourceProperty);
   }
 }
 
-export class CloneMapping implements IMapping {
-  apply(source: object, destination: object): object {
-    return Object.assign(destination, source);
+export class TextMapper extends MapperBase<string[]> implements IMapper<string[]> {
+  analyzer: Analyzer;
+
+  constructor(sourceProperty: string, analyzer: Analyzer) {
+    super(MapperType.Text, sourceProperty);
+
+    this.analyzer = analyzer;
+  }
+
+  map(item: any): string[] {
+    let text = Utils.getProperty<string>(item, super.sourceProperty);
+    return this.analyzer.analyze(text);
   }
 }
 
-export class DirectMapping implements IMapping {
-  properties: string[];
-
-  constructor(...properties: string[]) {
-    this.properties = properties;
+export class BooleanMapper extends MapperBase<boolean> implements IMapper<boolean> {
+  constructor(sourceProperty: string) {
+    super(MapperType.Boolean, sourceProperty);
   }
 
-  apply(source: object, destination: object): object {
-    for (let i = 0; i < this.properties.length; i++) {
-      let value = Utils.getProperty(source, this.properties[i]);
-      Utils.setProperty(destination, this.properties[i], value);
-    }
-
-    return destination;
+  map(item: any): boolean {
+    return Utils.getProperty<boolean>(item, super.sourceProperty);
   }
 }
 
-export class ArrayAnyMapping extends MappingBase<boolean> implements IMapper<boolean> {
+export class ArrayAnyMapping extends BooleanMapper {
   subProperty: string;
   comperator: Comperator.IComperator;
   values: any[];
 
-  constructor(arrayProperty: string, destinationProperty: string, options: { subProperty?: string, comperator: Comperator.IComperator, values: any[] }) {
-    super(arrayProperty, destinationProperty);
-    this.subProperty = options.subProperty;
-    this.comperator = options.comperator;
-    this.values = options.values;
+  constructor(arrayProperty: string, subProperty: string, comperator: Comperator.IComperator, values: any[]) {
+    super(arrayProperty);
+    this.subProperty = subProperty;
+    this.comperator = comperator;
+    this.values = values;
   }
 
-  map(array: any[]): boolean {
+  map(item: any): boolean {
+    let array = Utils.getProperty<any[]>(item, super.sourceProperty);
+
     for (let i = 0; i < array.length; i++) {
       for (let j = 0; j < this.values.length; j++) {
         let propertyValue = Utils.getProperty(array[i], this.subProperty);
