@@ -1,4 +1,4 @@
-import { IQuery, IWordQuery, ITextQuery, TextQueryMode, IAndQuery } from '../query';
+import { IQuery, IWordQuery, ITextQuery, IRangeQuery, TextQueryMode, IAndQuery, IOrQuery } from '../query';
 import { QueryResponse, QueryOptions } from '../model';
 import * as Redis from 'ioredis';
 
@@ -55,7 +55,6 @@ export class RedisWordQuery<T> extends RedisQueryBase<T> implements IRedisQuery<
   }
 }
 
-
 export class RedisTextQuery<T> extends RedisQueryBase<T> implements ITextQuery<T> {
   private _field: string;
 
@@ -92,8 +91,61 @@ export class RedisTextQuery<T> extends RedisQueryBase<T> implements ITextQuery<T
   }
 }
 
+export class RedisRangeQuery<T> extends RedisQueryBase<T> implements IRangeQuery<T> {
+  field(key: string): IRangeQuery<T> {
+    return;
+  }
+
+  less(value: number): IRangeQuery<T> {
+    return;
+  }
+
+  lessOrEqual(value: number): IRangeQuery<T> {
+    return;
+  }
+
+  greater(value: number): IRangeQuery<T> {
+    return;
+  }
+
+  greaterOrEqual(value: number): IRangeQuery<T> {
+    return;
+  }
+
+  between(a: number, b: number): IRangeQuery<T> {
+    return;
+  }
+
+  exact(value: number): IRangeQuery<T> {
+    return;
+  }
+
+  getResultSet(transaction: Redis.Pipeline): string {
+    throw '';
+  }
+
+  cleanUp(transaction: Redis.Pipeline) {
+    transaction.del
+  }
+}
+
 export class RedisAndQuery<T> extends RedisQueryBase<T> implements IAndQuery<T> {
   add(...queries: IRedisQuery<T>[]): RedisAndQuery<T> {
+
+    return this;
+  }
+
+  getResultSet(transaction: Redis.Pipeline): string {
+    throw '';
+  }
+
+  cleanUp(transaction: Redis.Pipeline) {
+    transaction.del
+  }
+}
+
+export class RedisOrQuery<T> extends RedisQueryBase<T> implements IOrQuery<T> {
+  add(...queries: IRedisQuery<T>[]): RedisOrQuery<T> {
 
     return this;
   }

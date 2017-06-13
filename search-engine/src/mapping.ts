@@ -8,12 +8,12 @@ export enum MapperType {
   Boolean
 }
 
-export interface IMapper<T extends string[] | number | boolean> {
+export interface IMapper<T extends string | number | boolean> {
   type: MapperType;
-  map(item: any): T;
+  map(item: any): T[];
 }
 
-export abstract class MapperBase<T extends string[] | number | boolean> implements IMapper<T> {
+export abstract class MapperBase<T extends string | number | boolean> implements IMapper<T> {
   type: MapperType;
   sourceProperty: string;
 
@@ -22,7 +22,7 @@ export abstract class MapperBase<T extends string[] | number | boolean> implemen
     this.sourceProperty = sourceProperty;
   }
 
-  abstract map(item: any): T;
+  abstract map(item: any): T[];
 }
 
 export class IntMapper extends MapperBase<number> implements IMapper<number> {
@@ -30,12 +30,12 @@ export class IntMapper extends MapperBase<number> implements IMapper<number> {
     super(MapperType.Int, sourceProperty);
   }
 
-  map(item: any): number {
-    return Utils.getProperty<number>(item, super.sourceProperty);
+  map(item: any): number[] {
+    return [Utils.getProperty<number>(item, this.sourceProperty)];
   }
 }
 
-export class TextMapper extends MapperBase<string[]> implements IMapper<string[]> {
+export class TextMapper extends MapperBase<string> implements IMapper<string> {
   analyzer: Analyzer;
 
   constructor(sourceProperty: string, analyzer: Analyzer) {
@@ -45,7 +45,7 @@ export class TextMapper extends MapperBase<string[]> implements IMapper<string[]
   }
 
   map(item: any): string[] {
-    let text = Utils.getProperty<string>(item, super.sourceProperty);
+    let text = Utils.getProperty<string>(item, this.sourceProperty);
     return this.analyzer.analyze(text);
   }
 }
@@ -55,8 +55,8 @@ export class BooleanMapper extends MapperBase<boolean> implements IMapper<boolea
     super(MapperType.Boolean, sourceProperty);
   }
 
-  map(item: any): boolean {
-    return Utils.getProperty<boolean>(item, super.sourceProperty);
+  map(item: any): boolean[] {
+    return [Utils.getProperty<boolean>(item, this.sourceProperty)];
   }
 }
 
@@ -72,19 +72,19 @@ export class ArrayAnyMapping extends BooleanMapper {
     this.values = values;
   }
 
-  map(item: any): boolean {
-    let array = Utils.getProperty<any[]>(item, super.sourceProperty);
+  map(item: any): boolean[] {
+    let array = Utils.getProperty<any[]>(item, this.sourceProperty);
 
     for (let i = 0; i < array.length; i++) {
       for (let j = 0; j < this.values.length; j++) {
         let propertyValue = Utils.getProperty(array[i], this.subProperty);
 
         if (this.comperator.compare(propertyValue, this.values[j])) {
-          return true;
+          return [true];
         }
       }
     }
 
-    return false;
+    return [false];
   }
 }

@@ -1,4 +1,4 @@
-import { ISearchEngineBackend, State, IndexParameter } from './backend';
+import { ISearchEngineBackend, IndexValue, IndexItem, State } from './backend';
 import { IMapper } from './mapping';
 import * as Queries from './query';
 
@@ -15,21 +15,23 @@ export class SearchEngine<T> {
     this.keys = Object.getOwnPropertyNames(this.mapping);
   }
 
-  index(...items: T[]): Promise<void> {
+  index(items: T[], ids: string[]): Promise<void> {
     let object: { [key: string]: any } = {};
-
+    let indexItems: IndexItem<T>[] = [];
 
     for (let i = 0; i < items.length; i++) {
+      let indexValues: IndexValue<any>[] = [];
       for (let j = 0; j < this.keys.length; j++) {
+        let indexValue: IndexValue<any> = { property: this.keys[i], values: [] };
+        indexValue.values = this.mapping[this.keys[j]].map(items[i]);
 
-        object[this.keys[j]] = this.mapping[this.keys[j]].map(items[i]);
-
+        indexValues.push(indexValue);
       }
+
+      indexItems.push({ rawItem: items[i], indexValues: indexValues, id: ids[i] })
     }
 
-
-    throw '';
-    //return this.backend.index(items);
+    return this.backend.index(indexItems);
   }
 
   state(): Promise<State> {

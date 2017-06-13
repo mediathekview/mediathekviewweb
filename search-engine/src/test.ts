@@ -1,8 +1,14 @@
+import { SearchEngine } from './search-engine';
+import { RedisBackend, IntSerializer } from './redis';
+import * as Redis from 'ioredis';
+
 import { LowerCaseTransformer, ASCIIFoldingTransformer } from './analyzing/transforming';
 import { WordTokenizer } from './analyzing/tokenizing';
 import { StemmingTokenFilter, EdgeNGramTokenFilter, ASCIIFoldingTokenFilter } from './analyzing/tokenizing/filtering';
 import { Analyzer } from './analyzing/analyzer';
-import { TextMapper } from './mapping';
+import { TextMapper, IntMapper} from './mapping';
+import { Entry } from '../../model/';
+import { Utils } from './utils';
 
 let lowerCaseTransformer = new LowerCaseTransformer();
 let asciiFoldingTransformer = new ASCIIFoldingTransformer();
@@ -19,26 +25,25 @@ let analyzer = new Analyzer(wordTokenizer).addTransformer(lowerCaseTransformer, 
 
 let text = `Möin Die schwersten Unglücke der DDR (1) - Schuld ist nie der Sozialismus`;
 
-let tokens;
+let redis = Redis();
+let redisBackend = new RedisBackend(redis, {
+  'timestamp': new IntSerializer(10)
+});
 
-let begin = Date.now();
-for (let i = 0; i < 10000; i++) {
-  tokens = analyzer.analyze(text);
+let searchEngine = new SearchEngine<Entry>(redisBackend, {
+  'title': new TextMapper('title', analyzer),
+  'timestamp': new IntMapper('timestamp')
+});
+
+let entry: Entry = {
+  title: 'test titel',
+  timestamp: 453452435,
+  topic: 'bla topic',
+  channel: 'bla channel',
+  duration: 12345,
+  description: 'a long description which could be there',
+  website: '',
+  media: []
 }
-let duration = Date.now() - begin;
 
-console.log(tokens, duration);
-
-
-
-let a = {
-  'title': {
-    type: 'text',
-    mapper: new StringMapper(),
-    index_analyzer: analyzer
-  },
-  'hasHD': {
-    type: 'boolean',
-    mapper: new ArrayAnyMapper()
-  }
-}
+searchEngine.index([entry],['blaErstesEntry']);

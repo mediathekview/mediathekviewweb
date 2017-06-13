@@ -1,19 +1,32 @@
 import * as Queries from './query';
 
-export interface State {
+export interface IState {
   indexedItems: number;
   lastChange: number;
+  memoryUsage: number;
 }
 
-export interface IToken<T> {
-  sourceProperty: string;
-  value: T;
+export class State implements State {
+  indexedItems: number;
+  lastChange: number;
+  memoryUsage: number;
+
+  constructor(indexedItems: number, lastChange: number, memoryUsage: number) {
+    this.indexedItems = indexedItems;
+    this.lastChange = lastChange;
+    this.memoryUsage = memoryUsage;
+  }
 }
 
-export type IndexParameter<T> = { tokens: IToken<any>, item?: T, id?: string };
+export type IndexValue<T> = {
+  property: string;
+  values: T[];
+}
+
+export type IndexItem<T> = { indexValues: IndexValue<any>[], id: string, rawItem?: T };
 
 export interface ISearchEngineBackend<T> {
-  index(data: IndexParameter<T>[]): Promise<string[]>;
+  index(items: IndexItem<T>[]): Promise<void>;
   state(): Promise<State>;
 
   getWordQuery(): Queries.IWordQuery<T>;

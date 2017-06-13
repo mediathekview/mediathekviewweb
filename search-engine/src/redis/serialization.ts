@@ -1,23 +1,14 @@
-import { ISerializer } from '../serialization';
+export interface IRedisSerializer<T, T2> {
+  serialize(value: T): T2;
+  deserialize(value: T2): T;
+}
 
 export abstract class RedisSerializerBase { }
 
-/*export class StringSerializer extends RedisSerializerBase implements ISerializer<string, string> {
-  serialize(value: string): string {
-    return value;
-  }
-
-  deserialize(value: string): string {
-    return value;
-  }
-}*/
-
-export class IntSerializer extends RedisSerializerBase implements ISerializer<number, string> {
+export class IntSerializer implements IRedisSerializer<number, string> {
   maxDigits: number;
 
   constructor(maxDigits: number) {
-    super();
-
     this.maxDigits = maxDigits;
   }
 
@@ -45,7 +36,7 @@ export class IntSerializer extends RedisSerializerBase implements ISerializer<nu
   }
 }
 
-export class BooleanSerializer extends RedisSerializerBase implements ISerializer<boolean, string> {
+export class BooleanSerializer implements IRedisSerializer<boolean, string> {
   serialize(value: boolean): string {
     return value ? '1' : '0';
   }
