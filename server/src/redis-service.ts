@@ -77,9 +77,9 @@ export class RedisService {
     });
   }
 
-  sadd(key: string, values: any[]): Promise<number> {
+  sadd(key: string, members: any[]): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      this.redis.sadd(key, values, (error, reply) => {
+      this.redis.sadd(key, members, (error, reply) => {
         if (error) {
           reject(error);
         } else {
@@ -89,7 +89,19 @@ export class RedisService {
     });
   }
 
-  sismember(key: string, value: any): Promise<boolean> {
+  zadd(key: string, scoresAndMembers: (string | number)[]): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.redis.zadd(key, scoresAndMembers, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(reply);
+        }
+      });
+    });
+  }
+
+  sismember(key: string, value: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       this.redis.sismember(key, value, (error, reply) => {
         if (error) {
@@ -101,9 +113,9 @@ export class RedisService {
     });
   }
 
-  srem(key: string, values: any[]): Promise<number> {
+  srem(key: string, members: string[]): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      this.redis.srem(key, values, (error, reply) => {
+      this.redis.srem(key, members, (error, reply) => {
         if (error) {
           reject(error);
         } else {
@@ -116,6 +128,40 @@ export class RedisService {
   spop(key: string, count: number = 1): Promise<string[]> {
     return new Promise<string[]>((resolve, reject) => {
       this.redis.spop(key, count, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(reply);
+        }
+      });
+    });
+  }
+
+  zrange(key: string, start: number, stop: number, withScores: boolean = false): Promise<{ member: string, score: number }[]> {
+    return new Promise<{ member: string, score: number }[]>((resolve, reject) => {
+      let args = [key, start, stop];
+      if (withScores) {
+        args.push('WITHSCORES');
+      }
+      this.redis.zrange(...args, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          let result: { member: string, score: number }[] = [];
+
+          for (let i = 0; i < reply.length; i += 2) {
+            result.push({ member: reply[i], score: parseFloat(reply[i + 1]) });
+          }
+
+          resolve(result);
+        }
+      });
+    });
+  }
+
+  zremrangebyrank(key: string, start: number, stop: number): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.redis.zremrangebyrank(key, start, stop, (error, reply) => {
         if (error) {
           reject(error);
         } else {

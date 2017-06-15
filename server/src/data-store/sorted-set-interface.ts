@@ -20,8 +20,8 @@ export interface ISortedSet<T> {
   size(): Promise<number>;
   flush(): Promise<boolean>;
 
-  intersect(destination: ISortedSet<T>, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
-  union(destination: ISortedSet<T>, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
-  diff(destination: ISortedSet<T>, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
+  intersect(destination: ISortedSet<T>, sets: (ISet<T> | ISortedSet<T>)[], weights?: number[], aggregationMode?: AggregationMode): Promise<number>;
+  union(destination: ISortedSet<T>, sets: (ISet<T> | ISortedSet<T>)[], weights?: number[], aggregationMode?: AggregationMode): Promise<number>;
+  diff(destination: ISortedSet<T>, sets: (ISet<T> | ISortedSet<T>)[], weights?: number[], aggregationMode?: AggregationMode): Promise<number>;
   move(destination: ISortedSet<T>): Promise<void>;
 }
