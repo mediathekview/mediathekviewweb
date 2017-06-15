@@ -28,12 +28,21 @@ export class FilmlisteIndexer {
       }
     }
 
-    await this.addBatch();
+    let promises: Promise<any>[] = [];
+
+    if (this.addedBatchBuffer.length > 0) {
+      let batch = this.addedBatchBuffer.shift();
+      promises.push(this.processAddedBatch(batch));
+    }
+    if (this.removedBatchBuffer.length > 0) {
+      let batch = this.removedBatchBuffer.shift();
+      await this.processRemovedBatch(batch);
+    }
 
     return this.index();
   }
 
-  async addBatch(batch: Entry[]) {
+  async processAddedBatch(batch: Entry[]) {
     let ids: string[] = [];
 
     for (let i = 0; i < batch.length; i++) {
@@ -41,6 +50,10 @@ export class FilmlisteIndexer {
     }
 
     await this.searchEngine.index(batch, ids);
+  }
+
+  async processRemovedBatch(batch: Entry[]) {
+    throw new Error('processRemovedBatch not implemented');
   }
 
   async fillBuffers() {

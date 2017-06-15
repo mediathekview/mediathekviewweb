@@ -38,37 +38,33 @@ export class HTTPFilmliste implements IFilmliste {
     return this.timestamp;
   }
 
-  private
-
   getEntries(): Observable<BatchType> {
-    console.log('getEntries');
     let observable: Observable<BatchType> = new Observable<BatchType>((observer) => {
-      this.observerHandler(observer);
+      this.getEntriesObserverHandler(observer);
     });
 
     return observable;
   }
 
-  private async observerHandler(observer: Subscriber<BatchType>) {
-    console.log('observerHandler');
+  private async getEntriesObserverHandler(observer: Subscriber<BatchType>) {
     let cache = CacheManager.get(this.url);
 
-    let has = await cache.has();
+    let has = this.cachable && (await cache.has());
     if (!has) {
-      let fd = await AsyncFS.open(cache.path, AsyncFS.Flags.WriteNonExist);
-      let fileStream = await AsyncFS.createWriteStream(null, { fd: fd, autoClose: false });
+      let fileStream = await cache.getWriteStream();
 
       await Utils.streamToPromise(await this.pipe(fileStream));
 
-      await AsyncFS.close(fd);
+      await cache.finalize();
     }
 
-    await NativeFilmlisteParser.parseFilmliste(cache.path, '({|,)?"(Filmliste|X)":', 150, (batch, next) => observer.next({ data: batch, next: next }));
+    await NativeFilmlisteParser.parseFilmliste(cache.path, '({|,|\\s*?)?"(Filmliste|X)"\\s*?:\\s*?', 150, (batch, next) => observer.next({ data: batch, next: next }));
 
     observer.complete();
   }
 
   async pipe<T>(destination: T, options?: { end?: boolean }): Promise<T> {
+    console.log('download');
     if (await this.streamIsCompressed) {
       let decompressor = LZMA.createDecompressor();
       return AsyncRequest.get(this.url).pipe(decompressor).pipe(destination, options);

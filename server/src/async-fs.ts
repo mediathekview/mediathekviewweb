@@ -90,6 +90,18 @@ export class AsyncFS {
     });
   }
 
+  static rename(oldPath: string, newPath: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      FS.rename(oldPath, newPath, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
   private static async _mkdir(path: string): Promise<void> {
     if (path.length == 0) {
       return;

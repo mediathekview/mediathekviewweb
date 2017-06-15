@@ -15,6 +15,7 @@ let deltaRemovedEntries = dataStore.getSet<Entry>(RedisKeys.DeltaRemovedEntries)
 let currentParsedEntries = dataStore.getSet<Entry>(RedisKeys.CurrentParsedEntries);
 let lastParsedEntries = dataStore.getSet<Entry>(RedisKeys.LastParsedEntries);
 
+
 let filmlisteManager = new FilmlisteManager(filmlisteArchive, indexedFilmlists, entriesToBeAdded, entriesToBeRemoved, deltaAddedEntries, deltaRemovedEntries, currentParsedEntries, lastParsedEntries);
 
 let loop = async () => {
@@ -23,8 +24,8 @@ let loop = async () => {
 }
 
 (async () => {
-  await filmlisteManager.buildArchive(30);
+  await filmlisteManager.buildArchive(60);
 
-  console.log('buildArchive end - loop');
+  console.log('buildArchive end, starting loop');
   setImmediate(() => loop());
 })();
