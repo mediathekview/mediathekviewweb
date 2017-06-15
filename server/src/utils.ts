@@ -34,21 +34,6 @@ export class Utils {
     return `${result} ${BYTE_UNITS[dimension]}`;
   }
 
-  static streamToPromise(stream: Stream.Writable | Stream.Readable): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      if (stream instanceof Stream.Writable) {
-        stream.on('finish', () => resolve());
-      } else if (stream instanceof Stream.Readable) {
-        stream.on('end', () => resolve());
-      } else {
-        throw new Error('stream type not supported');
-      }
-
-
-      stream.on('error', (error) => reject(error));
-    });
-  }
-
   static arrayize<T>(obj: T | T[]): T[] {
     if (Array.isArray(obj)) {
       return obj;
@@ -74,5 +59,44 @@ export class Utils {
     }
 
     return item;
+  }  
+
+  static streamToPromise(stream: Stream.Writable | Stream.Readable): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (stream instanceof Stream.Writable) {
+        stream.on('finish', () => resolve());
+      } else if (stream instanceof Stream.Readable) {
+        stream.on('end', () => resolve());
+      } else {
+        throw new Error('stream type not supported');
+      }
+
+
+      stream.on('error', (error) => reject(error));
+    });
+  }
+
+  static promiseTimeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
+    return new Promise<T>(async (resolve, reject) => {
+      let timedOut = false;
+      let resolved = false;
+
+      let timeoutHandle = setTimeout(() => {
+        if (resolved) {
+          return;
+        }
+
+        timedOut = true;
+        reject();
+      }, timeout);
+
+      let result = await promise;
+      resolved = true;
+
+      if (timedOut) {
+        return;
+      }
+      resolve(result);
+    });
   }
 }

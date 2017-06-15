@@ -36,15 +36,15 @@ export interface IMedia {
   size: number;
 }
 
-export interface Video extends IMedia {
+export interface IVideo extends IMedia {
   quality: Quality;
 }
 
-export interface Audio extends IMedia {
+export interface IAudio extends IMedia {
   quality: Quality;
 }
 
-export interface Subtitle extends IMedia {
+export interface ISubtitle extends IMedia {
 }
 
 export enum Quality {

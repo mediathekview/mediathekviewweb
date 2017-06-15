@@ -21,8 +21,9 @@ export class SearchEngine<T> {
 
     for (let i = 0; i < items.length; i++) {
       let indexValues: IndexValue<any>[] = [];
+
       for (let j = 0; j < this.keys.length; j++) {
-        let indexValue: IndexValue<any> = { property: this.keys[i], values: [] };
+        let indexValue: IndexValue<any> = { property: this.keys[j], values: [] };
         indexValue.values = this.mapping[this.keys[j]].map(items[i]);
 
         indexValues.push(indexValue);

@@ -53,13 +53,37 @@ export class RedisService {
     });
   }
 
-  sadd(key: string, values: any[]): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      this.redis.sadd(key, values, (error, result) => {
+  del(key: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.redis.del(key, (error, reply) => {
         if (error) {
           reject(error);
         } else {
-          resolve(result);
+          resolve(reply == '1');
+        }
+      });
+    });
+  }
+
+  rename(key: string, newKey: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.redis.rename(key, newKey, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  sadd(key: string, values: any[]): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.redis.sadd(key, values, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(reply);
         }
       });
     });
@@ -67,11 +91,11 @@ export class RedisService {
 
   sismember(key: string, value: any): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      this.redis.sismember(key, value, (error, result) => {
+      this.redis.sismember(key, value, (error, reply) => {
         if (error) {
           reject(error);
         } else {
-          resolve(result == 1);
+          resolve(parseInt(reply) == 1);
         }
       });
     });
@@ -79,11 +103,11 @@ export class RedisService {
 
   srem(key: string, values: any[]): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      this.redis.srem(key, values, (error, result) => {
+      this.redis.srem(key, values, (error, reply) => {
         if (error) {
           reject(error);
         } else {
-          resolve(result);
+          resolve(reply);
         }
       });
     });
@@ -91,11 +115,59 @@ export class RedisService {
 
   spop(key: string, count: number = 1): Promise<string[]> {
     return new Promise<string[]>((resolve, reject) => {
-      this.redis.spop(key, count, (error, result) => {
+      this.redis.spop(key, count, (error, reply) => {
         if (error) {
           reject(error);
         } else {
-          resolve(result);
+          resolve(reply);
+        }
+      });
+    });
+  }
+
+  scard(key: string): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.redis.scard(key, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(parseInt(reply));
+        }
+      });
+    });
+  }
+
+  sinterstore(destination: string, ...keys: string[]): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.redis.sinterstore(destination, ...keys, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(parseInt(reply));
+        }
+      });
+    });
+  }
+
+  sdiffstore(destination: string, ...keys: string[]): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.redis.sdiffstore(destination, ...keys, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(parseInt(reply));
+        }
+      });
+    });
+  }
+
+  sunionstore(destination: string, ...keys: string[]): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.redis.sunionstore(destination, ...keys, (error, reply) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(parseInt(reply));
         }
       });
     });

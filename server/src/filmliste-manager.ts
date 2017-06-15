@@ -1,19 +1,26 @@
 import { IFilmliste, IFilmlisteArchive, BatchType } from './interfaces';
-import { IDataStore, ISet } from './data-store';
-import { RedisKeys } from './redis-keys';
+import { ISet } from './data-store';
 import { Entry } from './model';
 
 export class FilmlisteManager {
   private filmlisteArchive: IFilmlisteArchive;
-  private dataStore: IDataStore;
   private indexedFilmlists: ISet<number>;
-  private entries: ISet<Entry>;
+  private entriesToBeAdded: ISet<Entry>;
+  private entriesToBeRemoved: ISet<Entry>;
+  private deltaAddedEntries: ISet<Entry>;
+  private deltaRemovedEntries: ISet<Entry>;
+  private currentParsedEntries: ISet<Entry>;
+  private lastParsedEntries: ISet<Entry>;
 
-  constructor(filmlisteArchive: IFilmlisteArchive, dataStore: IDataStore) {
+  constructor(filmlisteArchive: IFilmlisteArchive, indexedFilmlists: ISet<number>, entriesToBeAdded: ISet<Entry>, entriesToBeRemoved: ISet<Entry>, deltaAddedEntries: ISet<Entry>, deltaRemovedEntries: ISet<Entry>, currentParsedEntries: ISet<Entry>, lastParsedEntries: ISet<Entry>) {
     this.filmlisteArchive = filmlisteArchive;
-    this.dataStore = dataStore;
-    this.indexedFilmlists = this.dataStore.getSet<number>(RedisKeys.IndexedFilmlists);
-    this.entries = this.dataStore.getSet<Entry>(RedisKeys.EntriesToBeIndexed);
+    this.indexedFilmlists = indexedFilmlists;
+    this.entriesToBeAdded = entriesToBeAdded;
+    this.entriesToBeRemoved = entriesToBeRemoved;
+    this.deltaAddedEntries = deltaAddedEntries;
+    this.deltaRemovedEntries = deltaRemovedEntries;
+    this.currentParsedEntries = currentParsedEntries;
+    this.lastParsedEntries = lastParsedEntries;
   }
 
   async update() {
@@ -56,8 +63,7 @@ export class FilmlisteManager {
         next: async (batch) => await this.handleBatch(batch),
         error: (error) => reject(error),
         complete: async () => {
-          let timestamp = await filmliste.getTimestamp();
-          await this.indexedFilmlists.add(timestamp);
+          await this.handleComplete(filmliste);
           resolve();
         }
       });
@@ -65,13 +71,24 @@ export class FilmlisteManager {
   }
 
   private async createDelta() {
-
+    await Promise.all([
+      this.currentParsedEntries.diff(this.deltaAddedEntries, this.lastParsedEntries),
+      this.lastParsedEntries.diff(this.deltaRemovedEntries, this.currentParsedEntries),
+      this.deltaAddedEntries.union(this.entriesToBeAdded, this.entriesToBeAdded),
+      this.deltaRemovedEntries.union(this.entriesToBeRemoved, this.entriesToBeRemoved),
+      this.currentParsedEntries.move(this.lastParsedEntries)
+    ]);
   }
 
   private async handleBatch(batch: BatchType) {
-    await this.entries.add(batch.data)
+    await this.currentParsedEntries.add(batch.data)
 
     batch.next();
+  }
+
+  private async handleComplete(filmliste: IFilmliste) {
+    let timestamp = await filmliste.getTimestamp();
+    await this.indexedFilmlists.add(timestamp);
   }
 
   private async sortFilmlistsDescending(filmlists: IFilmliste[]): Promise<IFilmliste[]> {

@@ -60,7 +60,7 @@ export class BooleanMapper extends MapperBase<boolean> implements IMapper<boolea
   }
 }
 
-export class ArrayAnyMapping extends BooleanMapper {
+export class ArrayAnyMapper extends BooleanMapper {
   subProperty: string;
   comperator: Comperator.IComperator;
   values: any[];

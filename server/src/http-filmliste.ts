@@ -27,9 +27,11 @@ export class HTTPFilmliste implements IFilmliste {
 
     if (response.statusCode == 200 && response.headers['last-modified'] != undefined) {
       this.timestamp = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
-    } else if (response.statusCode != 200) {
+    }
+    else if (response.statusCode != 200) {
       throw new Error(`HTTP statuscode ${response.statusCode}`);
-    } else if (response.headers['last-modified'] == undefined) {
+    }
+    else if (response.headers['last-modified'] == undefined) {
       throw new Error(`No Last-Modified Header from ${this.url}`);
     }
 
@@ -54,7 +56,6 @@ export class HTTPFilmliste implements IFilmliste {
     let has = await cache.has();
     if (!has) {
       let fd = await AsyncFS.open(cache.path, AsyncFS.Flags.WriteNonExist);
-
       let fileStream = await AsyncFS.createWriteStream(null, { fd: fd, autoClose: false });
 
       await Utils.streamToPromise(await this.pipe(fileStream));
