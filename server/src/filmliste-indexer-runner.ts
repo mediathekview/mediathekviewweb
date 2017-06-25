@@ -46,8 +46,9 @@ let searchEngine = new SearchEngine<Entry>(redisBackend, {
 });
 
 let dataStore = DataStoreProvider.getDataStore();
-let entriesToBeAdded = dataStore.getSet<Entry>(RedisKeys.EntriesToBeAdded)
-let filmlisteIndexer = new FilmlisteIndexer(searchEngine, entries);
+let entriesToBeAdded = dataStore.getSet<Entry>(RedisKeys.EntriesToBeAdded);
+let entriesToBeRemoved = dataStore.getSet<Entry>(RedisKeys.EntriesToBeRemoved);
+let filmlisteIndexer = new FilmlisteIndexer(searchEngine, entriesToBeAdded, entriesToBeRemoved);
 
 async function loop() {
   await filmlisteIndexer.index();

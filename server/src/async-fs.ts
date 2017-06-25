@@ -135,4 +135,16 @@ export class AsyncFS {
       }
     }
   }
+
+  static async readFile(filename: string, encoding: string = 'UTF-8'): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      FS.readFile(filename, encoding, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
 }
