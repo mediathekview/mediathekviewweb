@@ -1,18 +1,20 @@
 import { IFilmliste, IFilmlisteArchive, BatchType } from './interfaces';
-import { ISet } from './data-store';
+import { ISet, ISortedSet, AggregationMode } from './data-store';
 import { Entry } from './model';
 
 export class FilmlisteManager {
   private filmlisteArchive: IFilmlisteArchive;
   private indexedFilmlists: ISet<number>;
-  private entriesToBeAdded: ISet<Entry>;
-  private entriesToBeRemoved: ISet<Entry>;
-  private deltaAddedEntries: ISet<Entry>;
-  private deltaRemovedEntries: ISet<Entry>;
-  private currentParsedEntries: ISet<Entry>;
-  private lastParsedEntries: ISet<Entry>;
+  private entriesToBeAdded: ISortedSet<Entry>;
+  private entriesToBeRemoved: ISortedSet<Entry>;
+  private deltaAddedEntries: ISortedSet<Entry>;
+  private deltaRemovedEntries: ISortedSet<Entry>;
+  private currentParsedEntries: ISortedSet<Entry>;
+  private lastParsedEntries: ISortedSet<Entry>;
 
-  constructor(filmlisteArchive: IFilmlisteArchive, indexedFilmlists: ISet<number>, entriesToBeAdded: ISet<Entry>, entriesToBeRemoved: ISet<Entry>, deltaAddedEntries: ISet<Entry>, deltaRemovedEntries: ISet<Entry>, currentParsedEntries: ISet<Entry>, lastParsedEntries: ISet<Entry>) {
+  private currentFilmlisteTimestamp: number;
+
+  constructor(filmlisteArchive: IFilmlisteArchive, indexedFilmlists: ISet<number>, entriesToBeAdded: ISortedSet<Entry>, entriesToBeRemoved: ISortedSet<Entry>, deltaAddedEntries: ISortedSet<Entry>, deltaRemovedEntries: ISortedSet<Entry>, currentParsedEntries: ISortedSet<Entry>, lastParsedEntries: ISortedSet<Entry>) {
     this.filmlisteArchive = filmlisteArchive;
     this.indexedFilmlists = indexedFilmlists;
     this.entriesToBeAdded = entriesToBeAdded;
@@ -58,8 +60,10 @@ export class FilmlisteManager {
 
   private async indexFilmliste(filmliste: IFilmliste) {
     console.log('indexFilmliste');
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
       console.log('getEntries');
+      this.currentFilmlisteTimestamp = await filmliste.getTimestamp();
+
       filmliste.getEntries().subscribe({
         next: async (batch) => await this.handleBatch(batch),
         error: (error) => reject(error),
@@ -73,16 +77,17 @@ export class FilmlisteManager {
 
   private async createDelta() {
     await Promise.all([
-      this.currentParsedEntries.diff(this.deltaAddedEntries, this.lastParsedEntries),
-      this.lastParsedEntries.diff(this.deltaRemovedEntries, this.currentParsedEntries),
-      this.deltaAddedEntries.union(this.entriesToBeAdded, this.entriesToBeAdded),
-      this.deltaRemovedEntries.union(this.entriesToBeRemoved, this.entriesToBeRemoved),
+      this.currentParsedEntries.diff(this.deltaAddedEntries, [this.lastParsedEntries]),
+      this.lastParsedEntries.diff(this.deltaRemovedEntries, [this.currentParsedEntries]),
+      this.deltaAddedEntries.union(this.entriesToBeAdded, [this.entriesToBeAdded]),
+      this.deltaRemovedEntries.union(this.entriesToBeRemoved, [this.entriesToBeRemoved]),
       this.currentParsedEntries.move(this.lastParsedEntries)
     ]);
   }
 
   private async handleBatch(batch: BatchType) {
-    await this.currentParsedEntries.add(batch.data);
+    let sortedSetMembers = batch.data.map((entry) => ({ member: entry, score: this.currentFilmlisteTimestamp }));
+    await this.currentParsedEntries.addWithScore(...sortedSetMembers);
 
     batch.next();
   }

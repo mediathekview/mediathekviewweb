@@ -66,15 +66,11 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
   }
 
   async move(destination: ISortedSet<T>): Promise<void> {
-    let promises: Promise<any>[] = [
-      destination.flush()
-    ];
-
     if (await this.size() > 0) {
-      promises.push(this.union(destination, []));
-      promises.push(this.flush());
+      await Promise.all([
+        this.union(destination, []),
+        this.flush()
+      ]);
     }
-
-    await Promise.all(promises);
   }
 }

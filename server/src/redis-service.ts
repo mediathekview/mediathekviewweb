@@ -292,6 +292,8 @@ export class RedisService {
         this.redis.defineCommand('zdiffstore', {
           lua: script
         });
+
+        this.definedZDIFFCommand = true;
       }
 
       let args = [keys.length + 1, destination, ...keys];
