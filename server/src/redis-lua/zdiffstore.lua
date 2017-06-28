@@ -1,4 +1,5 @@
 -- returns items only existing in first Sorted Set
+-- zdiffstore DESTIONATION key [key ...]
 
 local destination = KEYS[1]
 local diffSet = KEYS[2]

@@ -28,7 +28,7 @@ let wordTokenizer = new WordTokenizer().addFilter(stemmingTokenFilter, asciiFold
 let analyzer = new Analyzer(wordTokenizer).addTransformer(lowerCaseTransformer);
 
 let redis = Redis();
-let redisBackend = new RedisBackend(redis, {
+let redisBackend = new RedisBackend<Entry>(redis, {
   'timestamp': new IntSerializer(10),
   'duration': new IntSerializer(10),
   'hasHD': new BooleanSerializer()
