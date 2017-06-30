@@ -1,4 +1,5 @@
 import * as Queries from './query';
+import * as Comperator from './comperator';
 
 export interface IState {
   indexedItems: number;
@@ -18,15 +19,16 @@ export class State implements State {
   }
 }
 
-export type IndexValue<T> = {
-  property: string;
-  values: T[];
-}
+export type IndexValue<T> = { property: string; values: T[]; }
+export type UpdateCondition = { property: string, comperator: Comperator.IComperator, values: any[] };
 
-export type IndexItem<T> = { indexValues: IndexValue<any>[], id: string, rawItem?: T };
+export type IndexItem<T> = { id: string, rawItem?: T, indexValues: IndexValue<any>[] };
+export type UpdateItem<T> = { id: string, updateObject?: object, indexValues: IndexValue<any>[], condition?: UpdateCondition, upsert?: boolean };
 
 export interface ISearchEngineBackend<T> {
   index(items: IndexItem<T>[]): Promise<void>;
+  update(items: UpdateItem<T>[]): Promise<void>;
+  delete(ids: string[]): Promise<void>;
   state(): Promise<State>;
 
   getWordQuery(): Queries.IWordQuery<T>;
