@@ -177,9 +177,10 @@ io.on('connection', (socket) => {
                 callback(result);
             } else {
                 request.head(url, (error, response, body) => {
-                    let contentLength = response.headers['content-length'];
-                    if (!contentLength) {
-                        contentLength = -1;
+                    let contentLength = -1;
+                    
+                    if (!!response && !!response.headers['content-length']) {
+                        contentLength = response.headers['content-length'];
                     }
 
                     callback(contentLength);
