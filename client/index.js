@@ -709,19 +709,19 @@ function createVideoActionButton(entry) {
     let lowRow, midRow, highRow, subtitleRow;
 
     if (entry.url_video_hd) {
-        highRow = createVideoRow('Hoch', entry.url_video_hd, entry.title, filenamebase + entry.url_video_hd.split('.').pop());
+        highRow = createVideoRow('Hoch', entry.url_video_hd, entry.title, filenamebase + '.' + entry.url_video_hd.split('.').pop());
         tableBody.append(highRow);
     }
     if (entry.url_video) {
-        midRow = createVideoRow('Mittel', entry.url_video, entry.title, filenamebase + entry.url_video.split('.').pop(), entry.size);
+        midRow = createVideoRow('Mittel', entry.url_video, entry.title, filenamebase + '.' + entry.url_video.split('.').pop(), entry.size);
         tableBody.append(midRow);
     }
     if (entry.url_video_low) {
-        lowRow = createVideoRow('Niedrig', entry.url_video_low, entry.title, filenamebase + entry.url_video_low.split('.').pop());
+        lowRow = createVideoRow('Niedrig', entry.url_video_low, entry.title, filenamebase + '.' + entry.url_video_low.split('.').pop());
         tableBody.append(lowRow);
     }
     if (entry.url_subtitle) {
-        subtitleRow = createSubtitleRow('UT', entry.url_subtitle, filenamebase + entry.url_subtitle.split('.').pop());
+        subtitleRow = createSubtitleRow('UT', entry.url_subtitle, filenamebase + '.' + entry.url_subtitle.split('.').pop());
         tableBody.append(subtitleRow);
     }
 
