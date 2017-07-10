@@ -199,9 +199,10 @@ io.on('connection', (socket) => {
         callback(result);
       } else {
         request.head(url, (error, response, body) => {
-          let contentLength = response.headers['content-length'];
-          if (!contentLength) {
-            contentLength = -1;
+          let contentLength = -1;
+
+          if (!!response && !!response.headers['content-length']) {
+            contentLength = response.headers['content-length'];
           }
 
           callback(contentLength);
@@ -218,26 +219,6 @@ io.on('connection', (socket) => {
     }
 
     searchEngine.getDescription(id, callback);
-  });
-
-
-  socket.on('getContentLength', (url, callback) => {
-    redis.hget('mvw:contentLengthCache', url, (err, result) => {
-      if (result) {
-        callback(result);
-      } else {
-        request.head(url, (error, response, body) => {
-          let contentLength = -1;
-
-          if (!!response && !!response.headers['content-length']) {
-            contentLength = response.headers['content-length'];
-          }
-
-          callback(contentLength);
-          redis.hset('mvw:contentLengthCache', url, contentLength);
-        });
-      }
-    });
   });
 
   socket.on('queryEntries', (query, callback) => {
