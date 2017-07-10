@@ -20,11 +20,11 @@ const RSSFeedGenerator = require('./RSSFeedGenerator.js');
 
 var redis = REDIS.createClient(config.redis);
 redis.on('error', (err) => {
-    console.error(err);
+  console.error(err);
 });
 
 if (config.piwik.enabled) {
-    var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
+  var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
 }
 
 var app = express();
@@ -43,19 +43,19 @@ var lastIndexingState;
 var filmlisteTimestamp = 0;
 
 mediathekManager.on('state', (state) => {
-    console.log();
-    console.log(state);
-    console.log();
+  console.log();
+  console.log(state);
+  console.log();
 });
 
 mediathekManager.getCurrentFilmlisteTimestamp((timestamp) => {
-    filmlisteTimestamp = timestamp;
+  filmlisteTimestamp = timestamp;
 });
 
 if (!!piwik) {
-    piwik.on('error', function(err) {
-        console.error('piwik: error tracking request: ', err)
-    });
+  piwik.on('error', function(err) {
+    console.error('piwik: error tracking request: ', err)
+  });
 }
 
 app.use(compression());
@@ -63,286 +63,308 @@ app.use('/static', express.static(path.join(__dirname, '/static')));
 app.use('/api', bodyParser.text());
 
 app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname, '/client/index.html'));
+  res.sendFile(path.join(__dirname, '/client/index.html'));
 });
 app.get('/donate', function(req, res) {
-    res.sendFile(path.join(__dirname, '/client/donate.html'));
+  res.sendFile(path.join(__dirname, '/client/donate.html'));
 });
 app.get('/impressum', function(req, res) {
-    res.sendFile(path.join(__dirname, '/client/impressum.html'));
+  res.sendFile(path.join(__dirname, '/client/impressum.html'));
 });
 app.get('/datenschutz', function(req, res) {
-    res.sendFile(path.join(__dirname, '/client/datenschutz.html'));
+  res.sendFile(path.join(__dirname, '/client/datenschutz.html'));
 });
 
 app.get('/stats', function(req, res) {
-    res.send(`Socket.io connections: ${io.engine.clientsCount}`);
+  res.send(`Socket.io connections: ${io.engine.clientsCount}`);
 });
 
 app.get('/feed', function(req, res) {
-    rssFeedGenerator.createFeed(req.protocol + '://' + req.get('host') + req.originalUrl, (err, result) => {
-        if (err) {
-            res.status(500).send(err.message);
-        } else {
-            res.set('Content-Type', 'application/rss+xml');
-            res.send(result);
+  rssFeedGenerator.createFeed(req.protocol + '://' + req.get('host') + req.originalUrl, (err, result) => {
+    if (err) {
+      res.status(500).send(err.message);
+    } else {
+      res.set('Content-Type', 'application/rss+xml');
+      res.send(result);
 
-            if (!!piwik) {
-                piwik.track({
-                    token_auth: config.piwik.token_auth,
-                    url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
-                    uid: 'feed',
-                    action_name: 'feed'
-                });
-            }
-        }
+      if (!!piwik) {
+        piwik.track({
+          token_auth: config.piwik.token_auth,
+          url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
+          uid: 'feed',
+          action_name: 'feed'
+        });
+      }
+    }
+  });
+});
+
+app.get('/api/channels', (req, res) => {
+  searchEngine.getChannels((error, channels) => {
+    if (error == undefined) {
+      error = null;
+    }
+
+    res.json({
+      error: error,
+      channels: channels
     });
+
+    if (!!piwik) {
+      piwik.track({
+        token_auth: config.piwik.token_auth,
+        url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
+        uid: 'api',
+        action_name: 'api-channels'
+      });
+    }
+  });
 });
 
 app.post('/api/query', (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', '*');
 
-    let query;
-    try {
-        query = JSON.parse(req.body);
-    } catch (e) {
-        res.status(400).json({
-            result: null,
-            err: [e.message]
-        });
-        return;
+  let query;
+  try {
+    query = JSON.parse(req.body);
+  } catch (e) {
+    res.status(400).json({
+      result: null,
+      err: [e.message]
+    });
+    return;
+  }
+
+  let begin = process.hrtime();
+  searchEngine.search(query, (result, err) => {
+    let end = process.hrtime(begin);
+
+    if (err) {
+      if (err[0] == 'cannot query while indexing') {
+        res.status(503);
+      } else {
+        res.status(500);
+      }
+
+      res.json({
+        result: result,
+        err: err
+      });
+      return;
     }
 
-    let begin = process.hrtime();
-    searchEngine.search(query, (result, err) => {
-        let end = process.hrtime(begin);
+    let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
-        if (err) {
-            if (err[0] == 'cannot query while indexing') {
-                res.status(503);
-            } else {
-                res.status(500);
-            }
+    let queryInfo = {
+      filmlisteTimestamp: filmlisteTimestamp,
+      searchEngineTime: searchEngineTime,
+      resultCount: result.result.length,
+      totalResults: result.totalResults
+    };
 
-            res.json({
-                result: result,
-                err: err
-            });
-            return;
-        }
-
-        let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
-
-        let queryInfo = {
-            filmlisteTimestamp: filmlisteTimestamp,
-            searchEngineTime: searchEngineTime,
-            resultCount: result.result.length,
-            totalResults: result.totalResults
-        };
-
-        res.status(200).json({
-            result: {
-                results: result.result,
-                queryInfo: queryInfo
-            },
-            err: null
-        });
-
-        if (!!piwik) {
-            piwik.track({
-                token_auth: config.piwik.token_auth,
-                url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
-                uid: 'api',
-                action_name: 'api-query'
-            });
-        }
-
-        console.log(moment().format('HH:mm') + ' - api used');
+    res.status(200).json({
+      result: {
+        results: result.result,
+        queryInfo: queryInfo
+      },
+      err: null
     });
+
+    if (!!piwik) {
+      piwik.track({
+        token_auth: config.piwik.token_auth,
+        url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
+        uid: 'api',
+        action_name: 'api-query'
+      });
+    }
+
+    console.log(moment().format('HH:mm') + ' - api used');
+  });
 });
 
 io.on('connection', (socket) => {
-    var clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
-    var socketUid = null;
+  var clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
+  var socketUid = null;
 
-    console.log('client connected, ip: ' + clientIp);
+  console.log('client connected, ip: ' + clientIp);
 
-    if (indexing && lastIndexingState != null) {
-        socket.emit('indexState', lastIndexingState);
+  if (indexing && lastIndexingState != null) {
+    socket.emit('indexState', lastIndexingState);
+  }
+
+  socket.on('getContentLength', (url, callback) => {
+    redis.hget('mvw:contentLengthCache', url, (err, result) => {
+      if (result) {
+        callback(result);
+      } else {
+        request.head(url, (error, response, body) => {
+          let contentLength = response.headers['content-length'];
+          if (!contentLength) {
+            contentLength = -1;
+          }
+
+          callback(contentLength);
+          redis.hset('mvw:contentLengthCache', url, contentLength);
+        });
+      }
+    });
+  });
+
+  socket.on('getDescription', (id, callback) => {
+    if (indexing) {
+      callback('cannot get description while indexing');
+      return;
     }
 
-    socket.on('getContentLength', (url, callback) => {
-        redis.hget('mvw:contentLengthCache', url, (err, result) => {
-            if (result) {
-                callback(result);
-            } else {
-                request.head(url, (error, response, body) => {
-                    let contentLength = response.headers['content-length'];
-                    if (!contentLength) {
-                        contentLength = -1;
-                    }
+    searchEngine.getDescription(id, callback);
+  });
 
-                    callback(contentLength);
-                    redis.hset('mvw:contentLengthCache', url, contentLength);
-                });
-            }
-        });
-    });
-
-    socket.on('getDescription', (id, callback) => {
-        if (indexing) {
-            callback('cannot get description while indexing');
-            return;
-        }
-
-        searchEngine.getDescription(id, callback);
-    });
-
-    socket.on('queryEntries', (query, callback) => {
-        if (indexing) {
-            callback({
-                result: null,
-                err: ['cannot query while indexing']
-            });
-            return;
-        }
-
-        queryEntries(query, (result, err) => {
-            callback({
-                result: result,
-                err: err
-            });
-        });
-    });
-
-    function emitNewUid() {
-        socket.emit('uid', utils.randomValueBase64(32));
+  socket.on('queryEntries', (query, callback) => {
+    if (indexing) {
+      callback({
+        result: null,
+        err: ['cannot query while indexing']
+      });
+      return;
     }
 
-    socket.on('requestUid', () => {
-        emitNewUid();
+    queryEntries(query, (result, err) => {
+      callback({
+        result: result,
+        err: err
+      });
     });
+  });
 
-    socket.on('track', (data) => {
-        if (!data.uid || data.uid.length != 32) {
-            emitNewUid();
-            return;
-        }
+  function emitNewUid() {
+    socket.emit('uid', utils.randomValueBase64(32));
+  }
 
-        if (!socketUid) {
-            socketUid = data.uid;
-        } else if (data.uid != socketUid) {
-            socket.emit('uid', socketUid);
-            return;
-        }
+  socket.on('requestUid', () => {
+    emitNewUid();
+  });
 
-        if (!!piwik) {
-            if (!(typeof data.href === 'string' || data.href instanceof String)) {
-                return;
-            }
+  socket.on('track', (data) => {
+    if (!data.uid || data.uid.length != 32) {
+      emitNewUid();
+      return;
+    }
 
-            let host = URL.parse(data.href).hostname;
-            let siteHost = URL.parse(config.piwik.siteUrl).hostname;
-            if (siteHost != host) {
-                return;
-            }
+    if (!socketUid) {
+      socketUid = data.uid;
+    } else if (data.uid != socketUid) {
+      socket.emit('uid', socketUid);
+      return;
+    }
 
-            piwik.track({
-                token_auth: config.piwik.token_auth,
-                url: data.href,
-                uid: socketUid,
-                cip: clientIp,
+    if (!!piwik) {
+      if (!(typeof data.href === 'string' || data.href instanceof String)) {
+        return;
+      }
 
-                pv_id: data.pv_id,
-                ua: data.ua,
-                lang: data.lang,
-                res: data.res,
-                urlref: data.urlref,
-                action_name: data.action_name,
-                h: data.h,
-                m: data.m,
-                s: data.s,
-                rand: data.rand
-            });
-        }
+      let host = URL.parse(data.href).hostname;
+      let siteHost = URL.parse(config.piwik.siteUrl).hostname;
+      if (siteHost != host) {
+        return;
+      }
+
+      piwik.track({
+        token_auth: config.piwik.token_auth,
+        url: data.href,
+        uid: socketUid,
+        cip: clientIp,
+
+        pv_id: data.pv_id,
+        ua: data.ua,
+        lang: data.lang,
+        res: data.res,
+        urlref: data.urlref,
+        action_name: data.action_name,
+        h: data.h,
+        m: data.m,
+        s: data.s,
+        rand: data.rand
+      });
+    }
+  });
+
+  socket.on('getDonate', (callback) => {
+    fs.readFile(path.join(__dirname, '/client/donate.html'), 'utf-8', (err, data) => {
+      if (err) {
+        callback(err.message);
+      } else {
+        callback(data);
+      }
     });
+  });
 
-    socket.on('getDonate', (callback) => {
-        fs.readFile(path.join(__dirname, '/client/donate.html'), 'utf-8', (err, data) => {
-            if (err) {
-                callback(err.message);
-            } else {
-                callback(data);
-            }
-        });
+  socket.on('getImpressum', (callback) => {
+    fs.readFile(path.join(__dirname, '/client/impressum.html'), 'utf-8', (err, data) => {
+      if (err) {
+        callback(err.message);
+      } else {
+        callback(data);
+      }
     });
+  });
 
-    socket.on('getImpressum', (callback) => {
-        fs.readFile(path.join(__dirname, '/client/impressum.html'), 'utf-8', (err, data) => {
-            if (err) {
-                callback(err.message);
-            } else {
-                callback(data);
-            }
-        });
+  socket.on('getDatenschutz', (callback) => {
+    fs.readFile(path.join(__dirname, '/client/datenschutz.html'), 'utf-8', (err, data) => {
+      if (err) {
+        callback(err.message);
+      } else {
+        callback(data);
+      }
     });
-
-    socket.on('getDatenschutz', (callback) => {
-        fs.readFile(path.join(__dirname, '/client/datenschutz.html'), 'utf-8', (err, data) => {
-            if (err) {
-                callback(err.message);
-            } else {
-                callback(data);
-            }
-        });
-    });
+  });
 });
 
 httpServer.listen(config.webserverPort, () => {
-    console.log('server listening on *:' + config.webserverPort);
-    console.log();
+  console.log('server listening on *:' + config.webserverPort);
+  console.log();
 });
 
 function queryEntries(query, callback) {
-    let begin = process.hrtime();
-    searchEngine.search(query, (result, err) => {
-        let end = process.hrtime(begin);
+  let begin = process.hrtime();
+  searchEngine.search(query, (result, err) => {
+    let end = process.hrtime(begin);
 
-        if (err) {
-            callback(result, err);
-            return;
-        }
+    if (err) {
+      callback(result, err);
+      return;
+    }
 
-        let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
+    let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
-        let queryInfo = {
-            filmlisteTimestamp: filmlisteTimestamp,
-            searchEngineTime: searchEngineTime,
-            resultCount: result.result.length,
-            totalResults: result.totalResults
-        };
+    let queryInfo = {
+      filmlisteTimestamp: filmlisteTimestamp,
+      searchEngineTime: searchEngineTime,
+      resultCount: result.result.length,
+      totalResults: result.totalResults
+    };
 
-        callback({
-            results: result.result,
-            queryInfo: queryInfo
-        }, err);
-    });
+    callback({
+      results: result.result,
+      queryInfo: queryInfo
+    }, err);
+  });
 }
 
 function updateLoop() {
-    mediathekManager.updateFilmlisteIfUpdateAvailable((err) => {
-        if (err) {
-            console.error(err);
-        } else {
-            mediathekManager.getCurrentFilmlisteTimestamp((timestamp) => {
-                filmlisteTimestamp = timestamp;
-            });
-        }
+  mediathekManager.updateFilmlisteIfUpdateAvailable((err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      mediathekManager.getCurrentFilmlisteTimestamp((timestamp) => {
+        filmlisteTimestamp = timestamp;
+      });
+    }
 
-        setTimeout(() => updateLoop(), 2 * 60 * 1000);
-    });
+    setTimeout(() => updateLoop(), 2 * 60 * 1000);
+  });
 }
 
 if (config.index) {
-    setImmediate(() => updateLoop());
+  setImmediate(() => updateLoop());
 }
