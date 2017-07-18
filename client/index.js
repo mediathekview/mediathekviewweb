@@ -27,24 +27,30 @@ XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
 }
 
 function isWDRm3u8(url) {
-    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/(ww|de)\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
-
+    let regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
+    
     return regex.test(url);
 }
 
 function WDRm3u8ToMP4s(url) {
-    let regex = /http:\/\/adaptiv\.wdr\.de\/i\/medp\/(ww|de)\/(\w+?)\/(\w+?)\/(\w+?)\/,([\d_,]*?),\.mp4.csmil/;
+    let regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
     let match = regex.exec(url);
 
     if (match == null) {
         return url;
     }
 
+    let region = (match[1] == 'weltweit') ? 'ww' : match[1];
+    let fsk = match[2];
+    let unknownNumber = match[3];
+    let id = match[4];
     let qualities = match[5].split(',');
+    
     let mp4s = [];
 
     for (var i = 0; i < qualities.length; i++) {
-        mp4s.push(`http://ondemand-${match[1]}.wdr.de/medp/${match[2]}/${match[3]}/${match[4]}/${qualities[i]}.mp4`);
+        let mp4 = `http://ondemand-${region}.wdr.de/medp/${fsk}/${unknownNumber}/${id}/${qualities[i]}.mp4`;
+        mp4s.push(mp4);
     }
 
     return mp4s;
@@ -439,8 +445,8 @@ function handleQueryResult(result, err) {
             let mp4s = WDRm3u8ToMP4s(data.url_video);
 
             data.url_video_low = mp4s[0];
-            data.url_video = mp4s[1];
-            data.url_video_hd = mp4s[2];
+            data.url_video = mp4s[2];
+            data.url_video_hd = mp4s[4];
         } else if (isBRm3u8(data.url_video)) {
             let mp4s = BRm3u8ToMP4s(data.url_video);
 
