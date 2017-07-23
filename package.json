@@ -9,7 +9,8 @@
   "main": "app.js",
   "scripts": {
     "build": "babel ./client/index.js --out-file ./static/index-compiled.min.js --source-maps --minified",
-    "build-watch": "babel ./client/index.js --watch --out-file ./static/index-compiled.min.js --source-maps --minified & echo running in background.."
+    "build-watch": "babel ./client/index.js --watch --out-file ./static/index-compiled.min.js --source-maps --minified & echo running in background..",
+    "serve": "babel-node app.js"
   },
   "author": "",
   "license": "ISC",
@@ -37,7 +38,9 @@
     "videojs-contrib-hls": "^5.8.0"
   },
   "devDependencies": {
+    "babel": "^6.23.0",
     "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.3",
     "babel-preset-latest": "^6.24.1"
   }
 }
