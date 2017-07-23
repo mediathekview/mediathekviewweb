@@ -24,18 +24,16 @@ ipc.on('parseFilmliste', (options) => {
 });
 
 function createUrlFromBase(baseUrl, newUrl) {
-  let newSplit = newUrl.split('|');
+  const newSplit = newUrl.split('|');
   if (newSplit.length == 2) {
     return baseUrl.substr(0, newSplit[0]) + newSplit[1];
   }
   return '';
 }
 
-const handleListMeta = ({
-  line
-}) => {
-  let regex = /".*?","(\d+)\.(\d+)\.(\d+),\s?(\d+):(\d+)"/;
-  let match = regex.exec(line);
+const handleListMeta = ({line}) => {
+  const regex = /".*?","(\d+)\.(\d+)\.(\d+),\s?(\d+):(\d+)"/;
+  const match = regex.exec(line);
   return Math.floor(
     Date.UTC(
       parseInt(match[3]),
@@ -45,6 +43,52 @@ const handleListMeta = ({
       parseInt(match[5])
     ) / 1000
   );
+}
+
+const mapListLineToRedis = ({line, currentChannel, currentTopic}) => {
+  // destruct parsed
+  const [
+    line_channel,    // 0
+    line_topic,      // 1
+    title,           // 2
+    ,                // 3
+    ,                // 4
+    hr_duration,     // 5
+    size,            // 6
+    description,     // 7
+    url_video,       // 8
+    url_website,     // 9
+    url_subtitle,    // 10
+    ,                // 11
+    url_video_low,   // 12
+    ,                // 13
+    url_video_hd,    // 14
+    ,                // 15
+    timestamp        // 16
+  ] = JSON.parse(line);
+
+  currentChannel = (line_channel.length == 0) ? currentChannel : line_channel;
+  currentTopic = (line_topic.length == 0) ? currentTopic : line_topic;
+
+  const [hours, minutes, seconds] = hr_duration.split(':');
+  return [
+    currentChannel,
+    currentTopic,
+    JSON.stringify({
+      channel: currentChannel,
+      topic: currentTopic,
+      title,
+      description,
+      timestamp: parseInt(timestamp) | 0,
+      duration: (parseInt(hours) * 60 * 60) + (parseInt(minutes) * 60) + parseInt(seconds),
+      size: parseInt(size) * 1024 * 1024, //MB to bytes
+      url_website,
+      url_subtitle,
+      url_video,
+      url_video_low: createUrlFromBase(url_video, url_video_low),
+      url_video_hd: createUrlFromBase(url_video, url_video_hd)
+    })
+  ]
 }
 
 function parseFilmliste(file, setKey, timestampKey) {
@@ -81,6 +125,15 @@ function parseFilmliste(file, setKey, timestampKey) {
       }
 
       lineReader.eachLine(fileStream, lineReaderOpts, (line, last, getNext) => {
+        currentLine++;
+        if (currentLine === 1) {
+          return getNext();
+        }
+        if (currentLine === 2) {
+          redis.set(timestampKey, handleListMeta({line}));
+          return getNext();
+        }
+
         if (last) {
           return redis.batch(buffer).exec(() => {
             ipc.send('state', {
@@ -92,59 +145,9 @@ function parseFilmliste(file, setKey, timestampKey) {
           });
         }
 
-        currentLine++;
+        [currentChannel, currentTopic, entry] = mapListLineToRedis({line, currentChannel, currentTopic})
 
-        if (currentLine === 1) {
-          return getNext();
-        }
-        if (currentLine === 2) {
-          redis.set(timestampKey, handleListMeta({
-            line
-          }));
-          return getNext();
-        }
-
-        // destruct parsed
-        const [
-          line_channel,
-          line_topic,
-          title,
-          ,
-          ,
-          hr_duration,
-          size,
-          description,
-          url_video,
-          url_website,
-          url_subtitle,
-          ,
-          url_video_low,
-          ,
-          url_video_hd,
-          ,
-          timestamp
-        ] = JSON.parse(line);
-
-        currentChannel = (line_channel.length == 0) ? currentChannel : line_channel;
-        currentTopic = (line_topic.length == 0) ? currentTopic : line_topic;
-
-        const [hours, minutes, seconds] = hr_duration.split(':');
-        const entry = {
-          channel: currentChannel,
-          topic: currentTopic,
-          title,
-          description,
-          timestamp: parseInt(timestamp) | 0,
-          duration: (parseInt(hours) * 60 * 60) + (parseInt(minutes) * 60) + parseInt(seconds),
-          size: parseInt(size) * 1024 * 1024, //MB to bytes
-          url_website,
-          url_subtitle,
-          url_video,
-          url_video_low: createUrlFromBase(url_video, url_video_low),
-          url_video_hd: createUrlFromBase(url_video, url_video_hd)
-        };
-
-        buffer.push(['sadd', setKey, JSON.stringify(entry)]);
+        buffer.push(['sadd', setKey, entry]);
 
         if (currentLine % 500 == 0) {
           redis.batch(buffer).exec();
@@ -154,7 +157,6 @@ function parseFilmliste(file, setKey, timestampKey) {
             progress: getProgress()
           });
         }
-
         getNext();
       });
     });
