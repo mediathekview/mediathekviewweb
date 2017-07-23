@@ -72,7 +72,6 @@ function parseFilmliste(file, setKey, timestampKey) {
       };
 
       let buffer = [];
-      let entries = 0;
       let currentChannel;
       let currentTopic;
       let currentLine = 0;
@@ -105,13 +104,29 @@ function parseFilmliste(file, setKey, timestampKey) {
           return getNext();
         }
 
-        const parsed = JSON.parse(line);
-
         // destruct parsed
-        const [, , title, , , hr_duration, size, description, url_video, url_website, url_subtitle, , url_video_low, , url_video_hd, , timestamp] = parsed;
+        const [
+          line_channel,
+          line_topic,
+          title,
+          ,
+          ,
+          hr_duration,
+          size,
+          description,
+          url_video,
+          url_website,
+          url_subtitle,
+          ,
+          url_video_low,
+          ,
+          url_video_hd,
+          ,
+          timestamp
+        ] = JSON.parse(line);
 
-        channel = (parsed[0].length == 0) ? currentChannel : parsed[0];
-        topic = (parsed[1].length == 0) ? currentTopic : parsed[1];
+        const channel = (line_channel.length == 0) ? currentChannel : line_channel;
+        const topic = (line_topic.length == 0) ? currentTopic : line_topic;
 
         const [hours, minutes, seconds] = hr_duration.split(':');
         const entry = {
@@ -130,13 +145,12 @@ function parseFilmliste(file, setKey, timestampKey) {
         };
 
         buffer.push(['sadd', setKey, JSON.stringify(entry)]);
-        entries++;
 
         if (currentLine % 500 == 0) {
           redis.batch(buffer).exec();
           buffer = [];
           ipc.send('state', {
-            entries: entries,
+            entries: currentLine - 2,
             progress: getProgress()
           });
         }
