@@ -70,7 +70,11 @@ const mapListLineToRedis = ({line, currentChannel, currentTopic}) => {
   currentChannel = (line_channel.length == 0) ? currentChannel : line_channel;
   currentTopic = (line_topic.length == 0) ? currentTopic : line_topic;
 
-  const [hours, minutes, seconds] = hr_duration.split(':');
+  const duration = hr_duration.split(':').reverse().reduce((a, b, index) => (
+    (index === 1) 
+      ? parseInt(a) + parseInt(b) * 60 
+      : parseInt(b) * (Math.pow(60, index)) + a
+  ));
   return [
     currentChannel,
     currentTopic,
@@ -80,7 +84,7 @@ const mapListLineToRedis = ({line, currentChannel, currentTopic}) => {
       title,
       description,
       timestamp: parseInt(timestamp) | 0,
-      duration: (parseInt(hours) * 60 * 60) + (parseInt(minutes) * 60) + parseInt(seconds),
+      duration,
       size: parseInt(size) * 1024 * 1024, //MB to bytes
       url_website,
       url_subtitle,
@@ -104,27 +108,20 @@ function parseFilmliste(file, setKey, timestampKey) {
         return;
       }
 
-      let filesize = stats.size;
+      let currentChannel,
+          currentTopic,
+          buffer = [],
+          currentLine = 0;
 
-      let fileStream = fs.createReadStream(null, {
-        fd: fd,
-        autoClose: true
-      });
+      const filesize = stats.size,
+            fileStream = fs.createReadStream(null, {fd: fd, autoClose: true}),
+            lineReaderSeparator = {separator: /^{"Filmliste":|,"X":|}$/}
 
-      let getProgress = () => {
+      const getProgress = () => {
         return fileStream.bytesRead / filesize;
       };
 
-      let buffer = [];
-      let currentChannel;
-      let currentTopic;
-      let currentLine = 0;
-
-      const lineReaderOpts = {
-        separator: /^{"Filmliste":|,"X":|}$/
-      }
-
-      lineReader.eachLine(fileStream, lineReaderOpts, (line, last, getNext) => {
+      lineReader.eachLine(fileStream, lineReaderSeparator, (line, last, getNext) => {
         currentLine++;
         if (currentLine === 1) {
           return getNext();
@@ -146,7 +143,6 @@ function parseFilmliste(file, setKey, timestampKey) {
         }
 
         [currentChannel, currentTopic, entry] = mapListLineToRedis({line, currentChannel, currentTopic})
-
         buffer.push(['sadd', setKey, entry]);
 
         if (currentLine % 500 == 0) {
