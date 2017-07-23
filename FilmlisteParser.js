@@ -84,7 +84,7 @@ function parseFilmliste(file, setKey, timestampKey) {
         if (last) {
           return redis.batch(buffer).exec(() => {
             ipc.send('state', {
-              entries: entries,
+              entries: currentLine - 2,
               progress: 1
             });
             ipc.send('done');
@@ -125,13 +125,13 @@ function parseFilmliste(file, setKey, timestampKey) {
           timestamp
         ] = JSON.parse(line);
 
-        const channel = (line_channel.length == 0) ? currentChannel : line_channel;
-        const topic = (line_topic.length == 0) ? currentTopic : line_topic;
+        currentChannel = (line_channel.length == 0) ? currentChannel : line_channel;
+        currentTopic = (line_topic.length == 0) ? currentTopic : line_topic;
 
         const [hours, minutes, seconds] = hr_duration.split(':');
         const entry = {
-          channel,
-          topic,
+          channel: currentChannel,
+          topic: currentTopic,
           title,
           description,
           timestamp: parseInt(timestamp) | 0,
