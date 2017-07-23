@@ -22,38 +22,34 @@ class MediathekIndexer extends EventEmitter {
         this.stateEmitter.setState('step', 'indexFilmliste');
         this.hasCurrentState((err, hasCurrentState) => {
             if (err) {
-                callback(err);
-            } else {
-                if (hasCurrentState) {
-                    this.deltaIndexFilmliste(file, (err) => {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            this.finalize((err) => {
-                                if (err) {
-                                    callback(err);
-                                } else {
-                                    callback(null);
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    this.fullIndexFilmliste(file, (err) => {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            this.finalize((err) => {
-                                if (err) {
-                                    callback(err);
-                                } else {
-                                    callback(null);
-                                }
-                            });
-                        }
-                    });
-                }
+                return callback(err);
             }
+
+            if (hasCurrentState) {
+                return this.deltaIndexFilmliste(file, (err) => {
+                    if (err) {
+                        return callback(err);
+                    } 
+                    this.finalize((err) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(null);
+                    });
+                });
+                
+            }
+            this.fullIndexFilmliste(file, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+                this.finalize((err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null);
+                });
+            });
         });
     }
 
@@ -66,10 +62,9 @@ class MediathekIndexer extends EventEmitter {
             .del('mediathekIndexer:removedEntries')
             .exec((err, replies) => {
                 if (err) {
-                    callback(err);
-                } else {
-                    callback(null);
+                    return callback(err);
                 }
+                callback(null);
             });
 
         this.emit('done');
@@ -79,10 +74,9 @@ class MediathekIndexer extends EventEmitter {
     hasCurrentState(callback) {
         this.redis.exists('mediathekIndexer:currentFilmliste', (err, reply) => {
             if (err) {
-                callback(err, null);
-            } else {
-                callback(null, reply);
+                return callback(err, null);
             }
+            callback(null, reply);
         });
     }
 
@@ -90,28 +84,24 @@ class MediathekIndexer extends EventEmitter {
         this.stateEmitter.setState('step', 'fullIndexFilmliste');
         this.reCreateESIndex((err) => {
             if (err) {
-                callback(err);
-            } else {
-                this.parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp', (err) => {
-                    if (err) {
-                        callback(err);
-                    } else {
-                        this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:none', (err) => {
-                            if (err) {
-                                callback(err);
-                            } else {
-                                this.indexDelta((err) => {
-                                    if (err) {
-                                        callback(err);
-                                    } else {
-                                        callback(null);
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
+                return callback(err);
             }
+            this.parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp', (err) => {
+                if (err) {
+                    return callback(err);
+                }
+                this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:none', (err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    this.indexDelta((err) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(null);
+                    });
+                });
+            });
         });
     }
 
@@ -121,53 +111,47 @@ class MediathekIndexer extends EventEmitter {
             index: 'filmliste'
         }, (err, resp, status) => {
             if (err && err.status != 404) { //404 (index not found) is fine, as we'll create the index in next step.
-                callback(err);
-            } else {
-                this.searchClient.indices.create({
+                return callback(err);
+            } 
+            this.searchClient.indices.create({
+                index: 'filmliste'
+            }, (err, resp, status) => {
+                if (err) {
+                    return callback(err);
+                } 
+                this.searchClient.indices.close({
                     index: 'filmliste'
                 }, (err, resp, status) => {
                     if (err) {
-                        callback(err);
-                    } else {
-                        this.searchClient.indices.close({
-                            index: 'filmliste'
+                        return callback(err);
+                    }
+                    this.searchClient.indices.putSettings({
+                        index: 'filmliste',
+                        body: elasticsearchDefinitions.settings
+                    }, (err, resp, status) => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        this.searchClient.indices.putMapping({
+                            index: 'filmliste',
+                            type: 'entries',
+                            body: elasticsearchDefinitions.mapping
                         }, (err, resp, status) => {
                             if (err) {
-                                callback(err);
-                            } else {
-                                this.searchClient.indices.putSettings({
-                                    index: 'filmliste',
-                                    body: elasticsearchDefinitions.settings
-                                }, (err, resp, status) => {
-                                    if (err) {
-                                        callback(err);
-                                    } else {
-                                        this.searchClient.indices.putMapping({
-                                            index: 'filmliste',
-                                            type: 'entries',
-                                            body: elasticsearchDefinitions.mapping
-                                        }, (err, resp, status) => {
-                                            if (err) {
-                                                callback(err);
-                                            } else {
-                                                this.searchClient.indices.open({
-                                                    index: 'filmliste'
-                                                }, (err, resp, status) => {
-                                                    if (err) {
-                                                        callback(err);
-                                                    } else {
-                                                        callback(null);
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    }
-                                });
+                                return callback(err);
                             }
+                            this.searchClient.indices.open({
+                                index: 'filmliste'
+                            }, (err, resp, status) => {
+                                if (err) {
+                                    return callback(err);
+                                }
+                                callback(null);
+                            });
                         });
-                    }
+                    });
                 });
-            }
+            });
         });
     }
 
@@ -175,22 +159,19 @@ class MediathekIndexer extends EventEmitter {
         this.stateEmitter.setState('step', 'deltaIndexFilmliste');
         this.parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp', (err) => {
             if (err) {
-                callback(err);
-            } else {
-                this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste', (err) => {
-                    if (err) {
-                        callback(err);
-                    } else {
-                        this.indexDelta((err) => {
-                            if (err) {
-                                callback(err);
-                            } else {
-                                callback(null);
-                            }
-                        });
-                    }
-                });
+                return callback(err);
             }
+            this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste', (err) => {
+                if (err) {
+                    return callback(err);
+                }
+                this.indexDelta((err) => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null);
+                });
+            });
         });
     }
 
@@ -210,14 +191,13 @@ class MediathekIndexer extends EventEmitter {
             })
             .exec((err, replies) => {
                 if (err) {
-                    callback(err);
-                } else {
-                    this.stateEmitter.updateState({
-                        added: added,
-                        removed: removed
-                    });
-                    callback(null);
+                    return callback(err);
                 }
+                this.stateEmitter.updateState({
+                    added: added,
+                    removed: removed
+                });
+                callback(null);
             });
     }
 
