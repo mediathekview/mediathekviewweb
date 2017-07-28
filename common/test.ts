@@ -3,33 +3,20 @@ import * as Elasticsearch from 'elasticsearch';
 
 let elasticsearch = new Elasticsearch.Client({ host: 'localhost:9200' });
 
-
 let query = new Query();
 
 query
-  .index('test_data')
-  .type('test_type')
-  .skip(5)
-  .limit(10)
-//.sort('age', SortOrder.Ascending)
+  .index('filmliste')
+  .type('entries')
+  .skip(0)
+  .limit(5)
+.sort('timestamp', SortOrder.Descending)
 
-query.match(Occurrence.Must, new RangeMatch('age', { lte: 1000 }));
+query.match(Occurrence.Must, new MultiMatch('sturm der liebe', ['title', 'topic'], { }));
 
 let elasticQuery = query.buildQuery();
 
-elasticsearch.search(elasticQuery, (err, result) => {
-  elasticsearch.search(elasticQuery, (err, result) => {
-    elasticsearch.search(elasticQuery, (err, result) => {
-      elasticsearch.search(elasticQuery, (err, result) => {
-        elasticsearch.search(elasticQuery, (err, result) => {
-          elasticsearch.search(elasticQuery, (err, result) => {
-          });
-        });
-      });
-    });
-  });
-});
-
+console.log(JSON.stringify(elasticQuery, null, 2))
 
 setTimeout(() => {
   const NS_PER_SEC = 1e9;
@@ -39,6 +26,6 @@ setTimeout(() => {
     console.log(`Benchmark took ${(diff[0] * NS_PER_SEC + diff[1]) / 1000 / 1000} milliseconds`);
 
     console.log(JSON.stringify(err, null, 2));
-    console.log(result);
+    console.log(JSON.stringify(result, null, 2));
   });
 }, 2000);

@@ -1,13 +1,4 @@
-interface ISerializable {
-  getSerializedObj(): any;
-  deserialize(obj: any): ISerializable;
-}
-
-interface IQueryBuildable {
-  buildQuery(): {};
-}
-
-export type SerializedQuery = { matches: { occurrence: Occurrence, serializedMatch: any }[], sorts: ISort[], index: string, type: string, skip: number, limit: number };
+import { ISerializable, Occurrence, ISort, SortOrder, SortMode, SerializedQuery, Operator, IQueryBuildable } from './';
 
 export class Query implements ISerializable, IQueryBuildable {
   private _index: string;
@@ -104,7 +95,8 @@ export class Query implements ISerializable, IQueryBuildable {
             must_not: [],
             should: []
           }
-        }
+        },
+        sort: []
       }
     };
 
@@ -117,11 +109,11 @@ export class Query implements ISerializable, IQueryBuildable {
     }
 
     if (this.sort.length > 0) {
-      queryObj['sort'] = [];
+      queryObj.body.sort = [];
 
       this._sorts.forEach((sort) => {
         let sortEntry = {};
-        sortEntry[sort.field] = { order: (sort.order == SortOrder.Ascending) ? 'asc' : 'desc', ignore_unmapped: true  };
+        sortEntry[sort.field] = { order: (sort.order == SortOrder.Ascending) ? 'asc' : 'desc' };
 
         if (sort.mode != null) {
           let mode: string;
@@ -146,9 +138,9 @@ export class Query implements ISerializable, IQueryBuildable {
           sortEntry[sort.field]['mode'] = mode;
         }
 
-        queryObj['sort'].push(sortEntry);
+        queryObj.body.sort.push(sortEntry);
       });
-    }
+    } else delete queryObj.body.sort;
 
     this._matches.forEach((match) => {
       switch (match.occurrence) {
@@ -175,12 +167,6 @@ export class Query implements ISerializable, IQueryBuildable {
 
     return queryObj;
   }
-}
-
-interface ISort {
-  field: string;
-  order: SortOrder;
-  mode: SortMode;
 }
 
 interface IMatch extends ISerializable, IQueryBuildable {
@@ -284,39 +270,3 @@ export class RangeMatch implements IMatch {
     return queryObj;
   }
 }
-
-export enum Operator {
-  And,
-  Or
-}
-
-export enum Occurrence {
-  Must = 0,
-  Should = 1,
-  MustNot = 2,
-  Filter = 3
-}
-
-export enum SortOrder {
-  Ascending = 0,
-  Descending = 1
-}
-
-export enum SortMode {
-  Min,
-  Max,
-  Sum,
-  Average,
-  Median
-}
-
-export class Field {
-  static Channel = 'channel';
-  static Topic = 'topic';
-  static Title = 'title';
-  static Timestamp = 'timestamp';
-  static Duration = 'duration';
-  static Size = 'size';
-  static Description = 'description';
-  static Website = 'website';
-};
