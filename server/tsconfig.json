@@ -1,27 +1,38 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "lib": ["es2017", "dom"],
+    "target": "es5",
     "module": "commonjs",
-
+    "lib": ["es2017"],
     "sourceMap": true,
-    "outDir": "dist",
+    "outDir": "./build",
     "removeComments": true,
+    "downlevelIteration": true,
 
-    "strict": false,
-    "strictNullChecks": false,
-    "noImplicitThis": false,
-    "alwaysStrict": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
 
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitReturns": false,
-    "noFallthroughCasesInSwitch": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
 
     "moduleResolution": "node",
-    "typeRoots": ["node_modules/@types"]
+    "baseUrl": "./",
+    "paths": {},
+    "rootDirs": ["../common"],
+    "typeRoots": ["./node_modules/@types"],
+    "types": [],
+
+    "inlineSourceMap": false,
+    "inlineSources": false,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
 
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts", "dist", "package.json"]
+  "exclude": ["node_modules"]
 }

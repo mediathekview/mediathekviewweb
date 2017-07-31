@@ -1,18 +1,10 @@
 {
   "name": "common",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@types/elasticsearch": "^5.0.14",
-    "elasticsearch": "^13.2.0"
-  },
+  "description": "shared files between server and client",
+  "author": "Patrick Hein",
+  "license": "GPLv3",
   "devDependencies": {
-    "@types/node": "^8.0.14"
+    "@types/node": "^8.0.17"
   }
 }
