@@ -9,7 +9,7 @@
     "downlevelIteration": true,
 
     "strict": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "strictNullChecks": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
@@ -20,11 +20,8 @@
     "noFallthroughCasesInSwitch": true,
 
     "moduleResolution": "node",
-    "baseUrl": "./",
-    "paths": {},
     "rootDirs": ["../common"],
-    "typeRoots": ["./node_modules/@types"],
-    "types": [],
+    "typeRoots": ["node_modules/@types"],
 
     "inlineSourceMap": false,
     "inlineSources": false,
@@ -33,6 +30,5 @@
     "emitDecoratorMetadata": true
   },
 
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"]
 }

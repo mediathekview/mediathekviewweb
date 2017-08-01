@@ -10,12 +10,15 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "devDependencies": {
-    "@types/node": "^8.0.14",
+    "@types/needle": "^1.4.0",
+    "@types/node": "^8.0.19",
     "nodemon": "^1.11.0",
-    "ts-node": "^3.2.1",
+    "ts-node": "^3.3.0",
     "typescript": "^2.4.2"
   },
   "dependencies": {
+    "lzma-native": "^3.0.1",
+    "needle": "^1.6.0",
     "rxjs": "^5.4.2"
   }
 }
