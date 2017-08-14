@@ -1,58 +1,78 @@
 import { Transform } from 'stream';
 import * as Crypto from 'crypto';
+import { IFilmlist } from './filmlist-interface';
 import { IEntry, IFilmlistMetadata, IVideo, Video, ISubtitle, Subtitle, Quality } from '../common';
 
 const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
 
-export class FilmlistParser extends Transform {
-  private buffer: string = '';
-  private hasMetaData: boolean = false;
-  private filmlistMetadata: IFilmlistMetadata;
-  private metadataCallback: (filmlistMetadata: IFilmlistMetadata) => void;
+export class FilmlistParser {
+  private inputBuffer: string = '';
+  private outputBuffer: IEntry[] = [];
+  private end: boolean = false;
+  private error: Error | null = null;
   private currentChannel: string = '';
   private currentTopic: string = '';
 
-  constructor(metadataCallback: (filmlistMetadata: IFilmlistMetadata) => void) {
-    super({ objectMode: true });
+  private dataPromise: Promise<void>;
+  private resolve: () => void;
+  private reject: (reason: any) => void;
 
-    this.metadataCallback = metadataCallback;
+  metadata: IFilmlistMetadata | null = null;
+
+  constructor(private filmlist: IFilmlist, private metadataCallback: (metadata: IFilmlistMetadata) => void) {
   }
 
-  _transform(chunk: string, encoding: string, callback: (error: null | Error, data?: IEntry) => void) {
-    this.buffer += chunk;
+  async *parse(): AsyncIterableIterator<IEntry> {
+    this.filmlist.getStream()
+      .on('data', (chunk: string) => this.handleChunk(chunk))
+      .on('end', () => this.end = true)
+      .on('error', (error) => this.reject(error));
 
+    while (!this.end) {
+      await this.dataPromise;
+      yield* this.outputBuffer;
+      this.outputBuffer = [];
+
+      this.dataPromise = new Promise((resolve, reject) => {
+        this.resolve = resolve;
+        this.reject = reject;
+      });
+    }
+  }
+
+  private handleChunk(chunk: string) {
+    this.inputBuffer += chunk;
+    this.parseBuffer();
+    this.resolve();
+  }
+
+  private parseBuffer() {
     let match: RegExpMatchArray | null;
 
-    if (!this.hasMetaData) {
-      match = this.buffer.match(META_DATA_REGEX);
+    if (this.metadata == null) {
+      match = this.inputBuffer.match(META_DATA_REGEX);
 
       if (match != null) {
-        this.buffer = this.buffer.slice((match.index as number) + match[0].length);
+        this.inputBuffer = this.inputBuffer.slice((match.index as number) + match[0].length);
 
         const [, day, month, year, hour, minute, hash] = match;
         const date = Date.UTC(parseInt(year), parseInt(month), parseInt(day), parseInt(hour), parseInt(minute));
         const timestamp = Math.floor(date.valueOf() / 1000);
 
-        this.filmlistMetadata = { timestamp: timestamp, hash: hash };
-        this.metadataCallback(this.filmlistMetadata);
-
-        this.hasMetaData = true;
+        this.metadata = { timestamp: timestamp, hash: hash };
+        this.metadataCallback(this.metadata);
       }
-
-      return callback(null);
     }
 
-    while ((match = this.buffer.match(ENTRY_REGEX)) != null) {
-      this.buffer = this.buffer.slice((match.index as number) + match[0].length);
+    while ((match = this.inputBuffer.match(ENTRY_REGEX)) != null) {
+      this.inputBuffer = this.inputBuffer.slice((match.index as number) + match[0].length);
 
       const rawFilmlistEntry = match[1];
       const entry = this.rawFilmlistEntryToEntry(rawFilmlistEntry);
 
-      this.push(entry);
+      this.outputBuffer.push(entry);
     }
-
-    callback(null);
   }
 
   private rawFilmlistEntryToEntry(raw: string): IEntry {
@@ -75,8 +95,8 @@ export class FilmlistParser extends Transform {
     const entry: IEntry = {
       id: '',
       metadata: {
-        firstSeen: this.filmlistMetadata.timestamp, //has to be merged with Math.min() at indexing
-        lastSeen: this.filmlistMetadata.timestamp, //has to be merged with Math.max() at indexing
+        firstSeen: (this.metadata as IFilmlistMetadata).timestamp, //has to be merged with Math.min() at indexing
+        lastSeen: (this.metadata as IFilmlistMetadata).timestamp, //has to be merged with Math.max() at indexing
       },
 
       channel: this.currentChannel,
@@ -99,14 +119,14 @@ export class FilmlistParser extends Transform {
       entry.media.push(new Video(Quality.High, this.createUrlFromBase(url, url_hd), -1));
     }
 
-    const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.description, entry.website, JSON.stringify(entry.media)].join(' _ ');
+    const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.website].join(' _ ');
 
     entry.id = Crypto.createHash('md5').update(hashString).digest('base64').slice(0, -2).replace('/', 'a').replace('+', 'z');
 
     return entry;
   }
 
-  createUrlFromBase(baseUrl: string, newUrl: string): string {
+  private createUrlFromBase(baseUrl: string, newUrl: string): string {
     const split = newUrl.split('|');
     return baseUrl.substr(0, parseInt(split[0])) + split[1];
   }

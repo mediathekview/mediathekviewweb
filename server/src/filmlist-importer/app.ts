@@ -1,16 +1,43 @@
 import * as FS from 'fs';
 import { IEntry } from '../common';
 import { FilmlistParser } from './filmlist-parser';
+import { HttpFilmlist } from './http-filmlist';
+import { MVWArchiveFilmlistProvider } from './mvw-archive-filmlist-provider';
+import { MVWArchiveListing, MVWArchiveFile } from './listing';
+import { CacheManager } from './cache-manager';
 
-var filmlistParser = new FilmlistParser((metadata) => {
-  console.log(metadata);
-});
+(<any>Symbol).asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
 
-const fileStream = FS.createReadStream('/home/patrick/Downloads/filmlist', { encoding: 'utf-8' });
+(async () => {
+  try {
+    const filmlistProvider = new MVWArchiveFilmlistProvider();
+    const cacheManager = new CacheManager('../../data/cache');
 
-let count = 0;
-fileStream.pipe(filmlistParser).on('data', (data: IEntry) => {
-  if (++count % 1000 == 0) {
-    console.log(count);
+    const filmlist = await filmlistProvider.getLatest();
+
+    console.log(await cacheManager.has(filmlist.ressource));
+
+    const filmlisteStream = filmlist.getStream();
+    cacheManager.set('https://archiv.mediathekviewweb.de/Filmliste-akt.xz', filmlisteStream);
+
+    const filmlistParser = new FilmlistParser(filmlist, (metadata) => {
+      console.log(metadata);
+    });
+
+    let counter = 0;
+
+    const iterator = filmlistParser.parse();
+    console.log(iterator);
+
+    for await (let entry of iterator) {
+      counter++;
+      if (counter % 5000 == 0)
+        console.log(counter);
+    }
+
+    console.log(counter)
   }
-}).on('end', () => console.log('end: ' + count));
+  catch (error) {
+    console.error(error);
+  }
+})();

@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es6",
     "module": "commonjs",
-    "lib": ["es2017"],
-    "sourceMap": true,
+    "lib": ["es2017", "esnext"],
+    "sourceMap": false,
     "outDir": "./build",
     "removeComments": true,
     "downlevelIteration": true,

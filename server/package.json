@@ -10,6 +10,9 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "devDependencies": {
+    "@types/async": "^2.0.40",
+    "@types/fs-extra": "^4.0.0",
+    "@types/hjson": "^2.4.0",
     "@types/needle": "^1.4.0",
     "@types/node": "^8.0.19",
     "nodemon": "^1.11.0",
@@ -17,6 +20,9 @@
     "typescript": "^2.4.2"
   },
   "dependencies": {
+    "async": "^2.5.0",
+    "fs-extra": "^4.0.1",
+    "hjson": "^3.1.0",
     "lzma-native": "^3.0.1",
     "needle": "^1.6.0",
     "rxjs": "^5.4.2"
