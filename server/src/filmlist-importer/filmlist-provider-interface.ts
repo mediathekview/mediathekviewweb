@@ -1,6 +1,6 @@
 import { IFilmlist } from './filmlist-interface';
 
-export interface IFilmlisteProvider {
+export interface IFilmlistProvider {
   getAll(): Promise<IFilmlist[]>;
   getRange(fromTimestamp: number, toTimestamp: number): Promise<IFilmlist[]>;
   getLatest(): Promise<IFilmlist>;
