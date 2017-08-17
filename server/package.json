@@ -10,11 +10,12 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "devDependencies": {
-    "@types/async": "^2.0.40",
+    "@types/async": "^2.0.41",
     "@types/fs-extra": "^4.0.0",
     "@types/hjson": "^2.4.0",
+    "@types/ioredis": "0.0.24",
     "@types/needle": "^1.4.0",
-    "@types/node": "^8.0.19",
+    "@types/node": "^8.0.24",
     "nodemon": "^1.11.0",
     "ts-node": "^3.3.0",
     "typescript": "^2.4.2"
@@ -23,8 +24,9 @@
     "async": "^2.5.0",
     "fs-extra": "^4.0.1",
     "hjson": "^3.1.0",
+    "ioredis": "^3.1.4",
     "lzma-native": "^3.0.1",
     "needle": "^1.6.0",
-    "rxjs": "^5.4.2"
+    "rxjs": "^5.4.3"
   }
 }
