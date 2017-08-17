@@ -4,7 +4,15 @@ import * as HJSON from 'hjson';
 interface Config {
   dataDirectoriy: string;
 
+  redis: {
+    host: string;
+    port: number;
+    db: number;
+  }
+
   importer: {
+    latestCheckInterval: number;
+    fullCheckTimeout: number;
     cache: boolean;
   }
 }
@@ -12,7 +20,15 @@ interface Config {
 class StaticConfig {
   static dataDirectoriy = './data';
 
+  static redis = {
+    host: 'localhost',
+    port: 6379,
+    db: 0
+  };
+
   static importer = {
+    latestCheckInterval: 60 * 2,
+    fullCheckTimeout: 60 * 45,
     cache: true
   }
 }
