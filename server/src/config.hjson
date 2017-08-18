@@ -8,12 +8,16 @@
   }
 
   importer: {
-    #interval in seconds to check for an updated "latest filmlist" (Filmliste-akt - for people who know that)
+    // interval in seconds to check for an updated "latest filmlist" (Filmliste-akt - for people who know that), default is 120 (2 minutes)
     latestCheckInterval: 120
 
-    #timeout (reset after every latest check) after which to do a full check from filmlist archive
-    fullCheckTimeout: 60 * 45
+    // timeout (reset after every latest check) after which to do a full check from filmlist archive, default is 2700 (45 minutes)
+    fullCheckTimeout: 2700
 
+    // import all filmlists from archive with an age of X days, default is 30
+    archiveRange: 30
+
+    // whether to cache filmlists from archive or not
     cache: true
   }
 }
