@@ -1,5 +1,5 @@
 import { IFilmlist } from './filmlist-interface';
-import { IFilmlisteProvider } from './filmliste-provider-interface';
+import { IFilmlistProvider } from './filmlist-provider-interface';
 import { IListing, IFile, MVWArchiveListing } from './listing';
 import { HttpFilmlist } from './http-filmlist';
 import * as Needle from 'needle';
@@ -7,7 +7,7 @@ import { CacheManager } from './cache-manager';
 import Config from '../config';
 import * as Async from 'async';
 
-export class MVWArchiveFilmlistProvider implements IFilmlisteProvider {
+export class MVWArchiveFilmlistProvider implements IFilmlistProvider {
   private listing: IListing = new MVWArchiveListing();
 
   constructor() {

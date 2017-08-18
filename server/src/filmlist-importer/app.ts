@@ -5,12 +5,19 @@ import { HttpFilmlist } from './http-filmlist';
 import { MVWArchiveFilmlistProvider } from './mvw-archive-filmlist-provider';
 import { MVWArchiveListing, MVWArchiveFile } from './listing';
 import { CacheManager } from './cache-manager';
+import { FilmlistManager } from './filmlist-manager';
+
+import { IDatastoreProvider, ISet, IKey } from '../data-store';
+import { RedisDatastoreProvider } from '../data-store/redis';
 
 (<any>Symbol).asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
 
+
+const filmlistProvider = new MVWArchiveFilmlistProvider();
+const provider: IDatastoreProvider = new RedisDatastoreProvider('localhost', 6379, 0);
+
 (async () => {
   try {
-    const filmlistProvider = new MVWArchiveFilmlistProvider();
     const cacheManager = new CacheManager('../../data/cache');
 
     const filmlist = await filmlistProvider.getLatest();
@@ -40,4 +47,8 @@ import { CacheManager } from './cache-manager';
   catch (error) {
     console.error(error);
   }
-})();
+});
+
+const manager = new FilmlistManager(provider, filmlistProvider);
+
+setTimeout(() => { }, 10000000);

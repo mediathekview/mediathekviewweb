@@ -20,8 +20,7 @@ export class FilmlistParser {
 
   metadata: IFilmlistMetadata | null = null;
 
-  constructor(private filmlist: IFilmlist, private metadataCallback: (metadata: IFilmlistMetadata) => void) {
-  }
+  constructor(private filmlist: IFilmlist, private metadataCallback: (metadata: IFilmlistMetadata) => void) { }
 
   async *parse(): AsyncIterableIterator<IEntry> {
     this.filmlist.getStream()
