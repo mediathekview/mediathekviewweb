@@ -11,6 +11,7 @@
   "license": "GPLv3",
   "devDependencies": {
     "@types/async": "^2.0.41",
+    "@types/bull": "^3.0.0",
     "@types/fs-extra": "^4.0.0",
     "@types/hjson": "^2.4.0",
     "@types/ioredis": "0.0.24",
@@ -22,6 +23,7 @@
   },
   "dependencies": {
     "async": "^2.5.0",
+    "bull": "^3.0.0-rc.7",
     "fs-extra": "^4.0.1",
     "hjson": "^3.1.0",
     "ioredis": "^3.1.4",
