@@ -2,6 +2,19 @@ import * as Needle from 'needle';
 
 export type Nullable<T> = T | null;
 
+let counter = 0;
+let lastTimestamp: number = 0;
+export function getUniqueID(): string {
+  const timestamp = Date.now();
+
+  if (timestamp != lastTimestamp) {
+    counter = 0;
+    lastTimestamp = timestamp;
+  }
+
+  return `${process.pid}:${timestamp}:${counter++}`;
+}
+
 export function random(min: number, max: number, integer: boolean = false) {
   const value = (Math.random() * (max - min)) + min;
   return integer ? Math.floor(value) : value;
