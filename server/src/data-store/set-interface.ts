@@ -1,4 +1,6 @@
-export interface ISet<T> {
+import { ITransactable } from './';
+
+export interface ISet<T> extends ITransactable {
   key: string;
 
   add(members: T[] | T): Promise<number>;

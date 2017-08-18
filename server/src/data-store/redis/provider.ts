@@ -1,30 +1,18 @@
-import { IDatastoreProvider, ISet, IKey } from '../';
-import { RedisSet, RedisKey } from './';
+import { IDatastoreProvider, IMap, ITransaction, ISet, IKey } from '../';
+import { RedisSet, RedisMap, RedisKey, RedisTransaction } from './';
+import { getUniqueID } from '../../utils';
 import * as Redis from 'ioredis';
 
 export class RedisDatastoreProvider implements IDatastoreProvider {
   private redis: Redis.Redis;
-  private counter = 0;
-  private lastTimestamp: number = 0;
 
   constructor(host: string, port: number, db: number) {
     this.redis = Redis(port, host, { db: db });
   }
 
-  private getUniqueKey(): string {
-    const timestamp = Date.now();
-
-    if (timestamp != this.lastTimestamp) {
-      this.counter = 0;
-      this.lastTimestamp = timestamp;
-    }
-
-    return `${process.pid}:${timestamp}:${this.counter++}`;
-  }
-
   getKey<T>(key?: string): IKey<T> {
     if (key == undefined) {
-      key = this.getUniqueKey();
+      key = getUniqueID();
     }
 
     return new RedisKey<T>(key, this.redis);
@@ -32,9 +20,21 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
 
   getSet<T>(key?: string): ISet<T> {
     if (key == undefined) {
-      key = this.getUniqueKey();
+      key = getUniqueID();
     }
 
     return new RedisSet<T>(key, this.redis);
+  }
+
+  getMap<T>(key?: string): IMap<T> {
+    if (key == undefined) {
+      key = getUniqueID();
+    }
+
+    return new RedisMap<T>(key, this.redis);
+  }
+
+  getTransaction(): ITransaction {
+    return new RedisTransaction(this.redis.multi());
   }
 }
