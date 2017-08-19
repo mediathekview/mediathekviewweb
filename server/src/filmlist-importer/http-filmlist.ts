@@ -12,7 +12,7 @@ export class HttpFilmlist implements IFilmlist {
   constructor(url: string, timestamp: number | null = null, compressed?: boolean) {
     this.url = url;
 
-    if (typeof timestamp != null) {
+    if (timestamp != null) {
       this.timestamp = Promise.resolve(timestamp);
     }
 
