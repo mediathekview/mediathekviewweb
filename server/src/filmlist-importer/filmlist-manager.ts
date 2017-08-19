@@ -9,6 +9,7 @@ import { QueueProvider, ImportQueueType } from '../queue';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const FULL_CHECK_INTERVAL = config.importer.fullCheckTimeout * 1000;
+const MAX_AGE_DAYS = config.importer.archiveRange;
 
 export class FilmlistManager {
   private lastCheckTimestamp: IKey<number>;
@@ -33,37 +34,61 @@ export class FilmlistManager {
   }
 
   private async loop() {
-    const hasLock = await this.loopLock.lock();
+    try {
+      const hasLock = await this.loopLock.lock();
 
-    if (!hasLock) {
-      return this.dispatchLoop();
+      if (!hasLock) {
+        return this.dispatchLoop();
+      }
+
+      let lastCheckTimestamp = await this.lastCheckTimestamp.get();
+
+      if (lastCheckTimestamp == null) {
+        lastCheckTimestamp = 0;
+      }
+
+      const difference = Date.now() - lastCheckTimestamp;
+
+      if (difference >= LATEST_CHECK_INTERVAL) {
+        await this.checkLatest();
+      }
+
+      if (difference >= FULL_CHECK_INTERVAL) {
+        await this.checkFull();
+      }
+
+      await this.lastCheckTimestamp.set(Date.now());
+
+      this.loopLock.unlock();
+
+      this.dispatchLoop();
     }
+    catch (error) {
+      await this.loopLock.unlock();
 
-    let lastCheckTimestamp = await this.lastCheckTimestamp.get();
-
-    if (lastCheckTimestamp == null) {
-      lastCheckTimestamp = 0;
+      throw error;
     }
-
-    const difference = Date.now() - lastCheckTimestamp;
-
-    await this.lastCheckTimestamp.set(Date.now());
-
-    if (difference >= LATEST_CHECK_INTERVAL) {
-      await this.checkLatest();
-    }
-
-    if (difference >= FULL_CHECK_INTERVAL) {
-      await this.checkFull();
-    }
-
-    this.loopLock.unlock();
-
-    this.dispatchLoop();
   }
 
   private async checkLatest() {
     const filmlist = await this.filmlistProvider.getLatest();
+
+    await this.checkFilmlist(filmlist);
+  }
+
+  private async checkFull() {
+    const date = new Date();
+    const toTimestamp = Math.floor(date.getTime() / 1000);
+    const fromTimestamp = Math.floor(date.setDate(date.getDate() - MAX_AGE_DAYS) / 1000);
+
+    const filmlists = await this.filmlistProvider.getRange(fromTimestamp, toTimestamp);
+
+    for (let filmlist of filmlists) {
+      await this.checkFilmlist(filmlist);
+    }
+  }
+
+  private async checkFilmlist(filmlist: IFilmlist) {
     const timestamp = await filmlist.getTimestamp();
 
     if (timestamp == null) {
@@ -74,16 +99,11 @@ export class FilmlistManager {
 
     if (!filmlistImported) {
       await this.enqueueFilmlistImport(filmlist.ressource, timestamp);
-      this.importedFilmlistTimestamps.add(timestamp);
     }
-  }
-
-  private async checkFull() {
-
   }
 
   private async enqueueFilmlistImport(ressource: string, timestamp: number) {
     const jobData: ImportQueueType = { ressource: ressource, timestamp: timestamp };
-    await this.importQueue.add(jobData);
+    await this.importQueue.add(jobData, { jobId: (ressource + timestamp), priority: Number.MAX_SAFE_INTEGER - timestamp });
   }
 }
