@@ -15,7 +15,7 @@ export class MVWArchiveFilmlistProvider implements IFilmlistProvider {
 
   async getAll(): Promise<IFilmlist[]> {
     const files = (await this.listing.getFiles(true)).filter((file) => !file.name.endsWith('Filmliste-akt.xz'));
-    return files.map((file) => new HttpFilmlist(file.ressource, null, true));
+    return files;
   }
 
   async getRange(fromTimestamp: number | null, toTimestamp: number | null): Promise<IFilmlist[]> {
