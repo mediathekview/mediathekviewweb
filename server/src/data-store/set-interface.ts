@@ -3,9 +3,9 @@ import { ITransactable } from './';
 export interface ISet<T> extends ITransactable {
   key: string;
 
-  add(members: T[] | T): Promise<number>;
+  add(...members: T[]): Promise<number>;
   has(member: T): Promise<boolean>;
-  remove(members: T[] | T): Promise<number>;
+  remove(...members: T[]): Promise<number>;
   members(): Promise<T[]>;
   pop(count: number): Promise<T[]>;
   size(): Promise<number>;

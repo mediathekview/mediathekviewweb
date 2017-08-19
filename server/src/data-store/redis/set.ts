@@ -38,10 +38,12 @@ export class RedisSet<T> implements ISet<T> {
     return this.redisOrPipeline.sadd(this.key, ...members);
   }
 
-  has(member: T): Promise<boolean> {
+  async has(member: T): Promise<boolean> {
     this.throwOnTransacting();
     const serializedMember = JSON.stringify(member);
-    return this.redis.sismember(this.key, serializedMember);
+    const result = this.redis.sismember(this.key, serializedMember);
+    
+    return result == 1;
   }
 
   remove(...members: T[]): Promise<number> {

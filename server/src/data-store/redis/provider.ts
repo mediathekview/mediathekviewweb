@@ -1,14 +1,10 @@
-import { IDatastoreProvider, IMap, ITransaction, ISet, IKey } from '../';
-import { RedisSet, RedisMap, RedisKey, RedisTransaction } from './';
+import { IDatastoreProvider, IMap, ISortedSet, ITransaction, ISet, IKey } from '../';
+import { RedisSet, RedisSortedSet, RedisMap, RedisKey, RedisTransaction } from './';
 import { getUniqueID } from '../../utils';
 import * as Redis from 'ioredis';
 
 export class RedisDatastoreProvider implements IDatastoreProvider {
-  private redis: Redis.Redis;
-
-  constructor(host: string, port: number, db: number) {
-    this.redis = Redis(port, host, { db: db });
-  }
+  constructor(private redis: Redis.Redis) { }
 
   getKey<T>(key?: string): IKey<T> {
     if (key == undefined) {
@@ -24,6 +20,14 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
     }
 
     return new RedisSet<T>(key, this.redis);
+  }
+
+  getSortedSet<T>(key?: string): ISortedSet<T> {
+    if (key == undefined) {
+      key = getUniqueID();
+    }
+
+    return new RedisSortedSet<T>(key, this.redis);
   }
 
   getMap<T>(key?: string): IMap<T> {
