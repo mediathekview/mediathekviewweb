@@ -12,14 +12,18 @@ import { DatastoreKeys } from '../data-store-keys';
 export class FilmlistImporter {
   private importQueue: Bull.Queue;
   private importedFilmlistTimestamps: ISet<number>;
+  private importIDCounter: IKey<number>;
   private entryMap: IMap<IEntry>;
   private entryIDTimestampSortedSet: ISortedSet<string>;
+  private trackingSets: ISortedSet<string>;
 
   constructor(private datastoreProvider: IDatastoreProvider, private queueProvider: QueueProvider) {
     this.importQueue = queueProvider.getImportQueue();
     this.importedFilmlistTimestamps = datastoreProvider.getSet(DatastoreKeys.ImportedFilmlistTimestamps);
     this.entryMap = datastoreProvider.getMap(DatastoreKeys.EntryMap);
     this.entryIDTimestampSortedSet = datastoreProvider.getSortedSet(DatastoreKeys.EntryIDTimestampSortedSet);
+    this.importIDCounter = datastoreProvider.getKey(DatastoreKeys.ImportIDCounter);
+    this.trackingSets = datastoreProvider.getSortedSet<string>(DatastoreKeys.TrackingSetsSortedSet);
   }
 
   run() {
@@ -28,8 +32,11 @@ export class FilmlistImporter {
 
   private async process(job: Bull.Job) {
     const data: ImportQueueType = job.data;
+    const importID = await this.importIDCounter.increment();
+    const trackingSet = this.datastoreProvider.getSet<string>(DatastoreKeys.getTrackingSet(importID));
+    await this.trackingSets.add([{ key: trackingSet.key, score: importID }]);
 
-    console.log('importing', data.ressource);
+    console.log('importing', importID, data.ressource);
 
     let filmlist: IFilmlist;
     let metadata: IFilmlistMetadata | undefined;
@@ -55,27 +62,27 @@ export class FilmlistImporter {
       mapBuffer.set(entry.id, entry);
 
       if (sortedSetBuffer.length >= 250) {
-        await this.flushBuffer(sortedSetBuffer, mapBuffer, metadata);
+        await this.flushBuffer(sortedSetBuffer, mapBuffer, metadata, trackingSet);
       }
 
       if (++counter % 1000 == 0) {
         console.log(counter);
       }
     }
-    await this.flushBuffer(sortedSetBuffer, mapBuffer, metadata as IFilmlistMetadata);
+    await this.flushBuffer(sortedSetBuffer, mapBuffer, metadata as IFilmlistMetadata, trackingSet);
 
     console.log(counter);
 
     await this.importedFilmlistTimestamps.add(data.timestamp);
   }
 
-  private async flushBuffer(sortedSetBuffer: SortedSetMember<string>[], mapBuffer: Map<string, IEntry>, metadata: IFilmlistMetadata) {
+  private async flushBuffer(sortedSetBuffer: SortedSetMember<string>[], mapBuffer: Map<string, IEntry>, metadata: IFilmlistMetadata, trackingSet: ISet<string>) {
     const transaction = this.datastoreProvider.getTransaction();
     this.entryIDTimestampSortedSet.transact(transaction);
     this.entryMap.transact(transaction);
 
     this.entryMap.set(mapBuffer, { set: this.entryIDTimestampSortedSet, lessThan: metadata.timestamp });
-    this.entryIDTimestampSortedSet.add(sortedSetBuffer, Aggregation.Max);
+    this.entryIDTimestampSortedSet.add(sortedSetBuffer, { aggregation: Aggregation.Max, trackingSet: trackingSet });
 
     this.entryIDTimestampSortedSet.endTransact();
     this.entryMap.endTransact();
