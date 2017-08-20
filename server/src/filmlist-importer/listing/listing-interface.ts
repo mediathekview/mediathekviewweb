@@ -1,4 +1,4 @@
-import { Stream } from 'stream';
+import { Readable } from 'stream';
 import { Nullable } from '../../utils';
 
 export interface IListing {
@@ -12,5 +12,5 @@ export interface IFile {
   name: string;
   getTimestamp(): Promise<Nullable<number>>;
   getSize(): Promise<Nullable<number>>;
-  getStream(): Stream;
+  getStream(): Readable;
 }

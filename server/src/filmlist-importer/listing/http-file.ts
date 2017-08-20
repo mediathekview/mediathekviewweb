@@ -1,5 +1,5 @@
 import { IFile } from './listing-interface';
-import { Stream } from 'stream';
+import { Readable, Duplex } from 'stream';
 import * as Needle from 'needle';
 import { Nullable } from '../../utils';
 
@@ -81,7 +81,8 @@ export class HttpFile implements IFile {
     return this._size;
   }
 
-  getStream(): Stream {
-    return Needle.get(this.url);
+  getStream(): Readable {
+    const duplex = new Duplex();
+    return Needle.get(this.url).pipe(duplex);
   }
 }

@@ -1,5 +1,5 @@
 import * as LZMA from 'lzma-native';
-import * as Stream from 'stream';
+import { Readable, Duplex } from 'stream';
 import { IFilmlist } from './filmlist-interface';
 import { IFile } from './listing';
 
@@ -10,11 +10,11 @@ export class ListingFilmlist implements IFilmlist {
     return this.listingFile.ressource;
   }
 
-  getStream(): Stream.Stream {
+  getStream(): Readable {
     const fileStream = this.listingFile.getStream();
 
     if (this.listingFile.name.endsWith('.xz')) {
-      const decompressor = LZMA.createDecompressor() as Stream.Duplex;
+      const decompressor = LZMA.createDecompressor() as Duplex;
       return fileStream.pipe(decompressor);
     }
 

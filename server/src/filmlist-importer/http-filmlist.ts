@@ -2,7 +2,7 @@ import { IFilmlist } from './filmlist-interface';
 import { Nullable, getLastModifiedHeaderTimestamp } from '../utils';
 import * as Needle from 'needle';
 import * as LZMA from 'lzma-native';
-import { Stream, Duplex } from 'stream';
+import { Stream, Duplex, Readable } from 'stream';
 
 export class HttpFilmlist implements IFilmlist {
   private url: string;
@@ -27,7 +27,7 @@ export class HttpFilmlist implements IFilmlist {
     return this.url;
   }
 
-  getStream(): Stream {
+  getStream(): Readable {
     const httpStream = Needle.get(this.url);
 
     if (this.compressed) {
@@ -35,7 +35,8 @@ export class HttpFilmlist implements IFilmlist {
       return httpStream.pipe(decompressor);
     }
 
-    return httpStream;
+    const duplex = new Duplex();
+    return httpStream.pipe(duplex);
   }
 
   async getTimestamp(): Promise<Nullable<number>> {

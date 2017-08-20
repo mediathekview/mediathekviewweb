@@ -1,8 +1,8 @@
-import { Stream } from 'stream';
+import { Readable } from 'stream';
 import { Nullable } from '../utils';
 
 export interface IFilmlist {
   ressource: string;
-  getStream(): Stream;
+  getStream(): Readable;
   getTimestamp(): Promise<Nullable<number>>;
 }
