@@ -1,12 +1,15 @@
-import { Transform } from 'stream';
 import * as Crypto from 'crypto';
 import { IFilmlist } from './filmlist-interface';
-import { IEntry, IFilmlistMetadata, IVideo, Video, ISubtitle, Subtitle, Quality } from '../common';
+import { Readable } from 'stream';
+import { IEntry, IFilmlistMetadata, Video, Subtitle, Quality } from '../common';
 
 const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
 
+const INPUT_BUFFER_LENGTH = 10 * 1024; // 10 KB
+
 export class FilmlistParser {
+  private stream: Readable;
   private inputBuffer: string = '';
   private outputBuffer: IEntry[] = [];
   private end: boolean = false;
@@ -23,15 +26,25 @@ export class FilmlistParser {
   constructor(private filmlist: IFilmlist, private metadataCallback: (metadata: IFilmlistMetadata) => void) { }
 
   async *parse(): AsyncIterableIterator<IEntry> {
-    this.filmlist.getStream()
-      .on('data', (chunk: string) => this.handleChunk(chunk))
-      .on('end', () => this.end = true)
+    let counter = 0;
+    this.stream = this.filmlist.getStream()
+      //.on('data', (chunk: string) => this.handleChunk(chunk))
+      .on('readable', () => this.handleReadable())
+      .on('end', () => this.handleEnd())
       .on('error', (error) => this.reject(error));
+
+    this.stream.setEncoding('utf-8');
 
     while (!this.end) {
       await this.dataPromise;
-      yield* this.outputBuffer;
-      this.outputBuffer = [];
+
+      let chunk;
+      while ((chunk = this.stream.read(INPUT_BUFFER_LENGTH)) != null) {
+        this.handleChunk(chunk);
+
+        yield* this.outputBuffer;
+        this.outputBuffer = [];
+      }
 
       this.dataPromise = new Promise((resolve, reject) => {
         this.resolve = resolve;
@@ -40,10 +53,18 @@ export class FilmlistParser {
     }
   }
 
+  private handleEnd() {
+    this.end = true;
+    this.resolve();
+  }
+
+  private handleReadable() {
+    this.resolve();
+  }
+
   private handleChunk(chunk: string) {
     this.inputBuffer += chunk;
     this.parseBuffer();
-    this.resolve();
   }
 
   private parseBuffer() {
