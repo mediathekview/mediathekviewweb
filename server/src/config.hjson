@@ -15,7 +15,7 @@
     fullCheckTimeout: 2700
 
     // import all filmlists from archive with an age of X days, default is 30
-    archiveRange: 30
+    archiveRange: 5
 
     // whether to cache filmlists from archive or not
     cache: true

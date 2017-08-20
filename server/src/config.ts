@@ -31,7 +31,7 @@ class StaticConfig {
   static importer = {
     latestCheckInterval: 60 * 2,
     fullCheckTimeout: 60 * 45,
-    archiveRange: 30,
+    archiveRange: 5,
     cache: true
   }
 }
