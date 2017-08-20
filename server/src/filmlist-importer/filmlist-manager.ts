@@ -6,6 +6,7 @@ import config from '../config';
 import { random } from '../utils';
 import * as Bull from 'bull';
 import { ILockProvider, ILock } from '../lock';
+import { DistributedLoop } from '../distributed-loop';
 import { QueueProvider, ImportQueueType } from '../queue';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
@@ -16,61 +17,40 @@ export class FilmlistManager {
   private lastCheckTimestamp: IKey<number>;
   private importedFilmlistTimestamps: ISet<number>;
   private importQueue: Bull.Queue;
-  private loopLock: ILock;
+  private distributedLoop: DistributedLoop;
 
   constructor(private datastoreProvider: IDatastoreProvider, private filmlistProvider: IFilmlistProvider, private lockProvider: ILockProvider, private queueProvider: QueueProvider) {
-    this.lastCheckTimestamp = datastoreProvider.getKey(DatastoreKeys.LastCheckTimestamp);
+    this.lastCheckTimestamp = datastoreProvider.getKey(DatastoreKeys.LastFilmlistsCheckTimestamp);
     this.importedFilmlistTimestamps = datastoreProvider.getSet(DatastoreKeys.ImportedFilmlistTimestamps);
     this.importQueue = queueProvider.getImportQueue();
 
-    this.loopLock = lockProvider.getLock('manager:loop');
+    this.distributedLoop = new DistributedLoop('loop:filmlist-manager', lockProvider);
   }
 
   run() {
-    setTimeout(() => this.loop(), random(0, 5000));
-  }
-
-  private dispatchLoop() {
-    setTimeout(() => this.loop(), random(5000, 15000));
+    this.distributedLoop.run(() => this.loop(), random(5000, 15000));
   }
 
   private async loop() {
-    try {
-      const hasLock = await this.loopLock.lock();
+    await this.importQueue.clean(0, 'completed');
 
-      if (!hasLock) {
-        return this.dispatchLoop();
-      }
+    let lastCheckTimestamp = await this.lastCheckTimestamp.get();
 
-      await this.importQueue.clean(0, 'completed');
-
-      let lastCheckTimestamp = await this.lastCheckTimestamp.get();
-
-      if (lastCheckTimestamp == null) {
-        lastCheckTimestamp = 0;
-      }
-
-      const difference = Date.now() - lastCheckTimestamp;
-
-      if (difference >= LATEST_CHECK_INTERVAL) {
-        await this.checkLatest();
-      }
-
-      if (difference >= FULL_CHECK_INTERVAL) {
-        await this.checkFull();
-      }
-
-      await this.lastCheckTimestamp.set(Date.now());
-
-      this.loopLock.unlock();
-
-      this.dispatchLoop();
+    if (lastCheckTimestamp == null) {
+      lastCheckTimestamp = 0;
     }
-    catch (error) {
-      await this.loopLock.unlock();
 
-      throw error;
+    const difference = Date.now() - lastCheckTimestamp;
+
+    if (difference >= LATEST_CHECK_INTERVAL) {
+      await this.checkLatest();
     }
+
+    if (difference >= FULL_CHECK_INTERVAL) {
+      await this.checkFull();
+    }
+
+    await this.lastCheckTimestamp.set(Date.now());
   }
 
   private async checkLatest() {
