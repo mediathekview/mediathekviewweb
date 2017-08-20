@@ -1,6 +1,7 @@
 import { IDatastoreProvider, IKey, ISet } from '../data-store';
 import { IFilmlist } from './filmlist-interface';
 import { IFilmlistProvider } from './filmlist-provider-interface';
+import { DatastoreKeys } from '../data-store-keys';
 import config from '../config';
 import { random } from '../utils';
 import * as Bull from 'bull';
@@ -18,8 +19,8 @@ export class FilmlistManager {
   private loopLock: ILock;
 
   constructor(private datastoreProvider: IDatastoreProvider, private filmlistProvider: IFilmlistProvider, private lockProvider: ILockProvider, private queueProvider: QueueProvider) {
-    this.lastCheckTimestamp = datastoreProvider.getKey('manager:lastCheckTimestamp');
-    this.importedFilmlistTimestamps = datastoreProvider.getSet('importedFilmlistTimestamps');
+    this.lastCheckTimestamp = datastoreProvider.getKey(DatastoreKeys.LastCheckTimestamp);
+    this.importedFilmlistTimestamps = datastoreProvider.getSet(DatastoreKeys.ImportedFilmlistTimestamps);
     this.importQueue = queueProvider.getImportQueue();
 
     this.loopLock = lockProvider.getLock('manager:loop');
@@ -40,6 +41,8 @@ export class FilmlistManager {
       if (!hasLock) {
         return this.dispatchLoop();
       }
+
+      await this.importQueue.clean(0, 'completed');
 
       let lastCheckTimestamp = await this.lastCheckTimestamp.get();
 
@@ -96,6 +99,7 @@ export class FilmlistManager {
     }
 
     const filmlistImported = await this.importedFilmlistTimestamps.has(timestamp);
+    console.log(timestamp, filmlistImported);
 
     if (!filmlistImported) {
       await this.enqueueFilmlistImport(filmlist.ressource, timestamp);
