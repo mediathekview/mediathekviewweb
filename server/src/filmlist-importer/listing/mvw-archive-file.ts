@@ -1,4 +1,4 @@
-import { Stream } from 'stream';
+import { Readable } from 'stream';
 import { IFile, HttpFile } from './';
 import { Nullable } from '../../utils';
 
@@ -37,7 +37,7 @@ export class MVWArchiveFile implements IFile {
     return this.file.getSize();
   }
 
-  getStream(): Stream {
+  getStream(): Readable {
     return this.file.getStream();
   }
 }
