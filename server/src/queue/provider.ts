@@ -7,6 +7,6 @@ export class QueueProvider {
   constructor(private redisOptions: Redis.RedisOptions) { }
 
   getImportQueue(): Bull.Queue {
-    return new Bull('filmlist-import', { prefix: 'queue:', redis: this.redisOptions });
+    return new Bull('filmlist-import', { prefix: 'queue', redis: this.redisOptions });
   }
 }
