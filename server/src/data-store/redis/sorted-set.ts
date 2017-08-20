@@ -1,4 +1,4 @@
-import { ISortedSet, SortedSetMember, ISet, ITransaction, AggregationMode } from '../';
+import { ISortedSet, SortedSetMember, ISet, ITransaction, Aggregation } from '../';
 import { RedisTransaction } from './';
 import { Nullable } from '../../utils';
 import * as Redis from 'ioredis';
@@ -34,7 +34,7 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
     }
   }
 
-  add(...members: SortedSetMember<T>[]): Promise<number> {
+  add(members: SortedSetMember<T>[], aggregation?: Aggregation): Promise<number> {
     const args: (number | string)[] = [];
 
     for (let member of members) {
@@ -42,7 +42,12 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
       args.push(member.score, serialized);
     }
 
-    return this.redisOrPipeline.zadd(this.key, ...args);
+    if (aggregation != undefined) {
+      const aggregationString = Aggregation[aggregation].toUpperCase();
+      return this.redisOrPipeline['zaddAggregate'](this.key, aggregationString, ...args);
+    } else {
+      return this.redisOrPipeline.zadd(this.key, ...args);
+    }
   }
 
   async has(member: T): Promise<boolean> {
@@ -91,14 +96,14 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
     return result == 1;
   }
 
-  intersect(destination: ISortedSet<T>, mode: AggregationMode, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number> {
+  intersect(destination: ISortedSet<T>, mode: Aggregation, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number> {
     const setKeys = [this, ...sets].map((set) => set.key);
-    return this.redisOrPipeline.zinterstore(destination.key, setKeys.length, ...setKeys, 'AGGREGATE', AggregationMode[mode].toUpperCase());
+    return this.redisOrPipeline.zinterstore(destination.key, setKeys.length, ...setKeys, 'AGGREGATE', Aggregation[mode].toUpperCase());
   }
 
-  union(destination: ISortedSet<T>, mode: AggregationMode, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number> {
+  union(destination: ISortedSet<T>, mode: Aggregation, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number> {
     const setKeys = [this, ...sets].map((set) => set.key);
-    return this.redisOrPipeline.zunionstore(destination.key, setKeys.length, ...setKeys, 'AGGREGATE', AggregationMode[mode].toUpperCase());
+    return this.redisOrPipeline.zunionstore(destination.key, setKeys.length, ...setKeys, 'AGGREGATE', Aggregation[mode].toUpperCase());
   }
 
   /*diff(destination: ISet<T>, ...sets: ISet<T>[]): Promise<number> {

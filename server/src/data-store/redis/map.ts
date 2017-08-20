@@ -1,4 +1,4 @@
-import { IMap, ITransaction } from '../';
+import { IMap, ISortedSet, ITransaction } from '../';
 import { RedisTransaction } from './';
 import { Nullable } from '../../utils';
 import * as Redis from 'ioredis';
@@ -34,16 +34,35 @@ export class RedisMap<T> implements IMap<T> {
     }
   }
 
-  set(map: Map<string, T> | [[string, T]]): Promise<boolean> {
-    const commands: string[] = [];
+  set(map: Map<string, T> | [[string, T]], sortedSetCondition?: { set: ISortedSet<any>, greaterThan?: number, lessThan?: number }): Promise<void> {
+    const args: string[] = [];
 
     for (let entry of map) {
       const serialized = JSON.stringify(entry[1]);
 
-      commands.push(entry[0], serialized);
+      args.push(entry[0], serialized);
     }
 
-    return this.redisOrPipeline.hmset(this.key, ...commands);
+    if (sortedSetCondition != undefined) {
+      let condition;
+      let conditionValue;
+
+      if (sortedSetCondition.greaterThan == undefined && typeof sortedSetCondition.lessThan == 'number') {
+        condition = 'LESS';
+        conditionValue = sortedSetCondition.lessThan;
+      }
+      else if (sortedSetCondition.lessThan == undefined && typeof sortedSetCondition.greaterThan == 'number') {
+        condition = 'GREATER';
+        conditionValue = sortedSetCondition.greaterThan;
+      }
+      else {
+        throw new Error('either none or both conditions are set');
+      }
+
+      return this.redis['hmsetSortedSetCondition'](this.key, sortedSetCondition.set.key, condition, conditionValue, ...args);
+    } else {
+      return this.redisOrPipeline.hmset(this.key, ...args);
+    }
   }
 
   async get(key: string): Promise<Nullable<T>> {

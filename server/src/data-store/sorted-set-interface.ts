@@ -1,7 +1,7 @@
 import { ITransactable, ISet } from './';
 import { Nullable } from '../utils';
 
-export enum AggregationMode {
+export enum Aggregation {
   Sum,
   Min,
   Max
@@ -15,7 +15,7 @@ export type SortedSetMember<T> = {
 export interface ISortedSet<T> extends ITransactable {
   key: string;
 
-  add(...members: SortedSetMember<T>[]): Promise<number>;
+  add(members: SortedSetMember<T>[], aggregation?: Aggregation): Promise<number>;
   has(member: T): Promise<boolean>;
   remove(...members: T[]): Promise<number>;
   members(): Promise<SortedSetMember<T>[]>;
@@ -23,8 +23,8 @@ export interface ISortedSet<T> extends ITransactable {
   size(): Promise<number>;
   delete(): Promise<boolean>;
 
-  intersect(destination: ISortedSet<T>, mode: AggregationMode, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
-  union(destination: ISortedSet<T>, mode: AggregationMode, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
+  intersect(destination: ISortedSet<T>, mode: Aggregation, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
+  union(destination: ISortedSet<T>, mode: Aggregation, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
   //diff(destination: ISortedSet<T>, ...sets: (ISet<T> | ISortedSet<T>)[]): Promise<number>;
   clone(destination: ISortedSet<T>): Promise<void>;
 }

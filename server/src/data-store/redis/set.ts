@@ -41,8 +41,8 @@ export class RedisSet<T> implements ISet<T> {
   async has(member: T): Promise<boolean> {
     this.throwOnTransacting();
     const serializedMember = JSON.stringify(member);
-    const result = this.redis.sismember(this.key, serializedMember);
-    
+    const result = await this.redis.sismember(this.key, serializedMember);
+
     return result == 1;
   }
 
