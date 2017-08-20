@@ -20,6 +20,12 @@ export function random(min: number, max: number, integer: boolean = false) {
   return integer ? Math.floor(value) : value;
 }
 
+export function sleep(ms: number): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    setTimeout(() => resolve(), ms);
+  });
+}
+
 export async function getLastModifiedHeaderTimestamp(url: string): Promise<Nullable<number>> {
   return new Promise<Nullable<number>>((resolve, reject) => {
     Needle.head(url, (error, response) => {
