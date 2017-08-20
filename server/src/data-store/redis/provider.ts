@@ -5,12 +5,19 @@ import * as Redis from 'ioredis';
 
 export class RedisDatastoreProvider implements IDatastoreProvider {
   constructor(private redis: Redis.Redis) {
-    redis.defineCommand('zaddAggregate', {
-      numberOfKeys: 1,
+    redis.defineCommand('zaddExtended', {
+      // zaddExtended sortedSet [trackSet] [AGGREGATE MIN|MAX|SUM] score member [score member]...
       lua: `local set = KEYS[1]
-            local aggregator = ARGV[1]
+            local trackSet = KEYS[2]
+            local aggregator = nil
 
-            local i = 2
+            local i = 1
+
+            if (ARGV[i] == 'AGGREGATE') then
+                aggregator = ARGV[i + 1]
+                i = i + 2
+            end
+
             while i <= #ARGV do
                 local member = ARGV[i + 1]
                 local score = tonumber(ARGV[i])
@@ -18,7 +25,7 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
 
                 local resultingScore = 0
 
-                if (existingScore == nil) then
+                if (aggregator == nil or existingScore == nil) then
                     resultingScore = score
                 elseif (aggregator == 'MAX') then
                     resultingScore = math.max(existingScore, score)
@@ -32,6 +39,10 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
 
                 if (resultingScore ~= existingScore) then
                     redis.call('zadd', set, resultingScore, member)
+
+                    if (trackSet ~= nil) then
+                        redis.call('sadd', trackSet, member)
+                    end
                 end
 
                 i = i + 2
@@ -64,9 +75,13 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
     });
   }
 
+  getUniqueKey(): string {
+    return 'unnamed:' + getUniqueID();
+  }
+
   getKey<T>(key?: string): IKey<T> {
     if (key == undefined) {
-      key = getUniqueID();
+      key = this.getUniqueKey();
     }
 
     return new RedisKey<T>(key, this.redis);
@@ -74,7 +89,7 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
 
   getSet<T>(key?: string): ISet<T> {
     if (key == undefined) {
-      key = getUniqueID();
+      key = this.getUniqueKey();
     }
 
     return new RedisSet<T>(key, this.redis);
@@ -82,7 +97,7 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
 
   getSortedSet<T>(key?: string): ISortedSet<T> {
     if (key == undefined) {
-      key = getUniqueID();
+      key = this.getUniqueKey();
     }
 
     return new RedisSortedSet<T>(key, this.redis);
@@ -90,7 +105,7 @@ export class RedisDatastoreProvider implements IDatastoreProvider {
 
   getMap<T>(key?: string): IMap<T> {
     if (key == undefined) {
-      key = getUniqueID();
+      key = this.getUniqueKey();
     }
 
     return new RedisMap<T>(key, this.redis);

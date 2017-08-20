@@ -18,6 +18,14 @@ export class RedisKey<T> implements IKey<T> {
     return this.redis.set(this.key, serialized);
   }
 
+  async increment(increment: number = 1, threatAsFloat: boolean = false): Promise<number> {
+    if (threatAsFloat) {
+      return this.redis.incrbyfloat(this.key, increment);
+    }
+
+    return this.redis.incrby(this.key, increment);
+  }
+
   async exists(): Promise<boolean> {
     const result = await this.redis.exists(this.key);
     return result == 1;

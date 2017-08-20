@@ -34,19 +34,29 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
     }
   }
 
-  add(members: SortedSetMember<T>[], aggregation?: Aggregation): Promise<number> {
-    const args: (number | string)[] = [];
+  add(members: SortedSetMember<T>[], options?: { trackingSet?: ISet<T>, aggregation?: Aggregation }): Promise<number> {
+    const scoreMembers: (number | string)[] = [];
 
     for (let member of members) {
       const serialized = JSON.stringify(member.key);
-      args.push(member.score, serialized);
+      scoreMembers.push(member.score, serialized);
     }
 
-    if (aggregation != undefined) {
-      const aggregationString = Aggregation[aggregation].toUpperCase();
-      return this.redisOrPipeline['zaddAggregate'](this.key, aggregationString, ...args);
+    if (options != undefined && (options.aggregation != null || options.trackingSet != undefined)) {
+      const keysCount = options.trackingSet != undefined ? 2 : 1;
+      const args = [keysCount, this.key];
+
+      if (options.trackingSet != undefined) {
+        args.push(options.trackingSet.key);
+      }
+
+      if (options.aggregation != undefined) {
+        args.push('AGGREGATE', Aggregation[options.aggregation].toUpperCase());
+      }
+
+      return this.redisOrPipeline['zaddExtended'](...args, ...scoreMembers);
     } else {
-      return this.redisOrPipeline.zadd(this.key, ...args);
+      return this.redisOrPipeline.zadd(this.key, ...scoreMembers);
     }
   }
 
@@ -68,9 +78,33 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
     return this.redisOrPipeline.zrem(this.key, ...serializedMembers);
   }
 
-  async members(): Promise<SortedSetMember<T>[]> {
-    this.throwOnTransacting();
-    const result: (string | number)[] = await this.redis.zrange(this.key, 0, -1, 'WITHSCORES');
+  private async _range(options: {
+    byRank?: { start: number, stop: number },
+    byScore?: { min: number, minInclusive: boolean, max: number, maxInclusive: boolean },
+    reverse: boolean
+  }) {
+    let func: (...args: any[]) => Promise<[string, number]>;
+    let args: any[] = [this.key];
+
+    if (options.byRank) {
+      func = options.reverse ? this.redis.zrevrange : this.redis.zrange;
+      args.push(options.byRank.start, options.byRank.stop);
+    }
+    else if (options.byScore) {
+      func = options.reverse ? this.redis.zrevrangebyscore : this.redis.zrangebyscore;
+
+      let min = (options.byScore.minInclusive ? '' : '(') + (options.byScore.min == Number.POSITIVE_INFINITY) ? '+inf' : ((options.byScore.min == Number.NEGATIVE_INFINITY) ? '-inf' : options.byScore.min);
+      let max = (options.byScore.maxInclusive ? '' : '(') + (options.byScore.max == Number.POSITIVE_INFINITY) ? '+inf' : ((options.byScore.max == Number.NEGATIVE_INFINITY) ? '-inf' : options.byScore.max);
+
+      args.push(min, max);
+    }
+    else {
+      throw new Error('neither byRank nor byScore set');
+    }
+
+    args.push('WITHSCORES');
+
+    const result = await func(...args);
 
     const members: SortedSetMember<T>[] = [];
 
@@ -84,6 +118,24 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
     }
 
     return members;
+  }
+
+  async range(start: number, stop: number, reverse: boolean): Promise<SortedSetMember<T>[]> {
+    this.throwOnTransacting();
+
+    return this._range({ byRank: { start: start, stop: stop }, reverse: reverse });
+  }
+
+  async rangeByScore(min: number, minInclusive: boolean, max: number, maxInclusive: boolean, reverse: boolean): Promise<SortedSetMember<T>[]> {
+    this.throwOnTransacting();
+
+    return this._range({ byScore: { min: min, minInclusive: minInclusive, max: max, maxInclusive: maxInclusive }, reverse: reverse });
+  }
+
+  async members(): Promise<SortedSetMember<T>[]> {
+    this.throwOnTransacting();
+
+    return this._range({ byRank: { start: 0, stop: -1 }, reverse: false });
   }
 
   size(): Promise<number> {
