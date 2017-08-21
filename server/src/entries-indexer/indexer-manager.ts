@@ -29,6 +29,10 @@ export class IndexerManager {
 
   async run() {
     this.distributedLoop.run(() => this.loop(), random(5000, 15000));
+  }
+
+  private async loop() {
+    await this.indexEntriesQueue.clean(0, 'completed');
 
     let lastIndexedImportID = await this.lastIndexedImportID.get();
     if (lastIndexedImportID == null) {
@@ -36,9 +40,9 @@ export class IndexerManager {
     }
 
     const importsAfterLastIndex = await this.trackingSetsSortedSet.rangeByScore(lastIndexedImportID, false, Number.POSITIVE_INFINITY, true, false);
-    const trackingSets = importsAfterLastIndex.map((member) => member.key).map((key) => this.datastoreProvider.getSet(key));
+    const trackingSets = importsAfterLastIndex.map((member) => member.key).map((key) => this.datastoreProvider.getSet<string>(key));
 
-    const unionTrackingSet = this.datastoreProvider.getSet();
+    const unionTrackingSet = this.datastoreProvider.getSet<string>();
 
     if (trackingSets.length > 0) {
       trackingSets[0].union(unionTrackingSet, ...trackingSets.filter((set, index) => index != 0));
@@ -51,10 +55,6 @@ export class IndexerManager {
     for (let i = 0; i < batchCount; i++) {
       await this.enqueueIndexEntries(unionTrackingSet.key, JOB_BATCH_SIZE);
     }
-  }
-
-  private async loop() {
-    await this.indexEntriesQueue.clean(0, 'completed');
   }
 
   private async enqueueIndexEntries(idsSetKey: string, amount: number) {
