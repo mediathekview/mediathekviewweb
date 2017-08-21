@@ -1,4 +1,4 @@
-import { IMap, ISortedSet, ITransaction } from '../';
+import { IMap, MapEntry, ISortedSet, ITransaction } from '../';
 import { RedisTransaction } from './';
 import { Nullable } from '../../utils';
 import * as Redis from 'ioredis';
@@ -68,7 +68,7 @@ export class RedisMap<T> implements IMap<T> {
   async get(key: string): Promise<Nullable<T>> {
     this.throwOnTransacting();
 
-    const result = await this.redis.hget(this.key, key);
+    const result = await this.redis.hget(this.key, key) as string | null;
 
     if (result == null) {
       return null;
@@ -77,20 +77,39 @@ export class RedisMap<T> implements IMap<T> {
     return JSON.parse(result);
   }
 
-  async getAll(): Promise<Map<string, T>> {
+  async getMany(...keys: string[]): Promise<MapEntry<Nullable<T>>[]> {
     this.throwOnTransacting();
 
-    const result: string[] = await this.redis.hgetall(this.key);
-    const map = new Map<string, T>();
+    const results = await this.redis.hmget(this.key, ...keys) as (string | null)[];
 
-    for (let i = 0; i < result.length; i += 2) {
-      const key = result[i];
-      const value = JSON.parse(result[i + 1]) as T;
+    const items: MapEntry<Nullable<T>>[] = [];
 
-      map.set(key, value);
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const value = result != null ? JSON.parse(result) : null;
+      const entry: MapEntry<Nullable<T>> = { key: keys[i], value: value };
+
+      items.push(entry);
     }
 
-    return map;
+    return items;
+  }
+
+  async getAll(): Promise<MapEntry<T>[]> {
+    this.throwOnTransacting();
+
+    const result = await this.redis.hgetall(this.key);
+
+    const items: MapEntry<T>[] = [];
+
+    for (const property in result) {
+      const value = JSON.parse(result[property]);
+      const entry: MapEntry<T> = { key: property, value: value };
+
+      items.push(entry);
+    }
+
+    return items;
   }
 
   async exists(key: string): Promise<boolean> {
