@@ -13,11 +13,16 @@ export interface IEntry {
 }
 
 export interface IEntryMetadata {
-  firstSeen?: number;
-  lastSeen?: number;
-  downloads?: number;
-  plays?: number;
+  lastSeen: number;
+  downloads: IUserAction[];
+  plays: IUserAction[];
   secondsPlayed?: number;
+  secondsPaused?: number;
+}
+
+export interface IUserAction {
+  userID: string;
+  timestamp: number;
 }
 
 export enum MediaType {
