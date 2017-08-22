@@ -57,8 +57,8 @@ export const ElasticsearchMapping = {
       type: 'text',
       index: true,
       include_in_all: false,
-      analyzer: 'mvw_index_analyzer',
-      search_analyzer: 'mvw_search_analyzer',
+      analyzer: 'german',
+      search_analyzer: 'german',
       fielddata: true,
       fields: {
         keyword: {
@@ -70,8 +70,8 @@ export const ElasticsearchMapping = {
       type: 'text',
       index: true,
       include_in_all: false,
-      analyzer: 'mvw_index_analyzer',
-      search_analyzer: 'mvw_search_analyzer',
+      analyzer: 'german',
+      search_analyzer: 'german',
       fielddata: true,
       fields: {
         keyword: {
@@ -83,15 +83,15 @@ export const ElasticsearchMapping = {
       type: 'text',
       index: true,
       include_in_all: false,
-      analyzer: 'mvw_index_analyzer',
-      search_analyzer: 'mvw_search_analyzer'
+      analyzer: 'german',
+      search_analyzer: 'german'
     },
     description: {
       type: 'text',
       index: true,
       include_in_all: false,
-      analyzer: 'mvw_index_analyzer',
-      search_analyzer: 'mvw_search_analyzer'
+      analyzer: 'german',
+      search_analyzer: 'german'
     },
     timestamp: {
       type: 'date',
