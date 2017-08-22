@@ -34,7 +34,6 @@ export class FilmlistImporter {
     const data: ImportQueueType = job.data;
     const importID = await this.importIDCounter.increment();
     const trackingSet = this.datastoreProvider.getSet<string>(DatastoreKeys.getTrackingSet(importID));
-    await this.trackingSets.add([{ key: trackingSet.key, score: importID }]);
 
     console.log('importing', importID, data.ressource);
 
@@ -73,6 +72,7 @@ export class FilmlistImporter {
 
     console.log(counter);
 
+    await this.trackingSets.add([{ key: trackingSet.key, score: importID }]);
     await this.importedFilmlistTimestamps.add(data.timestamp);
   }
 

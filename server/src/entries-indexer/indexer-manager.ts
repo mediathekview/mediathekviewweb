@@ -32,6 +32,8 @@ export class IndexerManager {
   }
 
   private async loop() {
+    console.log('loop');
+
     await this.indexEntriesQueue.clean(0, 'completed');
 
     let lastIndexedImportID = await this.lastIndexedImportID.get();
@@ -45,7 +47,7 @@ export class IndexerManager {
     const unionTrackingSet = this.datastoreProvider.getSet<string>();
 
     if (trackingSets.length > 0) {
-      trackingSets[0].union(unionTrackingSet, ...trackingSets.filter((set, index) => index != 0));
+      await unionTrackingSet.union(unionTrackingSet, ...trackingSets);
     }
 
     const trackSize = await unionTrackingSet.size();
@@ -55,6 +57,9 @@ export class IndexerManager {
     for (let i = 0; i < batchCount; i++) {
       await this.enqueueIndexEntries(unionTrackingSet.key, JOB_BATCH_SIZE);
     }
+
+    const latestImportID = importsAfterLastIndex.map((member) => member.score).reduce((max, current) => Math.max(max, current), lastIndexedImportID);
+    await this.lastIndexedImportID.set(latestImportID);
   }
 
   private async enqueueIndexEntries(idsSetKey: string, amount: number) {
