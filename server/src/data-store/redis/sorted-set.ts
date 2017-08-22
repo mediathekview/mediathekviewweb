@@ -84,17 +84,17 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
     reverse: boolean
   }) {
     let func: (...args: any[]) => Promise<[string, number]>;
-    let args: any[] = [this.key];
+    const args: any[] = [this.key];
 
     if (options.byRank) {
-      func = options.reverse ? this.redis.zrevrange : this.redis.zrange;
+      func = (...args: any[]) => options.reverse ? this.redis.zrevrange(...args) : this.redis.zrange(...args);
       args.push(options.byRank.start, options.byRank.stop);
     }
     else if (options.byScore) {
-      func = options.reverse ? this.redis.zrevrangebyscore : this.redis.zrangebyscore;
+      func = (...args: any[]) => options.reverse ? this.redis.zrevrangebyscore(...args) : this.redis.zrangebyscore(...args);
 
-      let min = (options.byScore.minInclusive ? '' : '(') + (options.byScore.min == Number.POSITIVE_INFINITY) ? '+inf' : ((options.byScore.min == Number.NEGATIVE_INFINITY) ? '-inf' : options.byScore.min);
-      let max = (options.byScore.maxInclusive ? '' : '(') + (options.byScore.max == Number.POSITIVE_INFINITY) ? '+inf' : ((options.byScore.max == Number.NEGATIVE_INFINITY) ? '-inf' : options.byScore.max);
+      const min = (options.byScore.minInclusive ? '' : '(') + ((options.byScore.min == Number.POSITIVE_INFINITY) ? '+inf' : ((options.byScore.min == Number.NEGATIVE_INFINITY) ? '-inf' : options.byScore.min));
+      const max = (options.byScore.maxInclusive ? '' : '(') + ((options.byScore.max == Number.POSITIVE_INFINITY) ? '+inf' : ((options.byScore.max == Number.NEGATIVE_INFINITY) ? '-inf' : options.byScore.max));
 
       args.push(min, max);
     }
@@ -108,10 +108,10 @@ export class RedisSortedSet<T> implements ISortedSet<T> {
 
     const members: SortedSetMember<T>[] = [];
 
-    for (let i = 0; i < result.length; i += 1) {
+    for (let i = 0; i < result.length; i += 2) {
       const member: SortedSetMember<T> = {
         key: JSON.parse(result[i] as string) as T,
-        score: result[i + 1] as number
+        score: parseFloat(result[i + 1] as string)
       }
 
       members.push(member);
