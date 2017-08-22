@@ -5,7 +5,7 @@ export class ElasticsearchSearchEngine<T> implements ISearchEngine<T> {
   private initialized: boolean = false;
   private initializationPromise: Promise<any>;
 
-  constructor(private indexName: string, private typeName: string, private elasticsearchClient: Elasticsearch.Client, private indexSettings: {}, private indexMapping: {}) {
+  constructor(private indexName: string, private typeName: string, private elasticsearchClient: Elasticsearch.Client, private indexSettings?: {}, private indexMappings?: {}) {
     this.initializationPromise = this.initialize();
   }
 
@@ -13,14 +13,22 @@ export class ElasticsearchSearchEngine<T> implements ISearchEngine<T> {
     const indexExists = await this.elasticsearchClient.indices.exists({ index: this.indexName });
 
     const mappings = {};
-    mappings[this.typeName] = this.indexMapping;
+    mappings[this.typeName] = this.indexMappings;
 
     if (!indexExists) {
-      await this.elasticsearchClient.indices.create({ index: this.indexName, settings: this.indexSettings, mappings: mappings } as Elasticsearch.IndicesCreateParams);
+      await this.elasticsearchClient.indices.create({ index: this.indexName });
     }
 
-    //await this.elasticsearchClient.indices.putSettings({ index: this.indexName, body: this.indexSettings });
-    //await this.elasticsearchClient.indices.putMapping({ index: this.indexName, type: this.typeName, body: this.indexMapping });
+    if (this.indexSettings || this.indexMappings) {
+      await this.elasticsearchClient.indices.close({ index: this.indexName });
+      if (this.indexSettings) {
+        await this.elasticsearchClient.indices.putSettings({ index: this.indexName, body: this.indexSettings });
+      }
+      if (this.indexMappings) {
+        await this.elasticsearchClient.indices.putMapping({ index: this.indexName, type: this.typeName, body: this.indexMappings });
+      }
+      await this.elasticsearchClient.indices.open({ index: this.indexName });
+    }
 
     this.initialized = true;
   }
