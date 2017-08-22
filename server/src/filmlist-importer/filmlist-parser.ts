@@ -115,8 +115,11 @@ export class FilmlistParser {
     const entry: IEntry = {
       id: '',
       metadata: {
-        firstSeen: (this.metadata as IFilmlistMetadata).timestamp, //has to be merged with Math.min() at indexing
-        lastSeen: (this.metadata as IFilmlistMetadata).timestamp, //has to be merged with Math.max() at indexing
+        lastSeen: (this.metadata as IFilmlistMetadata).timestamp,
+        downloads: [],
+        plays: [],
+        secondsPlayed: 0,
+        secondsPaused: 0
       },
 
       channel: this.currentChannel,

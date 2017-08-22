@@ -1,6 +1,6 @@
 export interface IEntry {
   id: string;
-  metadata?: IEntryMetadata;
+  metadata: IEntryMetadata;
 
   channel: string;
   topic: string;
@@ -16,8 +16,8 @@ export interface IEntryMetadata {
   lastSeen: number;
   downloads: IUserAction[];
   plays: IUserAction[];
-  secondsPlayed?: number;
-  secondsPaused?: number;
+  secondsPlayed: number;
+  secondsPaused: number;
 }
 
 export interface IUserAction {
