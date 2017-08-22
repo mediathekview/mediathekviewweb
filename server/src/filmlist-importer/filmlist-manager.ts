@@ -32,6 +32,8 @@ export class FilmlistManager {
   }
 
   private async loop() {
+    console.log('loop');
+    
     await this.importQueue.clean(0, 'completed');
 
     let lastCheckTimestamp = await this.lastCheckTimestamp.get();

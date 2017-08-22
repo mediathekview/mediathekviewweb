@@ -27,6 +27,8 @@ export class EntriesIndexer {
   private async process(job: Bull.Job) {
     const data: IndexEntriesType = job.data;
 
+    console.log(job.id, job.data);
+
     const idsSet = this.datastoreProvider.getSet<string>(data.idsSetKey);
 
     let left = data.amount;

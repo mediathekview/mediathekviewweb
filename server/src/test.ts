@@ -1,51 +1,25 @@
 import { ILockProvider, ILock } from './lock';
 import { RedisDatastoreProvider } from './data-store/redis';
+import { SortedSetMember } from './data-store/';
 import { RedisLockProvider } from './lock/redis';
 import * as Redis from 'ioredis';
+import { DistributedLoop } from './distributed-loop';
+import { sleep } from './utils';
 
 const redis = new Redis();
 
-//sortedSetCondition?: { set: ISortedSet<any>, greaterThan?: number, lessThan?: number }
 const datastoreProvider = new RedisDatastoreProvider(redis);
-const set = datastoreProvider.getSet('importedFilmlistTimestamps');
 
-redis.defineCommand('zaddAggregate', {
-  numberOfKeys: 1,
-  lua: `local set = KEYS[1]
-        local aggregator = ARGV[1]
+const lockProvider = new RedisLockProvider(redis);
 
-        local i = 2
-        while i <= #ARGV do
-            local member = ARGV[i + 1]
-            local score = tonumber(ARGV[i])
-            local existingScore = tonumber(redis.call('zscore', set, member))
-
-            local resultingScore = 0
-
-            if (existingScore == nil) then
-                resultingScore = score
-            elseif (aggregator == 'MAX') then
-                resultingScore = math.max(existingScore, score)
-            elseif (aggregator == 'MIN') then
-                resultingScore = math.min(existingScore, score)
-            elseif (aggregator == 'SUM') then
-                resultingScore = existingScore + score
-            else
-                return redis.error_reply('invalid aggregator')
-            end
-
-            redis.call('zadd', set, resultingScore, member)
-
-            i = i + 2
-        end
-
-        return (#ARGV - 1) / 2`
-});
+const distributedLoop = new DistributedLoop('a-loop', lockProvider);
 
 (async () => {
-  //await redis.zadd('zet', 3, 'member1');
-  while(true)
-   await redis['zaddAggregate']('zet', 'SUM', 9, 'member1', 30, 'member2', 100, 'member3');
+
+  const map = datastoreProvider.getMap('TESTMAP');
+  await map.set([['bla', { hello: { yo: '3' } }], ['yo', 7]]);
+  console.log((await map.getMany('bla', 'yo')));
+
 })();
 
 
