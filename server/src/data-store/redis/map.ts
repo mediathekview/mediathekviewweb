@@ -80,6 +80,10 @@ export class RedisMap<T> implements IMap<T> {
   async getMany(...keys: string[]): Promise<MapEntry<Nullable<T>>[]> {
     this.throwOnTransacting();
 
+    if (keys.length == 0) {
+      return [];
+    }
+
     const results = await this.redis.hmget(this.key, ...keys) as (string | null)[];
 
     const items: MapEntry<Nullable<T>>[] = [];
