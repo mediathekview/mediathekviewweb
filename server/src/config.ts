@@ -5,6 +5,11 @@ import * as Path from 'path';
 interface Config {
   dataDirectoriy: string;
 
+  elasticsearch: {
+    host: string;
+    port: number;
+  }
+
   redis: {
     host: string;
     port: number;
@@ -19,16 +24,21 @@ interface Config {
   }
 }
 
-class StaticConfig {
-  static dataDirectoriy = './data';
+const staticConfig: Config = {
+  dataDirectoriy: './data',
 
-  static redis = {
+  elasticsearch: {
+    host: 'localhost',
+    port: 9200
+  },
+
+  redis: {
     host: 'localhost',
     port: 6379,
     db: 0
-  };
+  },
 
-  static importer = {
+  importer: {
     latestCheckInterval: 60 * 2,
     fullCheckTimeout: 60 * 45,
     archiveRange: 10,
@@ -39,7 +49,7 @@ class StaticConfig {
 const configFileString = FS.readFileSync(Path.join(__dirname, 'config.hjson'), { encoding: 'utf-8' });
 const configFile = HJSON.parse(configFileString) as Config;
 
-StaticConfig.dataDirectoriy = configFile.dataDirectoriy;
-StaticConfig.importer = configFile.importer;
+staticConfig.dataDirectoriy = configFile.dataDirectoriy;
+staticConfig.importer = configFile.importer;
 
-export default StaticConfig as Config;
+export default staticConfig as Config;
