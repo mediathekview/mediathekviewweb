@@ -4,7 +4,7 @@ import { IDatastoreProvider, ISet, IKey } from './';
 import { RedisDatastoreProvider } from './redis';
 
 (async () => {
-  const provider: IDatastoreProvider = new RedisDatastoreProvider('localhost', 6379, 0);
+  const provider: IDatastoreProvider = {} as any;// new RedisDatastoreProvider('localhost', 6379, 0);
 
   const key1 = provider.getKey<string>();
 

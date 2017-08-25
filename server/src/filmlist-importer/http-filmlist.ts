@@ -5,12 +5,13 @@ import * as LZMA from 'lzma-native';
 import { Stream, Duplex, Readable } from 'stream';
 
 export class HttpFilmlist implements IFilmlist {
-  private url: string;
   private timestamp: Promise<Nullable<number>> | null = null;
   private compressed: boolean;
 
+  ressource: string;
+
   constructor(url: string, timestamp: number | null = null, compressed?: boolean) {
-    this.url = url;
+    this.ressource = url;
 
     if (timestamp != null) {
       this.timestamp = Promise.resolve(timestamp);
@@ -19,16 +20,12 @@ export class HttpFilmlist implements IFilmlist {
     if (typeof compressed == 'boolean') {
       this.compressed = compressed;
     } else {
-      this.compressed = this.url.endsWith('xz');
+      this.compressed = this.ressource.endsWith('xz');
     }
   }
 
-  get ressource(): string {
-    return this.url;
-  }
-
   getStream(): Readable {
-    const httpStream = Needle.get(this.url);
+    const httpStream = Needle.get(this.ressource);
 
     if (this.compressed) {
       const decompressor = LZMA.createDecompressor() as Duplex;
@@ -41,7 +38,7 @@ export class HttpFilmlist implements IFilmlist {
 
   async getTimestamp(): Promise<Nullable<number>> {
     if (this.timestamp == null) {
-      this.timestamp = getLastModifiedHeaderTimestamp(this.url);
+      this.timestamp = getLastModifiedHeaderTimestamp(this.ressource);
     }
 
     return this.timestamp;

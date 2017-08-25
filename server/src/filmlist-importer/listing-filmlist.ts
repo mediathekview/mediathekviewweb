@@ -4,10 +4,10 @@ import { IFilmlist } from './filmlist-interface';
 import { IFile } from './listing';
 
 export class ListingFilmlist implements IFilmlist {
-  constructor(private listingFile: IFile) { }
+  ressource: string;
 
-  get ressource(): string {
-    return this.listingFile.ressource;
+  constructor(private listingFile: IFile) {
+    this.ressource = listingFile.ressource;
   }
 
   getStream(): Readable {

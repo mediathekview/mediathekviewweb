@@ -141,7 +141,7 @@ function mkdirp(path: string, mode: number | string | undefined, done: { (err: E
 
 function thunk<T>(target: Function, args: any[] | IArguments, context?: any, resolver?: { (): T }): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    target.apply(context, Array.prototype.slice.call(args).concat([(err: Error, result: T) => {
+    target.apply(context, Array.prototype.slice.call(args).concat([function (err: Error, result: T) {
       if (err)
         reject(err);
       else if (resolver)

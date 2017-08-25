@@ -6,21 +6,17 @@ const TIMESTAMP_REGEX = /\/(\d{4})-0?(\d{1,2})-0?(\d{1,2})-filme\.xz$/;
 
 export class MVWArchiveFile implements IFile {
   cacheable: boolean;
+  name:string;
+  ressource:string;
 
   constructor(private file: IFile) {
     if (!file.ressource.startsWith('https://archiv.mediathekviewweb.de/' || !file.ressource.endsWith('.xz'))) {
       throw new Error(`Invalid ressource for MVWArchiveFile: ${file.ressource}`);
     }
 
-    this.cacheable = !this.file.ressource.endsWith('Filmliste-akt.xz');
-  }
-
-  get name(): string {
-    return this.file.name;
-  }
-
-  get ressource(): string {
-    return this.file.ressource;
+    this.cacheable = !file.ressource.endsWith('Filmliste-akt.xz');
+    this.name = file.name;
+    this.ressource = file.ressource;
   }
 
   async getTimestamp(): Promise<Nullable<number>> {

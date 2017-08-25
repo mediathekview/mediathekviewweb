@@ -48,11 +48,8 @@ export class EntriesIndexer {
     const searchEngineEntries: SearchEngineEntry<IEntry>[] = [];
 
     for (const entry of entries) {
-      const id = entry.id;
-      delete entry.id;
-
       const searchEngineEntry: SearchEngineEntry<IEntry> = {
-        id: id,
+        id: entry.id,
         document: entry
       }
 

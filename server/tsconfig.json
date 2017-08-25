@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "lib": ["es2017", "esnext"],
+    "lib": ["esnext"],
     "sourceMap": false,
     "outDir": "./build",
     "removeComments": true,
