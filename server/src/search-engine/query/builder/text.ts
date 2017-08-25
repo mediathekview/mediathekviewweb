@@ -4,7 +4,7 @@ import { ITextQuery, Operator } from '../';
 export class TextQueryBuilder implements IQueryBuilder {
   private _fields: string[] = [];
   private _text: string | null = null;
-  private _operator: 'and' | 'or';
+  private _operator: Operator;
 
   fields(...fields: string[]): TextQueryBuilder {
     if (fields.length == 0) {
@@ -16,7 +16,7 @@ export class TextQueryBuilder implements IQueryBuilder {
     return this;
   }
 
-  text(text: string, operator: 'and' | 'or' = 'and'): TextQueryBuilder {
+  text(text: string, operator: Operator = 'and'): TextQueryBuilder {
     if (operator != 'or' && operator != 'and') {
       throw new Error('operator is neither and nor or'); //just in case a passed string isn't and | or
     }

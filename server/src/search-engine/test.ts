@@ -1,14 +1,33 @@
-import { BoolQueryBuilder, RangeQueryBuilder, TextQueryBuilder, TimeQueryValueBuilder, TimeUnit } from './query';
+import { BoolQueryBuilder, RangeQueryBuilder, TextQueryBuilder, TimeQueryValueBuilder, MatchAllQueryBuilder, TimeUnit, Query } from './query';
+import * as Elasticsearch from 'elasticsearch';
+import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch';
+import { IEntry } from '../common';
 
-const durationQueryBuilder = new RangeQueryBuilder().field('duration').gte(60).lt(600);
-const dateQueryBuilder = new RangeQueryBuilder().field('timestamp').gt(new TimeQueryValueBuilder().time('now', 'hour').plus(5, 'minutes'));
 const topicTitleQueryBuilder = new TextQueryBuilder().fields('topic', 'title').text('sturm der liebe');
 const channelAQueryBuilder = new TextQueryBuilder().fields('channel').text('ndr');
 const channelBQueryBuilder = new TextQueryBuilder().fields('channel').text('ndr');
 const channelQueryBuilder = new BoolQueryBuilder().should(channelAQueryBuilder, channelBQueryBuilder);
 
 
-const boolQueryBuilder = new BoolQueryBuilder().must(dateQueryBuilder, topicTitleQueryBuilder, channelQueryBuilder).filter(durationQueryBuilder);
+const boolQueryBuilder = new BoolQueryBuilder().must(topicTitleQueryBuilder, channelQueryBuilder).filter();
+
+const elasticsearchClient = new Elasticsearch.Client({ host: '127.0.0.1:9200' });
+
+const searchEngine = new ElasticsearchSearchEngine<IEntry>('mediathekviewweb', 'entry', elasticsearchClient);
 
 
-console.log(JSON.stringify(boolQueryBuilder.build(), null, 2));
+const query: Query = {
+  body: new MatchAllQueryBuilder().build(),
+  sorts: [{
+    field: 'timestamp',
+    order: 'descending'
+  }]
+};
+
+(async () => {
+
+  const result = await searchEngine.search(query);
+
+  console.log(result);
+
+})();

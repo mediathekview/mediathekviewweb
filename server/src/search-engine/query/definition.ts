@@ -1,51 +1,39 @@
-export enum Occurrence {
-  Must = 0,
-  Should = 1,
-  MustNot = 2,
-  Filter = 3
-}
+export type Aggregation = 'min' | 'max' | 'sum' | 'average' | 'median' | 'length';
 
-export enum Operator {
-  And,
-  Or
-}
+export type Order = 'ascending' | 'descending';
 
-export enum SortOrder {
-  Ascending = 0,
-  Descending = 1
-}
-
-export enum SortMode {
-  Sum,
-  Minimum,
-  Maximum,
-  Average,
-  Median,
-  Length
-}
+export type Operator = 'and' | 'or';
 
 export type Sort = {
   field: string;
-  order: SortOrder;
-  mode: SortMode;
+  order: Order;
+  aggregation?: Aggregation;
 }
 
 export type Query = {
   body: IQuery;
-  sorts: Sort[],
-  skip: number,
-  limit: number
+  sorts?: Sort[],
+  skip?: number,
+  limit?: number
 }
 
 export interface IQuery {
 }
 
+export interface IIDsQuery extends IQuery {
+  ids: string[]
+}
+
+export interface IMatchAllQuery extends IQuery {
+  matchAll: {}
+}
+
 export interface IBoolQuery extends IQuery {
   bool: {
-    musts?: IQuery[],
-    shoulds?: IQuery[],
-    nots?: IQuery[],
-    filters?: IQuery[]
+    must?: IQuery[],
+    should?: IQuery[],
+    not?: IQuery[],
+    filter?: IQuery[]
   }
 }
 
