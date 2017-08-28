@@ -1,13 +1,19 @@
 import * as SocketIO from 'socket.io';
-import { Nullable } from '../../utils';
+import * as HTTP from 'http';
+import { Nullable } from '../../common/utils';
 import { MediathekViewWebAPI, Query, SearchEngineSearchResult, IEntry } from '../api';
+import { IMediathekViewWebAPI } from '../../common/api';
+import { SocketResponse, APIError } from '../../common/api/socket-io';
 
-type ErrorType = { name?: string, message?: string, stack?: string };
-type SocketResponseType<T> = { result?: T, error?: ErrorType };
-type Acknowledgement<T> = (response: SocketResponseType<T>) => void;
+type Acknowledgement<T> = (response: SocketResponse<T>) => void;
 
-export class SocketIOExposer {
-  constructor(private api: MediathekViewWebAPI, private io: SocketIO.Server, private eventPrefix: string = '') {
+export class SocketIOMediathekViewWebAPIExposer {
+  private io: SocketIO.Server;
+
+  constructor(private api: IMediathekViewWebAPI, private httpServer: HTTP.Server, private path: string = '/socket.io', private eventPrefix: string = '') {
+    this.io = SocketIO(httpServer, { path: path });
+
+    this.initialize();
   }
 
   private initialize() {
@@ -18,13 +24,14 @@ export class SocketIOExposer {
     const event = (event: string) => { return this.eventPrefix + event };
 
     socket.on(event(this.api.search.name), async (query: Query, ack: Acknowledgement<SearchEngineSearchResult<IEntry>>) => {
+      console.log(query);
       try {
         const result = await this.api.search(query);
         ack(this.socketResult(result));
       }
       catch (error) {
         ack(this.socketError(error));
-        throw error;
+        console.error(error);
       }
     });
   }
@@ -33,7 +40,7 @@ export class SocketIOExposer {
     return { result: result };
   }
 
-  private socketError<T>(error): { error: ErrorType } {
+  private socketError<T>(error): { error: APIError } {
     if (typeof error == 'string') {
       return { error: { message: error } };
     }
@@ -41,6 +48,9 @@ export class SocketIOExposer {
       return { error: { name: error.name, message: error.message, stack: error.stack } };
     }
 
-    throw new Error(`no handler for error of type ${typeof error} available: ${error}`);
+    const noHandlerAvailableError = new Error(`no handler for error of type ${typeof error} available: ${error}`);
+    console.error(noHandlerAvailableError);
+
+    return this.socketError(noHandlerAvailableError);
   }
 }
