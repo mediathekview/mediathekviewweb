@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import { Nullable } from '../utils';
+import { Nullable } from '../common/utils';
 
 export interface IFilmlist {
   ressource: string;

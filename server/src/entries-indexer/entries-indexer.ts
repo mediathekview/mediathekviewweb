@@ -1,13 +1,13 @@
 import { IDatastoreProvider, IKey, IMap, ISortedSet, ISet } from '../data-store';
 import { DatastoreKeys } from '../data-store-keys';
-import { IEntry, IFilmlistMetadata } from '../common';
+import { IEntry, IFilmlistMetadata } from '../common/model';
 import config from '../config';
-import { random } from '../utils';
+import { random } from '../common/utils';
 import * as Bull from 'bull';
 import { ILockProvider, ILock } from '../lock';
 import { DistributedLoop } from '../distributed-loop';
 import { QueueProvider, IndexEntriesType } from '../queue';
-import { ISearchEngine, SearchEngineEntry } from '../search-engine';
+import { ISearchEngine, SearchEngineEntry } from '../common/search-engine';
 
 const BATCH_SIZE = 100;
 

@@ -1,4 +1,4 @@
-import { ISearchEngine, SearchEngineEntry, Query, SearchEngineSearchResult } from '../';
+import { ISearchEngine, SearchEngineItem, Query, SearchEngineSearchResult } from '../../common/search-engine';
 import convertQuery from './query-converter';
 import * as Elasticsearch from 'elasticsearch';
 
@@ -37,7 +37,7 @@ export class ElasticsearchSearchEngine<T> implements ISearchEngine<T> {
     this.initialized = true;
   }
 
-  async index(...entries: SearchEngineEntry<T>[]): Promise<void> {
+  async index(...entries: SearchEngineItem<T>[]): Promise<void> {
     if (entries.length == 0) {
       return;
     }
@@ -61,11 +61,9 @@ export class ElasticsearchSearchEngine<T> implements ISearchEngine<T> {
   async search(query: Query): Promise<SearchEngineSearchResult<T>> {
     const elasticsearchQuery = convertQuery(query, this.indexName, this.typeName);
 
-    console.log(elasticsearchQuery)
-
     const result = await this.elasticsearchClient.search<T>(elasticsearchQuery);
 
-    const items: T[] = result.hits.hits.map((hit) => hit._source);
+    const items: SearchEngineItem<T>[] = result.hits.hits.map((hit) => ({ id: hit._id, document: hit._source }));
 
     const searchResult: SearchEngineSearchResult<T> = {
       items: items,

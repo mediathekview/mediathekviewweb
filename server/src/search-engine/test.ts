@@ -1,7 +1,7 @@
-import { BoolQueryBuilder, RangeQueryBuilder, TextQueryBuilder, TimeQueryValueBuilder, MatchAllQueryBuilder, TimeUnit, Query } from './query';
+import { BoolQueryBuilder, RangeQueryBuilder, TextQueryBuilder, TimeQueryValueBuilder, MatchAllQueryBuilder, TimeUnit, Query } from '../common/search-engine';
 import * as Elasticsearch from 'elasticsearch';
 import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch';
-import { IEntry } from '../common';
+import { IEntry } from '../common/model';
 
 const topicTitleQueryBuilder = new TextQueryBuilder().fields('topic', 'title').text('sturm der liebe');
 const channelAQueryBuilder = new TextQueryBuilder().fields('channel').text('ndr');

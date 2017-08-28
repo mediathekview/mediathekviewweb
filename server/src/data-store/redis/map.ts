@@ -1,6 +1,6 @@
 import { IMap, MapEntry, ISortedSet, ITransaction } from '../';
 import { RedisTransaction } from './';
-import { Nullable } from '../../utils';
+import { Nullable } from '../../common/utils';
 import * as Redis from 'ioredis';
 
 export class RedisMap<T> implements IMap<T> {

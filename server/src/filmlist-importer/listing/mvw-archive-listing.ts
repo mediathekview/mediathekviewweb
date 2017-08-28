@@ -1,6 +1,6 @@
 import { Stream } from 'stream';
 import { IListing, IFile, HttpFile, NginxListing, MVWArchiveFile } from './';
-import { Nullable } from '../../utils';
+import { Nullable } from '../../common/utils';
 import * as Needle from 'needle';
 
 const URL = 'https://archiv.mediathekviewweb.de/';

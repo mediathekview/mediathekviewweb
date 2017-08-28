@@ -1,7 +1,7 @@
 import { IDatastoreProvider, IKey, ISortedSet, ISet } from '../data-store';
 import { DatastoreKeys } from '../data-store-keys';
 import config from '../config';
-import { random } from '../utils';
+import { random } from '../common/utils';
 import * as Bull from 'bull';
 import { ILockProvider, ILock } from '../lock';
 import { DistributedLoop } from '../distributed-loop';

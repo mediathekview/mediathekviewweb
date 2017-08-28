@@ -1,4 +1,4 @@
-import { Nullable } from '../utils';
+import { Nullable } from '../common/utils';
 
 export interface IKey<T> {
   key: string;

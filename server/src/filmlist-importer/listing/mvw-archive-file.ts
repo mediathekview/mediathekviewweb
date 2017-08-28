@@ -1,6 +1,6 @@
 import { Readable } from 'stream';
 import { IFile, HttpFile } from './';
-import { Nullable } from '../../utils';
+import { Nullable } from '../../common/utils';
 
 const TIMESTAMP_REGEX = /\/(\d{4})-0?(\d{1,2})-0?(\d{1,2})-filme\.xz$/;
 

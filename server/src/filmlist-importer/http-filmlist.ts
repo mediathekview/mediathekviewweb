@@ -1,5 +1,6 @@
 import { IFilmlist } from './filmlist-interface';
-import { Nullable, getLastModifiedHeaderTimestamp } from '../utils';
+import { Nullable } from '../common/utils';
+import { getLastModifiedHeaderTimestamp } from '../utils';
 import * as Needle from 'needle';
 import * as LZMA from 'lzma-native';
 import { Stream, Duplex, Readable } from 'stream';

@@ -1,5 +1,5 @@
 import { ILockProvider, ILock } from '../lock';
-import { sleep } from '../utils';
+import { sleep } from '../common/utils';
 import { EventEmitter } from 'events';
 
 export class DistributedLoop extends EventEmitter {

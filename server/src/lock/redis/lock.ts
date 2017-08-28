@@ -1,5 +1,5 @@
 import { ILock } from '../';
-import { sleep, random } from '../../utils';
+import { sleep, random } from '../../common/utils';
 import * as Redis from 'ioredis';
 
 export class RedisLock implements ILock {

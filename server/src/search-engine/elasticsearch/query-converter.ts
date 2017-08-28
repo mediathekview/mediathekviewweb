@@ -1,4 +1,4 @@
-import { Query, Aggregation, Sort, IQuery, IBoolQuery, IRangeQuery, ITextQuery, IIDsQuery } from '../query';
+import { Query, Aggregation, Sort, IQuery, IBoolQuery, IRangeQuery, ITextQuery, IIDsQuery } from '../../common/search-engine/';
 
 export default function queryToElasticsearchQuery(query: Query, indexName: string, typeName: string): object {
   if (query.skip == undefined) {

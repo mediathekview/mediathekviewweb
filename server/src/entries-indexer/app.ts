@@ -1,5 +1,5 @@
 import { IndexerManager } from './indexer-manager';
-import { IEntry } from '../common';
+import { IEntry } from '../common/model';
 import { EntriesIndexer } from './entries-indexer';
 import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch';
 import { ILockProvider } from '../lock';

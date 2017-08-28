@@ -1,6 +1,5 @@
 import * as Needle from 'needle';
-
-export type Nullable<T> = T | null;
+import { Nullable } from './common/utils';
 
 let counter = 0;
 let lastTimestamp: number = 0;
@@ -13,17 +12,6 @@ export function getUniqueID(): string {
   }
 
   return `${process.pid}:${timestamp}:${counter++}`;
-}
-
-export function random(min: number, max: number, integer: boolean = false) {
-  const value = (Math.random() * (max - min)) + min;
-  return integer ? Math.floor(value) : value;
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    setTimeout(() => resolve(), ms);
-  });
 }
 
 export async function getLastModifiedHeaderTimestamp(url: string): Promise<Nullable<number>> {

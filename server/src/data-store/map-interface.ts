@@ -1,5 +1,5 @@
 import { ITransactable, ISortedSet } from './';
-import { Nullable } from '../utils';
+import { Nullable } from '../common/utils';
 
 export type MapEntry<T> = { key: string, value: T };
 

@@ -1,7 +1,7 @@
 import { IFile } from './listing-interface';
 import { Readable, Duplex } from 'stream';
 import * as Needle from 'needle';
-import { Nullable } from '../../utils';
+import { Nullable } from '../../common/utils';
 
 const NAME_REGEX = /\/([^\/]+$)/;
 

@@ -3,7 +3,7 @@ import { IFilmlist } from './filmlist-interface';
 import { IFilmlistProvider } from './filmlist-provider-interface';
 import { DatastoreKeys } from '../data-store-keys';
 import config from '../config';
-import { random } from '../utils';
+import { random } from '../common/utils';
 import * as Bull from 'bull';
 import { ILockProvider, ILock } from '../lock';
 import { DistributedLoop } from '../distributed-loop';
@@ -33,7 +33,7 @@ export class FilmlistManager {
 
   private async loop() {
     console.log('loop');
-    
+
     await this.importQueue.clean(0, 'completed');
 
     let lastCheckTimestamp = await this.lastCheckTimestamp.get();

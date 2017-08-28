@@ -1,7 +1,7 @@
 import * as Crypto from 'crypto';
 import { IFilmlist } from './filmlist-interface';
 import { Readable } from 'stream';
-import { IEntry, IFilmlistMetadata, Video, Subtitle, Quality } from '../common';
+import { IEntry, IFilmlistMetadata, Video, Subtitle, Quality } from '../common/model';
 
 const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;

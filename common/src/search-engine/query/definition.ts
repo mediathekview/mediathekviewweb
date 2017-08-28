@@ -11,7 +11,7 @@ export type Sort = {
 }
 
 export type Query = {
-  body: IQuery;
+  body: IIDsQuery | IMatchAllQuery | IBoolQuery | IRangeQuery | ITextQuery;
   sorts?: Sort[],
   skip?: number,
   limit?: number

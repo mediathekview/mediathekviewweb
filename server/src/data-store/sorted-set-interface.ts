@@ -1,5 +1,5 @@
 import { ITransactable, ISet } from './';
-import { Nullable } from '../utils';
+import { Nullable } from '../common/utils';
 
 export enum Aggregation {
   Sum,

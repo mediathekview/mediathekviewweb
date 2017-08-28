@@ -1,9 +1,9 @@
 import { IDatastoreProvider, IKey, ISet, ISortedSet, SortedSetMember, IMap, Aggregation } from '../data-store';
 import { IFilmlist } from './filmlist-interface';
-import { IEntry, IFilmlistMetadata } from '../common';
+import { IEntry, IFilmlistMetadata } from '../common/model';
 import { FilmlistParser } from './filmlist-parser';
 import config from '../config';
-import { random } from '../utils';
+import { random } from '../common/utils';
 import * as Bull from 'bull';
 import { QueueProvider, ImportQueueType } from '../queue';
 import { HttpFilmlist } from './http-filmlist';

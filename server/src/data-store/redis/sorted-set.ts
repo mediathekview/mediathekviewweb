@@ -1,6 +1,6 @@
 import { ISortedSet, SortedSetMember, ISet, ITransaction, Aggregation } from '../';
 import { RedisTransaction } from './';
-import { Nullable } from '../../utils';
+import { Nullable } from '../../common/utils';
 import * as Redis from 'ioredis';
 
 export class RedisSortedSet<T> implements ISortedSet<T> {
