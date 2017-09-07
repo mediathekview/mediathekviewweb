@@ -7,7 +7,7 @@ import * as Bull from 'bull';
 import { ILockProvider, ILock } from '../lock';
 import { DistributedLoop } from '../distributed-loop';
 import { QueueProvider, IndexEntriesType } from '../queue';
-import { ISearchEngine, SearchEngineEntry } from '../common/search-engine';
+import { ISearchEngine, SearchEngineItem } from '../common/search-engine';
 
 const BATCH_SIZE = 100;
 
@@ -45,10 +45,10 @@ export class EntriesIndexer {
   }
 
   private async index(entries: IEntry[]) {
-    const searchEngineEntries: SearchEngineEntry<IEntry>[] = [];
+    const searchEngineEntries: SearchEngineItem<IEntry>[] = [];
 
     for (const entry of entries) {
-      const searchEngineEntry: SearchEngineEntry<IEntry> = {
+      const searchEngineEntry: SearchEngineItem<IEntry> = {
         id: entry.id,
         document: entry
       }

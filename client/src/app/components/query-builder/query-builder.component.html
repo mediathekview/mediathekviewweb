@@ -1,0 +1,18 @@
+<div>
+
+  <div class="input-group">
+    <input type="search" class="form-control" [ngClass]="{ 'border-bottom-no-radius': showOptions }" placeholder="{{ 'search' }}">
+    <span class="input-group-btn">
+      <button type="button" class="btn btn-secondary" [ngClass]="{ 'border-bottom-no-radius': showOptions }" (click)="showOptions = !showOptions">
+        <i class="material-icon scale-150 reset-size" [ngClass]="{ 'flip-vertical': showOptions }">expand_more</i>
+      </button>
+    </span>
+  </div>
+
+  <div class="collapse" [ngClass]="{ show: showOptions }">
+    <div class="card card-body">
+      <mvw-split-dropdown></mvw-split-dropdown>
+    </div>
+  </div>
+
+</div>

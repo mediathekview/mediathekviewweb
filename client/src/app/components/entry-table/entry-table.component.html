@@ -1,0 +1,21 @@
+<table class="table table-sm table-responsive table-hover">
+  <thead>
+    <tr>
+      <th class="channel-column border-top-0">Sender</th>
+      <th class="topic-column border-top-0">Thema</th>
+      <th class="title-column border-top-0">Titel</th>
+      <th class="date-column border-top-0">Datum</th>
+      <th class="time-column border-top-0">Zeit</th>
+      <th class="duration-column border-top-0">Dauer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <ng-container *ngFor="let entry of entries; let i = index">
+
+      <tr mvw-entry-row-overview class="height-2" [ngClass]="{ odd: i % 2 != 0 }" [entry]="entry" (click)="showDetails(entry)"></tr>
+
+      <tr mvw-entry-row-detail *ngIf="entry == detailedEntry" [ngClass]="{ odd: i % 2 != 0 }"></tr>
+
+    </ng-container>
+  </tbody>
+</table>
