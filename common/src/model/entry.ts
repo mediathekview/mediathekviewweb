@@ -12,6 +12,22 @@ export interface IEntry {
   media: IMedia[];
 }
 
+export class Fields {
+  static ID = 'id';
+  static Channel = 'channel';
+  static Topic = 'topic';
+  static Title = 'title';
+  static Timestamp = 'timestamp';
+  static Duration = 'duration';
+  static Description = 'description';
+  static Website = 'website';
+  static MediaType = 'media.type';
+  static MediaUrl = 'media.url';
+  static MediaSize = 'media.size';
+  static VideoQuality = 'media.quality';
+  static AudioQuality = 'media.quality';
+}
+
 export interface IEntryMetadata {
   lastSeen: number;
   downloads: IUserAction[];

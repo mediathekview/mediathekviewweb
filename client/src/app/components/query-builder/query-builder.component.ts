@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 
-import { BoolQueryBuilder, TextQueryBuilder, IQueryBuilder } from '../../common/search-engine/';
+import { BoolQueryBuilder, TextQueryBuilder, IQueryBuilder, IQuery } from '../../common/search-engine/';
 
 @Component({
   selector: 'mvw-query-builder',
@@ -8,11 +8,12 @@ import { BoolQueryBuilder, TextQueryBuilder, IQueryBuilder } from '../../common/
   styleUrls: ['./query-builder.component.scss']
 })
 export class QueryBuilderComponent implements OnInit {
+  @Output() onQuery = new EventEmitter<IQuery>();
+
   showOptions: boolean = false;
 
   constructor() { }
 
   ngOnInit() {
   }
-
 }

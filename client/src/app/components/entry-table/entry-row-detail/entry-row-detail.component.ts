@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+
+import { IEntry } from '../../../common/model';
 
 @Component({
   selector: '[mvw-entry-row-detail]',
@@ -6,11 +8,11 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./entry-row-detail.component.scss']
 })
 export class EntryRowDetailComponent implements OnInit {
+  @Input() entry: IEntry;
 
   constructor() {
-  console.log('ABSDF') }
+  }
 
   ngOnInit() {
   }
-
 }
