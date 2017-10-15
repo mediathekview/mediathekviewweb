@@ -12,16 +12,16 @@ export type Sort = {
 
 export type Query = {
   body: IIDsQuery | IMatchAllQuery | IBoolQuery | IRangeQuery | ITextQuery;
-  sorts?: Sort[],
-  skip?: number,
-  limit?: number
+  sorts?: Sort[];
+  skip?: number;
+  limit?: number;
 }
 
 export interface IQuery {
 }
 
 export interface IIDsQuery extends IQuery {
-  ids: string[]
+  ids: string[];
 }
 
 export interface IMatchAllQuery extends IQuery {
@@ -52,5 +52,12 @@ export interface ITextQuery extends IQuery {
     fields: string[];
     text: string;
     operator: 'and' | 'or';
+  }
+}
+
+export interface IRegexQuery extends IQuery {
+  regex: {
+    field: string;
+    expression: string;
   }
 }

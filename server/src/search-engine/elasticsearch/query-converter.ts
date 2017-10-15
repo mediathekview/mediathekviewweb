@@ -1,4 +1,4 @@
-import { Query, Aggregation, Sort, IQuery, IBoolQuery, IRangeQuery, ITextQuery, IIDsQuery } from '../../common/search-engine/';
+import { Query, Aggregation, Sort, IQuery, IBoolQuery, IRangeQuery, ITextQuery, IRegexQuery, IIDsQuery } from '../../common/search-engine/';
 
 export default function queryToElasticsearchQuery(query: Query, indexName: string, typeName: string): object {
   if (query.skip == undefined) {
@@ -17,7 +17,7 @@ export default function queryToElasticsearchQuery(query: Query, indexName: strin
     from: query.skip,
     size: query.limit,
     body: {
-      query: bodyToElasticsearchQuery(query.body, indexName, typeName)
+      query: bodyToElasticsearchQuery(query.body, typeName)
     }
   };
 
@@ -84,13 +84,15 @@ function lengthSort(sort: Sort): object {
   return scriptObj;
 }
 
-function bodyToElasticsearchQuery(query: IQuery, indexName: string, typeName: string): object {
+function bodyToElasticsearchQuery(query: IQuery, typeName: string): object {
   if ('bool' in query) {
-    return convertBoolQuery(query as IBoolQuery, indexName, typeName);
+    return convertBoolQuery(query as IBoolQuery, typeName);
   } else if ('range' in query) {
     return convertRangeQuery(query as IRangeQuery);
   } else if ('text' in query) {
     return convertTextQuery(query as ITextQuery);
+  } else if ('regex' in query) {
+    return convertRegexQuery(query as IRegexQuery);
   } else if ('matchAll' in query) {
     return { match_all: {} };
   } else if ('ids' in query) {
@@ -100,22 +102,22 @@ function bodyToElasticsearchQuery(query: IQuery, indexName: string, typeName: st
   }
 }
 
-function convertBoolQuery(query: IBoolQuery, indexName: string, typeName: string): object {
+function convertBoolQuery(query: IBoolQuery, typeName: string): object {
   const queryObj = {
     bool: {}
   };
 
   if (query.bool.must != undefined) {
-    queryObj.bool['must'] = query.bool.must.map((query) => bodyToElasticsearchQuery(query, indexName, typeName));
+    queryObj.bool['must'] = query.bool.must.map((query) => bodyToElasticsearchQuery(query, typeName));
   }
   if (query.bool.should != undefined) {
-    queryObj.bool['should'] = query.bool.should.map((query) => bodyToElasticsearchQuery(query, indexName, typeName));
+    queryObj.bool['should'] = query.bool.should.map((query) => bodyToElasticsearchQuery(query, typeName));
   }
   if (query.bool.not != undefined) {
-    queryObj.bool['must_not'] = query.bool.not.map((query) => bodyToElasticsearchQuery(query, indexName, typeName));
+    queryObj.bool['must_not'] = query.bool.not.map((query) => bodyToElasticsearchQuery(query, typeName));
   }
   if (query.bool.filter != undefined) {
-    queryObj.bool['filter'] = query.bool.filter.map((query) => bodyToElasticsearchQuery(query, indexName, typeName));
+    queryObj.bool['filter'] = query.bool.filter.map((query) => bodyToElasticsearchQuery(query, typeName));
   }
 
   return queryObj;
@@ -178,6 +180,16 @@ function convertTextQuery(query: ITextQuery): object {
   } else {
     throw new Error('no fields specified');
   }
+}
+
+function convertRegexQuery(query: IRegexQuery): object {
+  const queryObj = {
+    regexp: {}
+  };
+
+  queryObj[query.regex.field] = query.regex.expression;
+
+  return queryObj;
 }
 
 function convertToMatch(field: string, text: string): object {
