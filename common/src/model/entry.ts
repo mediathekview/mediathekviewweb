@@ -1,6 +1,6 @@
-export interface IEntry {
+export type Entry = {
   id: string;
-  metadata: IEntryMetadata;
+  metadata: EntryMetadata;
 
   channel: string;
   topic: string;
@@ -12,31 +12,32 @@ export interface IEntry {
   media: IMedia[];
 }
 
-export class Fields {
-  static ID = 'id';
-  static Channel = 'channel';
-  static Topic = 'topic';
-  static Title = 'title';
-  static Timestamp = 'timestamp';
-  static Duration = 'duration';
-  static Description = 'description';
-  static Website = 'website';
-  static MediaType = 'media.type';
-  static MediaUrl = 'media.url';
-  static MediaSize = 'media.size';
-  static VideoQuality = 'media.quality';
-  static AudioQuality = 'media.quality';
+export enum Field {
+  ID = 'id',
+  Channel = 'channel',
+  Topic = 'topic',
+  Title = 'title',
+  Timestamp = 'timestamp',
+  Duration = 'duration',
+  Description = 'description',
+  Website = 'website',
+  MediaType = 'media.type',
+  MediaUrl = 'media.url',
+  MediaSize = 'media.size',
+  VideoQuality = 'media.quality',
+  AudioQuality = 'media.quality',
+  LastSeen = 'metadata.lastSeen'
 }
 
-export interface IEntryMetadata {
+export type EntryMetadata = {
   lastSeen: number;
-  downloads: IUserAction[];
-  plays: IUserAction[];
+  downloads: UserAction[];
+  plays: UserAction[];
   secondsPlayed: number;
   secondsPaused: number;
 }
 
-export interface IUserAction {
+export type UserAction = {
   userID: string;
   timestamp: number;
 }

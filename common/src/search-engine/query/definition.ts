@@ -57,7 +57,8 @@ export interface ITextQuery extends IQuery {
 
 export interface IRegexQuery extends IQuery {
   regex: {
-    field: string;
+    fields: string[];
     expression: string;
+    operator: 'and' | 'or';
   }
 }
