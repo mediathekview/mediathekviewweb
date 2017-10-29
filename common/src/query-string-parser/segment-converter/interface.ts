@@ -3,7 +3,6 @@ import { IQueryBuilder, Operator, RegexQueryBuilder, TextQueryBuilder } from '..
 import { Field } from '../../model';
 
 export interface SegmentConverter {
-  selectorRegex: RegExp;
   canHandle(segment: Segment): boolean;
   convert(segment: Segment): IQueryBuilder;
 }

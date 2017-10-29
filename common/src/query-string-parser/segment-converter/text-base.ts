@@ -5,9 +5,7 @@ import { SegmentConverter } from './interface';
 export abstract class TextSegmentConverter implements SegmentConverter {
   private _fields: string[];
 
-  selectorRegex: RegExp;
-
-  constructor(selectorRegex: RegExp, private operator: Operator, fields: string | string[]) {
+  constructor(private selectorRegex: RegExp, private operator: Operator, fields: string | string[]) {
     this.selectorRegex = selectorRegex;
     this._fields = Array.isArray(fields) ? fields : [fields];
   }
