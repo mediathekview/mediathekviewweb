@@ -1,8 +1,8 @@
 import { Query, SearchEngineSearchResult } from '../search-engine';
-import { IEntry } from '../model';
+import { Entry } from '../model';
 
 export { Query, SearchEngineSearchResult };
 
-export interface IMediathekViewWebAPI {
-  search(query: Query): Promise<SearchEngineSearchResult<IEntry>>;
+export interface MediathekViewWebAPI {
+  search(query: Query): Promise<SearchEngineSearchResult<Entry>>;
 }
