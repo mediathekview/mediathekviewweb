@@ -1,4 +1,4 @@
-export * from './interface';
+export * from './base';
 export * from './bool';
 export * from './time-value';
 export * from './range';

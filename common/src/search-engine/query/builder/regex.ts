@@ -1,7 +1,7 @@
-import { IQueryBuilder } from './';
-import { IRegexQuery, Operator } from '../';
+import { QueryBuilder } from './';
+import { RegexQuery, Operator } from '../';
 
-export class RegexQueryBuilder implements IQueryBuilder {
+export class RegexQueryBuilder extends QueryBuilder {
   private _fields: string[] = [];
   private _expression: string | null = null;
   private _operator: Operator = 'and';
@@ -31,7 +31,7 @@ export class RegexQueryBuilder implements IQueryBuilder {
     return this;
   }
 
-  build(): IRegexQuery {
+  build(): RegexQuery {
     if (this._fields.length == 0) {
       throw new Error('no fields specified');
     }
@@ -39,7 +39,7 @@ export class RegexQueryBuilder implements IQueryBuilder {
       throw new Error('no expression specified');
     }
 
-    const queryObj: IRegexQuery = {
+    const queryObj: RegexQuery = {
       regex: {
         fields: this._fields,
         expression: this._expression,

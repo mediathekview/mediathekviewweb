@@ -1,7 +1,7 @@
-import { IQueryBuilder } from './';
-import { IIDsQuery } from '../';
+import { QueryBuilder } from './';
+import { IDsQuery } from '../';
 
-export class IDsQueryBuilder implements IQueryBuilder {
+export class IDsQueryBuilder extends QueryBuilder {
   private _ids: string[];
 
   add(...ids: string[]): IDsQueryBuilder {
@@ -10,7 +10,7 @@ export class IDsQueryBuilder implements IQueryBuilder {
     return this;
   }
 
-  build(): IIDsQuery {
+  build(): IDsQuery {
     return { ids: this._ids };
   }
 }

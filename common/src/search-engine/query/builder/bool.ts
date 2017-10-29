@@ -1,52 +1,52 @@
-import { IQueryBuilder } from './';
-import { IQuery, IBoolQuery } from '../';
+import { QueryBuilder } from './';
+import { Query, BoolQuery } from '../';
 
-export class BoolQueryBuilder implements IQueryBuilder {
-  private _must: IQueryBuilder[] = [];
-  private _should: IQueryBuilder[] = [];
-  private _not: IQueryBuilder[] = [];
-  private _filter: IQueryBuilder[] = [];
+export class BoolQueryBuilder extends QueryBuilder {
+  private _must: (QueryBuilder | Query)[] = [];
+  private _should: (QueryBuilder | Query)[] = [];
+  private _not: (QueryBuilder | Query)[] = [];
+  private _filter: (QueryBuilder | Query)[] = [];
 
-  build(): IBoolQuery {
-    const queryObj: IBoolQuery = {
+  build(): BoolQuery {
+    const queryObj: BoolQuery = {
       bool: {}
     };
 
     if (this._must.length > 0) {
-      queryObj.bool.must = this._must.map((queryBuilder) => queryBuilder.build());
+      queryObj.bool.must = this._must.map((q) => q instanceof QueryBuilder ? q.build() : q);
     }
     if (this._should.length > 0) {
-      queryObj.bool.should = this._should.map((queryBuilder) => queryBuilder.build());
+      queryObj.bool.should = this._should.map((q) => q instanceof QueryBuilder ? q.build() : q);
     }
     if (this._not.length > 0) {
-      queryObj.bool.not = this._not.map((queryBuilder) => queryBuilder.build());
+      queryObj.bool.not = this._not.map((q) => q instanceof QueryBuilder ? q.build() : q);
     }
     if (this._filter.length > 0) {
-      queryObj.bool.filter = this._filter.map((queryBuilder) => queryBuilder.build());
+      queryObj.bool.filter = this._filter.map((q) => q instanceof QueryBuilder ? q.build() : q);
     }
 
     return queryObj;
   }
 
-  must(...queries: IQueryBuilder[]): BoolQueryBuilder {
+  must(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
     this._must.push(...queries);
 
     return this;
   }
 
-  should(...queries: IQueryBuilder[]): BoolQueryBuilder {
+  should(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
     this._should.push(...queries);
 
     return this;
   }
 
-  not(...queries: IQueryBuilder[]): BoolQueryBuilder {
+  not(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
     this._not.push(...queries);
 
     return this;
   }
 
-  filter(...queries: IQueryBuilder[]): BoolQueryBuilder {
+  filter(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
     this._filter.push(...queries);
 
     return this;

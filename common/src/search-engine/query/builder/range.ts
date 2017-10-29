@@ -1,19 +1,19 @@
-import { IQueryBuilder, TimeQueryValueBuilder } from './';
-import { IRangeQuery } from '../';
+import { QueryBuilder, TimeQueryValueBuilder } from './';
+import { RangeQuery } from '../';
 
-export class RangeQueryBuilder implements IQueryBuilder {
+export class RangeQueryBuilder extends QueryBuilder {
   private _field: string | null = null;
   private _lt: number | string | null = null;
   private _lte: number | string | null = null;
   private _gt: number | string | null = null;
   private _gte: number | string | null = null;
 
-  build(): IRangeQuery {
+  build(): RangeQuery {
     if (this._field == null) {
       throw new Error('field not set');
     }
 
-    const queryObj: IRangeQuery = {
+    const queryObj: RangeQuery = {
       range: {
         field: this._field
       }

@@ -1,8 +1,8 @@
 import * as SocketIO from 'socket.io';
 import * as HTTP from 'http';
 import { Nullable } from '../../common/utils';
-import { MediathekViewWebAPI, Query, SearchEngineSearchResult, IEntry } from '../api';
-import { IMediathekViewWebAPI } from '../../common/api';
+import { Query, SearchEngineSearchResult, IEntry } from '../api';
+import { MediathekViewWebAPI } from '../../common/api';
 import { SocketResponse, APIError } from '../../common/api/socket-io';
 
 type Acknowledgement<T> = (response: SocketResponse<T>) => void;
@@ -10,7 +10,7 @@ type Acknowledgement<T> = (response: SocketResponse<T>) => void;
 export class SocketIOMediathekViewWebAPIExposer {
   private io: SocketIO.Server;
 
-  constructor(private api: IMediathekViewWebAPI, private httpServer: HTTP.Server, private path: string = '/socket.io', private eventPrefix: string = '') {
+  constructor(private api: MediathekViewWebAPI, private httpServer: HTTP.Server, private path: string = '/socket.io', private eventPrefix: string = '') {
     this.io = SocketIO(httpServer, { path: path });
 
     this.initialize();

@@ -1,23 +1,23 @@
-import { ISearchEngine, Query, SearchEngineSearchResult } from '../common/search-engine';
+import { SearchEngine, Query, SearchEngineSearchResult } from '../common/search-engine';
 import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch';
 import * as Elasticsearch from 'elasticsearch';
 import { Keys as ElasticsearchKeys } from '../elasticsearch-definitions';
-import { IEntry } from '../common/model';
+import { Entry } from '../common/model';
 import config from '../config';
-import { IMediathekViewWebAPI } from '../common/api';
+import { MediathekViewWebAPI } from '../common/api';
 import { Nullable } from '../common/utils';
 
-export { IEntry, Query, SearchEngineSearchResult };
+export { Entry, Query, SearchEngineSearchResult };
 
-export class MediathekViewWebAPI implements IMediathekViewWebAPI {
-  private searchEngine: ISearchEngine<IEntry>;
+export class BaseMediathekViewWebAPI implements MediathekViewWebAPI {
+  private searchEngine: SearchEngine<Entry>;
 
   constructor() {
     const elasticsearchClient = new Elasticsearch.Client({ host: `${config.elasticsearch.host}:${config.elasticsearch.port}` });
-    this.searchEngine = new ElasticsearchSearchEngine<IEntry>(ElasticsearchKeys.IndexName, ElasticsearchKeys.TypeName, elasticsearchClient);
+    this.searchEngine = new ElasticsearchSearchEngine<Entry>(ElasticsearchKeys.IndexName, ElasticsearchKeys.TypeName, elasticsearchClient);
   }
 
-  async search(query: Query): Promise<SearchEngineSearchResult<IEntry>> {
+  async search(query: Query): Promise<SearchEngineSearchResult<Entry>> {
     const result = await this.searchEngine.search(query);
 
     return result;

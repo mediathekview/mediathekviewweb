@@ -10,34 +10,35 @@ export type Sort = {
   aggregation?: Aggregation;
 }
 
-export type Query = {
-  body: IIDsQuery | IMatchAllQuery | IBoolQuery | IRangeQuery | ITextQuery;
+export type Query = IDsQuery | MatchAllQuery | BoolQuery | RangeQuery | TextQuery | RegexQuery;
+
+let a: IDsQuery | MatchAllQuery;
+
+export type QueryObject = {
+  body: Query;
   sorts?: Sort[];
   skip?: number;
   limit?: number;
 }
 
-export interface IQuery {
-}
-
-export interface IIDsQuery extends IQuery {
+export type IDsQuery = {
   ids: string[];
 }
 
-export interface IMatchAllQuery extends IQuery {
+export type MatchAllQuery = {
   matchAll: {}
 }
 
-export interface IBoolQuery extends IQuery {
+export type BoolQuery = {
   bool: {
-    must?: IQuery[],
-    should?: IQuery[],
-    not?: IQuery[],
-    filter?: IQuery[]
+    must?: Query[],
+    should?: Query[],
+    not?: Query[],
+    filter?: Query[]
   }
 }
 
-export interface IRangeQuery extends IQuery {
+export type RangeQuery = {
   range: {
     field: string;
     lt?: number | string;
@@ -47,7 +48,7 @@ export interface IRangeQuery extends IQuery {
   }
 }
 
-export interface ITextQuery extends IQuery {
+export type TextQuery = {
   text: {
     fields: string[];
     text: string;
@@ -55,7 +56,7 @@ export interface ITextQuery extends IQuery {
   }
 }
 
-export interface IRegexQuery extends IQuery {
+export type RegexQuery = {
   regex: {
     fields: string[];
     expression: string;

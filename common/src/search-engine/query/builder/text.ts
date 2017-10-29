@@ -1,7 +1,7 @@
-import { IQueryBuilder } from './';
-import { ITextQuery, Operator } from '../';
+import { QueryBuilder } from './';
+import { TextQuery, Operator } from '../';
 
-export class TextQueryBuilder implements IQueryBuilder {
+export class TextQueryBuilder extends QueryBuilder {
   private _fields: string[] = [];
   private _text: string | null = null;
   private _operator: Operator = 'and';
@@ -28,7 +28,7 @@ export class TextQueryBuilder implements IQueryBuilder {
     return this;
   }
 
-  build(): ITextQuery {
+  build(): TextQuery {
     if (this._fields.length == 0) {
       throw new Error('no fields specified');
     }
@@ -36,7 +36,7 @@ export class TextQueryBuilder implements IQueryBuilder {
       throw new Error('no text specified');
     }
 
-    const queryObj: ITextQuery = {
+    const queryObj: TextQuery = {
       text: {
         fields: this._fields,
         text: this._text,
