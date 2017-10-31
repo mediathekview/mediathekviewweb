@@ -1,4 +1,4 @@
-export interface IFilmlistMetadata {
+export interface FilmlistMetadata {
   timestamp: number;
   hash: string;
 }

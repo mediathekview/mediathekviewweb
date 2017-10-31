@@ -9,24 +9,24 @@ export type Entry = {
   duration: number;
   description: string;
   website: string;
-  media: IMedia[];
+  media: Media[];
 }
 
-export enum Field {
-  ID = 'id',
-  Channel = 'channel',
-  Topic = 'topic',
-  Title = 'title',
-  Timestamp = 'timestamp',
-  Duration = 'duration',
-  Description = 'description',
-  Website = 'website',
-  MediaType = 'media.type',
-  MediaUrl = 'media.url',
-  MediaSize = 'media.size',
-  VideoQuality = 'media.quality',
-  AudioQuality = 'media.quality',
-  LastSeen = 'metadata.lastSeen'
+export class Field {
+  static ID: string = 'id';
+  static Channel: string = 'channel';
+  static Topic: string = 'topic';
+  static Title: string = 'title';
+  static Timestamp: string = 'timestamp';
+  static Duration: string = 'duration';
+  static Description: string = 'description';
+  static Website: string = 'website';
+  static MediaType: string = 'media.type';
+  static MediaUrl: string = 'media.url';
+  static MediaSize: string = 'media.size';
+  static VideoQuality: string = 'media.quality';
+  static AudioQuality: string = 'media.quality';
+  static LastSeen: string = 'metadata.lastSeen';
 }
 
 export type EntryMetadata = {
@@ -48,46 +48,25 @@ export enum MediaType {
   Subtitle = 2
 }
 
-export interface IMedia {
+export interface Media {
   type: MediaType;
   url: string;
   size: number;
 }
 
-export interface IVideo extends IMedia {
+export type Video = Media & {
+  type: MediaType.Video;
   quality: Quality;
 }
 
-export class Video implements IVideo {
-  type: MediaType = MediaType.Video;
-  url: string;
-  size: number;
-  quality: Quality;
-
-  constructor(quality: Quality, url: string, size: number) {
-    this.quality = quality;
-    this.url = url;
-    this.size = size;
-  }
-}
-
-export interface IAudio extends IMedia {
+export type Audio = Media & {
+  type: MediaType.Audio;
   quality: Quality;
 }
 
-export interface ISubtitle extends IMedia {
-}
-
-export class Subtitle implements ISubtitle {
-  type: MediaType = MediaType.Subtitle;
-  url: string;
-  size: number;
-
-  constructor(url: string, size: number) {
-    this.url = url;
-    this.size = size;
-  }
-}
+export type Subtitle = Media & {
+  type: MediaType.Subtitle;
+};
 
 export enum Quality {
   UltraLow = 0,
@@ -96,4 +75,24 @@ export enum Quality {
   Medium = 3,
   High = 4,
   VeryHigh = 5
+}
+
+export class MediaFactory {
+  static createVideo(url: string, size: number, quality: Quality): Video {
+    return {
+      type: MediaType.Video,
+      url: url,
+      size: size,
+      quality: quality
+    }
+  }
+
+  static createAudio(url: string, size: number, quality: Quality): Audio {
+    return {
+      type: MediaType.Audio,
+      url: url,
+      size: size,
+      quality: quality
+    }
+  }
 }
