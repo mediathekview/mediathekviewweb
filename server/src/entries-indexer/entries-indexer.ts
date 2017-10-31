@@ -1,21 +1,21 @@
 import { IDatastoreProvider, IKey, IMap, ISortedSet, ISet } from '../data-store';
 import { DatastoreKeys } from '../data-store-keys';
-import { IEntry, IFilmlistMetadata } from '../common/model';
+import { Entry } from '../common/model';
 import config from '../config';
 import { random } from '../common/utils';
 import * as Bull from 'bull';
 import { ILockProvider, ILock } from '../lock';
 import { DistributedLoop } from '../distributed-loop';
 import { QueueProvider, IndexEntriesType } from '../queue';
-import { ISearchEngine, SearchEngineItem } from '../common/search-engine';
+import { SearchEngine, SearchEngineItem } from '../common/search-engine';
 
 const BATCH_SIZE = 100;
 
 export class EntriesIndexer {
   private indexEntriesQueue: Bull.Queue;
-  private entryMap: IMap<IEntry>;
+  private entryMap: IMap<Entry>;
 
-  constructor(private datastoreProvider: IDatastoreProvider, private searchEngine: ISearchEngine<IEntry>, private queueProvider: QueueProvider) {
+  constructor(private datastoreProvider: IDatastoreProvider, private searchEngine: SearchEngine<Entry>, private queueProvider: QueueProvider) {
     this.indexEntriesQueue = queueProvider.getIndexEntriesQueue();
     this.entryMap = datastoreProvider.getMap(DatastoreKeys.EntryMap);
   }
@@ -38,17 +38,17 @@ export class EntriesIndexer {
       left -= BATCH_SIZE;
 
       const result = await this.entryMap.getMany(...entryIDs);
-      const entries = result.filter((r) => r != null).map((r) => r.value as IEntry);
+      const entries = result.filter((r) => r != null).map((r) => r.value as Entry);
 
       await this.index(entries);
     }
   }
 
-  private async index(entries: IEntry[]) {
-    const searchEngineEntries: SearchEngineItem<IEntry>[] = [];
+  private async index(entries: Entry[]) {
+    const searchEngineEntries: SearchEngineItem<Entry>[] = [];
 
     for (const entry of entries) {
-      const searchEngineEntry: SearchEngineItem<IEntry> = {
+      const searchEngineEntry: SearchEngineItem<Entry> = {
         id: entry.id,
         document: entry
       }

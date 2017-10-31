@@ -1,11 +1,11 @@
-import { IFilmlist } from './filmlist-interface';
+import { Filmlist } from './filmlist-interface';
 import { Nullable } from '../common/utils';
 import { getLastModifiedHeaderTimestamp } from '../utils';
 import * as Needle from 'needle';
 import * as LZMA from 'lzma-native';
 import { Stream, Duplex, Readable } from 'stream';
 
-export class HttpFilmlist implements IFilmlist {
+export class HttpFilmlist implements Filmlist {
   private timestamp: Promise<Nullable<number>> | null = null;
   private compressed: boolean;
 

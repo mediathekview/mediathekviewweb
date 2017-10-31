@@ -1,8 +1,8 @@
-import { ISearchEngine, SearchEngineItem, Query, SearchEngineSearchResult } from '../../common/search-engine';
+import { SearchEngine, SearchEngineItem, QueryObject, SearchEngineSearchResult } from '../../common/search-engine';
 import convertQuery from './query-converter';
 import * as Elasticsearch from 'elasticsearch';
 
-export class ElasticsearchSearchEngine<T> implements ISearchEngine<T> {
+export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private initialized: boolean = false;
   private initializationPromise: Promise<any>;
 
@@ -58,7 +58,7 @@ export class ElasticsearchSearchEngine<T> implements ISearchEngine<T> {
     await this.elasticsearchClient.bulk({ body: params, index: this.indexName, type: this.typeName });
   }
 
-  async search(query: Query): Promise<SearchEngineSearchResult<T>> {
+  async search(query: QueryObject): Promise<SearchEngineSearchResult<T>> {
     const elasticsearchQuery = convertQuery(query, this.indexName, this.typeName);
 
     const result = await this.elasticsearchClient.search<T>(elasticsearchQuery);

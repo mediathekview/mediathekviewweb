@@ -1,12 +1,12 @@
 import * as LZMA from 'lzma-native';
 import { Readable, Duplex } from 'stream';
-import { IFilmlist } from './filmlist-interface';
-import { IFile } from './listing';
+import { Filmlist } from './filmlist-interface';
+import { File } from './listing';
 
-export class ListingFilmlist implements IFilmlist {
+export class ListingFilmlist implements Filmlist {
   ressource: string;
 
-  constructor(private listingFile: IFile) {
+  constructor(private listingFile: File) {
     this.ressource = listingFile.ressource;
   }
 

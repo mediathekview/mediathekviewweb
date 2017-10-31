@@ -1,7 +1,7 @@
 import * as Crypto from 'crypto';
-import { IFilmlist } from './filmlist-interface';
+import { Filmlist } from './filmlist-interface';
 import { Readable } from 'stream';
-import { IEntry, IFilmlistMetadata, Video, Subtitle, Quality } from '../common/model';
+import { Entry, FilmlistMetadata, Video, Subtitle, Quality, MediaFactory } from '../common/model';
 
 const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
@@ -11,7 +11,7 @@ const INPUT_BUFFER_LENGTH = 10 * 1024; // 10 KB
 export class FilmlistParser {
   private stream: Readable;
   private inputBuffer: string = '';
-  private outputBuffer: IEntry[] = [];
+  private outputBuffer: Entry[] = [];
   private end: boolean = false;
   private error: Error | null = null;
   private currentChannel: string = '';
@@ -21,11 +21,11 @@ export class FilmlistParser {
   private resolve: () => void;
   private reject: (reason: any) => void;
 
-  metadata: IFilmlistMetadata | null = null;
+  metadata: FilmlistMetadata | null = null;
 
-  constructor(private filmlist: IFilmlist, private metadataCallback: (metadata: IFilmlistMetadata) => void) { }
+  constructor(private filmlist: Filmlist, private metadataCallback: (metadata: FilmlistMetadata) => void) { }
 
-  async *parse(): AsyncIterableIterator<IEntry> {
+  async *parse(): AsyncIterableIterator<Entry> {
     let counter = 0;
     this.stream = this.filmlist.getStream()
       //.on('data', (chunk: string) => this.handleChunk(chunk))
@@ -95,7 +95,7 @@ export class FilmlistParser {
     }
   }
 
-  private rawFilmlistEntryToEntry(raw: string): IEntry {
+  private rawFilmlistEntryToEntry(raw: string): Entry {
     const parsedFilmlistEntry: string[] = JSON.parse(raw);
 
     const [channel, topic, title, date, time, rawDuration, size, description, url, url_website, url_subtitle, url_rtmp, url_small, url_rtmp_small, url_hd, url_rtmp_hd, date_l, url_history, geo, is_new] = parsedFilmlistEntry;
@@ -112,10 +112,10 @@ export class FilmlistParser {
 
     const timestamp = parseInt(date_l);
 
-    const entry: IEntry = {
+    const entry: Entry = {
       id: '',
       metadata: {
-        lastSeen: (this.metadata as IFilmlistMetadata).timestamp,
+        lastSeen: (this.metadata as FilmlistMetadata).timestamp,
         downloads: [],
         plays: [],
         secondsPlayed: 0,
@@ -133,13 +133,13 @@ export class FilmlistParser {
     }
 
     if (url_small.length > 0) {
-      entry.media.push(new Video(Quality.Low, this.createUrlFromBase(url, url_small), -1));
+      entry.media.push(MediaFactory.createVideo(this.createUrlFromBase(url, url_small), -1, Quality.Low));
     }
     if (url.length > 0) {
-      entry.media.push(new Video(Quality.Medium, url, -1));
+      entry.media.push(MediaFactory.createVideo(url, -1, Quality.Medium));
     }
     if (url_hd.length > 0) {
-      entry.media.push(new Video(Quality.High, this.createUrlFromBase(url, url_hd), -1));
+      entry.media.push(MediaFactory.createVideo(this.createUrlFromBase(url, url_hd), -1, Quality.High));
     }
 
     const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.website].join(' _ ');

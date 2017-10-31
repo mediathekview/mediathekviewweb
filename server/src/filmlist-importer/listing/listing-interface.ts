@@ -1,12 +1,12 @@
 import { Readable } from 'stream';
 import { Nullable } from '../../common/utils';
 
-export interface IListing {
-  getListings(recursive?: boolean): Promise<IListing[]>;
-  getFiles(recursive?: boolean): Promise<IFile[]>;
+export interface Listing {
+  getListings(recursive?: boolean): Promise<Listing[]>;
+  getFiles(recursive?: boolean): Promise<File[]>;
 }
 
-export interface IFile {
+export interface File {
   ressource: string;
   cacheable: boolean;
   name: string;

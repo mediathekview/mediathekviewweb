@@ -1,6 +1,6 @@
-import { Query, Aggregation, Sort, IQuery, IBoolQuery, IRangeQuery, ITextQuery, IRegexQuery, IIDsQuery } from '../../common/search-engine/';
+import { QueryObject, Query, Aggregation, Sort, BoolQuery, RangeQuery, TextQuery, RegexQuery, IDsQuery } from '../../common/search-engine/';
 
-export default function queryToElasticsearchQuery(query: Query, indexName: string, typeName: string): object {
+export default function queryToElasticsearchQuery(query: QueryObject, indexName: string, typeName: string): object {
   if (query.skip == undefined) {
     query.skip = 0;
   }
@@ -84,25 +84,25 @@ function lengthSort(sort: Sort): object {
   return scriptObj;
 }
 
-function bodyToElasticsearchQuery(query: IQuery, typeName: string): object {
+function bodyToElasticsearchQuery(query: Query, typeName: string): object {
   if ('bool' in query) {
-    return convertBoolQuery(query as IBoolQuery, typeName);
+    return convertBoolQuery(query as BoolQuery, typeName);
   } else if ('range' in query) {
-    return convertRangeQuery(query as IRangeQuery);
+    return convertRangeQuery(query as RangeQuery);
   } else if ('text' in query) {
-    return convertTextQuery(query as ITextQuery);
+    return convertTextQuery(query as TextQuery);
   } else if ('regex' in query) {
-    return convertRegexQuery(query as IRegexQuery);
+    return convertRegexQuery(query as RegexQuery);
   } else if ('matchAll' in query) {
     return { match_all: {} };
   } else if ('ids' in query) {
-    return convertIDsQuery(query as IIDsQuery, typeName);
+    return convertIDsQuery(query as IDsQuery, typeName);
   } else {
     throw new Error('query is invalid');
   }
 }
 
-function convertBoolQuery(query: IBoolQuery, typeName: string): object {
+function convertBoolQuery(query: BoolQuery, typeName: string): object {
   const queryObj = {
     bool: {}
   };
@@ -123,7 +123,7 @@ function convertBoolQuery(query: IBoolQuery, typeName: string): object {
   return queryObj;
 }
 
-function convertRangeQuery(query: IRangeQuery): object {
+function convertRangeQuery(query: RangeQuery): object {
   const queryObj = {
     range: {}
   };
@@ -163,7 +163,7 @@ function convertRangeValue(value: string | number): string | number {
   return converted;
 }
 
-function convertIDsQuery(query: IIDsQuery, typeName: string): object {
+function convertIDsQuery(query: IDsQuery, typeName: string): object {
   return {
     ids: {
       type: typeName,
@@ -172,7 +172,7 @@ function convertIDsQuery(query: IIDsQuery, typeName: string): object {
   };
 }
 
-function convertTextQuery(query: ITextQuery): object {
+function convertTextQuery(query: TextQuery): object {
   if (query.text.fields.length == 1) {
     return convertToMatch(query.text.fields[0], query.text.text);
   } else if (query.text.fields.length > 1) {
@@ -182,7 +182,7 @@ function convertTextQuery(query: ITextQuery): object {
   }
 }
 
-function convertRegexQuery(query: IRegexQuery): object {
+function convertRegexQuery(query: RegexQuery): object {
   const queryObj = {
     regexp: {}
   };
@@ -202,7 +202,7 @@ function convertToMatch(field: string, text: string): object {
   return queryObj;
 }
 
-function convertToMultiMatch(query: ITextQuery): object {
+function convertToMultiMatch(query: TextQuery): object {
   const queryObj = {
     multi_match: {
       type: 'cross_fields',

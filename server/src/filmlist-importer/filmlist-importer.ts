@@ -1,6 +1,6 @@
 import { IDatastoreProvider, IKey, ISet, ISortedSet, SortedSetMember, IMap, Aggregation } from '../data-store';
-import { IFilmlist } from './filmlist-interface';
-import { IEntry, IFilmlistMetadata } from '../common/model';
+import { Filmlist } from './filmlist-interface';
+import { Entry, FilmlistMetadata } from '../common/model';
 import { FilmlistParser } from './filmlist-parser';
 import config from '../config';
 import { random } from '../common/utils';
@@ -13,7 +13,7 @@ export class FilmlistImporter {
   private importQueue: Bull.Queue;
   private importedFilmlistTimestamps: ISet<number>;
   private importIDCounter: IKey<number>;
-  private entryMap: IMap<IEntry>;
+  private entryMap: IMap<Entry>;
   private entryIDTimestampSortedSet: ISortedSet<string>;
   private trackingSets: ISortedSet<string>;
 
@@ -37,8 +37,8 @@ export class FilmlistImporter {
 
     console.log('importing', importID, data.ressource);
 
-    let filmlist: IFilmlist;
-    let metadata: IFilmlistMetadata | undefined;
+    let filmlist: Filmlist;
+    let metadata: FilmlistMetadata | undefined;
 
     if (data.ressource.startsWith('http')) {
       filmlist = new HttpFilmlist(data.ressource, data.timestamp);
@@ -49,7 +49,7 @@ export class FilmlistImporter {
     const parser = new FilmlistParser(filmlist, (_metadata) => metadata = _metadata);
 
     let sortedSetBuffer: SortedSetMember<string>[] = [];
-    const mapBuffer: Map<string, IEntry> = new Map();
+    const mapBuffer: Map<string, Entry> = new Map();
 
     let counter = 0;
     for await (const entry of parser.parse()) {
@@ -68,7 +68,7 @@ export class FilmlistImporter {
         console.log(counter);
       }
     }
-    await this.flushBuffer(sortedSetBuffer, mapBuffer, metadata as IFilmlistMetadata, trackingSet);
+    await this.flushBuffer(sortedSetBuffer, mapBuffer, metadata as FilmlistMetadata, trackingSet);
 
     console.log(counter);
 
@@ -76,7 +76,7 @@ export class FilmlistImporter {
     await this.importedFilmlistTimestamps.add(data.timestamp);
   }
 
-  private async flushBuffer(sortedSetBuffer: SortedSetMember<string>[], mapBuffer: Map<string, IEntry>, metadata: IFilmlistMetadata, trackingSet: ISet<string>) {
+  private async flushBuffer(sortedSetBuffer: SortedSetMember<string>[], mapBuffer: Map<string, Entry>, metadata: FilmlistMetadata, trackingSet: ISet<string>) {
     const transaction = this.datastoreProvider.getTransaction();
     this.entryIDTimestampSortedSet.transact(transaction);
     this.entryMap.transact(transaction);

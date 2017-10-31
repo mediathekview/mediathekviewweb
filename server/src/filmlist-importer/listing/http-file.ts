@@ -1,11 +1,11 @@
-import { IFile } from './listing-interface';
+import { File } from './listing-interface';
 import { Readable, Duplex } from 'stream';
 import * as Needle from 'needle';
 import { Nullable } from '../../common/utils';
 
 const NAME_REGEX = /\/([^\/]+$)/;
 
-export class HttpFile implements IFile {
+export class HttpFile implements File {
   private _fetch: Nullable<Promise<void>> = null;
   private _timestamp: Nullable<number> = null;
   private _size: Nullable<number> = null;

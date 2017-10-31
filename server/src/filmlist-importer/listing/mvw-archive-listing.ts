@@ -1,5 +1,5 @@
 import { Stream } from 'stream';
-import { IListing, IFile, HttpFile, NginxListing, MVWArchiveFile } from './';
+import { File, HttpFile, NginxListing, MVWArchiveFile } from './';
 import { Nullable } from '../../common/utils';
 import * as Needle from 'needle';
 
@@ -10,8 +10,8 @@ export class MVWArchiveListing extends NginxListing {
     super(URL);
   }
 
-  async getFiles(recursive?: boolean): Promise<IFile[]> {
-    let httpFiles: IFile[] = await super.getFiles(recursive);
+  async getFiles(recursive?: boolean): Promise<File[]> {
+    let httpFiles: File[] = await super.getFiles(recursive);
 
     return httpFiles
       .filter((httpFile) => !httpFile.ressource.endsWith('Filmliste-diff.xz'))

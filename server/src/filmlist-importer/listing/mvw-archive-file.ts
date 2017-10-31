@@ -1,15 +1,15 @@
 import { Readable } from 'stream';
-import { IFile, HttpFile } from './';
+import { File, HttpFile } from './';
 import { Nullable } from '../../common/utils';
 
 const TIMESTAMP_REGEX = /\/(\d{4})-0?(\d{1,2})-0?(\d{1,2})-filme\.xz$/;
 
-export class MVWArchiveFile implements IFile {
+export class MVWArchiveFile implements File {
   cacheable: boolean;
   name:string;
   ressource:string;
 
-  constructor(private file: IFile) {
+  constructor(private file: File) {
     if (!file.ressource.startsWith('https://archiv.mediathekviewweb.de/' || !file.ressource.endsWith('.xz'))) {
       throw new Error(`Invalid ressource for MVWArchiveFile: ${file.ressource}`);
     }

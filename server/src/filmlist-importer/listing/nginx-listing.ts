@@ -1,13 +1,13 @@
 import * as URL from 'url';
 import * as Needle from 'needle';
-import { IListing, IFile } from './listing-interface';
+import { Listing, File } from './listing-interface';
 import { HttpFile } from './http-file';
 
 const PARSE_REGEX = /^<a\s+href="(.*?)"\s?>(.*?)<\/a>\s*(\S+)\s+(\S+)/gm;
 
-export class NginxListing implements IListing {
-  private listings: IListing[] | null = null;
-  private files: IFile[] | null = null;
+export class NginxListing implements Listing {
+  private listings: Listing[] | null = null;
+  private files: File[] | null = null;
 
   private _fetch: Promise<void> | null = null;
 
@@ -66,7 +66,7 @@ export class NginxListing implements IListing {
     this.files = files;
   }
 
-  async getListings(recursive?: boolean): Promise<IListing[]> {
+  async getListings(recursive?: boolean): Promise<Listing[]> {
     await this.fetch();
 
     if (this.listings == null) {
@@ -86,7 +86,7 @@ export class NginxListing implements IListing {
   }
 
 
-  async getFiles(recursive?: boolean): Promise<IFile[]> {
+  async getFiles(recursive?: boolean): Promise<File[]> {
     await this.fetch();
 
     if (this.files == null) {
