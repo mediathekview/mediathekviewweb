@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
 
-import { IEntry } from './common/model';
-import { IMediathekViewWebAPI } from './common/api';
+import { Entry } from './common/model';
+import { MediathekViewWebAPI } from './common/api';
 import { SocketIOMediathekViewWebAPI } from './api/socket-io';
+import { MatchAllQueryBuilder } from './common/search-engine';
+import { Query } from './common/search-engine';
 
 @Component({
   selector: 'mvw-root',
@@ -16,13 +18,16 @@ export class AppComponent {
   responseString: string;
 
   showNav: boolean = false;
-  private api: IMediathekViewWebAPI;
+  private api: MediathekViewWebAPI;
 
-  entries: IEntry[] = [];
+  entries: Entry[] = [];
 
   constructor() {
+
+  const q: Query = { matchAll: {}};
+
     this.api = new SocketIOMediathekViewWebAPI('localhost:8080');
-    const query = { body: { matchAll: {} } };
+    const query = { body: new MatchAllQueryBuilder().build() };
 
     this.queryString = JSON.stringify(query, null, 2);
 
@@ -30,7 +35,7 @@ export class AppComponent {
       const result = await this.api.search(query);
 
       this.entries = result.items.map((item) => item.document);
-      
+
       this.responseString = JSON.stringify(result, null, 2);
     })();
   }

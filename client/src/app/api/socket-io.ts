@@ -1,5 +1,5 @@
 import * as SocketIO from 'socket.io-client';
-import { MediathekViewWebAPI, Query, SearchEngineSearchResult } from '../common/api';
+import { MediathekViewWebAPI, QueryObject, SearchEngineSearchResult } from '../common/api';
 import { SocketResponse, APIError } from '../common/api/socket-io';
 import { Entry } from '../common/model';
 
@@ -16,7 +16,7 @@ export class SocketIOMediathekViewWebAPI implements MediathekViewWebAPI {
     }
   }
 
-  async search(query: Query): Promise<SearchEngineSearchResult<Entry>> {
+  async search(query: QueryObject): Promise<SearchEngineSearchResult<Entry>> {
     return this.emit<SearchEngineSearchResult<Entry>>('search', query);
   }
 

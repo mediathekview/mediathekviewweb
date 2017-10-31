@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 
-import { IEntry } from '../../common/model';
+import { Entry } from '../../common/model';
 
 @Component({
   selector: 'mvw-entry',
@@ -8,7 +8,7 @@ import { IEntry } from '../../common/model';
   styleUrls: ['./entry.component.scss']
 })
 export class EntryComponent implements OnInit {
-  @Input() entry: IEntry;
+  @Input() entry: Entry;
 
   constructor() { }
 
