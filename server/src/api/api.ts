@@ -1,13 +1,12 @@
-import { SearchEngine, Query, SearchEngineSearchResult } from '../common/search-engine';
+import { SearchEngine, QueryObject, SearchEngineSearchResult } from '../common/search-engine';
 import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch';
 import * as Elasticsearch from 'elasticsearch';
 import { Keys as ElasticsearchKeys } from '../elasticsearch-definitions';
 import { Entry } from '../common/model';
 import config from '../config';
 import { MediathekViewWebAPI } from '../common/api';
-import { Nullable } from '../common/utils';
 
-export { Entry, Query, SearchEngineSearchResult };
+export { Entry, QueryObject, SearchEngineSearchResult };
 
 export class BaseMediathekViewWebAPI implements MediathekViewWebAPI {
   private searchEngine: SearchEngine<Entry>;
@@ -17,7 +16,7 @@ export class BaseMediathekViewWebAPI implements MediathekViewWebAPI {
     this.searchEngine = new ElasticsearchSearchEngine<Entry>(ElasticsearchKeys.IndexName, ElasticsearchKeys.TypeName, elasticsearchClient);
   }
 
-  async search(query: Query): Promise<SearchEngineSearchResult<Entry>> {
+  async search(query: QueryObject): Promise<SearchEngineSearchResult<Entry>> {
     const result = await this.searchEngine.search(query);
 
     return result;

@@ -1,7 +1,7 @@
 import * as SocketIO from 'socket.io';
 import * as HTTP from 'http';
 import { Nullable } from '../../common/utils';
-import { Query, SearchEngineSearchResult, IEntry } from '../api';
+import { QueryObject, SearchEngineSearchResult, Entry } from '../api';
 import { MediathekViewWebAPI } from '../../common/api';
 import { SocketResponse, APIError } from '../../common/api/socket-io';
 
@@ -23,7 +23,7 @@ export class SocketIOMediathekViewWebAPIExposer {
   private handleSocket(socket: SocketIO.Socket) {
     const event = (event: string) => { return this.eventPrefix + event };
 
-    socket.on(event(this.api.search.name), async (query: Query, ack: Acknowledgement<SearchEngineSearchResult<IEntry>>) => {
+    socket.on(event(this.api.search.name), async (query: QueryObject, ack: Acknowledgement<SearchEngineSearchResult<Entry>>) => {
       console.log(query);
       try {
         const result = await this.api.search(query);
