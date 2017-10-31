@@ -1,4 +1,4 @@
-import { QueryBuilder } from './';
+import { QueryBuilder } from './base';
 import { IDsQuery } from '../';
 
 export class IDsQueryBuilder extends QueryBuilder {

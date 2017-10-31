@@ -1,17 +1,17 @@
-import { QueryBuilder } from './';
+import { QueryBuilder } from './base';
 import { RegexQuery, Operator } from '../';
 
 export class RegexQueryBuilder extends QueryBuilder {
-  private _fields: string[] = [];
+  private _field: string | null = null;
   private _expression: string | null = null;
   private _operator: Operator = 'and';
 
-  fields(...fields: string[]): RegexQueryBuilder {
-    if (fields.length == 0) {
+  field(field: string): RegexQueryBuilder {
+    if (field.length == 0) {
       throw new Error('no field specified');
     }
 
-    this._fields = fields;
+    this._field = field;
 
     return this;
   }
@@ -32,8 +32,8 @@ export class RegexQueryBuilder extends QueryBuilder {
   }
 
   build(): RegexQuery {
-    if (this._fields.length == 0) {
-      throw new Error('no fields specified');
+    if (this._field == null) {
+      throw new Error('no field specified');
     }
     if (this._expression == null) {
       throw new Error('no expression specified');
@@ -41,7 +41,7 @@ export class RegexQueryBuilder extends QueryBuilder {
 
     const queryObj: RegexQuery = {
       regex: {
-        fields: this._fields,
+        field: this._field,
         expression: this._expression,
         operator: this._operator
       }

@@ -1,4 +1,5 @@
-import { QueryBuilder, TimeQueryValueBuilder } from './';
+import { QueryBuilder } from './base';
+import { TimeQueryValueBuilder } from './time-value';
 import { RangeQuery } from '../';
 
 export class RangeQueryBuilder extends QueryBuilder {

@@ -1,4 +1,4 @@
-import { QueryBuilder } from './';
+import { QueryBuilder } from './base';
 import { Query, BoolQuery } from '../';
 
 export class BoolQueryBuilder extends QueryBuilder {

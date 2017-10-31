@@ -12,8 +12,6 @@ export type Sort = {
 
 export type Query = IDsQuery | MatchAllQuery | BoolQuery | RangeQuery | TextQuery | RegexQuery;
 
-let a: IDsQuery | MatchAllQuery;
-
 export type QueryObject = {
   body: Query;
   sorts?: Sort[];
@@ -58,7 +56,7 @@ export type TextQuery = {
 
 export type RegexQuery = {
   regex: {
-    fields: string[];
+    field: string;
     expression: string;
     operator: 'and' | 'or';
   }
