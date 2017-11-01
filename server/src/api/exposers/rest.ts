@@ -38,9 +38,20 @@ export class RESTMediathekViewWebAPIExposer {
   private async queryJSON(context: KoaRouter.IRouterContext, next: () => Promise<any>) {
     const query = context.request.body;
 
-    const result = await this.api.search(query);
+    let response: APIResponse<SearchEngineSearchResult<Entry>>;
 
-    const response: APIResponse<SearchEngineSearchResult<Entry>> = { result: result };
+    try {
+      const result = await this.api.search(query);
+      response = { result: result };
+    }
+    catch (error) {
+      if (error instanceof Error) {
+        response = { error: { name: error.name, message: error.message, stack: error.stack } };
+      } else {
+        const stack = (new Error()).stack;
+        response = { error: { name: "UnknownError", message: JSON.stringify(error), stack: stack } };
+      }
+    }
 
     context.response.body = response;
     next();
