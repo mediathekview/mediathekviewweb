@@ -66,9 +66,9 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     const items: SearchEngineItem<T>[] = result.hits.hits.map((hit) => ({ id: hit._id, document: hit._source }));
 
     const searchResult: SearchEngineSearchResult<T> = {
-      items: items,
       total: result.hits.total,
-      milliseconds: result.took
+      milliseconds: result.took,
+      items: items
     };
 
     return searchResult;

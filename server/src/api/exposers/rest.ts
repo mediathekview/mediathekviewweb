@@ -4,12 +4,9 @@ import * as KoaBodyParser from 'koa-bodyparser';
 import * as HTTP from 'http';
 import { Nullable } from '../../common/utils';
 import { QueryObject, SearchEngineSearchResult, Entry } from '../api';
-import { MediathekViewWebAPI } from '../../common/api';
-import { SocketResponse, APIError } from '../../common/api/socket-io';
+import { MediathekViewWebAPI, APIError, APIResponse } from '../../common/api';
 
-type Acknowledgement<T> = (response: SocketResponse<T>) => void;
-
-export class SocketIOMediathekViewWebAPIExposer {
+export class RESTMediathekViewWebAPIExposer {
   private koa: Koa;
   private router: KoaRouter;
   private bodyParser: Koa.Middleware;
@@ -35,11 +32,17 @@ export class SocketIOMediathekViewWebAPIExposer {
   private setRoutes() {
     this.router.prefix(this.path);
 
-    this.router.get('/query/json', (context, next) => this.query(context, next));
+    this.router.post('/query/json', (context, next) => this.queryJSON(context, next));
   }
 
-  private async query(context: KoaRouter.IRouterContext, next: () => Promise<any>) {
-    console.log(context.request.body);
+  private async queryJSON(context: KoaRouter.IRouterContext, next: () => Promise<any>) {
+    const query = context.request.body;
+
+    const result = await this.api.search(query);
+
+    const response: APIResponse<SearchEngineSearchResult<Entry>> = { result: result };
+
+    context.response.body = response;
     next();
   }
 }

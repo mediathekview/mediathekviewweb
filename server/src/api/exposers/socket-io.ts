@@ -2,10 +2,9 @@ import * as SocketIO from 'socket.io';
 import * as HTTP from 'http';
 import { Nullable } from '../../common/utils';
 import { QueryObject, SearchEngineSearchResult, Entry } from '../api';
-import { MediathekViewWebAPI } from '../../common/api';
-import { SocketResponse, APIError } from '../../common/api/socket-io';
+import { MediathekViewWebAPI, APIError, APIResponse } from '../../common/api';
 
-type Acknowledgement<T> = (response: SocketResponse<T>) => void;
+type Acknowledgement<T> = (response: APIResponse<T>) => void;
 
 export class SocketIOMediathekViewWebAPIExposer {
   private io: SocketIO.Server;
