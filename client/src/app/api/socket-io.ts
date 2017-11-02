@@ -1,6 +1,6 @@
 import * as SocketIO from 'socket.io-client';
 import { MediathekViewWebAPI, QueryObject, SearchEngineSearchResult } from '../common/api';
-import { SocketResponse, APIError } from '../common/api/socket-io';
+import { APIResponse, APIError } from '../common/api/';
 import { Entry } from '../common/model';
 
 export class SocketIOMediathekViewWebAPI implements MediathekViewWebAPI {
@@ -22,7 +22,7 @@ export class SocketIOMediathekViewWebAPI implements MediathekViewWebAPI {
 
   async emit<T>(event: string, data: any): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      this.io.emit(event, data, (response: SocketResponse<T>) => {
+      this.io.emit(event, data, (response: APIResponse<T>) => {
         if (response.error != undefined) {
           return reject(response.error);
         }
