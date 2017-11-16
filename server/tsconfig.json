@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "target": "es6",
-    "lib": ["esnext"],
+    "lib": ["es5", "es6", "esnext"],
     "sourceMap": false,
     "outDir": "./dist/",
     "removeComments": true,
