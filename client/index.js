@@ -18,7 +18,7 @@ var video;
 var debugResponse = false;
 
 XMLHttpRequest.prototype.baseOpen = XMLHttpRequest.prototype.open;
-XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+XMLHttpRequest.prototype.open = function (method, url, async, user, password) {
     if (url.startsWith('http://srfvodhd-vh.akamaihd.net') || url.startsWith('http://hdvodsrforigin-f.akamaihd.net')) {
         url = 'https' + url.slice(4);
     }
@@ -28,7 +28,7 @@ XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
 
 function isWDRm3u8(url) {
     let regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
-    
+
     return regex.test(url);
 }
 
@@ -45,7 +45,7 @@ function WDRm3u8ToMP4s(url) {
     let unknownNumber = match[3];
     let id = match[4];
     let qualities = match[5].split(',');
-    
+
     let mp4s = [];
 
     for (var i = 0; i < qualities.length; i++) {
@@ -83,7 +83,7 @@ function BRm3u8ToMP4s(url) {
 
 /*polyfills for stupid internet explorer*/
 if (!String.prototype.endsWith) {
-    String.prototype.endsWith = function(searchString, position) {
+    String.prototype.endsWith = function (searchString, position) {
         var subjectString = this.toString();
         if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
             position = subjectString.length;
@@ -94,7 +94,7 @@ if (!String.prototype.endsWith) {
     };
 }
 if (!String.prototype.startsWith) {
-    String.prototype.startsWith = function(searchString, position) {
+    String.prototype.startsWith = function (searchString, position) {
         position = position || 0;
         return this.indexOf(searchString, position) === position;
     };
@@ -103,7 +103,7 @@ if (!String.prototype.startsWith) {
 var locale = window.navigator.userLanguage || window.navigator.language;
 moment.locale(locale);
 
-Number.prototype.pad = function(size) {
+Number.prototype.pad = function (size) {
     var s = String(this);
     while (s.length < (size || 2)) {
         s = "0" + s;
@@ -209,7 +209,7 @@ function track(action) {
     });
 }
 
-if (typeof(Storage) !== "undefined" && localStorage != null) {
+if (typeof (Storage) !== "undefined" && localStorage != null) {
     uid = localStorage.getItem('uid');
 }
 if (!!uid) {
@@ -224,7 +224,7 @@ if (!!uid && uid.length == 32) {
     track('index');
 } else {
     socket.on('uid', (_uid) => {
-        if (typeof(Storage) !== "undefined" && localStorage != null) {
+        if (typeof (Storage) !== "undefined" && localStorage != null) {
             localStorage.setItem('uid', _uid);
         }
         Cookies.set('uid', _uid, {
@@ -419,7 +419,7 @@ function query() {
         });
 
         trackQuery();
-    }, 250);
+    }, 20);
     query();
 }
 
@@ -1030,17 +1030,17 @@ $(() => {
             clearButton.animate({
                 opacity: 0
             }, {
-                easing: 'swing',
-                duration: 20
-            });
+                    easing: 'swing',
+                    duration: 20
+                });
             queryInputClearButtonState = 'hidden';
         } else if (currentQueryString.length > 0 && queryInputClearButtonState == 'hidden') {
             clearButton.animate({
                 opacity: 1
             }, {
-                easing: 'swing',
-                duration: 20
-            });
+                    easing: 'swing',
+                    duration: 20
+                });
             queryInputClearButtonState = 'shown';
         }
     });
@@ -1065,7 +1065,7 @@ $(() => {
         }
     });
 
-    $('#queryInputClearButton').click(function() {
+    $('#queryInputClearButton').click(function () {
         $('#queryInput').val('').trigger('input').focus();
     });
 

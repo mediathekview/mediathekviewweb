@@ -1,1 +1,0 @@
-../node_modules/bootstrap-multiselect/dist/js/bootstrap-multiselect.js

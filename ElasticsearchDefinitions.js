@@ -2,7 +2,7 @@ const mapping = {
   properties: {
     channel: {
       type: 'text',
-      index: 'true',
+      index: true,
       analyzer: 'mvw_index_analyzer',
       search_analyzer: 'mvw_search_analyzer',
       fielddata: true,
@@ -14,55 +14,55 @@ const mapping = {
     },
     topic: {
       type: 'text',
-      index: 'true',
+      index: true,
       analyzer: 'mvw_index_analyzer',
       search_analyzer: 'mvw_search_analyzer'
     },
     title: {
       type: 'text',
-      index: 'true',
+      index: true,
       analyzer: 'mvw_index_analyzer',
       search_analyzer: 'mvw_search_analyzer'
     },
     description: {
       type: 'text',
-      index: 'true',
+      index: true,
       analyzer: 'mvw_index_analyzer',
       search_analyzer: 'mvw_search_analyzer'
     },
     timestamp: {
       type: 'date',
       format: 'epoch_second',
-      index: 'true',
+      index: true,
     },
     duration: {
       type: 'long',
-      index: 'false'
+      index: false
     },
     size: {
       type: 'long',
-      index: 'false'
+      index: false
     },
     url_video: {
-      type: 'string',
-      index: 'no'
+      type: 'keyword',
+      index: false
     },
     url_website: {
-      type: 'string',
-      index: 'no'
+      type: 'keyword',
+      index: false
     },
     url_video_low: {
-      type: 'string',
-      index: 'no'
+      type: 'keyword',
+      index: false
     },
     url_video_hd: {
-      type: 'string',
-      index: 'no'
+      type: 'keyword',
+      index: false
     },
     filmlisteTimestamp: {
       type: 'date',
       format: 'epoch_second',
-      index: 'true',
+      index: true,
     },
 
   }
