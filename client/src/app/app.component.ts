@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 
-import { Entry } from './common/model';
+import { IndexedEntry } from './common/model';
 import { MediathekViewWebAPI } from './common/api';
 import { SocketIOMediathekViewWebAPI } from './api/socket-io';
 import { MatchAllQueryBuilder } from './common/search-engine';
@@ -20,7 +20,7 @@ export class AppComponent {
   showNav: boolean = false;
   private api: MediathekViewWebAPI;
 
-  entries: Entry[] = [];
+  entries: IndexedEntry[] = [];
 
   constructor() {
 

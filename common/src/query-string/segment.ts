@@ -1,4 +1,4 @@
-import { Query } from '../search-engine';
+import { QueryBody } from '../search-engine';
 import { SegmentHandler } from './segment-handler';
 
 export class Segment {
@@ -26,7 +26,7 @@ export class Segment {
     return handler.validate(this.text);
   }
 
-  buildQuery(): Query {
+  buildQuery(): QueryBody {
     const handler = this.getHandlerThrowOnNull();
 
     return handler.buildQuery(this.text);

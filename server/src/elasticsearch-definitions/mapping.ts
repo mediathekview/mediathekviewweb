@@ -36,17 +36,14 @@ export interface IMedia {
 const UserActionMapping = {
   type: 'nested',
   dynamic: false,
-  include_in_all: false,
   properties: {
     userID: {
       type: 'keyword',
       index: false,
-      include_in_all: false
     },
     timestamp: {
       type: 'long',
       index: true,
-      include_in_all: false
     }
   }
 }
@@ -56,7 +53,6 @@ export const ElasticsearchMapping = {
     channel: {
       type: 'text',
       index: true,
-      include_in_all: false,
       analyzer: 'german',
       search_analyzer: 'german',
       fielddata: true,
@@ -69,7 +65,6 @@ export const ElasticsearchMapping = {
     topic: {
       type: 'text',
       index: true,
-      include_in_all: false,
       analyzer: 'german',
       search_analyzer: 'german',
       fielddata: true,
@@ -82,81 +77,67 @@ export const ElasticsearchMapping = {
     title: {
       type: 'text',
       index: true,
-      include_in_all: false,
       analyzer: 'german',
       search_analyzer: 'german'
     },
     description: {
       type: 'text',
       index: true,
-      include_in_all: false,
       analyzer: 'german',
       search_analyzer: 'german'
     },
     timestamp: {
       type: 'date',
       index: true,
-      include_in_all: false,
       format: 'epoch_second',
     },
     duration: {
       type: 'long',
       index: true,
-      include_in_all: false,
     },
     website: {
       type: 'keyword',
       index: false,
-      include_in_all: false
     },
     media: {
       type: 'nested',
       dynamic: false,
-      include_in_all: false,
       properties: {
         type: {
           type: 'byte',
-          index: true,
-          include_in_all: false
+          index: true
         },
         url: {
           type: 'keyword',
-          index: false,
-          include_in_all: false
+          index: false
         },
         size: {
           type: 'long',
-          index: true,
-          include_in_all: false
+          index: true
         },
         quality: {
           type: 'byte',
-          index: true,
-          include_in_all: false
+          index: true
         }
       }
     },
     metadata: {
       type: 'object',
       dynamic: false,
-      include_in_all: false,
       properties: {
         lastSeen: {
           type: 'long',
-          index: true,
-          include_in_all: false
+          index: true
         },
         downloads: UserActionMapping,
         plays: UserActionMapping,
         secondsPlayed: {
           type: 'long',
-          index: true,
-          include_in_all: false
+          index: true
         },
         secondsPaused: {
           type: 'long',
-          index: true,
-          include_in_all: false
+          index: true
         }
       }
     }

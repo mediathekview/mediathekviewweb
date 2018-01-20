@@ -1,11 +1,11 @@
-import { QueryBuilder } from './base';
-import { Query, BoolQuery } from '../';
+import { QueryBuilder } from './builder';
+import { QueryBody, BoolQuery } from '../';
 
 export class BoolQueryBuilder extends QueryBuilder {
-  private _must: (QueryBuilder | Query)[] = [];
-  private _should: (QueryBuilder | Query)[] = [];
-  private _not: (QueryBuilder | Query)[] = [];
-  private _filter: (QueryBuilder | Query)[] = [];
+  private _must: (QueryBuilder | QueryBody)[] = [];
+  private _should: (QueryBuilder | QueryBody)[] = [];
+  private _not: (QueryBuilder | QueryBody)[] = [];
+  private _filter: (QueryBuilder | QueryBody)[] = [];
 
   build(): BoolQuery {
     const queryObj: BoolQuery = {
@@ -28,25 +28,25 @@ export class BoolQueryBuilder extends QueryBuilder {
     return queryObj;
   }
 
-  must(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
+  must(...queries: (QueryBuilder | QueryBody)[]): BoolQueryBuilder {
     this._must.push(...queries);
 
     return this;
   }
 
-  should(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
+  should(...queries: (QueryBuilder | QueryBody)[]): BoolQueryBuilder {
     this._should.push(...queries);
 
     return this;
   }
 
-  not(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
+  not(...queries: (QueryBuilder | QueryBody)[]): BoolQueryBuilder {
     this._not.push(...queries);
 
     return this;
   }
 
-  filter(...queries: (QueryBuilder | Query)[]): BoolQueryBuilder {
+  filter(...queries: (QueryBuilder | QueryBody)[]): BoolQueryBuilder {
     this._filter.push(...queries);
 
     return this;

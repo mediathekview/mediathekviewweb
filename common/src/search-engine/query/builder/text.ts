@@ -1,4 +1,4 @@
-import { QueryBuilder } from './base';
+import { QueryBuilder } from './builder';
 import { TextQuery, Operator } from '../';
 
 export class TextQueryBuilder extends QueryBuilder {

@@ -1,7 +1,7 @@
 import * as SocketIO from 'socket.io-client';
 import { MediathekViewWebAPI, QueryObject, SearchEngineSearchResult } from '../common/api';
 import { APIResponse, APIError } from '../common/api/';
-import { Entry } from '../common/model';
+import { IndexedEntry } from '../common/model';
 
 export class SocketIOMediathekViewWebAPI implements MediathekViewWebAPI {
   private io: SocketIOClient.Socket;
@@ -16,8 +16,8 @@ export class SocketIOMediathekViewWebAPI implements MediathekViewWebAPI {
     }
   }
 
-  async search(query: QueryObject): Promise<SearchEngineSearchResult<Entry>> {
-    return this.emit<SearchEngineSearchResult<Entry>>('search', query);
+  async search(query: QueryObject): Promise<SearchEngineSearchResult<IndexedEntry>> {
+    return this.emit<SearchEngineSearchResult<IndexedEntry>>('search', query);
   }
 
   async emit<T>(event: string, data: any): Promise<T> {

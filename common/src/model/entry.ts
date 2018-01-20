@@ -1,15 +1,22 @@
-export type Entry = {
-  id: string;
-  metadata: EntryMetadata;
+import { Entity } from './entity';
+import { EntryMetadata } from './entry-metadata';
 
+export type Entry = Entity & {
   channel: string;
   topic: string;
   title: string;
-  timestamp: number;
+  timestamp: Date;
   duration: number;
   description: string;
   website: string;
   media: Media[];
+
+  sourceIdentifier: string;
+  sourceData?: any;
+}
+
+export type AggregatedEntry = Entry & {
+  metadata: EntryMetadata;
 }
 
 export class Field {
@@ -29,19 +36,6 @@ export class Field {
   static LastSeen: string = 'metadata.lastSeen';
 }
 
-export type EntryMetadata = {
-  lastSeen: number;
-  downloads: UserAction[];
-  plays: UserAction[];
-  secondsPlayed: number;
-  secondsPaused: number;
-}
-
-export type UserAction = {
-  userID: string;
-  timestamp: number;
-}
-
 export enum MediaType {
   Video = 0,
   Audio = 1,
@@ -51,7 +45,7 @@ export enum MediaType {
 export interface Media {
   type: MediaType;
   url: string;
-  size: number;
+  size: number | null;
 }
 
 export type Video = Media & {
@@ -78,7 +72,7 @@ export enum Quality {
 }
 
 export class MediaFactory {
-  static createVideo(url: string, size: number, quality: Quality): Video {
+  static createVideo(url: string, size: number | null, quality: Quality): Video {
     return {
       type: MediaType.Video,
       url: url,
@@ -87,7 +81,7 @@ export class MediaFactory {
     }
   }
 
-  static createAudio(url: string, size: number, quality: Quality): Audio {
+  static createAudio(url: string, size: number | null, quality: Quality): Audio {
     return {
       type: MediaType.Audio,
       url: url,

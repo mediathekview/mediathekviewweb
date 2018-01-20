@@ -1,53 +1,86 @@
-import { ILockProvider, ILock } from '../lock';
-import { sleep } from '../common/utils';
-import { EventEmitter } from 'events';
+import { LockProvider, Lock } from '../lock';
+import { sleep, ResetPromise } from '../common/utils';
+import { HighPrecisionTimer } from '../utils';
+import { LoopController } from './controller';
+import { Subject } from 'rxjs/Subject';
 
-export class DistributedLoop extends EventEmitter {
-  constructor(private key: string, private lockProvider: ILockProvider) {
-    super();
+export type LoopFunction = (controller: LoopController) => Promise<void>;
+
+export class DistributedLoop {
+  private readonly key: string;
+  private readonly lockProvider: LockProvider;
+  private readonly throwError: boolean;
+  private readonly stoppedPromise: ResetPromise<void>;
+
+  constructor(key: string, lockProvider: LockProvider, throwError: boolean = true) {
+    this.key = `loop:${key}`;
+    this.lockProvider = lockProvider;
+    this.throwError = throwError;
+    this.stoppedPromise = new ResetPromise();
   }
 
-  async run(loop: (stop?: () => void) => Promise<void>, interval: number | (() => number)) {
+  run(func: LoopFunction, interval: number, accuracy: number): LoopController {
     let stop = false;
+    let pause = new ResetPromise<void>().resolve();
+    let errorSubject = new Subject<void>();
 
-    let stopFunction = () => stop = true;
-
-    const lock = this.lockProvider.getLock(this.key);
-
-    while (!stop) {
-      try {
-        const hasLock = await lock.lock();
-        if (hasLock) {
-          await loop(stopFunction);
+    const controller: LoopController = {
+      stop: () => { stop = true; return this.stoppedPromise; },
+      pause: () => pause.reset(),
+      resume: () => pause.resolve(),
+      setTiming: (timing) => {
+        if (timing.interval != undefined) {
+          interval = timing.interval;
         }
-      } catch (error) {
-        this.emit('error', error);
+        if (timing.accuracy != undefined) {
+          accuracy = timing.accuracy;
+        }
+      },
+
+      error: errorSubject.asObservable()
+    };
+
+    (async () => {
+      const lock = this.lockProvider.get(this.key);
+      const timer = new HighPrecisionTimer(true);
+
+      while (!stop) {
+        await pause;
+
+        timer.reset();
+
+        const success = await lock.acquire(0);
+        const acquireDuration = timer.milliseconds;
+
+        if (success) {
+          try {
+            await func(controller);
+          }
+          catch (error) {
+            errorSubject.next(error);
+
+            if (this.throwError) {
+              throw error;
+            }
+          }
+
+          const timeLeft = interval - timer.milliseconds;
+          await sleep(timeLeft);
+          await lock.release();
+          
+          timer.reset();
+        }
+        else {
+          await sleep(accuracy - acquireDuration);
+          continue;
+        }
+
+        await sleep(interval - acquireDuration);
       }
 
-      const _interval = this.getInterval(interval);
+      this.stoppedPromise.resolve();
+    })();
 
-      await sleep(_interval * 0.9);
-
-      try {
-        await lock.unlock();
-      } catch (error) {
-        this.emit('error', error);
-      }
-
-      await sleep(_interval * 0.1);
-    }
-  }
-
-  getInterval(interval: number | (() => number)): number {
-    switch (typeof interval) {
-      case 'number':
-        return interval as number;
-
-      case 'function':
-        return (interval as Function)();
-
-      default:
-        throw new Error('interval is neither number nor function');
-    }
+    return controller;
   }
 }

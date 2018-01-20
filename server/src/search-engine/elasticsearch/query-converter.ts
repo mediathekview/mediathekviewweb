@@ -1,6 +1,8 @@
-import { QueryObject, Query, Aggregation, Sort, BoolQuery, RangeQuery, TextQuery, RegexQuery, IDsQuery } from '../../common/search-engine/';
+import * as Elasticsearch from 'elasticsearch';
 
-export default function queryToElasticsearchQuery(query: QueryObject, indexName: string, typeName: string): object {
+import { SearchQuery, QueryBody, Aggregation, Sort, BoolQuery, RangeQuery, TextQuery, RegexQuery, IDsQuery } from '../../common/search-engine/query';
+
+export default function queryToElasticsearchQuery(query: SearchQuery, indexName: string, typeName: string): object {
   if (query.skip == undefined) {
     query.skip = 0;
   }
@@ -11,7 +13,7 @@ export default function queryToElasticsearchQuery(query: QueryObject, indexName:
     throw new Error(`${query.limit} is above 100`);
   }
 
-  const elasticQuery = {
+  const elasticQuery: Elasticsearch.SearchParams = {
     index: indexName,
     type: typeName,
     from: query.skip,
@@ -22,7 +24,7 @@ export default function queryToElasticsearchQuery(query: QueryObject, indexName:
   };
 
   if (query.sorts != undefined && query.sorts.length > 0) {
-    elasticQuery.body['sort'] = sortsToElasticsearchSort(query.sorts)
+    elasticQuery.body['sort'] = sortsToElasticsearchSort(query.sorts);
   }
 
   return elasticQuery;
@@ -37,7 +39,7 @@ function sortsToElasticsearchSort(sorts: Sort[]): object {
       break;
     }
 
-    const sortObj = {};
+    const sortObj: { [key: string]: any } = {};
 
     sortObj[sort.field] = {
       order: (sort.order == 'ascending') ? 'asc' : 'desc',
@@ -84,7 +86,7 @@ function lengthSort(sort: Sort): object {
   return scriptObj;
 }
 
-function bodyToElasticsearchQuery(query: Query, typeName: string): object {
+function bodyToElasticsearchQuery(query: QueryBody, typeName: string): object {
   if ('bool' in query) {
     return convertBoolQuery(query as BoolQuery, typeName);
   } else if ('range' in query) {
@@ -104,7 +106,7 @@ function bodyToElasticsearchQuery(query: Query, typeName: string): object {
 
 function convertBoolQuery(query: BoolQuery, typeName: string): object {
   const queryObj = {
-    bool: {}
+    bool: {} as { [key: string]: any }
   };
 
   if (query.bool.must != undefined) {
@@ -125,7 +127,7 @@ function convertBoolQuery(query: BoolQuery, typeName: string): object {
 
 function convertRangeQuery(query: RangeQuery): object {
   const queryObj = {
-    range: {}
+    range: {} as { [key: string]: any }
   };
 
   queryObj.range[query.range.field] = {};
@@ -184,17 +186,17 @@ function convertTextQuery(query: TextQuery): object {
 
 function convertRegexQuery(query: RegexQuery): object {
   const queryObj = {
-    regexp: {}
+    regexp: {} as { [key: string]: any }
   };
 
-  queryObj[query.regex.field] = query.regex.expression;
+  queryObj.regexp[query.regex.field] = query.regex.expression;
 
   return queryObj;
 }
 
 function convertToMatch(field: string, text: string): object {
   const queryObj = {
-    match: {}
+    match: {} as { [key: string]: any }
   };
 
   queryObj.match[field] = text;

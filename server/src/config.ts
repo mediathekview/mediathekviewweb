@@ -18,7 +18,7 @@ interface Config {
 
   importer: {
     latestCheckInterval: number;
-    fullCheckTimeout: number;
+    archiveCheckInterval: number;
     archiveRange: number;
     cache: boolean;
   }
@@ -40,7 +40,7 @@ const staticConfig: Config = {
 
   importer: {
     latestCheckInterval: 60 * 2,
-    fullCheckTimeout: 60 * 45,
+    archiveCheckInterval: 60 * 45,
     archiveRange: 10,
     cache: true
   }

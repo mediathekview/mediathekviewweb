@@ -1,24 +1,15 @@
-import { SearchEngine, QueryObject, SearchEngineSearchResult } from '../common/search-engine';
-import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch';
-import * as Elasticsearch from 'elasticsearch';
-import { Keys as ElasticsearchKeys } from '../elasticsearch-definitions';
-import { Entry } from '../common/model';
-import config from '../config';
-import { MediathekViewWebAPI } from '../common/api';
+import { SearchEngine, SearchQuery, SearchResult } from '../common/search-engine';
+import { AggregatedEntry } from '../common/model';
+import { SearchApi } from '../common/api';
 
-export { Entry, QueryObject, SearchEngineSearchResult };
+export class BaseSearchApi implements SearchApi {
+  private searchEngine: SearchEngine<AggregatedEntry>;
 
-export class BaseMediathekViewWebAPI implements MediathekViewWebAPI {
-  private searchEngine: SearchEngine<Entry>;
-
-  constructor() {
-    const elasticsearchClient = new Elasticsearch.Client({ host: `${config.elasticsearch.host}:${config.elasticsearch.port}` });
-    this.searchEngine = new ElasticsearchSearchEngine<Entry>(ElasticsearchKeys.IndexName, ElasticsearchKeys.TypeName, elasticsearchClient);
+  constructor(searchEngine: SearchEngine<AggregatedEntry>) {
+    this.searchEngine = searchEngine;
   }
 
-  async search(query: QueryObject): Promise<SearchEngineSearchResult<Entry>> {
-    const result = await this.searchEngine.search(query);
-
-    return result;
+  search(query: SearchQuery): Promise<SearchResult<AggregatedEntry>> {
+    return this.searchEngine.search(query);
   }
 }

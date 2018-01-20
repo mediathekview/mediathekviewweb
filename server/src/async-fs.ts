@@ -29,16 +29,16 @@ import * as fs from 'fs';
 import * as pathutil from 'path';
 
 export {
-createReadStream,
-createWriteStream,
-watch,
-watchFile,
-unwatchFile,
-Stats,
-FSWatcher,
-ReadStream,
-WriteStream,
-constants
+  createReadStream,
+  createWriteStream,
+  watch,
+  watchFile,
+  unwatchFile,
+  Stats,
+  FSWatcher,
+  ReadStream,
+  WriteStream,
+  constants
 } from 'fs';
 
 export function access(path: string, mode?: number | string): Promise<void> { return thunk<void>(fs.access, arguments); }
@@ -59,7 +59,7 @@ export function lstat(path: string): Promise<fs.Stats> { return thunk<fs.Stats>(
 export function mkdir(path: string, mode?: number | string): Promise<void> { return thunk<void>(fs.mkdir, arguments); }
 export function mkdtemp(path: string): Promise<string> { return thunk<string>((fs as any).mkdtemp, arguments); }
 export function open(path: string, flags: 'r' | 'r+' | 'rs' | 'rs+' | 'w' | 'wx' | 'w+' | 'wx+' | 'a' | 'ax' | 'a+' | 'ax+', mode?: number | string): Promise<number> { return thunk<number>(fs.open, arguments); }
-export function read(fd: number, buffer: Buffer, offset: number, length: number, position: number): Promise<{ bytesRead: number; buffer: Buffer; }> { return thunk<{ bytesRead: number; buffer: Buffer; }>(fs.read, arguments, null, function() { return { bytesRead: <number>arguments[1], buffer: <Buffer>arguments[2] }; }); }
+export function read(fd: number, buffer: Buffer, offset: number, length: number, position: number): Promise<{ bytesRead: number; buffer: Buffer; }> { return thunk<{ bytesRead: number; buffer: Buffer; }>(fs.read, arguments, null, function () { return { bytesRead: <number>arguments[1], buffer: <Buffer>arguments[2] }; }); }
 export function readdir(path: string): Promise<string[]> { return thunk<string[]>(fs.readdir, arguments); }
 export function readFile(file: string | number,
   options?: {
@@ -79,7 +79,7 @@ export function unlink(path: string): Promise<void> { return thunk<void>(fs.unli
 export function utimes(path: string, atime: Date | number, mtime: Date | number): Promise<void> { return thunk<void>(fs.utimes, arguments); }
 export function write(fd: number, buffer: Buffer, offset: number, length: number, position?: number): Promise<{ written: number; buffer: Buffer }>;
 export function write(fd: number, data: any, offset?: number, encoding?: 'ascii' | 'base64' | 'binary' | 'hex' | 'ucs2' | 'utf16le' | 'utf8'): Promise<{ written: number; buffer: Buffer }>;
-export function write(fd: number): Promise<{ written: number; buffer: Buffer; }> { return thunk<{ written: number; buffer: Buffer }>(fs.write, arguments, null, function() { return { written: <number>arguments[1], buffer: <Buffer>arguments[2] }; }); }
+export function write(fd: number): Promise<{ written: number; buffer: Buffer; }> { return thunk<{ written: number; buffer: Buffer }>(fs.write, arguments, null, function () { return { written: <number>arguments[1], buffer: <Buffer>arguments[2] }; }); }
 
 export function writeFile(file: string | number, data: string | any,
   options?: {
@@ -117,7 +117,7 @@ export function createDirectory(path: string, mode?: number | string): Promise<v
     mkdirp(path, mode, err =>
       !err ? resolve() : reject(err)));
 }
-export {createDirectory as mkdirp};
+export { createDirectory as mkdirp };
 
 export function exists(path: string): Promise<boolean> {
   return new Promise<boolean>((resolve, reject) =>

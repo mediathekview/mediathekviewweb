@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 
-import { Entry } from '../../../common/model';
+import { IndexedEntry } from '../../../common/model';
 
 @Component({
   selector: '[mvw-entry-row-overview]',
@@ -8,7 +8,7 @@ import { Entry } from '../../../common/model';
   styleUrls: ['./entry-row-overview.component.scss']
 })
 export class EntryRowOverviewComponent implements OnInit {
-  @Input() entry: Entry;
+  @Input() entry: IndexedEntry;
 
   constructor() { }
 

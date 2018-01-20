@@ -1,4 +1,4 @@
-import { QueryBuilder } from './base';
+import { QueryBuilder } from './builder';
 import { MatchAllQuery } from '../';
 
 export const MATCH_ALL_QUERY: MatchAllQuery = { matchAll: {} };

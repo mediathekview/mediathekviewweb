@@ -1,40 +1,100 @@
-import * as Redis from 'ioredis';
-import { getUniqueID } from '../../utils';
+import { Redis } from 'ioredis';
+import { uniqueID } from '../../utils/unique-id';
 import { RedisLock } from './';
-import { ILockProvider, ILock } from '../';
+import { LockProvider, Lock } from '../';
 
-export class RedisLockProvider implements ILockProvider {
-  constructor(private redis: Redis.Redis) {
-    redis.defineCommand('lock', {
-      numberOfKeys: 1,
-      lua: `if (redis.call("get", KEYS[1]) ~= ARGV[1] and redis.call("exists", KEYS[1]) == 1) then
-                return 0
-            end
+export class RedisLockProvider implements LockProvider {
+  private readonly redis: Redis;
 
-            return redis.call("set", KEYS[1], ARGV[1], "PX", ARGV[2])`
-    });
-
-    redis.defineCommand('unlock', {
-      numberOfKeys: 1,
-      lua: `if redis.call("get", KEYS[1]) == ARGV[1] then
-                return redis.call("del", KEYS[1])
-            else
-                return 0
-            end`
-    });
-
-    redis.defineCommand('haslock', {
-      numberOfKeys: 1,
-      lua: `if redis.call("get", KEYS[1]) == ARGV[1] then
-                return 1
-            else
-                return 0
-            end`
-    });
+  constructor(redis: Redis) {
+    this.redis = redis;
+    this.defineCommands();
   }
 
-  getLock(key: string): ILock {
-    const id = getUniqueID();
-    return new RedisLock(key, id, this.redis);
+  get(key: string): RedisLock {
+    key = `lock:${key}`;
+    const id = uniqueID();
+
+    const lock = new RedisLock(this.redis, key, id);
+    return lock;
+  }
+
+  private defineCommands() {
+    this.redis.defineCommand('lock:acquire', {
+      numberOfKeys: 1,
+      lua: `
+            local key = KEYS[1]
+            local id = ARGV[1]
+            local expire = ARGV[2]
+
+            local lockedID = redis.call("get", key)
+            if (lockedID == id) then
+              return "owned"
+            end
+
+            local result = redis.call("set", key, id, "NX", "PX", expire)
+            if (result ~= false) then
+              return "acquired"
+            else
+              return "failed"
+            end`
+    });
+
+    this.redis.defineCommand('lock:refresh', {
+      numberOfKeys: 1,
+      lua: `
+            local key = KEYS[1]
+            local id = ARGV[1]
+            local expire = ARGV[2]
+
+            local acquired = (redis.call("exists", key) == 1)
+            local success = 0
+
+            if (acquired) then
+              local lockedID = redis.call("get", key)
+
+              if (lockedID == id) then
+                local result = redis.call("set", key, id, "PX", expire)
+            
+                if (result ~= false) then
+                  success = 1
+                end
+              end
+            end
+
+            return success`
+    });
+
+    this.redis.defineCommand('lock:release', {
+      numberOfKeys: 1,
+      lua: `
+            local key = KEYS[1]
+            local id = ARGV[1]
+
+            local lockedID = redis.call("get", key)
+            local success = 0
+
+            if (lockedID == id) then
+              success = redis.call("del", key)
+            end
+            
+            return success`
+    });
+
+    this.redis.defineCommand('lock:owned', {
+      numberOfKeys: 1,
+      lua: `
+            local key = KEYS[1]
+            local id = ARGV[1]
+            
+            local lockedID = redis.call("get", key)
+            local success = 0
+
+            if (lockedID == id) then
+              success = 1
+            end
+            
+            return success`
+    });
   }
 }

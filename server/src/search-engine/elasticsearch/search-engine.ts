@@ -1,76 +1,82 @@
-import { SearchEngine, SearchEngineItem, QueryObject, SearchEngineSearchResult } from '../../common/search-engine';
+import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
 import convertQuery from './query-converter';
 import * as Elasticsearch from 'elasticsearch';
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
-  private initialized: boolean = false;
-  private initializationPromise: Promise<any>;
+  private readonly indexName: string;
+  private readonly typeName: string;
+  private readonly client: Elasticsearch.Client;
+  private readonly indexSettings: { [key: string]: any } | undefined;
+  private readonly mappings: { [key: string]: any } | undefined;
 
-  constructor(private indexName: string, private typeName: string, private elasticsearchClient: Elasticsearch.Client, private indexSettings?: {}, private indexMappings?: {}) {
-    this.initializationPromise = this.initialize();
+  constructor(indexName: string, typeName: string, client: Elasticsearch.Client, indexSettings?: {}, indexMappings?: {}) {
+    this.indexName = indexName;
+    this.typeName = typeName;
+    this.client = client;
+    this.indexSettings = indexSettings;
+
+    if (indexMappings != undefined) {
+      this.mappings = {};
+      this.mappings[typeName] = indexMappings;
+    }
   }
 
-  private async initialize() {
-    const indexExists = await this.elasticsearchClient.indices.exists({ index: this.indexName });
+  async initialize() {
+    await this.ensureIndex();
 
-    const mappings = {};
-    mappings[this.typeName] = this.indexMappings;
+    if (this.indexSettings != undefined || this.mappings != undefined) {
+      await this.client.indices.close({ index: this.indexName });
 
-    if (!indexExists) {
-      await this.elasticsearchClient.indices.create({ index: this.indexName });
-    }
-
-    if (this.indexSettings || this.indexMappings) {
-      await this.elasticsearchClient.indices.close({ index: this.indexName });
-
-      if (this.indexSettings) {
-        await this.elasticsearchClient.indices.putSettings({ index: this.indexName, body: this.indexSettings });
+      if (this.indexSettings != undefined) {
+        await this.client.indices.putSettings({ index: this.indexName, body: this.indexSettings });
       }
 
-      if (this.indexMappings) {
-        await this.elasticsearchClient.indices.putMapping({ index: this.indexName, type: this.typeName, body: this.indexMappings });
+      if (this.mappings != undefined) {
+        await this.client.indices.putMapping({ index: this.indexName, type: this.typeName, body: this.mappings });
       }
 
-      await this.elasticsearchClient.indices.open({ index: this.indexName });
+      await this.client.indices.open({ index: this.indexName });
     }
-
-    this.initialized = true;
   }
 
-  async index(...entries: SearchEngineItem<T>[]): Promise<void> {
-    if (entries.length == 0) {
-      return;
-    }
-
-    if (!this.initialized) {
-      await this.initializationPromise;
-    }
-
-    const params: {}[] = [];
+  async index(entries: SearchEngineItem<T>[]): Promise<void> {
+    const bulkRequest = {
+      body: [] as any[],
+      index: this.indexName,
+      type: this.typeName
+    };
 
     for (let entry of entries) {
-      params.push(
+      bulkRequest.body.push(
         { index: { _id: entry.id } },
         entry.document
       );
     }
 
-    await this.elasticsearchClient.bulk({ body: params, index: this.indexName, type: this.typeName });
+    await this.client.bulk(bulkRequest);
   }
 
-  async search(query: QueryObject): Promise<SearchEngineSearchResult<T>> {
+  async search(query: SearchQuery): Promise<SearchResult<T>> {
     const elasticsearchQuery = convertQuery(query, this.indexName, this.typeName);
 
-    const result = await this.elasticsearchClient.search<T>(elasticsearchQuery);
+    const result = await this.client.search<T>(elasticsearchQuery);
 
-    const items: SearchEngineItem<T>[] = result.hits.hits.map((hit) => ({ id: hit._id, document: hit._source }));
+    const items = result.hits.hits.map((hit) => hit._source);
 
-    const searchResult: SearchEngineSearchResult<T> = {
+    const searchResult: SearchResult<T> = {
       total: result.hits.total,
       milliseconds: result.took,
       items: items
     };
 
     return searchResult;
+  }
+
+  private async ensureIndex() {
+    const indexExists = await this.client.indices.exists({ index: this.indexName });
+
+    if (!indexExists) {
+      await this.client.indices.create({ index: this.indexName });
+    }
   }
 }

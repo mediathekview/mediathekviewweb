@@ -1,14 +1,14 @@
-import { Query } from '../search-engine';
+import { QueryBody } from '../search-engine';
 
 export abstract class SegmentHandler {
-  private queryCache: Map<string, Query> = new Map();
+  private queryCache: Map<string, QueryBody> = new Map();
 
-  protected abstract _buildQuery(text: string): Query;
+  protected abstract _buildQuery(text: string): QueryBody;
 
   abstract canHandle(text: string): boolean;
   abstract validate(text: string): boolean;
 
-  buildQuery(text: string): Query {
+  buildQuery(text: string): QueryBody {
     const cachedQuery = this.queryCache.get(text);
     if (cachedQuery != undefined) {
       return cachedQuery;

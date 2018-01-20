@@ -1,4 +1,4 @@
-export * from './base';
+export * from './builder';
 export * from './bool';
 export * from './time-value';
 export * from './range';

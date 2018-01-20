@@ -1,1 +1,0 @@
-this project imports filmlists (using native-filmliste-parser) (from archiv and the latest one) and always maintains an concatenated up-to-date list of it in redis (likely an sorted-set having the filmlist-timestamp as value)

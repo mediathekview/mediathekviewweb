@@ -1,71 +1,120 @@
-import { ILock } from '../';
-import { sleep, random } from '../../common/utils';
 import * as Redis from 'ioredis';
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 
-export class RedisLock implements ILock {
-  private relockTimeout: NodeJS.Timer | null;
+import { Lock, LockedFunction } from '../';
+import { HighPrecisionTimer } from '../../utils/';
+import { sleep, interrupt } from '../../common/utils';
+import { AcquireResult } from './acquire-result';
 
-  constructor(private key: string, private id: string, private redis: Redis.Redis) { }
+const EXPIRE_MS = 10000;
+const RETRY_DELAY = 50;
 
-  async lock(time?: number): Promise<boolean> {
-    this.clearTimeout();
+export class RedisLock implements Lock {
+  private readonly redis: Redis.Redis;
+  private readonly key: string;
+  private readonly id: string;
+  private readonly onLockLostSubject: Subject<void>;
 
-    let result;
-    for (let i = 0; i < 5; i++) {
-      const _time = Math.floor((time == undefined) ? 1000 : time);
+  private stopLockLoop: Function = () => { };
 
-      if (_time <= 0) {
-       throw new Error('cannot lock for zero or negative time');
-      }
-
-      result = await (this.redis as any).lock(this.key, this.id, _time);
-
-      if (result == 'OK') {
-        break;
-      }
-
-      const timeLeft = await this.timeLeft(false);
-      await sleep(150 + (timeLeft / 2) + random(-50, 50, true));
-    }
-
-    if (result == 'OK') {
-      if (time == undefined) {
-        this.relockTimeout = setTimeout(() => this.lock(time), 500);
-      }
-
-      return true;
-    }
-
-    return false;
+  get onLockLost(): Observable<void> {
+    return this.onLockLostSubject;
   }
 
-  async unlock(): Promise<boolean> {
-    this.clearTimeout();
-    const result = await (this.redis as any).unlock(this.key, this.id);
+  constructor(redis: Redis.Redis, key: string, id: string) {
+    this.redis = redis;
+    this.key = key;
+    this.id = id;
+    this.onLockLostSubject = new Subject();
+  }
+
+  async acquire(): Promise<boolean>;
+  async acquire(timeout: number): Promise<boolean>;
+  async acquire(func: LockedFunction): Promise<boolean>;
+  async acquire(timeout: number, func: LockedFunction): Promise<boolean>;
+  async acquire(funcOrTimeout?: number | LockedFunction, func?: LockedFunction): Promise<boolean> {
+    let timeout = 1000;
+
+    if (typeof funcOrTimeout == 'number') {
+      timeout = funcOrTimeout;
+    } else {
+      func = funcOrTimeout;
+    }
+
+    const timer = new HighPrecisionTimer(true);
+    let success = false;
+
+    do {
+      const result = await this.tryAcquire();
+
+      if (result == AcquireResult.Owned) {
+        return false;
+      }
+      success = result == AcquireResult.Acquired;
+
+      if (!success) {
+        await sleep(RETRY_DELAY);
+      }
+    } while (!success && (timeout > 0) && (timer.milliseconds < timeout));
+
+
+    if (success) {
+      this.stopLockLoop = this.refreshLoop();
+
+      if (func != undefined) {
+        try {
+          await func().then(interrupt);
+        }
+        finally {
+          await this.release();
+        }
+      }
+    }
+
+    return success;
+  }
+
+  async release(): Promise<boolean> {
+    this.stopLockLoop();
+
+    const result = await (this.redis as any)['lock:release'](this.key, this.id);
     return result == 1;
   }
 
-  async haslock(): Promise<boolean> {
-    const result = await (this.redis as any).haslock(this.key, this.id);
+  async owned(): Promise<boolean> {
+    const result = await (this.redis as any)['lock:owned'](this.key, this.id);
     return result == 1;
   }
 
-  async timeLeft(ownedOnly: boolean): Promise<number> {
-    if (ownedOnly) {
-      const has = await this.haslock();
+  private refreshLoop(): () => void {
+    let run = true;
 
-      if (!has) {
-        return 0;
+    (async () => {
+      while (run) {
+        await sleep(EXPIRE_MS / 2.5);
+
+        if (run) {
+          const success = await this.tryRefresh();
+
+          if (!success) {
+            this.onLockLostSubject.next();
+            return;
+          }
+        }
       }
-    }
+    })();
 
-    const result = await (this.redis as any).pttl(this.key);
-
-    return Math.max(result, 0);
+    return () => run = false;
   }
 
-  private clearTimeout() {
-    clearTimeout(this.relockTimeout as NodeJS.Timer);
-    this.relockTimeout = null;
+  private async tryAcquire(): Promise<AcquireResult> {
+    const result = await (this.redis as any)['lock:acquire'](this.key, this.id, EXPIRE_MS);
+    return result as AcquireResult;
+  }
+
+  private async tryRefresh(): Promise<boolean> {
+    const result = await (this.redis as any)['lock:refresh'](this.key, this.id, EXPIRE_MS);
+    return result == 1;
   }
 }

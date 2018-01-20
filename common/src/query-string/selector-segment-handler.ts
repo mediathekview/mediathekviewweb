@@ -1,11 +1,11 @@
-import { Query, MATCH_ALL_QUERY } from '../search-engine';
+import { QueryBody, MATCH_ALL_QUERY } from '../search-engine';
 import { SegmentHandler } from './segment-handler';
 
 export abstract class SelectorSegmentHandler extends SegmentHandler {
   protected abstract _selectorValueRegex: RegExp; //group 1 must be selector, group 2 value
   protected abstract _canHandleSelector(selector: string): boolean;
   protected abstract _validate(value: string): boolean;
-  protected abstract __buildQuery(value: string): Query;
+  protected abstract __buildQuery(value: string): QueryBody;
 
   canHandle(text: string): boolean {
     const selector = this.getSelector(text);
@@ -27,7 +27,7 @@ export abstract class SelectorSegmentHandler extends SegmentHandler {
     return false;
   }
 
-  protected _buildQuery(text: string): Query {
+  protected _buildQuery(text: string): QueryBody {
     const value = this.getValue(text);
 
     if (value != null) {

@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 
-import { Entry } from '../../common/model';
+import { IndexedEntry } from '../../common/model';
 
 @Component({
   selector: 'mvw-entry-table',
@@ -8,15 +8,15 @@ import { Entry } from '../../common/model';
   styleUrls: ['./entry-table.component.scss']
 })
 export class EntryTableComponent implements OnInit {
-  @Input() entries: Entry[] = [];
-  detailedEntry: Entry | null = null;
+  @Input() entries: IndexedEntry[] = [];
+  detailedEntry: IndexedEntry | null = null;
 
   constructor() { }
 
   ngOnInit() {
   }
 
-  showDetails(entry: Entry) {
+  showDetails(entry: IndexedEntry) {
     this.detailedEntry = entry === this.detailedEntry ? null : entry;
   }
 

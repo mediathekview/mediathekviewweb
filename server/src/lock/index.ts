@@ -1,2 +1,2 @@
-export * from './lock-interface';
-export * from './provider-interface';
+export * from './lock';
+export * from './provider';

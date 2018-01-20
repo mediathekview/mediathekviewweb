@@ -1,4 +1,4 @@
-import { BoolQueryBuilder, RangeQueryBuilder, TextQueryBuilder, TimeQueryValueBuilder, MatchAllQueryBuilder, TimeUnit, Query } from '../common/search-engine';
+import { BoolQueryBuilder, RangeQueryBuilder, TextQueryBuilder, TimeQueryValueBuilder, MatchAllQueryBuilder, TimeUnit, QueryBody } from '../common/search-engine';
 import * as Elasticsearch from 'elasticsearch';
 import { ElasticsearchSearchEngine } from '../search-engine/elasticsearch';
 import { IEntry } from '../common/model';
@@ -16,7 +16,7 @@ const elasticsearchClient = new Elasticsearch.Client({ host: '127.0.0.1:9200' })
 const searchEngine = new ElasticsearchSearchEngine<IEntry>('mediathekviewweb', 'entry', elasticsearchClient);
 
 
-const query: Query = {
+const query: QueryBody = {
   body: new MatchAllQueryBuilder().build(),
   sorts: [{
     field: 'timestamp',

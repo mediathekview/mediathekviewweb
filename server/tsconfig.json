@@ -1,8 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "target": "es6",
-    "lib": ["es5", "es6", "esnext"],
+    "target": "es5",
+    "lib": ["esnext"],
     "sourceMap": false,
     "outDir": "./dist/",
     "removeComments": true,
@@ -21,7 +21,6 @@
     "noFallthroughCasesInSwitch": true,
 
     "moduleResolution": "node",
-    "rootDirs": ["../common"],
     "typeRoots": ["node_modules/@types"],
 
     "inlineSourceMap": false,
@@ -29,7 +28,5 @@
 
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
-  },
-
-  "include": ["./src/", "../common/src/"]
+  }
 }

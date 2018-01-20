@@ -10,10 +10,10 @@ export type Sort = {
   aggregation?: Aggregation;
 }
 
-export type Query = IDsQuery | MatchAllQuery | BoolQuery | RangeQuery | TextQuery | RegexQuery;
+export type QueryBody = IDsQuery | MatchAllQuery | BoolQuery | RangeQuery | TextQuery | RegexQuery;
 
-export type QueryObject = {
-  body: Query;
+export type SearchQuery = {
+  body: QueryBody;
   sorts?: Sort[];
   skip?: number;
   limit?: number;
@@ -29,10 +29,10 @@ export type MatchAllQuery = {
 
 export type BoolQuery = {
   bool: {
-    must?: Query[],
-    should?: Query[],
-    not?: Query[],
-    filter?: Query[]
+    must?: QueryBody[],
+    should?: QueryBody[],
+    not?: QueryBody[],
+    filter?: QueryBody[]
   }
 }
 
