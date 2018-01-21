@@ -5,4 +5,3 @@ export * from './event-loop-watcher';
 export * from './unique-id';
 export * from './async-iterable-helper';
 export * from './base62';
-export * from './measure';

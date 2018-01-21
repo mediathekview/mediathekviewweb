@@ -5,12 +5,19 @@ import * as HTTP from 'http';
 import { Nullable } from '../../common/utils';
 import { SearchApi, APIError, APIResponse, AggregatedEntry } from '../../common/api';
 import { SearchResult } from '../../common/search-engine';
+import { HighPrecisionTimer } from '../../utils';
+import { Subject } from 'rxjs/Subject';
+import { Observable } from 'rxjs/Observable';
+import { setTimeout } from 'timers';
 
-export type RestResponse = { result?: any, error?: RestError };
-
-export type RestError = { name?: string, message?: string, stack?: string };
 
 export type PostFunction = (parameters: { [key: string]: any }) => Promise<any>;
+
+export type RequestLog = {
+  duration: number,
+  path: string,
+  ip: string
+}
 
 export class RestExposer {
   private readonly httpServer: HTTP.Server;
@@ -18,6 +25,11 @@ export class RestExposer {
   private readonly koa: Koa;
   private readonly router: KoaRouter;
   private readonly bodyParser: Koa.Middleware;
+  private readonly requestLogSubject: Subject<RequestLog>;
+
+  get requestLog(): Observable<RequestLog> {
+    return this.requestLogSubject.asObservable();
+  }
 
   constructor(backingApi: SearchApi, httpServer: HTTP.Server, pathPrefix: string) {
     this.httpServer = httpServer;
@@ -26,6 +38,7 @@ export class RestExposer {
     this.koa = new Koa();
     this.router = new KoaRouter();
     this.bodyParser = KoaBodyParser();
+    this.requestLogSubject = new Subject();
 
     this.initialize();
   }
@@ -35,8 +48,11 @@ export class RestExposer {
   }
 
   private initialize() {
+    this.koa.proxy = true;
+
     this.router.prefix(this.pathPrefix);
 
+    this.koa.use((context, next) => this.requestLogger(context, next));
     this.koa.use(this.bodyParser);
     this.koa.use(this.router.routes());
     this.koa.use(this.router.allowedMethods());
@@ -44,15 +60,23 @@ export class RestExposer {
     this.httpServer.on('request', this.koa.callback());
   }
 
+  private async requestLogger(context: Koa.Context, next: () => Promise<void>): Promise<void> {
+    const ms = await HighPrecisionTimer.measure(next);
+    context.response.set('X-Response-Time', `${ms}ms`);
+    const { path, ip } = context.request;
+
+    setTimeout(() => this.requestLogSubject.next({ duration: ms, path: path, ip: ip }), 0);
+  }
+
   private async handlePost(context: KoaRouter.IRouterContext, next: () => Promise<any>, postFunction: PostFunction) {
     const parameters = context.request.body;
 
-    let response: RestResponse = {};
+    const response: RestResponse = {};
 
     try {
-      const result = await postFunction(parameters);
+      response.result = await postFunction(parameters);
     } catch (error) {
-      
+      response.error = error;
     }
   }
 

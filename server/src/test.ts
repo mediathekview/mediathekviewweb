@@ -16,7 +16,7 @@ import { BullQueueProvider } from './queue/bull/provider';
 import { DistributedLoopProvider } from './distributed-loop/index';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { Filmlist } from './entry-source/filmlist/filmlist';
-import { HighPrecisionTimer, measureTime, EventLoopWatcher } from './utils/index';
+import { HighPrecisionTimer,  EventLoopWatcher } from './utils/index';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { EntriesImporter } from './entries-importer/importer';
 import { Keys } from './keys';
@@ -33,16 +33,16 @@ async function* counter(to: number) {
   }
 }
 
-const watcher = new EventLoopWatcher(100);
-
-watcher
-  .watch(0, 10, 'max')
-  .map((measure) => Math.round(measure * 10000) / 10000)
-  .subscribe((delay) => console.log(`eventloop: ${delay} ms`));
-
 (async () => {
   try {
     Serializer.registerPrototype(Filmlist)
+
+    const watcher = new EventLoopWatcher(100);
+
+    watcher
+      .watch(0, 10, 'max')
+      .map((measure) => Math.round(measure * 10000) / 10000)
+      .subscribe((delay) => console.log(`eventloop: ${delay} ms`));
 
     const redis = new Redis();
     const mongo = await Mongo.MongoClient.connect('mongodb://localhost:27017');

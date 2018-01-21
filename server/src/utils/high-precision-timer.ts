@@ -37,6 +37,26 @@ export class HighPrecisionTimer {
     return this.read(NS_PER_SEC);
   }
 
+  measure(func: () => void): number;
+  measure(func: () => Promise<void>): Promise<number>;
+  measure(func: () => void | Promise<void>): number | Promise<number> {
+    this.reset();
+
+    const voidOrPromise = func();
+
+    if (voidOrPromise instanceof Promise) {
+      return voidOrPromise.then(() => this.milliseconds);
+    } else {
+      return this.milliseconds;
+    }
+  }
+
+  static measure(func: () => void): number;
+  static measure(func: () => Promise<void>): Promise<number>;
+  static measure(func: () => void | Promise<void>): number | Promise<number> {
+    return new HighPrecisionTimer().measure(func);
+  }
+
   private read(): number;
   private read(divider: number): number;
   private read(divider?: number): number {
