@@ -14,9 +14,17 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(filtered);
   }
 
+  static filter<T>(source: Iterable<T>, predicate: Predicate<T>): SyncEnumerable<T> {
+    return new SyncEnumerable(source).filter(predicate);
+  }
+
   map<TOut>(mapper: IteratorFunction<T, TOut>): SyncEnumerable<TOut> {
     const mapped = map(this.source, mapper);
     return new SyncEnumerable(mapped);
+  }
+
+  static map<T, TOut>(source: Iterable<T>, mapper: IteratorFunction<T, TOut>): SyncEnumerable<TOut> {
+    return new SyncEnumerable(source).map(mapper);
   }
 
   single(predicate: Predicate<T>): T {
@@ -24,9 +32,17 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return result;
   }
 
+  static single<T>(source: Iterable<T>, predicate: Predicate<T>): T {
+    return new SyncEnumerable(source).single(predicate);
+  }
+
   batch(size: number): SyncEnumerable<T[]> {
     const batched = batch(this.source, size);
     return new SyncEnumerable(batched);
+  }
+
+  static batch<T>(source: Iterable<T>, size: number): SyncEnumerable<T[]> {
+    return new SyncEnumerable(source).batch(size);
   }
 
   any(predicate: Predicate<T>): boolean {
@@ -34,9 +50,17 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return result;
   }
 
+  static any<T>(source: Iterable<T>, predicate: Predicate<T>): boolean {
+    return new SyncEnumerable(source).any(predicate);
+  }
+
   mapMany<TOut>(mapper: IteratorFunction<T, Iterable<TOut>>): SyncEnumerable<TOut> {
     const result = mapMany(this.source, mapper);
     return new SyncEnumerable(result);
+  }
+
+  static mapMany<T, TOut>(source: Iterable<T>, mapper: IteratorFunction<T, Iterable<TOut>>): SyncEnumerable<TOut> {
+    return new SyncEnumerable(source).mapMany(mapper);
   }
 
   intercept(func: IteratorFunction<T, void>): SyncEnumerable<T> {
@@ -44,22 +68,42 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(iterator);
   }
 
+  static intercept<T>(source: Iterable<T>, func: IteratorFunction<T, void>): SyncEnumerable<T> {
+    return new SyncEnumerable(source).intercept(func);
+  }
+
   toArray(): T[] {
     const array = Array.from(this.source);
     return array;
+  }
+
+  static toArray<T>(source: Iterable<T>): T[] {
+    return new SyncEnumerable(source).toArray();
   }
 
   forEach(func: IteratorFunction<T, void>) {
     forEach(this.source, func);
   }
 
+  static forEach<T>(source: Iterable<T>, func: IteratorFunction<T, void>) {
+    return new SyncEnumerable(source).forEach(func);
+  }
+
   toAsync(): AsyncEnumerable<T> {
     return new AsyncEnumerable(this.source);
+  }
+
+  static toAsync<T>(source: Iterable<T>): AsyncEnumerable<T> {
+    return new SyncEnumerable(source).toAsync();
   }
 
   toIterator(): Iterator<T> {
     const iterator = this.source[Symbol.iterator]();
     return iterator;
+  }
+
+  static toIterator<T>(source: Iterable<T>): Iterator<T> {
+    return new SyncEnumerable(source).toIterator();
   }
 
   next(value?: any): IteratorResult<T> {
