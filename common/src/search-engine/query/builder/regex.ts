@@ -1,10 +1,9 @@
 import { QueryBuilder } from './builder';
-import { RegexQuery, Operator } from '../';
+import { RegexQuery } from '../';
 
 export class RegexQueryBuilder extends QueryBuilder {
   private _field: string | null = null;
   private _expression: string | null = null;
-  private _operator: Operator = 'and';
 
   field(field: string): RegexQueryBuilder {
     if (field.length == 0) {
@@ -21,16 +20,6 @@ export class RegexQueryBuilder extends QueryBuilder {
     return this;
   }
 
-  operator(operator: Operator): RegexQueryBuilder {
-    if (operator != 'or' && operator != 'and') {
-      throw new Error('operator is neither and nor or'); //just in case a passed string isn't and | or
-    }
-
-    this._operator = operator;
-
-    return this;
-  }
-
   build(): RegexQuery {
     if (this._field == null) {
       throw new Error('no field specified');
@@ -42,8 +31,7 @@ export class RegexQueryBuilder extends QueryBuilder {
     const queryObj: RegexQuery = {
       regex: {
         field: this._field,
-        expression: this._expression,
-        operator: this._operator
+        expression: this._expression
       }
     };
 

@@ -14,10 +14,11 @@ export type ExposerMiddlewareFunction = (path: string[], parameters: ExposedFunc
 
 export class MiddlewareExposer implements Exposer {
   private readonly backingExposer: Exposer;
-  private readonly middleware: ExposerMiddlewareFunction[] = [];
+  private readonly middleware: ExposerMiddlewareFunction[];
 
   constructor(backingExposer: Exposer) {
     this.backingExposer = backingExposer;
+    this.middleware = [];
   }
 
   expose(path: string[], func: ExposedFunction): this {

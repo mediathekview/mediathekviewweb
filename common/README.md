@@ -1,1 +1,1 @@
-this folder contains shared stuff between server and client (like models)
+this folder contains stuff that is neither server nor client specific and can be used by both.

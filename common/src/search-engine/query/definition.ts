@@ -58,6 +58,5 @@ export type RegexQuery = {
   regex: {
     field: string;
     expression: string;
-    operator: 'and' | 'or';
   }
 }
