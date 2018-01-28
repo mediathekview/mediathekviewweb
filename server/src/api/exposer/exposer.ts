@@ -12,6 +12,3 @@ type ExposedFunctionParameterType = null | number | string | boolean | ExposedFu
   | (null | number | string | boolean | ExposedFunctionParameters)[];
 
 export const PATH_VALIDATION_REGEX = /^[a-zA-Z]+[a-zA-Z0-9]+$/;
-
-
-const a :ExposedFunctionParameters = {a: 5, b:'h', c: {a:[[[[[3]]], ]]}}

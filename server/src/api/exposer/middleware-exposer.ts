@@ -1,4 +1,3 @@
-import { SyncEnumerable } from '../../common/enumerable/index';
 import { ExposedFunction, ExposedFunctionParameters, Exposer, ExposedFunctionResult } from './exposer';
 
 type RegisteredExposedFunction = {
@@ -10,7 +9,8 @@ export interface ExposerMiddleware {
   handle: ExposerMiddlewareFunction;
 }
 
-export type ExposerMiddlewareFunction = (path: string[], parameters: ExposedFunctionParameters, next: ExposerMiddlewareFunction) => Promise<ExposedFunctionResult>;
+export type ExposerMiddlewareNextFunction = (path: string[], parameters: ExposedFunctionParameters) => Promise<ExposedFunctionResult>;
+export type ExposerMiddlewareFunction = (path: string[], parameters: ExposedFunctionParameters, next: ExposerMiddlewareNextFunction) => Promise<ExposedFunctionResult>;
 
 export class MiddlewareExposer implements Exposer {
   private readonly backingExposer: Exposer;
@@ -43,20 +43,22 @@ export class MiddlewareExposer implements Exposer {
 
   private getWrappedFunction(path: string[], func: ExposedFunction): ExposedFunction {
     const wrappedFunction: ExposedFunction = (parameters) => {
-      let next: ExposerMiddlewareFunction = this.getEndware(func);
+      let next: ExposerMiddlewareNextFunction = this.getEndware(func);
 
-      for (const middleware of this.middleware) {
-        next = (path, parameters, next) => middleware(path, parameters, next);
+      for (let i = this.middleware.length; i > 0; i--) {
+        const middleware = this.middleware[i];
+
+        next = (path, parameters) => middleware(path, parameters, next);
       }
 
-      return next(path, parameters, next);
+      return next(path, parameters);
     };
 
     return wrappedFunction;
   }
 
-  private getEndware(func: ExposedFunction): ExposerMiddlewareFunction {
-    const endware: ExposerMiddlewareFunction = (path, parameters, next) => {
+  private getEndware(func: ExposedFunction): ExposerMiddlewareNextFunction {
+    const endware: ExposerMiddlewareNextFunction = (path, parameters) => {
       return func(parameters);
     };
 
