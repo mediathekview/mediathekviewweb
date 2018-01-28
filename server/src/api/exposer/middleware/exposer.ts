@@ -1,4 +1,4 @@
-import { ExposedFunction, ExposedFunctionParameters, Exposer, ExposedFunctionResult } from './exposer';
+import { ExposedFunction, ExposedFunctionParameters, Exposer, ExposedFunctionResult } from '../';
 
 type RegisteredExposedFunction = {
   path: string[],
@@ -14,7 +14,7 @@ export type ExposerMiddlewareFunction = (path: string[], parameters: ExposedFunc
 
 export class MiddlewareExposer implements Exposer {
   private readonly backingExposer: Exposer;
-  private readonly middleware: ExposerMiddlewareFunction[];
+  private readonly middleware: ExposerMiddlewareFunction[] = [];
 
   constructor(backingExposer: Exposer) {
     this.backingExposer = backingExposer;
@@ -33,7 +33,7 @@ export class MiddlewareExposer implements Exposer {
     if (typeof middleware == 'function') {
       middlewareFunction = middleware;
     } else {
-      middlewareFunction = (path, parameters, next) => middleware.handle(path, parameters, next);
+      middlewareFunction = middleware.handle.bind(middleware);
     }
 
     this.middleware.push(middlewareFunction);
@@ -45,7 +45,7 @@ export class MiddlewareExposer implements Exposer {
     const wrappedFunction: ExposedFunction = (parameters) => {
       let next: ExposerMiddlewareNextFunction = this.getEndware(func);
 
-      for (let i = this.middleware.length; i > 0; i--) {
+      for (let i = this.middleware.length - 1; i >= 0; i--) {
         const middleware = this.middleware[i];
 
         next = (path, parameters) => middleware(path, parameters, next);
@@ -63,5 +63,9 @@ export class MiddlewareExposer implements Exposer {
     };
 
     return endware;
+  }
+
+  private wrapMiddleware(middleware: ExposerMiddlewareFunction, next: ExposerMiddlewareNextFunction): ExposerMiddlewareNextFunction {
+    return (path, parameters) => middleware(path, parameters, next);
   }
 }

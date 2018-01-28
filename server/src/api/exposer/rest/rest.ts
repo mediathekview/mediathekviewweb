@@ -3,7 +3,8 @@ import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
 import * as KoaBodyParser from 'koa-bodyparser';
 
-import { Exposer, ExposedFunction } from '../exposer';
+import { Exposer, ExposedFunction, ExposedFunctionResult } from '../exposer';
+import { HighPrecisionTimer } from '../../../utils/index';
 
 export class RestExposer implements Exposer {
   private readonly server: Http.Server;
@@ -21,15 +22,26 @@ export class RestExposer implements Exposer {
     this.koa = new Koa();
     this.router = new KoaRouter();
     this.bodyParser = KoaBodyParser();
+
+    this.initialize();
   }
 
-  initialize() {
+  expose(path: string[], func: ExposedFunction): this {
+    const urlPath = `/${path.join('/')}`;
+
+    this.router.all(urlPath, (context, next) => this.onRequest(context, next, func));
+
+    return this;
+  }
+
+  private initialize() {
     this.koa.proxy = true;
 
     if (this.prefix != null) {
       this.router.prefix(this.prefix);
     }
 
+    this.koa.use(RestExposer.responseTime);
     this.koa.use(this.bodyParser);
     this.koa.use(this.router.routes());
     this.koa.use(this.router.allowedMethods());
@@ -37,18 +49,24 @@ export class RestExposer implements Exposer {
     this.server.on('request', this.koa.callback());
   }
 
-  expose(path: string[], func: ExposedFunction): void {
-    const urlPath = `/${path.join('/')}`;
-
-    this.router.post(urlPath, (context, next) => this.onRequest(context, next, func));
-  }
-
   private async onRequest(context: KoaRouter.IRouterContext, next: () => Promise<any>, func: ExposedFunction): Promise<void> {
     const parameters = context.request.body;
 
-    const result = await func(parameters);
-    context.response.body = await func(parameters);
+    try {
+      context.response.body = await func(parameters);
+    }
+    catch (error) {
+      context.status = 500;
+      throw error;
+    }
 
     await next();
+  }
+
+  private static async responseTime(context: Koa.Context, next: () => Promise<any>) {
+    const ms = await HighPrecisionTimer.measure(next);
+    const roundedMs = Math.precisionRound(ms, 2);
+
+    context.response.set('X-Response-Time', `${roundedMs}ms`);
   }
 }

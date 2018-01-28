@@ -1,7 +1,7 @@
 import { ExposedFunctionError } from '../exposer';
 
-export class UnknownRequestError implements ExposedFunctionError {
-  type: 'UnknownRequest';
+export class InvalidRequestError implements ExposedFunctionError {
+  type: 'InvalidRequest';
   message: string;
   details: any;
 

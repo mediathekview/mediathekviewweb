@@ -1,5 +1,8 @@
-import { ExposerMiddleware, ExposerMiddlewareFunction, ExposerMiddlewareNextFunction } from "../middleware-exposer";
-import { ExposedFunctionResult, ExposedFunctionParameters } from "../exposer";
+import { ExposerMiddleware, ExposerMiddlewareFunction, ExposerMiddlewareNextFunction } from '../middleware-exposer';
+import { ExposedFunctionResult, ExposedFunctionParameters, ExposedFunctionError, ExposedFunction } from '../exposer';
+import { InvalidRequestError } from '../errors/invalid-request';
+import { SyncEnumerable } from '../../../common/enumerable';
+import '../../../common/extensions/set';
 
 type Verification = {
   required: Set<string>;
@@ -36,6 +39,30 @@ export class ParameterVerifierExposerMiddleware implements ExposerMiddleware {
   async handle(path: string[], parameters: ExposedFunctionParameters, next: ExposerMiddlewareNextFunction): Promise<ExposedFunctionResult> {
     const verification = this.getVerification(path);
 
+    const propertyNames = Object.getOwnPropertyNames(parameters);
+    const properties = new Set(propertyNames);
+
+    const missingProperties = verification.required.difference(properties);
+    const unknownProperties = properties.difference(verification.required, verification.optional);
+
+    const errors: ExposedFunctionError[] = [];
+
+    if (missingProperties.size > 0) {
+      const missingPropertiesArray = SyncEnumerable.toArray(missingProperties);
+      const error = new InvalidRequestError('request is missing parameters', missingPropertiesArray);
+      errors.push(error);
+    }
+
+    if (unknownProperties.size > 0) {
+      const unknownPropertiesArray = SyncEnumerable.toArray(unknownProperties);
+      const error = new InvalidRequestError('request has unknown parameters', unknownPropertiesArray);
+      errors.push(error);
+    }
+
+    if (errors.length > 0) {
+      return { errors: errors };
+    }
+
     return next(path, parameters);
   }
 
@@ -56,7 +83,7 @@ export class ParameterVerifierExposerMiddleware implements ExposerMiddleware {
     if (!has) {
       verification = this.createVerification(key);
     } else {
-      verification = this.getVerification(key);
+      verification = this.verifications.get(key) as Verification;
     }
 
     return verification;

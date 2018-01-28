@@ -1,11 +1,11 @@
 export interface Exposer {
-  expose(path: string[], func: ExposedFunction): void;
+  expose(path: string[], func: ExposedFunction): this;
 }
 
 export type ExposedFunction = (parameters: ExposedFunctionParameters) => Promise<ExposedFunctionResult>;
 export type ExposedFunctionParameters = { [key: string]: ExposedFunctionParameterType | ExposedFunctionParameterType[] };
 export type ExposedFunctionResult = { result?: any, errors?: ExposedFunctionError[] };
-export type ExposedFunctionError = { type: ExposedFunctionErrorType, message?: string };
+export type ExposedFunctionError = { type: ExposedFunctionErrorType, message: string, details?: any };
 export type ExposedFunctionErrorType = 'UnknownRequest' | 'InvalidRequest' | 'Unauthorized' | 'NotFound' | 'ServerError';
 
 type ExposedFunctionParameterType = null | number | string | boolean | ExposedFunctionParameters
