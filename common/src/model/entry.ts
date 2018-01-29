@@ -19,21 +19,21 @@ export type AggregatedEntry = Entry & {
   metadata: EntryMetadata;
 }
 
-export class Field {
-  static ID: string = 'id';
-  static Channel: string = 'channel';
-  static Topic: string = 'topic';
-  static Title: string = 'title';
-  static Timestamp: string = 'timestamp';
-  static Duration: string = 'duration';
-  static Description: string = 'description';
-  static Website: string = 'website';
-  static MediaType: string = 'media.type';
-  static MediaUrl: string = 'media.url';
-  static MediaSize: string = 'media.size';
-  static VideoQuality: string = 'media.quality';
-  static AudioQuality: string = 'media.quality';
-  static LastSeen: string = 'metadata.lastSeen';
+export const Field = {
+  ID: 'id',
+  Channel: 'channel',
+  Topic: 'topic',
+  Title: 'title',
+  Timestamp: 'timestamp',
+  Duration: 'duration',
+  Description: 'description',
+  Website: 'website',
+  MediaType: 'media.type',
+  MediaUrl: 'media.url',
+  MediaSize: 'media.size',
+  VideoQuality: 'media.quality',
+  AudioQuality: 'media.quality',
+  LastSeen: 'metadata.lastSeen'
 }
 
 export enum MediaType {
