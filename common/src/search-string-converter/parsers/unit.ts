@@ -5,57 +5,57 @@ export type Unit = { pattern: RegExp, factor: number };
 type SplitResult = { value: number, unitString: string | null };
 
 export class UnitParser {
-    private readonly units: Unit[];
+  private readonly units: Unit[];
 
-    constructor(units: Unit[]) {
-        this.units = units;
+  constructor(units: Unit[]) {
+    this.units = units;
+  }
+
+  parse(text: string): number {
+    let total = 0;
+
+    const splits = this.split(text);
+
+    for (const split of splits) {
+      total += this.parseSplit(split);
     }
 
-    parse(text: string): number {
-        let total = 0;
+    return total;
+  }
 
-        const splits = this.split(text);
+  private split(text: string): SplitResult[] {
+    const regex = new RegExp(PARSE_REGEX);
 
-        for (const split of splits) {
-            total += this.parseSplit(split);
-        }
+    const results: SplitResult[] = [];
 
-        return total;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text)) != null) {
+      const [, valueString, unitMatch] = match;
+
+      const value = Number.parseFloat(valueString);
+      const unit = (unitMatch != undefined) ? unitMatch : null;
+
+      const result: SplitResult = { value: value, unitString: unit };
+
+      results.push(result);
     }
 
-    private split(text: string): SplitResult[] {
-        const regex = new RegExp(PARSE_REGEX);
+    return results;
+  }
 
-        const results: SplitResult[] = [];
-
-        let match: RegExpExecArray | null;
-        while ((match = regex.exec(text)) != null) {
-            const [, valueString, unitMatch] = match;
-
-            const value = Number.parseFloat(valueString);
-            const unit = (unitMatch != undefined) ? unitMatch : null;
-
-            const result: SplitResult = { value: value, unitString: unit };
-
-            results.push(result);
-        }
-
-        return results;
+  private parseSplit(splitResult: SplitResult): number {
+    if (splitResult.unitString == null) {
+      return 1;
     }
 
-    private parseSplit(splitResult: SplitResult): number {
-        if (splitResult.unitString == null) {
-            return 1;
-        }
+    for (const unit of this.units) {
+      const matches = unit.pattern.test(splitResult.unitString);
 
-        for (const unit of this.units) {
-            const matches = unit.pattern.test(splitResult.unitString);
-
-            if (matches) {
-                return unit.factor;
-            }
-        }
-
-        throw new Error(`no unit for ${splitResult.unitString} available`);
+      if (matches) {
+        return unit.factor;
+      }
     }
+
+    throw new Error(`no unit for ${splitResult.unitString} available`);
+  }
 }

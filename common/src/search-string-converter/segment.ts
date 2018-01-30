@@ -1,4 +1,4 @@
-const SEGMENT_PARSE_REGEX = /(\^)?(?:([a-zA-Z]+):)?(?:[\""](.+?)[\""]|([^ ]+))/;
+const SEGMENT_PARSE_REGEX = /^(\^)?(?:(([a-zA-Z]+):)|[!#*+])?(?:[\""](.+?)[\""]|([^ ]+))$/;
 
 export class Segment {
   readonly inverted: boolean;
