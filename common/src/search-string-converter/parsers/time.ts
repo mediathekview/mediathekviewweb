@@ -1,4 +1,4 @@
-import { UnitStringParser, Unit } from './unit-string';
+import { UnitParser, Unit } from './unit';
 
 
 const UNITS: Unit[] = [
@@ -7,7 +7,7 @@ const UNITS: Unit[] = [
     { pattern: /^h(o(u(r(s)?)?)?)$/, factor: 60 * 60 }
 ];
 
-export class TimeStringParser extends UnitStringParser {
+export class TimeParser extends UnitParser {
     constructor() {
         super(UNITS);
     }

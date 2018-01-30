@@ -4,7 +4,7 @@ export type Unit = { pattern: RegExp, factor: number };
 
 type SplitResult = { value: number, unitString: string | null };
 
-export class UnitStringParser {
+export class UnitParser {
     private readonly units: Unit[];
 
     constructor(units: Unit[]) {
