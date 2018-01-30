@@ -1,5 +1,5 @@
 import { SegmentConverter, SegmentConverterResult, Segment } from '../';
-import { QueryBody } from '../../search-engine/query/index';
+import { QueryBody } from '../../search-engine/query';
 
 export abstract class SelectorSegmentConverterBase implements SegmentConverter {
     private readonly selectorRegex: RegExp;

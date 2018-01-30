@@ -3,7 +3,7 @@ import { Segment } from './segment';
 const SEGMENTATION_REGEX = /[^"\s]+[\""].+?[\""]|[^\s]+/g;
 
 export class Segmentizer {
-  static segmentize(search: string): Segment[] {
+  segmentize(search: string): Segment[] {
     const regex = new RegExp(SEGMENTATION_REGEX);
 
     const segments: Segment[] = [];
