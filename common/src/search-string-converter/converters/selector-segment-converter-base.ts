@@ -8,19 +8,30 @@ export abstract class SelectorSegmentConverterBase implements SegmentConverter {
         this.selectorRegex = selectorRegex;
     }
 
-    canHandle(segment: Segment): boolean {
-        return segment.selector != null && this.selectorRegex.test(segment.selector);
-    }
+    tryConvert(segment: Segment): SegmentConverterResult | null {
+        const canHandleSelector = this.canHandleSelector(segment);
 
-    convert(segment: Segment): SegmentConverterResult {
-        let result: SegmentConverterResult = {};
-        const property = segment.inverted ? 'exclude' : 'include';
+        if (!canHandleSelector) {
+            return null;
+        }
+
+        let result: SegmentConverterResult | null = null;
 
         const query = this.textToQuery(segment.text);
-        result[property] = query;
+
+        if (query != null) {
+            result = {};
+
+            const property = segment.inverted ? 'exclude' : 'include';
+            result[property] = query;
+        }
 
         return result;
     }
 
-    protected abstract textToQuery(text: string): QueryBody;
+    private canHandleSelector(segment: Segment): boolean {
+        return segment.selector != null && this.selectorRegex.test(segment.selector);
+    }
+
+    protected abstract textToQuery(text: string): QueryBody | null;
 }

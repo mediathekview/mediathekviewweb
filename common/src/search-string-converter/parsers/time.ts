@@ -6,6 +6,8 @@ const UNITS: Unit[] = [
   { pattern: /^((?:s(?:t(?:u(?:n(?:d(?:e(?:n)?)?)?)?)?)?)|(?:h(?:o(?:u(?:r(?:s)?)?)?)?))$/, factor: 60 * 60 }
 ];
 
+const RANGE_INCLUSIVE = true;
+
 export class TimeParser extends UnitParser {
   constructor() {
     super(UNITS);

@@ -10,13 +10,22 @@ export type Sort = {
   aggregation?: Aggregation;
 }
 
-export type QueryBody = IDsQuery | MatchAllQuery | BoolQuery | RangeQuery | TextQuery | RegexQuery;
+export type QueryBody = TermQuery | IDsQuery | MatchAllQuery | BoolQuery | RangeQuery | TextQuery | RegexQuery;
 
 export type SearchQuery = {
   body: QueryBody;
   sorts?: Sort[];
   skip?: number;
   limit?: number;
+}
+
+export type TermQueryValue = string | number | boolean | Date;
+
+export type TermQuery = {
+  term: {
+    field: string;
+    value: TermQueryValue;
+  }
 }
 
 export type IDsQuery = {
@@ -39,10 +48,10 @@ export type BoolQuery = {
 export type RangeQuery = {
   range: {
     field: string;
-    lt?: number | string;
-    lte?: number | string;
-    gt?: number | string;
-    gte?: number | string;
+    lt?: number | string | Date;
+    lte?: number | string | Date;
+    gt?: number | string | Date;
+    gte?: number | string | Date;
   }
 }
 
