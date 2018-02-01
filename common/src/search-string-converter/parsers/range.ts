@@ -1,5 +1,3 @@
-import { text } from "body-parser";
-
 const PARSE_REGEX = /^(?:(>=|<=|<|>|=)?([^-<>=]+)|([^-<>=]+)-([^-<>=]+))$/;
 
 export enum RangeType {
@@ -12,7 +10,7 @@ export enum RangeType {
 
 export type Range = { type: RangeType, text: string }
 
-const RangeTypeMap = new Map<string, RangeType>([
+const RANGE_TYPE_MAP = new Map<string, RangeType>([
   ['', RangeType.Equals],
   ['=', RangeType.Equals],
   ['<', RangeType.Less],
@@ -54,7 +52,7 @@ export class RangeParser {
   }
 
   private parseSingle(typeString: string, value: string): Range {
-    const type = RangeTypeMap.get(typeString);
+    const type = RANGE_TYPE_MAP.get(typeString);
 
     if (type == undefined) {
       throw new Error('should not happen');
