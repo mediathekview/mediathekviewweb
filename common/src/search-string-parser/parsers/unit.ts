@@ -1,8 +1,8 @@
-const PARSE_REGEX = /(\d+(?:[.,]\d+)?([a-zA-Z]+)?)/;
+const PARSE_REGEX = /(\d+(?:[.,]\d+)?)([a-zA-Z]*)/g;
 
-export type Unit = { pattern: RegExp, factor: number };
+export type Unit = { pattern: string | RegExp, factor: number };
 
-type SplitResult = { value: number, unitString: string | null };
+type SplitResult = { value: number, unitString: string };
 
 export class UnitParser {
   private readonly units: Unit[];
@@ -30,11 +30,10 @@ export class UnitParser {
 
     let match: RegExpExecArray | null;
     while ((match = regex.exec(text)) != null) {
-      const [, valueString, unitMatch] = match;
-
-      const value = Number.parseFloat(valueString);
-      const unit = (unitMatch != undefined) ? unitMatch : null;
-
+      const [, valueString, unit] = match;
+      const normalizedValueString = valueString.replace(',', '.');
+      
+      const value = Number.parseFloat(normalizedValueString);
       const result: SplitResult = { value: value, unitString: unit };
 
       results.push(result);
@@ -44,15 +43,18 @@ export class UnitParser {
   }
 
   private parseSplit(splitResult: SplitResult): number {
-    if (splitResult.unitString == null) {
-      return 1;
-    }
-
     for (const unit of this.units) {
-      const matches = unit.pattern.test(splitResult.unitString);
+      let matches: boolean;
+
+      if (typeof unit.pattern == 'string') {
+        matches = splitResult.unitString == unit.pattern;
+      } else {
+        matches = unit.pattern.test(splitResult.unitString);
+      }
 
       if (matches) {
-        return unit.factor;
+        const result = splitResult.value * unit.factor;
+        return result;
       }
     }
 
