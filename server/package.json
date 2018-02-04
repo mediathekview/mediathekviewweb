@@ -5,12 +5,13 @@
   "main": "./src/app.ts",
   "scripts": {
     "start": "npm run build-live",
+    "build": "tsc",
     "build-live": "nodemon --exec ./node_modules/.bin/ts-node -- ./src/app.ts"
   },
   "author": "Patrick Hein",
   "license": "GPLv3",
   "devDependencies": {
-    "@types/bull": "^3.3.3",
+    "@types/bull": "^3.3.4",
     "@types/elasticsearch": "^5.0.19",
     "@types/hjson": "^2.4.0",
     "@types/ioredis": "^3.2.5",
@@ -21,22 +22,22 @@
     "@types/needle": "^2.0.2",
     "@types/node": "^9.4.0",
     "@types/socket.io": "^1.4.31",
-    "nodemon": "^1.14.11",
+    "nodemon": "^1.14.12",
     "ts-node": "^4.1.0",
-    "typescript": "^2.6.2"
+    "typescript": "^2.7.1"
   },
   "dependencies": {
     "base-x": "^3.0.4",
     "bull": "^3.3.9",
-    "elasticsearch": "^14.0.0",
+    "elasticsearch": "^14.1.0",
     "hjson": "^3.1.1",
     "ioredis": "^3.2.2",
     "koa": "^2.4.1",
     "koa-bodyparser": "^4.2.0",
-    "koa-router": "^7.3.0",
+    "koa-router": "^7.4.0",
     "kue": "^0.11.6",
     "lzma-native": "^3.0.4",
-    "mongodb": "^3.0.1",
+    "mongodb": "^3.0.2",
     "needle": "^2.1.1",
     "rxjs": "^5.5.6",
     "socket.io": "^2.0.4"

@@ -6,7 +6,8 @@ import { TextQueryBuilder, TimeQueryValueBuilder, RangeQueryBuilder, TermQueryBu
 import { RangeParser, Range, RangeType } from '../parsers/range';
 import { TimeParser } from '../parsers/time';
 
-const SELECTOR_REGEX = /^du(r(a(t(i(o(n)?)?)?)?)?)?$/;
+const FIELD = Field.Duration;
+const SELECTOR_REGEX = /^(?:du(?:r(?:a(?:t(?:i(?:o(?:n)?)?)?)?)?)?|dau(?:e(?:r)?)?)$/;
 
 const RANGE_INCLUSIVE = true;
 
@@ -15,7 +16,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
   private readonly timeParser: TimeParser;
 
   constructor() {
-    super(SELECTOR_REGEX);
+    super(FIELD, SELECTOR_REGEX);
 
     this.rangeParser = new RangeParser(RANGE_INCLUSIVE);
     this.timeParser = new TimeParser();
@@ -57,7 +58,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
         break;
     }
 
-    queryBuilder.field(Field.Channel);
+    queryBuilder.field(FIELD);
 
     const query = queryBuilder.build();
     return query;
@@ -65,7 +66,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
 
   private convertFromTo(from: Range, to: Range): QueryBody | null {
     const rangeQueryBuilder = new RangeQueryBuilder();
-    rangeQueryBuilder.field(Field.Channel);
+    rangeQueryBuilder.field(FIELD);
 
     this.setRange(rangeQueryBuilder, from);
     this.setRange(rangeQueryBuilder, to);

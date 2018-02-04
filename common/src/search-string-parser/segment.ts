@@ -1,4 +1,4 @@
-const SEGMENT_PARSE_REGEX = /^(\^)?(?:(([a-zA-Z]+):)|[!#*+])?(?:[\""](.+?)[\""]|([^ ]+))$/;
+const SEGMENT_PARSE_REGEX = /^(\^)?(?:([a-zA-Z]+):|([!#*+]))?(?:[\""](.+?)[\""]|([^ ]+))$/;
 
 export class Segment {
   readonly inverted: boolean;
@@ -15,7 +15,9 @@ export class Segment {
 
   static fromString(segmentString: string): Segment {
     const match = segmentString.match(SEGMENT_PARSE_REGEX);
-    const [, invertedString, selector, quotedText, nonQuotedText] = match;
+    const [, invertedString, selectorA, selectorB, quotedText, nonQuotedText] = match;
+
+    const selector = (selectorA != undefined) ? selectorA : selectorB;
 
     const inverted = (invertedString != undefined);
     let text: string;

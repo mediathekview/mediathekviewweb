@@ -3,9 +3,11 @@ import { parallelForEach, parallelMap, parallelFilter, parallelIntercept } from 
 import { BufferedAsyncIterable, isAsyncIterable, isIterable, toAsyncIterable } from '../utils';
 import { SyncEnumerable } from './sync-enumerable';
 import {
-  AsyncPredicate, AsyncIteratorFunction, ParallelizableIteratorFunction, ParallelizableAsyncPredicate,
+  AsyncPredicate, AsyncIteratorFunction, ParallelizableIteratorFunction, ParallelizablePredicate,
   filterAsync, mapAsync, singleAsync, batchAsync, anyAsync, toArrayAsync, interceptAsync, toAsyncIterator, forEachAsync, interruptEveryAsync, mapManyAsync
 } from '../utils';
+import { groupAsync } from '../utils/async-iterable-helpers/group';
+import { parallelGroup } from '../utils/async-iterable-helpers/parallel/group';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   private readonly source: AnyIterable<T>;
@@ -90,6 +92,15 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(source).intercept(func);
   }
 
+  group<TGroup>(selector: AsyncIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
+    const grouped = groupAsync<T, TGroup>(this.source, selector);
+    return grouped;
+  }
+
+  static group<T, TGroup>(source: Iterable<T>, selector: AsyncIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
+    return new AsyncEnumerable(source).group(selector);
+  }
+
   toArray(): Promise<T[]> {
     const array = toArrayAsync(this.source);
     return array;
@@ -117,12 +128,12 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(source).parallelForEach(concurrency, func);
   }
 
-  parallelFilter(concurrency: number, keepOrder: boolean, predicate: ParallelizableAsyncPredicate<T>): AsyncEnumerable<T> {
+  parallelFilter(concurrency: number, keepOrder: boolean, predicate: ParallelizablePredicate<T>): AsyncEnumerable<T> {
     const result = parallelFilter(this.source, concurrency, keepOrder, predicate);
     return new AsyncEnumerable(result);
   }
 
-  static parallelFilter<T>(source: AnyIterable<T>, concurrency: number, keepOrder: boolean, predicate: ParallelizableAsyncPredicate<T>): AsyncEnumerable<T> {
+  static parallelFilter<T>(source: AnyIterable<T>, concurrency: number, keepOrder: boolean, predicate: ParallelizablePredicate<T>): AsyncEnumerable<T> {
     return new AsyncEnumerable(source).parallelFilter(concurrency, keepOrder, predicate);
   }
 
@@ -142,6 +153,15 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
 
   static parallelIntercept<T>(source: AnyIterable<T>, concurrency: number, keepOrder: boolean, func: ParallelizableIteratorFunction<T, void>): AsyncEnumerable<T> {
     return new AsyncEnumerable(source).parallelIntercept(concurrency, keepOrder, func);
+  }
+
+  parallelGroup<TGroup>(concurrency: number, selector: ParallelizableIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
+    const grouped = parallelGroup(this.source, concurrency, selector);
+    return grouped;
+  }
+
+  static parallelGroup<T, TGroup>(source: AnyIterable<T>, concurrency: number, selector: ParallelizableIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
+    return new AsyncEnumerable(source).parallelGroup(concurrency, selector);
   }
 
   interruptEvery(value: number): AsyncEnumerable<T> {

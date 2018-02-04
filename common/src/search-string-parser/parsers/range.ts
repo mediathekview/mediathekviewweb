@@ -1,4 +1,4 @@
-const PARSE_REGEX = /^(?:(>=|<=|<|>|=)?([^-<>=]+)|([^-<>=]+)-([^-<>=]+))$/;
+const PARSE_REGEX = /^(?:(>=|<=|<|>|=)?(?:([^-"<>=]+)|"(.+?)")|(?:([^-"<>=]+)|"(.+?)")-(?:([^-"<>=]+)|"(.+?)"))$/;
 
 export enum RangeType {
   Equals,
@@ -33,12 +33,16 @@ export class RangeParser {
       return null;
     }
 
-    const [, typeString, value, left, right] = match;
+    const [, rangeTypeString, unquotedValue, quotedValue, unquotedLeft, quotedLeft, unquotedRight, quotedRight] = match;
+
+    const value = (unquotedValue != undefined) ? unquotedValue : quotedValue;
+    const left = (unquotedLeft != undefined) ? unquotedLeft : quotedLeft;
+    const right = (unquotedRight != undefined) ? unquotedRight : quotedRight;
 
     let result: Range[] = [];
 
-    if (typeString != undefined && value != undefined) {
-      const range = this.parseSingle(typeString, value);
+    if (rangeTypeString != undefined && value != undefined) {
+      const range = this.parseSingle(rangeTypeString, value);
       result = [range];
     }
     else if (left != undefined && right != undefined) {

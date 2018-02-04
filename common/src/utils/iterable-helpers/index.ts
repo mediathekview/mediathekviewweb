@@ -8,3 +8,4 @@ export * from './single';
 export * from './types';
 export * from './intercept';
 export * from './map-many';
+export * from './group';

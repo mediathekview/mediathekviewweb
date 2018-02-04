@@ -1,5 +1,5 @@
-import { Predicate, IteratorFunction, filter, map, single, batch, any, intercept, forEach, mapMany } from "../utils";
-import { AsyncEnumerable } from "./async-enumerable";
+import { Predicate, IteratorFunction, filter, map, single, batch, any, intercept, forEach, mapMany, group } from '../utils';
+import { AsyncEnumerable } from './async-enumerable';
 
 export class SyncEnumerable<T> implements IterableIterator<T> {
   private readonly source: Iterable<T>;
@@ -70,6 +70,15 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
 
   static intercept<T>(source: Iterable<T>, func: IteratorFunction<T, void>): SyncEnumerable<T> {
     return new SyncEnumerable(source).intercept(func);
+  }
+
+  group<TGroup>(selector: IteratorFunction<T, TGroup>): Map<TGroup, T[]> {
+    const grouped = group<T, TGroup>(this.source, selector);
+    return grouped;
+  }
+
+  static group<T, TGroup>(source: Iterable<T>, selector: IteratorFunction<T, TGroup>): Map<TGroup, T[]> {
+    return new SyncEnumerable(source).group(selector);
   }
 
   toArray(): T[] {
