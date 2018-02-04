@@ -18,6 +18,10 @@ export class ResetPromise<T> implements Promise<T> {
     return this.backingPromise.catch(onrejected);
   }
 
+  finally(onfinally?: (() => void) | null | undefined): Promise<T> {
+    return this.backingPromise.finally(onfinally);
+  }
+
   resolve(value?: T | PromiseLike<T>): this {
     this.resolvePromise(value);
     return this;

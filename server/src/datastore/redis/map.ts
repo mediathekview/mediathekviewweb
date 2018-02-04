@@ -1,10 +1,10 @@
 import * as Redis from 'ioredis';
 
-import { Map, Entry, DataType } from '../';
+import { DataType, Entry, Map } from '../';
+import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
 import { Nullable, Undefinable } from '../../common/utils';
 import { AnyIterable } from '../../common/utils/any-iterable';
-import { serialize, deserialize } from './serializer';
-import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
+import { deserialize, serialize } from './serializer';
 
 const BATCH_SIZE = 100;
 
@@ -58,7 +58,7 @@ export class RedisMap<T> implements Map<T> {
     } else {
       const enumerable = new AsyncEnumerable(keyOrIterable);
       const array = await enumerable.toArray();
-      
+
       return this.redis.hdel(this.key, ...array);
     }
   }
@@ -81,14 +81,14 @@ export class RedisMap<T> implements Map<T> {
     const batches = enumerable.batch(BATCH_SIZE);
 
     for await (const batch of batches) {
-      const args: string[] = [];
+      const map = new Map<string, string>();
 
       for (let entry of batch) {
-        const value = serialize(entry.value, this.dataType);
-        args.push(entry.key, value);
+        const serialized = serialize(entry.value, this.dataType);
+        map.set(entry.key, serialized);
       }
 
-      await this.redis.hmset(this.key, args.shift(), args.shift(), ...args);
+      await this.redis.hmset(this.key, map);
     }
   }
 
@@ -111,7 +111,7 @@ export class RedisMap<T> implements Map<T> {
       return undefined;
     }
 
-    const value = deserialize(result,this.dataType);
+    const value = deserialize(result, this.dataType);
     return value;
   }
 

@@ -2,30 +2,27 @@
   "compileOnSave": false,
   "compilerOptions": {
     "target": "es5",
-    "lib": ["esnext"],
-    "sourceMap": false,
-    "outDir": "./dist/",
+    "lib": [
+      "esnext"
+    ],
+    "sourceMap": true,
+    "outDir": "build",
     "removeComments": true,
     "downlevelIteration": true,
     "declaration": false,
-
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "noImplicitThis": true,
     "alwaysStrict": true,
-
     "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-
     "moduleResolution": "node",
-    "typeRoots": ["node_modules/@types"],
-
     "inlineSourceMap": false,
     "inlineSources": false,
-
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   }

@@ -32,7 +32,7 @@ export class SocketIOCouplerServer {
     const event = this.eventPrefix + functionName;
     const request: SocketRequest = { parameters: parameters };
 
-    return new Promise<T>((resolve, reject) => {
+    return new Promise<T>((_resolve, reject) => {
       this.io.emit(event, request, (response: SocketResponse) => {
         if (response.error != undefined) {
           if (response.error.nonError != undefined) {

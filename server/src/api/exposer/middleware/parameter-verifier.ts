@@ -1,4 +1,4 @@
-import { ExposerMiddleware, ExposerMiddlewareFunction, ExposerMiddlewareNextFunction } from '../middleware-exposer';
+import { ExposerMiddleware, ExposerMiddlewareFunction, ExposerMiddlewareNextFunction } from './exposer';
 import { ExposedFunctionResult, ExposedFunctionParameters, ExposedFunctionError, ExposedFunction } from '../exposer';
 import { InvalidRequestError } from '../errors/invalid-request';
 import { SyncEnumerable } from '../../../common/enumerable';

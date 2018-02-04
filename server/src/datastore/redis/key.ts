@@ -1,5 +1,6 @@
 import * as Redis from 'ioredis';
-import { Key, DataType } from '../'
+
+import { DataType, Key } from '../';
 import { Nullable, Undefinable } from '../../common/utils';
 import { deserialize, serialize } from './serializer';
 

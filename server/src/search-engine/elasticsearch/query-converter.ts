@@ -148,9 +148,12 @@ function convertRangeQuery(query: RangeQuery): object {
   return queryObj;
 }
 
-function convertRangeValue(value: string | number): string | number {
+function convertRangeValue(value: string | number | Date): string | number {
   if (typeof value == 'number') {
     return value;
+  }
+  else if (value instanceof Date) {
+    return Math.floor(value.valueOf() / 1000);
   }
 
   const converted = value

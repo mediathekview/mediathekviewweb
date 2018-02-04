@@ -59,7 +59,7 @@ export class MiddlewareExposer implements Exposer {
   }
 
   private getEndware(func: ExposedFunction): ExposerMiddlewareNextFunction {
-    const endware: ExposerMiddlewareNextFunction = (path, parameters) => {
+    const endware: ExposerMiddlewareNextFunction = (_path, parameters) => {
       return func(parameters);
     };
 

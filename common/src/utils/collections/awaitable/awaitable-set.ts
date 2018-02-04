@@ -49,6 +49,18 @@ export class AwaitableSet<T> implements Set<T> {
     return this.backingSet.has(value);
   }
 
+  intersect(...sets: Set<T>[]): Set<T> {
+    return this.backingSet.intersect(...sets);
+  }
+
+  difference(...sets: Set<T>[]): Set<T> {
+    return this.backingSet.difference(...sets);
+  }
+
+  union(...sets: Set<T>[]): Set<T> {
+    return this.backingSet.union(...sets);
+  }
+
   [Symbol.iterator](): IterableIterator<T> {
     return this.backingSet.values();
   }

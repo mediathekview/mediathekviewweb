@@ -16,6 +16,6 @@ echoParameterVerifier.addRequired(['echo'], 'name');
 
 middlewareExposer.registerMiddleware(echoParameterVerifier);
 
-middlewareExposer.expose(['echo'], async (parameters: ExposedFunctionParameters) => {
+middlewareExposer.expose(['echo'], async (_parameters: ExposedFunctionParameters) => {
   return { result: 'hello' };
 });

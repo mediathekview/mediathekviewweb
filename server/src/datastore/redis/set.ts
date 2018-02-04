@@ -1,10 +1,10 @@
 import * as Redis from 'ioredis';
 
 import { DataType, Set } from '../';
-import { AnyIterable, isIterable, Nullable, toAsyncIterable, Undefinable } from '../../common/utils';
-import { serialize, deserialize } from './serializer';
-import { SyncEnumerable, AsyncEnumerable, getEnumerable } from '../../common/enumerable';
+import { AsyncEnumerable, getEnumerable } from '../../common/enumerable';
+import { AnyIterable, Nullable, Undefinable } from '../../common/utils';
 import { BATCH_SIZE, CONCURRENCY } from './constants';
+import { deserialize, serialize } from './serializer';
 
 export class RedisSet<T> implements Set<T> {
   private readonly redis: Redis.Redis;

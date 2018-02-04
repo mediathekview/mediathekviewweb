@@ -1,16 +1,14 @@
 import * as Redis from 'ioredis';
 
-import { DatastoreProvider, Key, Set, Map, DataType } from '../';
-import { RedisKey } from './key';
-import { RedisSet } from './set';
-import { RedisMap } from './map';
-
+import { DatastoreProvider, DataType, Set } from '../';
 import { uniqueID } from '../../utils/unique-id';
+import { RedisKey } from './key';
+import { RedisMap } from './map';
+import { RedisSet } from './set';
 
-type Generic<T> = any;
 
-interface RedisDatastoreConstructable<TInstance extends Generic<TValue>, TValue> {
-  new(redis: Redis.Redis, key: string, dataType: DataTyp): TInstance;
+interface RedisDatastoreConstructable<TInstance> {
+  new(redis: Redis.Redis, key: string, dataType: DataType): TInstance;
 }
 
 export class RedisDatastoreProvider implements DatastoreProvider {
@@ -24,7 +22,7 @@ export class RedisDatastoreProvider implements DatastoreProvider {
     return 'unnamed:' + uniqueID();
   }
 
-  construct<TInstance extends Generic<TValue>, TValue>(constructor: RedisDatastoreConstructable<TInstance, TValue>, keyOrDataType: string | DataType, dataType?: DataType): TInstance {
+  construct<TInstance, TValue>(constructor: RedisDatastoreConstructable<TInstance>, keyOrDataType: string | DataType, dataType?: DataType): TInstance {
     let key: string;
 
     if (typeof keyOrDataType != 'string') {
@@ -40,18 +38,18 @@ export class RedisDatastoreProvider implements DatastoreProvider {
   key<T>(dataType: DataType): RedisKey<T>;
   key<T>(key: string, dataType: DataType): RedisKey<T>;
   key<T>(keyOrDataType: string | DataType, dataType?: DataType): RedisKey<T> {
-    return this.construct(RedisKey, keyOrDataType, dataType);
+    return this.construct(RedisKey, keyOrDataType, dataType) as RedisKey<T>;
   }
 
   set<T>(dataType: DataType): Set<T>;
   set<T>(key: string, dataType: DataType): Set<T>;
   set<T>(keyOrDataType: string | DataType, dataType?: DataType): Set<T> {
-    return this.construct(RedisSet, keyOrDataType, dataType);
+    return this.construct(RedisSet, keyOrDataType, dataType) as RedisSet<T>;
   }
 
   map<T>(dataType: DataType): RedisMap<T>;
   map<T>(key: string, dataType: DataType): RedisMap<T>;
   map<T>(keyOrDataType: string | DataType, dataType?: DataType): RedisMap<T> {
-    return this.construct(RedisMap, keyOrDataType, dataType);
+    return this.construct(RedisMap, keyOrDataType, dataType) as RedisMap<T>;
   }
 }

@@ -26,7 +26,7 @@ export class SearchStringParser {
   private readonly segmentizer: Segmentizer;
 
   constructor() {
-    this.converters = [];
+    this.converters = CONVERTERS;
     this.segmentizer = new Segmentizer();
   }
 
