@@ -1,11 +1,10 @@
-import { EntryRepository } from '../repository/entry-repository';
-import { LockProvider } from '../lock';
 import { AsyncEnumerable } from '../common/enumerable';
-import { Entry, AggregatedEntry } from '../common/model';
+import { LockProvider } from '../common/lock';
+import { AggregatedEntry } from '../common/model';
+import { SearchEngine } from '../common/search-engine';
+import { ProviderFunctionIterable, sleep } from '../common/utils';
 import { DatastoreProvider, DataType, Set } from '../datastore';
 import { Keys } from '../keys';
-import { ProviderFunctionIterable, sleep, ProviderFunction } from '../common/utils';
-import { SearchEngine, SearchEngineItem } from '../common/search-engine';
 import { AggregatedEntryRepository } from '../repository';
 
 const BATCH_SIZE = 250;

@@ -1,7 +1,8 @@
 import { Redis } from 'ioredis';
+
+import { LockProvider } from '../../common/lock';
 import { uniqueID } from '../../utils/unique-id';
 import { RedisLock } from './';
-import { LockProvider, Lock } from '../';
 
 export class RedisLockProvider implements LockProvider {
   private readonly redis: Redis;

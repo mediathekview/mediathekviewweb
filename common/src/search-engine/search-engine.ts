@@ -5,4 +5,5 @@ import { SearchResult } from './result';
 export interface SearchEngine<T> {
   index(entries: SearchEngineItem<T>[]): Promise<void>;
   search(query: SearchQuery): Promise<SearchResult<T>>;
+  drop(): Promise<void>;
 }

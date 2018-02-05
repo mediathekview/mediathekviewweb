@@ -1,4 +1,4 @@
-import { Entry, Document } from '../common/model';
+import { Document, Entry } from '../common/model';
 import { AnyIterable } from '../common/utils';
 
 export interface EntryRepository {
@@ -7,4 +7,6 @@ export interface EntryRepository {
 
   load(id: string): Promise<Document<Entry> | null>;
   loadMany(ids: AnyIterable<string>): AsyncIterable<Document<Entry>>;
+
+  drop(): Promise<void>;
 }

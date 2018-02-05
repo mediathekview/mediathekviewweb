@@ -1,12 +1,11 @@
 import * as Mongo from 'mongodb';
 
+import { AsyncEnumerable } from '../../common/enumerable';
+import { Document } from '../../common/model';
 import { MongoFilter, MongoUpdate } from '../../common/mongo-query';
-import { Document, Entity } from '../../common/model';
-import { MongoDocument, InsertedMongoDocument } from './mongo-document';
-import { map, now, AnyIterable, FeedableAsyncIterable } from '../../common/utils';
-import { objectIDOrStringToString, stringToObjectIDOrString } from './utils';
+import { AnyIterable } from '../../common/utils';
 import { SaveItem } from '../save-item';
-import { AsyncEnumerable } from '../../common/enumerable/index';
+import { InsertedMongoDocument, MongoDocument } from './mongo-document';
 
 const CREATED_PROPERTY = 'created';
 const UPDATED_PROPERTY = 'updated';
@@ -75,6 +74,10 @@ export class MongoBaseRepository<T> {
       const document = MongoDocument.fromInserted(insertedDocument).toDocument();
       yield document;
     }
+  }
+
+  async drop():Promise<void> {
+    await this.collection.drop();
   }
 
   private getUpdateOneOperation(document: MongoDocument<T>): { updateOne: { filter: MongoFilter, update: MongoUpdate, upsert: boolean } } {

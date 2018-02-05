@@ -1,4 +1,4 @@
-import { LockProvider } from '../lock';
+import { LockProvider } from '../common/lock';
 import { DistributedLoop } from './distributed-loop';
 
 export class DistributedLoopProvider {

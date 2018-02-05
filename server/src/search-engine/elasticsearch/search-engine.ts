@@ -1,6 +1,7 @@
+import * as Elasticsearch from 'elasticsearch';
+
 import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
 import convertQuery from './query-converter';
-import * as Elasticsearch from 'elasticsearch';
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly indexName: string;
@@ -9,7 +10,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly indexSettings: { [key: string]: any } | undefined;
   private readonly mappings: { [key: string]: any } | undefined;
 
-  constructor(indexName: string, typeName: string, client: Elasticsearch.Client, indexSettings?: {}, indexMappings?: {}) {
+  constructor(client: Elasticsearch.Client, indexName: string, typeName: string, indexSettings?: {}, indexMappings?: {}) {
     this.indexName = indexName;
     this.typeName = typeName;
     this.client = client;
@@ -22,6 +23,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   }
 
   async initialize() {
+    await this.waitForConnection();
     await this.ensureIndex();
 
     if (this.indexSettings != undefined || this.mappings != undefined) {
@@ -72,11 +74,29 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     return searchResult;
   }
 
+  async drop(): Promise<void> {
+    await this.client.indices.delete({ index: this.indexName });
+    await this.initialize();
+  }
+
   private async ensureIndex() {
     const indexExists = await this.client.indices.exists({ index: this.indexName });
 
     if (!indexExists) {
       await this.client.indices.create({ index: this.indexName });
     }
+  }
+
+  private async waitForConnection(): Promise<void> {
+    let success = false;
+
+    do {
+      try {
+        await this.client.ping({ requestTimeout: 500 });
+        success = true;
+      } catch {
+        console.log(`couldn't connect to elasticsearch, trying again...`)
+      }
+    } while (success);
   }
 }

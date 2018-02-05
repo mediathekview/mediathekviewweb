@@ -2,9 +2,9 @@ import * as Redis from 'ioredis';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
-import { Lock, LockedFunction } from '../';
+import { Lock, LockedFunction } from '../../common/lock';
+import { interrupt, sleep } from '../../common/utils';
 import { HighPrecisionTimer } from '../../utils/';
-import { sleep, interrupt } from '../../common/utils';
 import { AcquireResult } from './acquire-result';
 
 const EXPIRE_MS = 10000;

@@ -1,11 +1,10 @@
 import * as Mongo from 'mongodb';
 
 import { EntryRepository } from '../';
-import { Entry, Document } from '../../common/model';
+import { Document, Entry } from '../../common/model';
+import { AnyIterable } from '../../common/utils';
 import { MongoBaseRepository } from './base-repository';
 import { InsertedMongoDocument } from './mongo-document';
-import { AnyIterable } from '../../common/utils/index';
-import { AsyncEnumerable } from '../../common/enumerable/index';
 
 export class MongoEntryRepository implements EntryRepository {
   private readonly collection: Mongo.Collection<InsertedMongoDocument<Entry>>;
@@ -32,5 +31,9 @@ export class MongoEntryRepository implements EntryRepository {
 
   loadMany(ids: AnyIterable<string>): AsyncIterable<Document<Entry>> {
     return this.baseRepository.loadMany(ids);
+  }
+
+  drop(): Promise<void> {
+    return this.baseRepository.drop();
   }
 }
