@@ -1,6 +1,7 @@
 import * as Elasticsearch from 'elasticsearch';
 
 import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
+import { sleep } from '../../common/utils';
 import convertQuery from './query-converter';
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
@@ -92,11 +93,14 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
     do {
       try {
-        await this.client.ping({ requestTimeout: 500 });
+        await this.client.ping({ requestTimeout: 250 });
         success = true;
+        console.log('connected to elasticsearch');
       } catch {
         console.log(`couldn't connect to elasticsearch, trying again...`)
       }
-    } while (success);
+
+      await sleep(500);
+    } while (!success);
   }
 }

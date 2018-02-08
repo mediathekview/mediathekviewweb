@@ -7,13 +7,18 @@ import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { TextQueryBuilder, MatchAllQueryBuilder } from './common/search-engine/query/builder';
 import { Field } from './common/model';
 
-const elasticsearch = new Elasticsearch.Client({});
-const entrySearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, 'mediathekviewweb', 'entry', ElasticsearchSettings, ElasticsearchMapping);
+const elasticsearch = new Elasticsearch.Client({
+  log: [{
+    type: 'stdio',
+    levels: ['error'] // change these options
+  }]
+});
 
+const entrySearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, 'mediathekviewweb', 'entry', ElasticsearchSettings, ElasticsearchMapping);
 
 (async () => {
   await entrySearchEngine.initialize();
-
+  console.log('initialized');
 
   const parser = new SearchStringParser();
 
@@ -26,8 +31,8 @@ const entrySearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elastic
   }
 
   try {
-    const result = await entrySearchEngine.search(searchQuery);
-    console.log(result);
+    //  const result = await entrySearchEngine.search(searchQuery);
+    //   console.log(result);
   }
   catch (error) {
     console.error(error);
