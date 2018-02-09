@@ -41,7 +41,7 @@ export class Converter {
       body: {
         query: queryBody
       }
-    };
+    } as any;
 
     if (query.sorts != undefined && query.sorts.length > 0) {
       const sorts = query.sorts.map((sort) => this.sortConverter.convert(sort));

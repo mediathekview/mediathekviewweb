@@ -1,53 +1,3 @@
-/*
-export interface IEntry {
-  id: string;
-  metadata?: IEntryMetadata;
-
-  channel: string;
-  topic: string;
-  title: string;
-  timestamp: number;
-  duration: number;
-  description: string;
-  website: string;
-  media: IMedia[];
-}
-
-export interface IEntryMetadata {
-  lastSeen: number;
-  downloads: IUserAction[];
-  plays: IUserAction[];
-  secondsPlayed?: number;
-  secondsPaused?: number;
-}
-
-export interface IUserAction {
-  userID: string;
-  timestamp: number;
-}
-
-export interface IMedia {
-  type: MediaType;
-  url: string;
-  size: number;
-}
-*/
-
-const UserActionMapping = {
-  type: 'nested',
-  dynamic: false,
-  properties: {
-    userID: {
-      type: 'keyword',
-      index: false,
-    },
-    timestamp: {
-      type: 'long',
-      index: true,
-    }
-  }
-}
-
 export const ElasticsearchMapping = {
   properties: {
     channel: {
@@ -123,14 +73,28 @@ export const ElasticsearchMapping = {
     },
     metadata: {
       type: 'object',
-      dynamic: false,
+      dynamic: 'strict',
       properties: {
-        lastSeen: {
+        lastSeenTimestamp: {
           type: 'long',
           index: true
         },
-        downloads: UserActionMapping,
-        plays: UserActionMapping,
+        downloads: {
+          type: 'long',
+          index: true
+        },
+        plays: {
+          type: 'long',
+          index: true
+        },
+        comments: {
+          type: 'long',
+          index: true
+        },
+        averageRating: {
+          type: 'float',
+          index: true
+        },
         secondsPlayed: {
           type: 'long',
           index: true
@@ -140,6 +104,10 @@ export const ElasticsearchMapping = {
           index: true
         }
       }
+    },
+    sourceIdentifier: {
+      type: 'keyword',
+      index: false,
     }
   }
 }

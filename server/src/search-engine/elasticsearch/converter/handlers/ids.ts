@@ -10,7 +10,7 @@ type ElasticsearchIDsQuery = {
 }
 
 export class IDsQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: IDsQuery, index: string, type: string): object | null {
+  tryConvert(query: IDsQuery, _index: string, type: string): object | null {
     const canHandle = ('ids' in query);
 
     if (!canHandle) {

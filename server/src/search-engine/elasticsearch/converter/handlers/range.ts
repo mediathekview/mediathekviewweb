@@ -28,6 +28,7 @@ export class RangeQueryConvertHandler implements ConvertHandler {
       range: {}
     };
 
+    queryObj.range[query.range.field] = {};
     queryObj.range[query.range.field].lt = this.convertValue(query.range.lt);
     queryObj.range[query.range.field].gt = this.convertValue(query.range.gt);
     queryObj.range[query.range.field].lte = this.convertValue(query.range.lte);

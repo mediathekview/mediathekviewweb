@@ -5,7 +5,7 @@ import { Converter } from '../converter';
 type ElasticsearchRegexQuery = { regexp: { [key: string]: string } }
 
 export class RegexQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: RegexQuery, index: string, type: string): object | null {
+  tryConvert(query: RegexQuery, _index: string, _type: string): object | null {
     const canHandle = ('regex' in query);
 
     if (!canHandle) {

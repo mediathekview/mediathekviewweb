@@ -5,7 +5,7 @@ export type Entry = Entity & {
   channel: string;
   topic: string;
   title: string;
-  timestamp: Date;
+  timestamp: number;
   duration: number;
   description: string;
   website: string;

@@ -2,24 +2,26 @@ import * as Elasticsearch from 'elasticsearch';
 
 import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
 import { sleep } from '../../common/utils';
-import convertQuery from './query-converter';
+import { Converter } from './converter';
+
+type ElasticsearchBulkResponse = { took: number, errors: boolean, items: { [key: string]: { [key: string]: any, status: number, error?: any } }[] };
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly indexName: string;
   private readonly typeName: string;
   private readonly client: Elasticsearch.Client;
   private readonly indexSettings: { [key: string]: any } | undefined;
-  private readonly mappings: { [key: string]: any } | undefined;
+  private readonly mapping: { [key: string]: any } | undefined;
 
-  constructor(client: Elasticsearch.Client, indexName: string, typeName: string, indexSettings?: {}, indexMappings?: {}) {
+  constructor(client: Elasticsearch.Client, indexName: string, typeName: string, indexSettings?: {}, indexMapping?: {}) {
     this.indexName = indexName;
     this.typeName = typeName;
     this.client = client;
     this.indexSettings = indexSettings;
 
-    if (indexMappings != undefined) {
-      this.mappings = {};
-      this.mappings[typeName] = indexMappings;
+    if (indexMapping != undefined) {
+      this.mapping = {};
+      this.mapping[typeName] = indexMapping;
     }
   }
 
@@ -27,40 +29,47 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     await this.waitForConnection();
     await this.ensureIndex();
 
-    if (this.indexSettings != undefined || this.mappings != undefined) {
+    if (this.indexSettings != undefined || this.mapping != undefined) {
       await this.client.indices.close({ index: this.indexName });
 
       if (this.indexSettings != undefined) {
         await this.client.indices.putSettings({ index: this.indexName, body: this.indexSettings });
       }
 
-      if (this.mappings != undefined) {
-        await this.client.indices.putMapping({ index: this.indexName, type: this.typeName, body: this.mappings });
+      if (this.mapping != undefined) {
+        await this.client.indices.putMapping({ index: this.indexName, type: this.typeName, body: this.mapping });
       }
 
       await this.client.indices.open({ index: this.indexName });
+      await this.client.indices.refresh({ index: this.indexName });
     }
   }
 
-  async index(entries: SearchEngineItem<T>[]): Promise<void> {
+  async index(items: SearchEngineItem<T>[]): Promise<void> {
     const bulkRequest = {
       body: [] as any[],
       index: this.indexName,
       type: this.typeName
     };
 
-    for (let entry of entries) {
+    for (const item of items) {
       bulkRequest.body.push(
-        { index: { _id: entry.id } },
-        entry.document
+        { index: { _id: item.id } },
+        item.document
       );
     }
 
-    await this.client.bulk(bulkRequest);
+    const response = await this.client.bulk(bulkRequest) as ElasticsearchBulkResponse;
+
+    if (response.errors) {
+      throw new Error(JSON.stringify(response, null, 2));
+    }
   }
 
   async search(query: SearchQuery): Promise<SearchResult<T>> {
-    const elasticsearchQuery = convertQuery(query, this.indexName, this.typeName);
+    const elasticsearchQuery = Converter.convert(query, this.indexName, this.typeName);
+
+    console.log(elasticsearchQuery);
 
     const result = await this.client.search<T>(elasticsearchQuery);
 
@@ -100,7 +109,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
         console.log(`couldn't connect to elasticsearch, trying again...`)
       }
 
-      await sleep(500);
+      await sleep(2000);
     } while (!success);
   }
 }

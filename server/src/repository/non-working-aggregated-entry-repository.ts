@@ -31,10 +31,12 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
   }
 
   private toAggregated(entryDocument: Document<Entry>): AggregatedEntry {
-    return {
+    const lastSeenTimestamp = Math.floor(entryDocument.updated.valueOf() / 1000);
+
+    const entry = {
       ...entryDocument.item,
       metadata: {
-        lastSeen: entryDocument.updated,
+        lastSeenTimestamp: lastSeenTimestamp,
         downloads: 1234,
         plays: 1234,
         comments: 0,
@@ -42,6 +44,8 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
         secondsPlayed: 1234,
         secondsPaused: 1234
       }
-    }
+    };
+
+    return entry;
   }
 }

@@ -1,4 +1,4 @@
 export interface FilmlistMetadata {
-  date: Date;
+  timestamp: number;
   hash: string;
 }

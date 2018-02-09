@@ -1,5 +1,5 @@
 export type EntryMetadata = {
-  lastSeen: Date;
+  lastSeenTimestamp: number;
   downloads: number;
   plays: number;
   comments: number;

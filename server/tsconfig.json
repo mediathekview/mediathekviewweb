@@ -2,9 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "esnext"
-    ],
+    "lib": ["esnext"],
     "sourceMap": true,
     "outDir": "build",
     "removeComments": true,

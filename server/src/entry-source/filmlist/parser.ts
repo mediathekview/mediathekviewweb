@@ -74,7 +74,9 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
       const [, day, month, year, hour, minute, hash] = match;
       const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute)));
 
-      const metadata: FilmlistMetadata = { date: date, hash: hash };
+      const timestamp = Math.floor(date.valueOf() / 1000);
+
+      const metadata: FilmlistMetadata = { timestamp: timestamp, hash: hash };
       return { metadata: metadata, buffer: buffer };
     }
 
@@ -134,7 +136,7 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
     const [hoursString, minutesString, secondsString] = rawDuration.split(':');
     const duration = (parseInt(hoursString) * 3600) + (parseInt(minutesString) * 60) + parseInt(secondsString);
 
-    const timestamp = new Date(parseInt(date_l) * 1000);
+    const timestamp = parseInt(date_l);
 
     const entry: Entry = {
       id: '',

@@ -46,10 +46,15 @@ const staticConfig: Config = {
   }
 }
 
-const configFileString = FS.readFileSync(Path.join(__dirname, 'config.hjson'), { encoding: 'utf-8' });
-const configFile = HJSON.parse(configFileString) as Config;
+const configPath = Path.join(__dirname, 'config.hjson');
+const exists = FS.existsSync(configPath);
 
-staticConfig.dataDirectoriy = configFile.dataDirectoriy;
-staticConfig.importer = configFile.importer;
+if (exists) {
+  const configFileString = FS.readFileSync(configPath, { encoding: 'utf-8' });
+  const configFile = HJSON.parse(configFileString) as Config;
+
+  staticConfig.dataDirectoriy = configFile.dataDirectoriy;
+  staticConfig.importer = configFile.importer;
+}
 
 export default staticConfig as Config;

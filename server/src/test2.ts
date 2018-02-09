@@ -18,21 +18,20 @@ const entrySearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elastic
 
 (async () => {
   await entrySearchEngine.initialize();
-  console.log('initialized');
 
   const parser = new SearchStringParser();
 
-  const query = parser.parse('channel:NDR');//duration:30s-2m duration:>=40m
+  const query = parser.parse('channel:NDR title:sturm');
 
   const queryString = JSON.stringify(query, null, 1);
 
   const searchQuery: SearchQuery = {
-    body: new MatchAllQueryBuilder().build()
+    body: query
   }
 
   try {
-    //  const result = await entrySearchEngine.search(searchQuery);
-    //   console.log(result);
+    const result = await entrySearchEngine.search(searchQuery);
+    console.log(result);
   }
   catch (error) {
     console.error(error);
