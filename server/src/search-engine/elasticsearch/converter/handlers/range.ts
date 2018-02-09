@@ -1,35 +1,31 @@
 import { RangeQuery } from '../../../../common/search-engine';
-import { Converter } from '../converter';
+import { ConvertHandler } from '../convert-handler';
 
-type ElasticSearchRangeQueryValue = number | string;
-type ElasticSearchRangeQuery = {
-  [key: string]: {
-    lt?: ElasticSearchRangeQueryValue,
-    gt?: ElasticSearchRangeQueryValue,
-    lte?: ElasticSearchRangeQueryValue,
-    gte?: ElasticSearchRangeQueryValue,
-    format?: string
+type ElasticsearchRangeQueryValue = number | string
+type ElasticsearchRangeQuery = {
+  range: {
+    [key: string]: {
+      lt?: ElasticsearchRangeQueryValue,
+      gt?: ElasticsearchRangeQueryValue,
+      lte?: ElasticsearchRangeQueryValue,
+      gte?: ElasticsearchRangeQueryValue,
+      format?: string
+    }
   }
-};
+}
 
 const MILLISECONDS_TYPE = 'epoch_millis';
 
-export class RangeQueryConverter implements Converter {
-  private readonly converter: Converter;
-
-  constructor(converter: Converter) {
-    this.converter = converter;
-  }
-
-  tryConvert(query: RangeQuery, index: string, type: string): object {
+export class RangeQueryConvertHandler implements ConvertHandler {
+  tryConvert(query: RangeQuery, _index: string, _type: string): object | null {
     const canHandle = ('range' in query);
 
     if (!canHandle) {
       return null;
     }
-   
-    const queryObj = {
-      range: {} as ElasticSearchRangeQuery
+
+    const queryObj: ElasticsearchRangeQuery = {
+      range: {}
     };
 
     queryObj.range[query.range.field].lt = this.convertValue(query.range.lt);
@@ -59,20 +55,12 @@ export class RangeQueryConverter implements Converter {
     return false;
   }
 
-  private convertValue(value: string | number | Date | undefined): ElasticSearchRangeQueryValue | undefined {
-    if (value == undefined) {
-      return undefined;
-    }
-
-    const type = typeof value;
-
-    if (type == 'number' || type == 'string') {
-      return value as number | string;
-    }
-
+  private convertValue(value: string | number | Date | undefined): ElasticsearchRangeQueryValue | undefined {
     if (value instanceof Date) {
       const milliseconds = Math.floor(value.valueOf() / 1000);
       return milliseconds;
     }
+
+    return value;
   }
 }

@@ -1,13 +1,10 @@
+import { BoolQuery, QueryBody } from '../../../../common/search-engine';
+import { ConvertHandler } from '../convert-handler';
 import { Converter } from '../converter';
-import { QueryBody, BoolQuery } from '../../../../common/search-engine';
 
-type ElasticSearchBooleanQuery = { must?: object, should?: object, must_not?: object, filter?: object };
+type ElasticsearchBooleanQuery = { bool: { must?: object, should?: object, must_not?: object, filter?: object } }
 
-export class BoolQueryConverter implements Converter {
-
-  constructor() {
-  }
-
+export class BoolQueryConvertHandler implements ConvertHandler {
   tryConvert(query: BoolQuery, index: string, type: string): object | null {
     const canHandle = ('bool' in query);
 
@@ -15,8 +12,8 @@ export class BoolQueryConverter implements Converter {
       return null;
     }
 
-    const queryObj = {
-      bool: {} as ElasticSearchBooleanQuery
+    const queryObj: ElasticsearchBooleanQuery = {
+      bool: {}
     };
 
     queryObj.bool.must = this.convertArray(query.bool.must, index, type);
@@ -28,13 +25,11 @@ export class BoolQueryConverter implements Converter {
   }
 
   private convertArray(queries: QueryBody[] | undefined, index: string, type: string): object[] | undefined {
-    throw new Error('not implemented');
-
     if (queries == undefined) {
       return undefined;
     }
 
-    // const converted = queries.map((query) => this.mainConverter.convert(query, index, type));
-    // return converted;
+    const converted = queries.map((query) => Converter.convertBody(query, index, type));
+    return converted;
   }
 }

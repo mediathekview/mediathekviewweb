@@ -2,9 +2,17 @@ import { QueryBuilder } from './builder';
 import { TextQuery, Operator } from '../';
 
 export class TextQueryBuilder extends QueryBuilder {
-  private _fields: string[] = [];
-  private _text: string | null = null;
-  private _operator: Operator = 'and';
+  private _fields: string[];
+  private _text: string | null;
+  private _operator: Operator;
+
+  constructor() {
+    super();
+
+    this._fields = [];
+    this._text = null;
+    this._operator = 'and';
+  }
 
   fields(...fields: string[]): TextQueryBuilder {
     this._fields = fields;
