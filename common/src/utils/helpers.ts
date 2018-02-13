@@ -36,7 +36,7 @@ export function destroyPrototype(obj: any): any {
     return obj;
   }
 
-  const result: { [key: string]: any } = {};
+  const result: ObjectMap<any> = {};
 
   const properties = Object.getOwnPropertyNames(obj);
   for (const property of properties) {

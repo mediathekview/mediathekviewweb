@@ -1,4 +1,4 @@
-type FieldOperatorValue<T> = { [key: string]: T }
+type FieldOperatorValue<T> = ObjectMap<T>
 
 type CurrentDateOperator = { $currentDate: FieldOperatorValue<boolean | 'date' | 'timestamp'> }
 type IncreaseOperator = { $inc: FieldOperatorValue<number> }

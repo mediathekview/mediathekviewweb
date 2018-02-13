@@ -29,6 +29,9 @@ export class RedisLock implements Lock {
     this.onLockLostSubject = new Subject();
   }
 
+  /**
+   * @param 
+   */
   async acquire(): Promise<boolean>;
   async acquire(timeout: number): Promise<boolean>;
   async acquire(func: LockedFunction): Promise<boolean>;

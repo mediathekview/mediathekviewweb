@@ -1,23 +1,26 @@
-import { AnyIterable } from '../utils/any-iterable';
-import { parallelForEach, parallelMap, parallelFilter, parallelIntercept } from '../utils/async-iterable-helpers/parallel';
-import { BufferedAsyncIterable, isAsyncIterable, isIterable, toAsyncIterable } from '../utils';
-import { SyncEnumerable } from './sync-enumerable';
 import {
-  AsyncPredicate, AsyncIteratorFunction, ParallelizableIteratorFunction, ParallelizablePredicate,
-  filterAsync, mapAsync, singleAsync, batchAsync, anyAsync, toArrayAsync, interceptAsync, toAsyncIterator, forEachAsync, interruptEveryAsync, mapManyAsync
+  anyAsync, AsyncIteratorFunction, AsyncPredicate, batchAsync,
+  BufferedAsyncIterable, filterAsync, forEachAsync, interceptAsync, interruptEveryAsync,
+  isAsyncIterable, isIterable, mapAsync, mapManyAsync, ParallelizableIteratorFunction,
+  ParallelizablePredicate, singleAsync, toArrayAsync, toAsyncIterable, toAsyncIterator,
 } from '../utils';
+import { AnyIterable } from '../utils/any-iterable';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
+import { parallelFilter, parallelForEach, parallelIntercept, parallelMap } from '../utils/async-iterable-helpers/parallel';
 import { parallelGroup } from '../utils/async-iterable-helpers/parallel/group';
+import { SyncEnumerable } from './sync-enumerable';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   private readonly source: AnyIterable<T>;
   private asyncIterator: AsyncIterator<T> | null;
 
-  constructor(iterable: Iterable<T>);
-  constructor(iterable: AsyncIterable<T>);
-  constructor(iterable: AnyIterable<T>);
   constructor(iterable: AnyIterable<T>) {
     this.source = iterable;
+    this.asyncIterator = null;
+  }
+
+  static from<T>(iterable: AnyIterable<T>): AsyncEnumerable<T> {
+    return new AsyncEnumerable(iterable);
   }
 
   filter(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {

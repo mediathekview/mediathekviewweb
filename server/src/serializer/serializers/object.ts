@@ -17,7 +17,7 @@ export class ObjectSerializeHandler implements SerializeHandler {
   }
 
   serialize(obj: any): SerializedElement {
-    const data: { [key: string]: SerializedElement } = {};
+    const data: ObjectMap<SerializedElement> = {};
     const properties = Object.getOwnPropertyNames(obj);
 
     for (let property of properties) {
@@ -39,7 +39,7 @@ export class ObjectSerializeHandler implements SerializeHandler {
 
   deserialize(serialized: SerializedElement): any {
     const properties = Object.getOwnPropertyNames(serialized.data);
-    const result: { [key: string]: any } = {};
+    const result: ObjectMap<any> = {};
 
     for (let property of properties) {
       const value = serialized.data[property];

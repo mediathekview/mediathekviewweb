@@ -7,6 +7,7 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
 
   constructor(iterable: Iterable<T>) {
     this.source = iterable;
+    this.iterator = null;
   }
 
   filter(predicate: Predicate<T>): SyncEnumerable<T> {

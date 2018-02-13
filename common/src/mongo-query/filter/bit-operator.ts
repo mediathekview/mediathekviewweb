@@ -7,6 +7,6 @@ type BitsAnyClearOperator = { $bitsAnyClear: BitOperatorValue }
 type BitsAnySetOperator = { $bitsAnySet: BitOperatorValue }
 
 type NonFieldedBitOperator = BitsAllClearOperator | BitsAllSetOperator | BitsAnyClearOperator | BitsAnySetOperator
-type FieldedBitOperator = { [key: string]: NonFieldedBitOperator }
+type FieldedBitOperator = ObjectMap<NonFieldedBitOperator>
 
 export type BitOperator = NonFieldedBitOperator | FieldedBitOperator

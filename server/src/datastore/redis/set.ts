@@ -17,19 +17,18 @@ export class RedisSet<T> implements Set<T> {
     this.dataType = dataType;
   }
 
-  async add(value: T): Promise<void> {
+  add(value: T): Promise<void> {
     const serialized = serialize(value, this.dataType);
-    await this.redis.sadd(this.key, serialized);
+    return this.redis.sadd(this.key, serialized);
   }
 
-  async addMany(iterable: AnyIterable<T>): Promise<void> {
-    const enumerable = getEnumerable(iterable);
-    const batches = enumerable.batch(BATCH_SIZE);
-
-    for await (const batch of batches) {
-      const serialized = batch.map((value) => serialize(value, this.dataType));
-      await this.redis.sadd(this.key, ...serialized);
-    }
+  addMany(iterable: AnyIterable<T>): Promise<void> {
+    return AsyncEnumerable.from(iterable)
+      .map((value) => serialize(value, this.dataType))
+      .batch(BATCH_SIZE)
+      .forEach(async (batch) => {
+        await this.redis.sadd(this.key, ...batch);
+      });
   }
 
   async has(value: T): Promise<boolean> {
@@ -40,15 +39,11 @@ export class RedisSet<T> implements Set<T> {
   }
 
   hasMany(iterable: AnyIterable<T>): AsyncIterable<boolean> {
-    const enumerable = new AsyncEnumerable(iterable);
-
-    const result = enumerable
+    return AsyncEnumerable.from(iterable)
+      .map((value) => serialize(value, this.dataType))
       .batch(BATCH_SIZE)
-      .map((batch) => batch.map((value) => serialize(value, this.dataType)))
       .parallelMap(3, true, (batch) => this.hasPipeline(batch))
       .mapMany((results) => results);
-
-    return result;
   }
 
   async delete(value: T): Promise<void> {

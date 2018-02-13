@@ -1,9 +1,5 @@
 import { Serializer, SerializedElement, SerializeHandler } from '../';
 
-type SerializedArrayData = {
-  [key: string]: SerializedElement;
-}
-
 const TYPE = 'array';
 
 export class ArraySerializeHandler implements SerializeHandler {

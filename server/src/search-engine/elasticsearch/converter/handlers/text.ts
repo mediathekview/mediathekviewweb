@@ -2,7 +2,7 @@ import { TextQuery } from '../../../../common/search-engine';
 import { ConvertHandler } from '../convert-handler';
 
 type ElasticsearchMatchQuery = {
-  match: { [key: string]: string }
+  match: ObjectMap<string>
 }
 
 type ElasticsearchMultiMatchType = 'best_fields' | 'most_fields' | 'cross_fields' | 'phrase' | 'phrase_prefix'

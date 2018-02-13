@@ -2,7 +2,7 @@ import { Aggregation, Sort } from '../../../../common/search-engine';
 
 type ElasticsearchSortOrder = 'asc' | 'desc'
 type ElasticsearchSortMode = 'min' | 'max' | 'sum' | 'avg' | 'median'
-type ElasticsearchSort = string | { [key: string]: { order?: ElasticsearchSortOrder, mode?: ElasticsearchSortMode } } | { [key: string]: ElasticsearchSortOrder }
+type ElasticsearchSort = string | ObjectMap<{ order?: ElasticsearchSortOrder, mode?: ElasticsearchSortMode }> | ObjectMap<ElasticsearchSortOrder>
 
 export class SortConverter {
 

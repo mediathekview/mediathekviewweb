@@ -19,10 +19,10 @@ export class EntriesImporter {
   import(source: EntrySource): Promise<void> {
     return AsyncEnumerable
       .buffer(source, BUFFER_SIZE)
-      .parallelForEach(CONCURRENCY, async (entries) => {
-        const ids = entries.map((entry) => entry.id);
+      .parallelForEach(CONCURRENCY, async (batch) => {
+        const ids = batch.map((entry) => entry.id);
 
-        await this.entryRepository.saveMany(entries);
+        await this.entryRepository.saveMany(batch);
         await this.entriesToBeIndexed.addMany(ids);
       });
   }

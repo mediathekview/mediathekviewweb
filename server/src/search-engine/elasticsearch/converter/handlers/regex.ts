@@ -2,7 +2,7 @@ import { IDsQuery, QueryBody, RegexQuery } from '../../../../common/search-engin
 import { ConvertHandler } from '../convert-handler';
 import { Converter } from '../converter';
 
-type ElasticsearchRegexQuery = { regexp: { [key: string]: string } }
+type ElasticsearchRegexQuery = { regexp: ObjectMap<string> }
 
 export class RegexQueryConvertHandler implements ConvertHandler {
   tryConvert(query: RegexQuery, _index: string, _type: string): object | null {

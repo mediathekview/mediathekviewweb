@@ -1,7 +1,7 @@
 import { MatchAllQuery, TermQuery } from '../../../../common/search-engine';
 import { ConvertHandler } from '../convert-handler';
 
-type ElasticsearchTermQuery = { term: { [key: string]: string | number | boolean | Date } }
+type ElasticsearchTermQuery = { term: ObjectMap<string | number | boolean | Date> }
 
 export class TermQueryConvertHandler implements ConvertHandler {
   tryConvert(query: TermQuery, _index: string, _type: string): object | null {

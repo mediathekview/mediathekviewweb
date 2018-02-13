@@ -25,6 +25,15 @@ import { AggregatedEntryRepository, EntryRepository } from './repository';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
+import { EventLoopWatcher } from './utils';
+
+
+const watcher = new EventLoopWatcher(25);
+
+watcher
+  .watch(0, 10, 'max')
+  .map((measure) => Math.round(measure * 10000) / 10000)
+  .subscribe((delay) => console.log(`eventloop: ${delay} ms`));
 
 async function init() {
   Serializer.registerPrototype(Filmlist)
