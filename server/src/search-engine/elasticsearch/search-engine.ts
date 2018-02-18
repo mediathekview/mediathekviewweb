@@ -30,13 +30,16 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     if (created) {
       await this.putIndexOptions();
     }
+
+    console.log('initialized elasticsearch search-engine');
   }
 
   async index(items: SearchEngineItem<T>[]): Promise<void> {
-    const bulkRequest = {
-      body: [] as any[],
+    const bulkRequest: Elasticsearch.BulkIndexDocumentsParams = {
       index: this.indexName,
-      type: this.typeName
+      type: this.typeName,
+      refresh: false,
+      body: [] as any[]
     };
 
     for (const item of items) {
@@ -77,8 +80,8 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       }
 
       if (this.indexMapping != undefined) {
-        const actualMapping = this.createActualMapping(this.indexMapping);
-        await this.client.indices.putMapping({ index: this.indexName, type: this.typeName, body: actualMapping });
+        const elasticsearchMappingObject = this.createElasticsearchMappingObject(this.indexMapping);
+        await this.client.indices.putMapping({ index: this.indexName, type: this.typeName, body: elasticsearchMappingObject });
       }
 
       await this.client.indices.open({ index: this.indexName });
@@ -107,7 +110,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     return created;
   }
 
-  private createActualMapping(mapping: object): ObjectMap<object> {
+  private createElasticsearchMappingObject(mapping: object): ObjectMap<object> {
     const actualMapping: ObjectMap<object> = {};
     actualMapping[this.typeName] = mapping;
 

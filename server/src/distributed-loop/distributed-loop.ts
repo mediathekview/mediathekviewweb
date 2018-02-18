@@ -69,14 +69,11 @@ export class DistributedLoop {
           await sleep(timeLeft);
           await lock.release();
           
-          timer.reset();
+          await sleep(interval - acquireDuration);
         }
         else {
           await sleep(accuracy - acquireDuration);
-          continue;
         }
-
-        await sleep(interval - acquireDuration);
       }
 
       this.stoppedPromise.resolve();

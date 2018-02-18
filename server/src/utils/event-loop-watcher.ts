@@ -1,7 +1,8 @@
-import { Observable, Subject } from 'rxjs';
-import { HighPrecisionTimer } from './high-precision-timer';
-import { sleep } from '../common/utils';
 import '../common/extensions/math';
+
+import { Observable, Subject } from 'rxjs';
+
+import { HighPrecisionTimer } from './high-precision-timer';
 
 type AggregationMode = 'min' | 'max' | 'avg';
 
@@ -38,8 +39,7 @@ export class EventLoopWatcher {
       stopwatch.start();
 
       setImmediate(setImmediate, () => { // inner setImmediate, to measure an full event-loop-cycle
-        const milliseconds = stopwatch.milliseconds;
-        resolve(milliseconds);
+        resolve(stopwatch.milliseconds);
       });
     });
   }

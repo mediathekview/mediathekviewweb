@@ -1,5 +1,5 @@
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
-import { DatastoreProvider, DataType, Set } from '../datastore';
+import { DatastoreFactory, DataType, Set } from '../datastore';
 import { EntrySource } from '../entry-source';
 import { Keys } from '../keys';
 import { EntryRepository } from '../repository/entry-repository';
@@ -11,9 +11,9 @@ export class EntriesImporter {
   private readonly entryRepository: EntryRepository;
   private readonly entriesToBeIndexed: Set<string>;
 
-  constructor(entryRepository: EntryRepository, datastoreProvider: DatastoreProvider) {
+  constructor(entryRepository: EntryRepository, datastoreFactory: DatastoreFactory) {
     this.entryRepository = entryRepository;
-    this.entriesToBeIndexed = datastoreProvider.set(Keys.EntriesToBeIndexed, DataType.String);
+    this.entriesToBeIndexed = datastoreFactory.set(Keys.EntriesToBeIndexed, DataType.String);
   }
 
   import(source: EntrySource): Promise<void> {

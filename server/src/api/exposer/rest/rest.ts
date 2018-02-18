@@ -1,10 +1,10 @@
 import * as Http from 'http';
 import * as Koa from 'koa';
-import * as KoaRouter from 'koa-router';
 import * as KoaBodyParser from 'koa-bodyparser';
+import * as KoaRouter from 'koa-router';
 
-import { Exposer, ExposedFunction, ExposedFunctionResult } from '../exposer';
-import { HighPrecisionTimer } from '../../../utils/index';
+import { HighPrecisionTimer } from '../../../utils';
+import { ExposedFunction, Exposer } from '../exposer';
 
 export class RestExposer implements Exposer {
   private readonly server: Http.Server;

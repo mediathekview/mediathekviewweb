@@ -1,7 +1,7 @@
-import { ExposedFunctionError } from '../exposer';
+import { ErrorType, ResultError } from '../exposer';
 
-export class InvalidRequestError implements ExposedFunctionError {
-  type: 'InvalidRequest';
+export class InvalidRequestError implements ResultError {
+  type = ErrorType.InvalidRequest;
   message: string;
   details: any;
 

@@ -1,8 +1,9 @@
-import { ExposerMiddleware, ExposerMiddlewareFunction, ExposerMiddlewareNextFunction } from './exposer';
-import { ExposedFunctionResult, ExposedFunctionParameters, ExposedFunctionError, ExposedFunction } from '../exposer';
-import { InvalidRequestError } from '../errors/invalid-request';
-import { SyncEnumerable } from '../../../common/enumerable';
 import '../../../common/extensions/set';
+
+import { SyncEnumerable } from '../../../common/enumerable';
+import { InvalidRequestError } from '../errors/invalid-request';
+import { ResultError, Parameters, Result } from '../exposer';
+import { ExposerMiddleware, ExposerMiddlewareNextFunction } from './exposer';
 
 type Verification = {
   required: Set<string>;
@@ -36,7 +37,7 @@ export class ParameterVerifierExposerMiddleware implements ExposerMiddleware {
     return this;
   }
 
-  async handle(path: string[], parameters: ExposedFunctionParameters, next: ExposerMiddlewareNextFunction): Promise<ExposedFunctionResult> {
+  async handle(path: string[], parameters: Parameters, next: ExposerMiddlewareNextFunction): Promise<Result> {
     const verification = this.getVerification(path);
 
     const propertyNames = Object.getOwnPropertyNames(parameters);
@@ -45,7 +46,7 @@ export class ParameterVerifierExposerMiddleware implements ExposerMiddleware {
     const missingProperties = verification.required.difference(properties);
     const unknownProperties = properties.difference(verification.required, verification.optional);
 
-    const errors: ExposedFunctionError[] = [];
+    const errors: ResultError[] = [];
 
     if (missingProperties.size > 0) {
       const missingPropertiesArray = SyncEnumerable.toArray(missingProperties);

@@ -1,6 +1,6 @@
 import * as Redis from 'ioredis';
 
-import { DatastoreProvider, DataType, Set } from '../';
+import { DatastoreFactory, DataType, Set } from '../';
 import { uniqueID } from '../../utils/unique-id';
 import { RedisKey } from './key';
 import { RedisMap } from './map';
@@ -11,7 +11,7 @@ interface RedisDatastoreConstructable<TInstance> {
   new(redis: Redis.Redis, key: string, dataType: DataType): TInstance;
 }
 
-export class RedisDatastoreProvider implements DatastoreProvider {
+export class RedisDatastoreFactory implements DatastoreFactory {
   private readonly redis: Redis.Redis;
 
   constructor(redis: Redis.Redis) {

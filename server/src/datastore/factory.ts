@@ -3,7 +3,7 @@ import { Key } from './key';
 import { Set } from './set';
 import { Map } from './map';
 
-export interface DatastoreProvider {
+export interface DatastoreFactory {
   key<T>(dataType: DataType): Key<T>;
   key<T>(key: string, dataType: DataType): Key<T>;
 

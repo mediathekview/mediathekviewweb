@@ -1,8 +1,8 @@
 import { Server } from 'http';
 
-import { Exposer, ExposedFunctionParameters } from './exposer';
-import { RestExposer } from './exposer/rest';
+import { Parameters } from './exposer';
 import { MiddlewareExposer, ParameterVerifierExposerMiddleware } from './exposer/middleware';
+import { RestExposer } from './exposer/rest';
 
 const server = new Server();
 server.listen(8081);
@@ -16,6 +16,6 @@ echoParameterVerifier.addRequired(['echo'], 'name');
 
 middlewareExposer.registerMiddleware(echoParameterVerifier);
 
-middlewareExposer.expose(['echo'], async (_parameters: ExposedFunctionParameters) => {
+middlewareExposer.expose(['echo'], async (_parameters: Parameters) => {
   return { result: 'hello' };
 });

@@ -3,7 +3,7 @@ import { LockProvider } from '../common/lock';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
 import { ProviderFunctionIterable, sleep } from '../common/utils';
-import { DatastoreProvider, DataType, Set } from '../datastore';
+import { DatastoreFactory, DataType, Set } from '../datastore';
 import { Keys } from '../keys';
 import { AggregatedEntryRepository } from '../repository';
 
@@ -17,11 +17,11 @@ export class EntriesIndexer {
   private readonly lockProvider: LockProvider;
   private readonly entriesToBeIndexed: Set<string>;
 
-  constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, lockProvider: LockProvider, datastoreProvider: DatastoreProvider) {
+  constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, lockProvider: LockProvider, datastoreFactory: DatastoreFactory) {
     this.aggregatedEntryRepository = indexedEntryRepository;
     this.searchEngine = searchEngine;
     this.lockProvider = lockProvider;
-    this.entriesToBeIndexed = datastoreProvider.set(Keys.EntriesToBeIndexed, DataType.String);
+    this.entriesToBeIndexed = datastoreFactory.set(Keys.EntriesToBeIndexed, DataType.String);
   }
 
   async run() {

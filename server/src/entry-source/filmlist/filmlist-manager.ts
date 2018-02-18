@@ -1,7 +1,7 @@
 import { Keys } from '../../keys';
 import config from '../../config';
 import { FilmlistRepository } from './repository';
-import { Set, Key, DatastoreProvider, DataType } from '../../datastore';
+import { Set, Key, DatastoreFactory, DataType } from '../../datastore';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { QueueProvider, Queue } from '../../queue';
 import { random, now } from '../../common/utils/index';
@@ -20,12 +20,12 @@ export class FilmlistManager {
   private importQueue: Queue<Filmlist>;
   private distributedLoop: DistributedLoop;
 
-  constructor(datastoreProvider: DatastoreProvider, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider) {
+  constructor(datastoreFactory: DatastoreFactory, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider) {
     this.filmlistRepository = filmlistRepository;
 
-    this.lastLatestCheck = datastoreProvider.key(Keys.LastLatestCheck, DataType.Date);
-    this.lastArchiveCheck = datastoreProvider.key(Keys.LastArchiveCheck, DataType.Date);
-    this.importedFilmlistDates = datastoreProvider.set(Keys.ImportedFilmlistDates, DataType.Date);
+    this.lastLatestCheck = datastoreFactory.key(Keys.LastLatestCheck, DataType.Date);
+    this.lastArchiveCheck = datastoreFactory.key(Keys.LastArchiveCheck, DataType.Date);
+    this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
     this.importQueue = queueProvider.get(Keys.FilmlistImportQueue);
     this.distributedLoop = distributedLoopProvider.get(Keys.FilmlistManagerLoop, true);
   }

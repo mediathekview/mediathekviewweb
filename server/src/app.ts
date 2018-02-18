@@ -8,8 +8,8 @@ import { Serializer } from './serializer';
 import { LockProvider } from './common/lock';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
-import { DatastoreProvider } from './datastore';
-import { RedisDatastoreProvider } from './datastore/redis';
+import { DatastoreFactory } from './datastore';
+import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
 import { ElasticsearchMapping, ElasticsearchSettings } from './elasticsearch-definitions';
 import { EntriesImporter } from './entries-importer/importer';
@@ -28,12 +28,18 @@ import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { EventLoopWatcher } from './utils';
 
 
-const watcher = new EventLoopWatcher(25);
+const watcher = new EventLoopWatcher(10);
 
 watcher
-  .watch(0, 10, 'max')
+  .watch(0, 25, 'avg')
   .map((measure) => Math.round(measure * 10000) / 10000)
-  .subscribe((delay) => console.log(`eventloop: ${delay} ms`));
+  .subscribe((delay) => setTerminalTitle(`eventloop: ${delay} ms`));
+
+function setTerminalTitle(title: string) {
+  process.stdout.write(
+    String.fromCharCode(27) + "]0;" + title + String.fromCharCode(7)
+  );
+}
 
 async function init() {
   Serializer.registerPrototype(Filmlist)
@@ -45,7 +51,7 @@ async function init() {
   const db = mongo.db('mediathekviewweb');
   const entriesCollection = db.collection('entries');
 
-  const datastoreProvider = new RedisDatastoreProvider(redis);
+  const datastoreFactory = new RedisDatastoreFactory(redis);
   const lockProvider = new RedisLockProvider(redis);
   const filmlistRepository = new MediathekViewWebVerteilerFilmlistRepository('https://verteiler.mediathekviewweb.de/');
   const loopProvider = new DistributedLoopProvider(lockProvider);
@@ -56,28 +62,29 @@ async function init() {
 
   await entrySearchEngine.initialize();
 
-
-  await runFilmlistManager(datastoreProvider, filmlistRepository, loopProvider, queueProvider);
-  await runImporter(datastoreProvider, queueProvider, entryRepository);
-  await runIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreProvider);
+  await Promise.all([
+    runFilmlistManager(datastoreFactory, filmlistRepository, loopProvider, queueProvider),
+    runImporter(datastoreFactory, queueProvider, entryRepository),
+    runIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreFactory)
+  ]);
 }
 
-async function runFilmlistManager(datastoreProvider: DatastoreProvider, filmlistRepository: FilmlistRepository, loopProvider: DistributedLoopProvider, queueProvider: QueueProvider) {
-  const filmlistManager = new FilmlistManager(datastoreProvider, filmlistRepository, loopProvider, queueProvider);
+async function runFilmlistManager(datastoreFactory: DatastoreFactory, filmlistRepository: FilmlistRepository, loopProvider: DistributedLoopProvider, queueProvider: QueueProvider) {
+  const filmlistManager = new FilmlistManager(datastoreFactory, filmlistRepository, loopProvider, queueProvider);
   filmlistManager.run();
 }
 
-async function runImporter(datastoreProvider: DatastoreProvider, queueProvider: QueueProvider, entryRepository: EntryRepository) {
-  const filmlistEntrySource = new FilmlistEntrySource(datastoreProvider, queueProvider);
+async function runImporter(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider, entryRepository: EntryRepository) {
+  const filmlistEntrySource = new FilmlistEntrySource(datastoreFactory, queueProvider);
   filmlistEntrySource.run();
 
-  const importer = new EntriesImporter(entryRepository, datastoreProvider);
-  importer.import(filmlistEntrySource);
+  const importer = new EntriesImporter(entryRepository, datastoreFactory);
+  await importer.import(filmlistEntrySource);
 }
 
-async function runIndexer(aggregatedEntryRepository: AggregatedEntryRepository, entrySearchEngine: SearchEngine<AggregatedEntry>, lockProvider: LockProvider, datastoreProvider: DatastoreProvider) {
-  const indexer = new EntriesIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreProvider);
-  indexer.run();
+async function runIndexer(aggregatedEntryRepository: AggregatedEntryRepository, entrySearchEngine: SearchEngine<AggregatedEntry>, lockProvider: LockProvider, datastoreFactory: DatastoreFactory) {
+  const indexer = new EntriesIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreFactory);
+  await indexer.run();
 }
 
 (async () => {

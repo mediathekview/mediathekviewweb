@@ -1,4 +1,4 @@
-import { ExposedFunction, ExposedFunctionParameters, Exposer, ExposedFunctionResult } from '../';
+import { ExposedFunction, Exposer, Parameters, Result } from '../';
 
 type RegisteredExposedFunction = {
   path: string[],
@@ -9,8 +9,8 @@ export interface ExposerMiddleware {
   handle: ExposerMiddlewareFunction;
 }
 
-export type ExposerMiddlewareNextFunction = (path: string[], parameters: ExposedFunctionParameters) => Promise<ExposedFunctionResult>;
-export type ExposerMiddlewareFunction = (path: string[], parameters: ExposedFunctionParameters, next: ExposerMiddlewareNextFunction) => Promise<ExposedFunctionResult>;
+export type ExposerMiddlewareNextFunction = (path: string[], parameters: Parameters) => Promise<Result>;
+export type ExposerMiddlewareFunction = (path: string[], parameters: Parameters, next: ExposerMiddlewareNextFunction) => Promise<Result>;
 
 export class MiddlewareExposer implements Exposer {
   private readonly backingExposer: Exposer;

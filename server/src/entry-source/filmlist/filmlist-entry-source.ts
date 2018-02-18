@@ -2,7 +2,7 @@ import { EntrySource } from '../';
 
 import { Queue, QueueProvider, Job } from '../../queue';
 import { Filmlist } from './filmlist';
-import { Set, DatastoreProvider, DataType } from '../../datastore';
+import { Set, DatastoreFactory, DataType } from '../../datastore';
 import { Keys } from '../../keys';
 import { FeedableAsyncIterable } from '../../common/utils';
 import { Entry } from '../../common/model';
@@ -12,10 +12,10 @@ export class FilmlistEntrySource implements EntrySource {
   private readonly importQueue: Queue<Filmlist>;
   private readonly importedFilmlistDates: Set<Date>;
 
-  constructor(datastoreProvider: DatastoreProvider, queueProvider: QueueProvider) {
+  constructor(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider) {
     this.out = new FeedableAsyncIterable();
     this.importQueue = queueProvider.get(Keys.FilmlistImportQueue);
-    this.importedFilmlistDates = datastoreProvider.set(Keys.ImportedFilmlistDates, DataType.Date);
+    this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
   }
 
   run(): void;

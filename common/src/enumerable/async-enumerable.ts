@@ -208,7 +208,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
 
   [Symbol.asyncIterator](): AsyncIterableIterator<T> {
     if (isAsyncIterable(this.source)) {
-      return (this.source as any)[Symbol.asyncIterator]();
+      return (this.source as AsyncIterableIterator<T>)[Symbol.asyncIterator]();
     }
     else if (isIterable(this.source)) {
       return toAsyncIterable(this.source as Iterable<T>);

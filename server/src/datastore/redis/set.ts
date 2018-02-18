@@ -26,7 +26,7 @@ export class RedisSet<T> implements Set<T> {
     return AsyncEnumerable.from(iterable)
       .map((value) => serialize(value, this.dataType))
       .batch(BATCH_SIZE)
-      .forEach(async (batch) => {
+      .parallelForEach(3, async (batch) => {
         await this.redis.sadd(this.key, ...batch);
       });
   }
@@ -52,11 +52,9 @@ export class RedisSet<T> implements Set<T> {
   }
 
   deleteMany(iterable: AnyIterable<T>): Promise<void> {
-    const enumerable = new AsyncEnumerable(iterable);
-
-    return enumerable
+    return AsyncEnumerable.from(iterable)
+      .map((value) => serialize(value, this.dataType))
       .batch(BATCH_SIZE)
-      .map((batch) => batch.map((value) => serialize(value, this.dataType)))
       .parallelForEach(CONCURRENCY, async (batch) => {
         await this.redis.srem(this.key, ...batch);
       });
@@ -98,21 +96,23 @@ export class RedisSet<T> implements Set<T> {
 
     batch.forEach((value) => pipeline.sismember(this.key, value));
 
-    const results = await pipeline.exec() as [Nullable<Error>, 0 | 1][];
+    const response = await pipeline.exec() as [Nullable<Error>, 0 | 1][];
 
-    return results.map(([error, result]) => {
+    const result = response.map(([error, result]) => {
       if (error) {
         throw error;
       }
 
       return result == 1;
     });
+
+    return result;
   }
 
   private async popOne(): Promise<T> {
     const serialized = await this.redis.spop(this.key) as string;
 
-    console.log('popOne response', serialized);
+    console.log('popOne response (function to be verified)', serialized);
 
     const result = deserialize(serialized, this.dataType);
 
