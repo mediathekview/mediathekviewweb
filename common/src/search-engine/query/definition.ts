@@ -14,7 +14,7 @@ export type QueryBody = TermQuery | IDsQuery | MatchAllQuery | BoolQuery | Range
 
 export type SearchQuery = {
   body: QueryBody;
-  sorts?: Sort[];
+  sort?: Sort[];
   skip?: number;
   limit?: number;
 }

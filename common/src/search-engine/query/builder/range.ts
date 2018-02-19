@@ -1,13 +1,23 @@
+import { RangeQuery } from '../';
 import { QueryBuilder } from './builder';
 import { TimeQueryValueBuilder } from './time-value';
-import { RangeQuery } from '../';
 
 export class RangeQueryBuilder extends QueryBuilder {
-  private _field: string | null = null;
-  private _lt: number | string | null = null;
-  private _lte: number | string | null = null;
-  private _gt: number | string | null = null;
-  private _gte: number | string | null = null;
+  private _field: string | null;
+  private _lt: number | string | null;
+  private _lte: number | string | null;
+  private _gt: number | string | null;
+  private _gte: number | string | null;
+
+  constructor() {
+    super();
+
+    this._field = null;
+    this._lt = null;
+    this._lte = null;
+    this._gt = null;
+    this._gte = null;
+  }
 
   build(): RangeQuery {
     if (this._field == null) {

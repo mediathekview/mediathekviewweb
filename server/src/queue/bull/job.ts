@@ -4,19 +4,21 @@ import { Serializer } from '../../serializer/serializer';
 
 export class BullJob<T> implements Job<T> {
   private readonly job: Bull.Job;
-  private deserialized: boolean = false;
-  private deserializedData: T;
+  private deserialized: boolean;
+  private deserializedData: T | null;
 
   get data(): T {
-    if (!this.deserialized) {
+    if (this.deserialized == undefined) {
       this.deserializedData = Serializer.deserialize(this.job.data.data);
       this.deserialized = true;
     }
 
-    return this.deserializedData;
+    return this.deserializedData as T;
   }
 
   constructor(job: Bull.Job) {
     this.job = job;
+    this.deserialized = false;
+    this.deserializedData = null;
   }
 }

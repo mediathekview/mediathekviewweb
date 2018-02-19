@@ -1,5 +1,5 @@
+import { Operator, TextQuery } from '../';
 import { QueryBuilder } from './builder';
-import { TextQuery, Operator } from '../';
 
 export class TextQueryBuilder extends QueryBuilder {
   private _fields: string[];
@@ -16,13 +16,11 @@ export class TextQueryBuilder extends QueryBuilder {
 
   fields(...fields: string[]): TextQueryBuilder {
     this._fields = fields;
-
     return this;
   }
 
   text(text: string): TextQueryBuilder {
     this._text = text;
-
     return this;
   }
 

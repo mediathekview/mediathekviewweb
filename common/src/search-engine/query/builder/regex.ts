@@ -1,9 +1,16 @@
-import { QueryBuilder } from './builder';
 import { RegexQuery } from '../';
+import { QueryBuilder } from './builder';
 
 export class RegexQueryBuilder extends QueryBuilder {
-  private _field: string | null = null;
-  private _expression: string | null = null;
+  private _field: string | null;
+  private _expression: string | null;
+
+  constructor() {
+    super();
+
+    this._field = null;
+    this._expression = null;
+  }
 
   field(field: string): RegexQueryBuilder {
     if (field.length == 0) {

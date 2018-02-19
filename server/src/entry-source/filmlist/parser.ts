@@ -12,20 +12,27 @@ const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
 const READ_SIZE = 25 * 1024; // 25 KB
 
 export class FilmlistParser implements AsyncIterable<Entry[]> {
-  private stream: Readable;
-  private metadataCallback: (metadata: FilmlistMetadata) => void;
-  private inputBuffer: string = '';
-  private outputBuffer: Entry[] = [];
-  private currentChannel: string = '';
-  private currentTopic: string = '';
+  private readonly stream: Readable;
+  private readonly metadataCallback: (metadata: FilmlistMetadata) => void;
 
-  metadata: FilmlistMetadata | null = null;
+  private inputBuffer: string;
+  private outputBuffer: Entry[];
+  private currentChannel: string;
+  private currentTopic: string;
+
+  metadata: FilmlistMetadata | null;
 
   constructor(stream: Readable)
   constructor(stream: Readable, metadataCallback: (metadata: FilmlistMetadata) => void)
   constructor(stream: Readable, metadataCallback: (metadata: FilmlistMetadata) => void = () => { }) {
     this.stream = stream;
     this.metadataCallback = metadataCallback;
+
+    this.inputBuffer = '';
+    this.outputBuffer = [];
+    this.currentChannel = '';
+    this.currentTopic = '';
+    this.metadata = null;
   }
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Entry[]> {
@@ -149,8 +156,10 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
       website: url_website,
       media: [],
 
-      sourceIdentifier: 'filmlist',
-      sourceData: this.metadata
+      source: {
+        identifier: 'filmlist',
+        data: this.metadata
+      }
     }
 
     if (url_small.length > 0) {

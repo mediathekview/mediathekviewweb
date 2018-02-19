@@ -3,11 +3,13 @@ const NS_PER_MS = 1e6;
 const NS_PER_US = 1e3;
 
 export class HighPrecisionTimer {
-  private begin: [number, number];
+  private begin: [number, number] | null;
 
   constructor();
   constructor(start: boolean);
   constructor(start: boolean = false) {
+    this.begin = null;
+
     if (start) {
       this.start();
     }
@@ -60,6 +62,10 @@ export class HighPrecisionTimer {
   private read(): number;
   private read(divider: number): number;
   private read(divider?: number): number {
+    if (this.begin == null) {
+      throw new Error('timer not started');
+    }
+
     const [secondsDiff, nanosecondsDiff] = process.hrtime(this.begin);
     let result = (secondsDiff * NS_PER_SEC) + nanosecondsDiff;
 

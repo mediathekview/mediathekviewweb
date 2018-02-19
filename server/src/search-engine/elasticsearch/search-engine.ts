@@ -3,7 +3,6 @@ import * as Elasticsearch from 'elasticsearch';
 import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
 import { sleep } from '../../common/utils';
 import { Converter } from './converter';
-import { LockProvider } from '../../common/lock';
 
 type ElasticsearchBulkResponse = { took: number, errors: boolean, items: ObjectMap<{ [key: string]: any, status: number, error?: any }>[] };
 

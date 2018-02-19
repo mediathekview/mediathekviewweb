@@ -32,7 +32,7 @@ export class MediathekViewWebExpose {
   private exposeSearch() {
     this.parameterVerifier
       .addRequired(SEARCH_PATH, 'body')
-      .addOptional(SEARCH_PATH, 'sorts', 'skip', 'limit');
+      .addOptional(SEARCH_PATH, 'sort', 'skip', 'limit');
 
     this.exposer.expose(SEARCH_PATH, async (parameters) => {
       const out: Result = {};

@@ -1,53 +1,41 @@
 import { Readable } from 'stream';
+import { ResetPromise } from '../common/utils';
 
 export class StreamIterable<T> implements AsyncIterable<T> {
-    private stream: Readable;
-    private readSize: number;
+    private readonly stream: Readable;
+    private readonly readSize: number;
 
-    private end: boolean = false;
-    private readablePromise: Promise<void>;
-    private readableResolve: () => void;
-    private readableReject: (error: Error) => void;
+    private end: boolean;
+    private resetPromise: ResetPromise<void>;
 
     constructor(stream: Readable, readSize: number) {
         this.stream = stream;
         this.readSize = readSize;
 
-        this.resetPromise();
+        this.end = false;
+        this.resetPromise = new ResetPromise();
     }
 
     async *[Symbol.asyncIterator](): AsyncIterator<T> {
         this.stream
-            .on('readable', () => this.handleReadable())
+            .on('readable', () => this.resetPromise.resolve())
             .on('end', () => this.handleEnd())
-            .on('error', (error: Error) => this.handleError(error));
+            .on('error', (error: Error) => this.resetPromise.reject(error));
 
         while (!this.end) {
-            await this.readablePromise;
+            await this.resetPromise;
 
             let chunk;
             while ((chunk = this.stream.read(this.readSize)) != null) {
                 yield chunk;
             }
 
-            this.resetPromise();
+            this.resetPromise.reset();
         }
-    }
-
-    private resetPromise() {
-        this.readablePromise = new Promise((resolve) => this.readableResolve = resolve);
-    }
-
-    private handleReadable() {
-        this.readableResolve();
     }
 
     private handleEnd() {
         this.end = true;
-        this.readableResolve();
-    }
-
-    private handleError(error: Error) {
-        this.readableReject(error);
+        this.resetPromise.resolve();
     }
 }

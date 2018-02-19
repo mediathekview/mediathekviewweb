@@ -2,10 +2,19 @@ import { QueryBuilder } from './builder';
 import { QueryBody, BoolQuery } from '../';
 
 export class BoolQueryBuilder extends QueryBuilder {
-  private _must: (QueryBuilder | QueryBody)[] = [];
-  private _should: (QueryBuilder | QueryBody)[] = [];
-  private _not: (QueryBuilder | QueryBody)[] = [];
-  private _filter: (QueryBuilder | QueryBody)[] = [];
+  private readonly _must: (QueryBuilder | QueryBody)[];
+  private readonly _should: (QueryBuilder | QueryBody)[];
+  private readonly _not: (QueryBuilder | QueryBody)[];
+  private readonly _filter: (QueryBuilder | QueryBody)[];
+
+  constructor() {
+    super();
+
+    this._must = [];
+    this._should = [];
+    this._not = [];
+    this._filter = [];
+  }
 
   build(): BoolQuery {
     const queryObj: BoolQuery = {

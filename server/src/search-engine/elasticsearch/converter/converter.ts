@@ -43,10 +43,10 @@ export class Converter {
       }
     } as any;
 
-    if (query.sorts != undefined && query.sorts.length > 0) {
-      const sorts = query.sorts.map((sort) => this.sortConverter.convert(sort));
+    if (query.sort != undefined && query.sort.length > 0) {
+      const sort = query.sort.map((sort) => this.sortConverter.convert(sort));
 
-      elasticQuery.body['sort'] = sorts;
+      elasticQuery.body['sort'] = sort;
     }
 
     return elasticQuery;

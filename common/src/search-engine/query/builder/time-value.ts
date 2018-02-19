@@ -1,13 +1,21 @@
 export type TimeUnit = 'second' | 'seconds' | 'minute' | 'minutes' | 'hour' | 'hours' | 'day' | 'days' | 'week' | 'weeks' | 'month' | 'months' | 'year' | 'years';
 
 export class TimeQueryValueBuilder {
-  private _time: 'now' | Date;
-  private downRounding: TimeUnit;
-  private offsets: [number, TimeUnit][] = [];
+  private _time: 'now' | Date | null;
+  private requiredPrecision: TimeUnit | null;
+  private offsets: [number, TimeUnit][];
 
-  time(time: 'now' | Date, downRounding: TimeUnit): TimeQueryValueBuilder {
+  constructor() {
+    this._time = null;
+    this.requiredPrecision = null;
+    this.offsets = [];
+  }
+
+  time(time: 'now' | Date): TimeQueryValueBuilder;
+  time(time: 'now' | Date, requiredPrecision: TimeUnit): TimeQueryValueBuilder;
+  time(time: 'now' | Date, requiredPrecision: TimeUnit = 'seconds'): TimeQueryValueBuilder {
     this._time = time;
-    this.downRounding = downRounding;
+    this.requiredPrecision = requiredPrecision;
 
     return this;
   }
@@ -25,8 +33,12 @@ export class TimeQueryValueBuilder {
   }
 
   build(): string {
+    if (this._time == null) {
+      throw new Error('time not set');
+    }
+
     if (!(this._time instanceof Date) && this._time != 'now') {
-      throw new Error(`Invalid date. Must be either 'now' or an instance of Date.`);
+      throw new Error(`time must be either 'now' or an instance of Date`);
     }
 
     let timeString = (this._time instanceof Date) ? (Math.floor(this._time.getTime() / 1000) + '||') : this._time;
@@ -36,7 +48,7 @@ export class TimeQueryValueBuilder {
       const timeUnit = offset[1];
 
       if (!Number.isFinite(value)) {
-        throw new Error('Invalid number: ' + value);
+        throw new Error(`invalid number: ${value}`);
       }
 
       if (value != 0) {
@@ -45,7 +57,7 @@ export class TimeQueryValueBuilder {
       }
     }
 
-    timeString += '/' + this.downRounding;
+    timeString += '/' + this.requiredPrecision;
 
     return timeString;
   }
