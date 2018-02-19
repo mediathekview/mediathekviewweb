@@ -41,7 +41,7 @@ export class RestExposer implements Exposer {
       this.router.prefix(this.prefix);
     }
 
-    this.koa.use(RestExposer.responseTime);
+    this.koa.use(RestExposer.responseTimeMiddleware);
     this.koa.use(this.bodyParser);
     this.koa.use(this.router.routes());
     this.koa.use(this.router.allowedMethods());
@@ -63,7 +63,7 @@ export class RestExposer implements Exposer {
     await next();
   }
 
-  private static async responseTime(context: Koa.Context, next: () => Promise<any>) {
+  private static async responseTimeMiddleware(context: Koa.Context, next: () => Promise<any>) {
     const ms = await HighPrecisionTimer.measure(next);
     const roundedMs = Math.precisionRound(ms, 2);
 

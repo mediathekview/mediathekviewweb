@@ -129,7 +129,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
         console.log(`couldn't connect to elasticsearch, trying again...`)
       }
 
-      await sleep(2000);
+      await sleep(50);
     } while (!success);
   }
 }

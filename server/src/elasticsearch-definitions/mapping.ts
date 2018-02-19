@@ -105,9 +105,14 @@ export const ElasticsearchMapping = {
         }
       }
     },
-    sourceIdentifier: {
-      type: 'keyword',
-      index: false,
+    source: {
+      type: 'object',
+      properties: {
+        identifier: {
+          type: 'keyword',
+          index: false
+        }
+      }
     }
   }
 }

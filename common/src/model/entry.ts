@@ -11,8 +11,10 @@ export type Entry = Entity & {
   website: string;
   media: Media[];
 
-  sourceIdentifier: string;
-  sourceData?: any;
+  source: {
+    identifier: string,
+    data?: any
+  };
 }
 
 export type AggregatedEntry = Entry & {

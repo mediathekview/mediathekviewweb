@@ -21,13 +21,13 @@
     "@types/needle": "^2.0.2",
     "@types/node": "^9.4.6",
     "@types/socket.io": "^1.4.31",
-    "nodemon": "^1.15.0",
+    "nodemon": "^1.15.1",
     "ts-node": "^4.1.0",
     "typescript": "^2.7.2"
   },
   "dependencies": {
     "base-x": "^3.0.4",
-    "bull": "^3.3.9",
+    "bull": "^3.3.10",
     "elasticsearch": "^14.1.0",
     "hjson": "^3.1.1",
     "ioredis": "^3.2.2",

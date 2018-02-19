@@ -1,32 +1,24 @@
 (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
 
-import * as Elasticsearch from 'elasticsearch';
-import * as Redis from 'ioredis';
-import * as Mongo from 'mongodb';
+import * as Http from 'http';
 
 import { Serializer } from './serializer';
 import { LockProvider } from './common/lock';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
 import { DatastoreFactory } from './datastore';
-import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
-import { ElasticsearchMapping, ElasticsearchSettings } from './elasticsearch-definitions';
 import { EntriesImporter } from './entries-importer/importer';
 import { EntriesIndexer } from './entries-indexer/indexer';
 import { Filmlist } from './entry-source/filmlist/filmlist';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
-import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
-import { RedisLockProvider } from './lock/redis';
+import { FilmlistRepository } from './entry-source/filmlist/repository';
+import { InstanceProvider } from './instance-provider';
 import { QueueProvider } from './queue';
-import { BullQueueProvider } from './queue/bull/provider';
 import { AggregatedEntryRepository, EntryRepository } from './repository';
-import { MongoEntryRepository } from './repository/mongo/entry-repository';
-import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
-import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { EventLoopWatcher } from './utils';
-
+import { MediathekViewWebExpose } from './expose';
 
 const watcher = new EventLoopWatcher(10);
 
@@ -44,26 +36,24 @@ function setTerminalTitle(title: string) {
 async function init() {
   Serializer.registerPrototype(Filmlist)
 
-  const redis = new Redis();
-  const elasticsearch = new Elasticsearch.Client({});
+  const datastoreFactory = await InstanceProvider.datastoreFactory();
+  const lockProvider = await InstanceProvider.lockProvider();
+  const filmlistRepository = await InstanceProvider.filmlistRepository();
+  const distributedLoopProvider = await InstanceProvider.distributedLoopProvider();
+  const queueProvider = await InstanceProvider.queueProvider();
+  const entryRepository = await InstanceProvider.entryRepository();
+  const aggregatedEntryRepository = await InstanceProvider.aggregatedEntryRepository();
+  const entrySearchEngine = await InstanceProvider.entrySearchEngine();
 
-  const mongo = await Mongo.MongoClient.connect('mongodb://localhost:27017');
-  const db = mongo.db('mediathekviewweb');
-  const entriesCollection = db.collection('entries');
+  const server = new Http.Server();
 
-  const datastoreFactory = new RedisDatastoreFactory(redis);
-  const lockProvider = new RedisLockProvider(redis);
-  const filmlistRepository = new MediathekViewWebVerteilerFilmlistRepository('https://verteiler.mediathekviewweb.de/');
-  const loopProvider = new DistributedLoopProvider(lockProvider);
-  const queueProvider = new BullQueueProvider();
-  const entryRepository = new MongoEntryRepository(entriesCollection);
-  const aggregatedEntryRepository = new NonWorkingAggregatedEntryRepository(entryRepository);
-  const entrySearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, 'mediathekviewweb', 'entry', ElasticsearchSettings, ElasticsearchMapping);
+  const expose = new MediathekViewWebExpose(entrySearchEngine, server);
+  expose.expose();
 
-  await entrySearchEngine.initialize();
+  server.listen(8080);
 
   await Promise.all([
-    runFilmlistManager(datastoreFactory, filmlistRepository, loopProvider, queueProvider),
+    runFilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider),
     runImporter(datastoreFactory, queueProvider, entryRepository),
     runIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreFactory)
   ]);

@@ -48,8 +48,9 @@ export class MiddlewareExposer implements Exposer {
 
       for (let i = this.middleware.length - 1; i >= 0; i--) {
         const middleware = this.middleware[i];
+        const nextMiddleware = next;
 
-        next = (path, parameters) => middleware(path, parameters, next);
+        next = (path, parameters) => middleware(path, parameters, nextMiddleware);
       }
 
       return next(path, parameters);

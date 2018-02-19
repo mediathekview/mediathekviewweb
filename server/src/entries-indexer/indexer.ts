@@ -11,6 +11,8 @@ const BATCH_SIZE = 250;
 const BATCH_BUFFER_SIZE = 10;
 const CONCURRENCY = 3;
 
+let total = 0;
+
 export class EntriesIndexer {
   private readonly aggregatedEntryRepository: AggregatedEntryRepository;
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
@@ -66,6 +68,7 @@ export class EntriesIndexer {
 
     await this.searchEngine.index(searchEngineItems);
 
-    console.log(`indexed ${searchEngineItems.length} entries`);
+    total += searchEngineItems.length;
+    console.log(`indexed ${total} entries`);
   }
 }

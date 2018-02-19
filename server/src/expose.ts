@@ -6,7 +6,7 @@ import { RestExposer } from './api/exposer/rest';
 import { AggregatedEntry } from './common/api';
 import { SearchEngine, SearchQuery } from './common/search-engine';
 
-const EXPOSE_PATH = '/api';
+const REST_PREFIX = '/api';
 const SEARCH_PATH = ['search'];
 
 export class MediathekViewWebExpose {
@@ -18,7 +18,7 @@ export class MediathekViewWebExpose {
   constructor(searchEngine: SearchEngine<AggregatedEntry>, server: Server) {
     this.searchEngine = searchEngine;
 
-    const restExposer = new RestExposer(server, EXPOSE_PATH);
+    const restExposer = new RestExposer(server, REST_PREFIX);
     this.exposer = new MiddlewareExposer(restExposer);
     this.parameterVerifier = new ParameterVerifierExposerMiddleware();
   }
@@ -41,7 +41,7 @@ export class MediathekViewWebExpose {
         out.result = await this.searchEngine.search(parameters as SearchQuery);
       }
       catch (error) {
-        out.errors = [{ type: ErrorType.ServerError, details: error }];
+        out.errors = [{ type: ErrorType.ServerError, details: (error as Error).message }];
       }
 
       return out;

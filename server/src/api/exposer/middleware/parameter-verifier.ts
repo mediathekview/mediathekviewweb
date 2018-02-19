@@ -2,7 +2,7 @@ import '../../../common/extensions/set';
 
 import { SyncEnumerable } from '../../../common/enumerable';
 import { InvalidRequestError } from '../errors/invalid-request';
-import { ResultError, Parameters, Result } from '../exposer';
+import { Parameters, Result, ResultError } from '../exposer';
 import { ExposerMiddleware, ExposerMiddlewareNextFunction } from './exposer';
 
 type Verification = {
