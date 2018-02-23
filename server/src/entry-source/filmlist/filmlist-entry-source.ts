@@ -1,11 +1,13 @@
 import { EntrySource } from '../';
-
-import { Queue, QueueProvider, Job } from '../../queue';
-import { Filmlist } from './filmlist';
-import { Set, DatastoreFactory, DataType } from '../../datastore';
-import { Keys } from '../../keys';
-import { FeedableAsyncIterable } from '../../common/utils';
 import { Entry } from '../../common/model';
+import { FeedableAsyncIterable } from '../../common/utils';
+import { DatastoreFactory, DataType, Set } from '../../datastore';
+import { Keys } from '../../keys';
+import { LoggerFactoryProvider } from '../../logger-factory-provider';
+import { Job, Queue, QueueProvider } from '../../queue';
+import { Filmlist } from './filmlist';
+
+const logger = LoggerFactoryProvider.factory.create('[FILMLIST_SOURCE]');
 
 export class FilmlistEntrySource implements EntrySource {
   private readonly out: FeedableAsyncIterable<Entry[]>;
@@ -27,7 +29,7 @@ export class FilmlistEntrySource implements EntrySource {
   private async process(job: Job<Filmlist>) {
     let filmlist = job.data;
 
-    console.log(`processing filmlist ${filmlist.date}`);
+    logger.info(`${process.pid} processing filmlist ${filmlist.date}`);
 
     for await (const entry of filmlist) {
       if (this.out.bufferSize > 10) {

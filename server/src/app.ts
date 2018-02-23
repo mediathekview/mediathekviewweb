@@ -1,87 +1,69 @@
-(Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
+import './common/async-iterator-symbol';
 
+import * as Cluster from 'cluster';
 import * as Http from 'http';
 
 import { Serializer } from './serializer';
-import { LockProvider } from './common/lock';
-import { AggregatedEntry } from './common/model';
-import { SearchEngine } from './common/search-engine';
-import { DatastoreFactory } from './datastore';
-import { DistributedLoopProvider } from './distributed-loop';
-import { EntriesImporter } from './entries-importer/importer';
-import { EntriesIndexer } from './entries-indexer/indexer';
 import { Filmlist } from './entry-source/filmlist/filmlist';
-import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
-import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
-import { FilmlistRepository } from './entry-source/filmlist/repository';
+import { MediathekViewWebExposer } from './exposer';
+import { MediathekViewWebImporter } from './importer';
+import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
-import { QueueProvider } from './queue';
-import { AggregatedEntryRepository, EntryRepository } from './repository';
+import { LoggerFactoryProvider } from './logger-factory-provider';
 import { EventLoopWatcher } from './utils';
-import { MediathekViewWebExpose } from './expose';
 
 const watcher = new EventLoopWatcher(10);
+const logger = LoggerFactoryProvider.factory.create('[APP]');
 
 watcher
-  .watch(0, 25, 'avg')
+  .watch(0, 250, 'avg')
   .map((measure) => Math.round(measure * 10000) / 10000)
-  .subscribe((delay) => setTerminalTitle(`eventloop: ${delay} ms`));
+  .subscribe((delay) => logger.silly(`eventloop-${process.pid}: ${delay} ms`));
 
-function setTerminalTitle(title: string) {
-  process.stdout.write(
-    String.fromCharCode(27) + "]0;" + title + String.fromCharCode(7)
-  );
-}
+Serializer.registerPrototype(Filmlist);
 
 async function init() {
-  Serializer.registerPrototype(Filmlist)
-
-  const datastoreFactory = await InstanceProvider.datastoreFactory();
-  const lockProvider = await InstanceProvider.lockProvider();
-  const filmlistRepository = await InstanceProvider.filmlistRepository();
-  const distributedLoopProvider = await InstanceProvider.distributedLoopProvider();
-  const queueProvider = await InstanceProvider.queueProvider();
-  const entryRepository = await InstanceProvider.entryRepository();
-  const aggregatedEntryRepository = await InstanceProvider.aggregatedEntryRepository();
-  const entrySearchEngine = await InstanceProvider.entrySearchEngine();
-
   const server = new Http.Server();
+  const exposer = new MediathekViewWebExposer(server);
+  const indexer = new MediathekViewWebIndexer();
+  const importer = new MediathekViewWebImporter();
 
-  const expose = new MediathekViewWebExpose(entrySearchEngine, server);
-  expose.expose();
+  const lockProvider = await InstanceProvider.lockProvider();
+  const lock = lockProvider.get('init');
 
-  server.listen(8080);
+  await lock.acquire(async () => {
+    const filmlistManager = await InstanceProvider.filmlistManager();
+
+    await exposer.initialize();
+    await indexer.initialize();
+    await importer.initialize();
+
+    exposer.expose();
+    filmlistManager.run();
+    server.listen(8080);
+  });
 
   await Promise.all([
-    runFilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider),
-    runImporter(datastoreFactory, queueProvider, entryRepository),
-    runIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreFactory)
+    indexer.run(),
+    importer.run(),
   ]);
-}
-
-async function runFilmlistManager(datastoreFactory: DatastoreFactory, filmlistRepository: FilmlistRepository, loopProvider: DistributedLoopProvider, queueProvider: QueueProvider) {
-  const filmlistManager = new FilmlistManager(datastoreFactory, filmlistRepository, loopProvider, queueProvider);
-  filmlistManager.run();
-}
-
-async function runImporter(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider, entryRepository: EntryRepository) {
-  const filmlistEntrySource = new FilmlistEntrySource(datastoreFactory, queueProvider);
-  filmlistEntrySource.run();
-
-  const importer = new EntriesImporter(entryRepository, datastoreFactory);
-  await importer.import(filmlistEntrySource);
-}
-
-async function runIndexer(aggregatedEntryRepository: AggregatedEntryRepository, entrySearchEngine: SearchEngine<AggregatedEntry>, lockProvider: LockProvider, datastoreFactory: DatastoreFactory) {
-  const indexer = new EntriesIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreFactory);
-  await indexer.run();
 }
 
 (async () => {
   try {
-    await init();
+    if (Cluster.isMaster) {
+      for (let i = 0; i < 4; i++) {
+        const worker = Cluster.fork();
+      }
+    }
+    else {
+      logger.info(`Worker ${process.pid} started`);
+      await init();
+
+      logger.info(`Worker ${process.pid} initialized`);
+    }
   }
   catch (error) {
-    console.error(error);
+    logger.error(error);
   }
 })();

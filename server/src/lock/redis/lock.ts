@@ -67,7 +67,8 @@ export class RedisLock implements Lock {
 
       if (func != undefined) {
         try {
-          await func().then(interrupt);
+          await func();
+          await interrupt();
         }
         finally {
           await this.release();

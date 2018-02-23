@@ -8,7 +8,7 @@ export class BullJob<T> implements Job<T> {
   private deserializedData: T | null;
 
   get data(): T {
-    if (this.deserialized == undefined) {
+    if (!this.deserialized) {
       this.deserializedData = Serializer.deserialize(this.job.data.data);
       this.deserialized = true;
     }

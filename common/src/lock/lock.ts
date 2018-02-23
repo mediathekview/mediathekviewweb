@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
-export type LockedFunction = () => Promise<void>;
+export type LockedFunction = () => void | Promise<void>;
 
 export interface Lock {
   onLockLost: Observable<void>;

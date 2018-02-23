@@ -7,10 +7,13 @@ import { QueueProvider, Queue } from '../../queue';
 import { random, now } from '../../common/utils/index';
 import { Filmlist } from './filmlist';
 import { AsyncEnumerable } from '../../common/enumerable/index';
+import { LoggerFactoryProvider } from '../../logger-factory-provider';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
+
+const logger = LoggerFactoryProvider.factory.create('[FILMLIST_MANAGER]');
 
 export class FilmlistManager {
   private filmlistRepository: FilmlistRepository;
@@ -57,15 +60,19 @@ export class FilmlistManager {
   }
 
   private async checkLatest() {
+    logger.info('checking for new current-filmlist');
     const filmlist = await this.filmlistRepository.getLatest();
     await this.checkFilmlist(filmlist);
   }
 
   private async checkArchive(): Promise<void> {
+    logger.info('checking for new archive-filmlist');
+
     const minimumDate = now();
     minimumDate.setDate(minimumDate.getDate() - MAX_AGE_DAYS);
 
-    const filmlists = new AsyncEnumerable(this.filmlistRepository.getArchive());
+    const archiveIterable = this.filmlistRepository.getArchive();
+    const filmlists = new AsyncEnumerable(archiveIterable);
 
     await filmlists
       .filter((filmlist) => filmlist.date >= minimumDate)

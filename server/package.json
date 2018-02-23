@@ -10,7 +10,7 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "devDependencies": {
-    "@types/bull": "^3.3.5",
+    "@types/bull": "^3.3.6",
     "@types/elasticsearch": "^5.0.19",
     "@types/hjson": "^2.4.0",
     "@types/ioredis": "^3.2.5",
@@ -22,7 +22,7 @@
     "@types/node": "^9.4.6",
     "@types/socket.io": "^1.4.31",
     "nodemon": "^1.15.1",
-    "ts-node": "^4.1.0",
+    "ts-node": "^5.0.0",
     "typescript": "^2.7.2"
   },
   "dependencies": {
@@ -35,9 +35,9 @@
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.4.0",
     "kue": "^0.11.6",
-    "lzma-native": "^3.0.4",
+    "lzma-native": "^3.0.5",
     "mongodb": "^3.0.2",
-    "needle": "^2.1.2",
+    "needle": "^2.2.0",
     "rxjs": "^5.5.6",
     "socket.io": "^2.0.4"
   }

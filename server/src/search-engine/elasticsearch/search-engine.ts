@@ -2,7 +2,10 @@ import * as Elasticsearch from 'elasticsearch';
 
 import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
 import { sleep } from '../../common/utils';
+import { LoggerFactoryProvider } from '../../logger-factory-provider';
 import { Converter } from './converter';
+
+const logger = LoggerFactoryProvider.factory.create('[ELASTIC_SEARCH_ENGINE]');
 
 type ElasticsearchBulkResponse = { took: number, errors: boolean, items: ObjectMap<{ [key: string]: any, status: number, error?: any }>[] };
 
@@ -30,7 +33,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       await this.putIndexOptions();
     }
 
-    console.log('initialized elasticsearch search-engine');
+    logger.info('initialized elasticsearch search-engine');
   }
 
   async index(items: SearchEngineItem<T>[]): Promise<void> {
@@ -123,9 +126,9 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       try {
         await this.client.ping({ requestTimeout: 250 });
         success = true;
-        console.log('connected to elasticsearch');
+        logger.info('connected to elasticsearch');
       } catch {
-        console.log(`couldn't connect to elasticsearch, trying again...`)
+        logger.warn(`couldn't connect to elasticsearch, trying again...`)
       }
 
       await sleep(50);

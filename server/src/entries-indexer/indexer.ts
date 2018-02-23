@@ -4,14 +4,16 @@ import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
 import { ProviderFunctionIterable, sleep } from '../common/utils';
 import { DatastoreFactory, DataType, Set } from '../datastore';
+import { InstanceProvider } from '../instance-provider';
 import { Keys } from '../keys';
 import { AggregatedEntryRepository } from '../repository';
+import { LoggerFactoryProvider } from '../logger-factory-provider';
 
 const BATCH_SIZE = 250;
 const BATCH_BUFFER_SIZE = 10;
 const CONCURRENCY = 3;
 
-let total = 0;
+const logger = LoggerFactoryProvider.factory.create('[INDEXER]');
 
 export class EntriesIndexer {
   private readonly aggregatedEntryRepository: AggregatedEntryRepository;
@@ -34,7 +36,7 @@ export class EntriesIndexer {
         await this.indexEntries(batch);
       }
       catch (error) {
-        console.error(error);
+        logger.error(error);
         await this.entriesToBeIndexed.addMany(batch);
       }
     }
@@ -49,7 +51,7 @@ export class EntriesIndexer {
         ids = await AsyncEnumerable.toArray(popped);
       }
       catch (error) {
-        console.error(error);
+        logger.error(error);
       }
 
       if (ids.length == 0) {
@@ -68,7 +70,6 @@ export class EntriesIndexer {
 
     await this.searchEngine.index(searchEngineItems);
 
-    total += searchEngineItems.length;
-    console.log(`indexed ${total} entries`);
+    logger.verbose(`indexed ${searchEngineItems.length} entries`);
   }
 }

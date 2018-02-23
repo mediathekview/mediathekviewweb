@@ -3,12 +3,15 @@ import * as Redis from 'ioredis';
 import * as Mongo from 'mongodb';
 
 import { LockProvider } from './common/lock';
+import { LoggerFactory, LogLevel } from './common/logger';
+import { ConsoleLoggerFactory } from './common/logger/console';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
 import { ElasticsearchMapping, ElasticsearchSettings } from './elasticsearch-definitions';
+import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
 import { RedisLockProvider } from './lock/redis';
 import { QueueProvider } from './queue';
@@ -110,6 +113,17 @@ export class InstanceProvider {
       await elasticsearchSearchEngine.initialize();
 
       return elasticsearchSearchEngine;
+    });
+  }
+
+  static filmlistManager(): Promise<FilmlistManager> {
+    return this.singleton('filmlistManager', async () => {
+      const datastoreFactory = await this.datastoreFactory();
+      const filmlistRepository = await this.filmlistRepository();
+      const distributedLoopProvider = await this.distributedLoopProvider();
+      const queueProvider = await this.queueProvider();
+
+      return new FilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider);
     });
   }
 
