@@ -25,6 +25,15 @@ redis.on('error', (err) => {
 
 if (config.piwik.enabled) {
   var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
+
+  var origTrack = piwik.track.bind(piwik);
+  piwik.track = (options) => {
+    if (options.action_name != 'index') {
+        return;
+    }
+
+    origTrack(options);
+  }
 }
 
 var app = express();
@@ -362,7 +371,7 @@ function updateLoop() {
       });
     }
 
-    setTimeout(() => updateLoop(), 2 * 60 * 1000);
+    setTimeout(() => updateLoop(), 10 * 60 * 1000);
   });
 }
 
