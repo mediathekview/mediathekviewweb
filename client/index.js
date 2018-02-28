@@ -504,7 +504,7 @@ function createPagination(totalPages) {
     let pagination = $('#pagination');
     pagination.empty();
 
-    let backButton = createPaginationButton('<i class="material-icons" style="margin: -6px;">arrow_left</i>', false, currentPage > 0, () => {
+    let backButton = createPaginationButton('<i class="material-icons" style="margin: -6px;">keyboard_arrow_left</i>', false, currentPage > 0, () => {
         currentPage--;
     });
     pagination.append(backButton);
@@ -519,7 +519,7 @@ function createPagination(totalPages) {
         pagination.append(button);
     }
 
-    let nextButton = createPaginationButton('<i class="material-icons" style="margin: -6px">arrow_right</i>', false, currentPage < (totalPages - 1), () => {
+    let nextButton = createPaginationButton('<i class="material-icons" style="margin: -6px">keyboard_arrow_right</i>', false, currentPage < (totalPages - 1), () => {
         currentPage++;
     });
     pagination.append(nextButton);
