@@ -27,7 +27,7 @@
     "lodash": "^4.17.5",
     "lzma-native": "^3.0.5",
     "moment": "^2.20.1",
-    "piwik-tracker": "^1.1.2",
+    "matomo-tracker": "^2.1.0",
     "redis": "^2.8.0",
     "request": "^2.83.0",
     "request-progress": "^3.0.0",
