@@ -1,35 +1,19 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["esnext", "dom"],
-    "sourceMap": true,
     "outDir": "./dist/out-tsc",
-    "removeComments": true,
-    "downlevelIteration": true,
+    "sourceMap": true,
     "declaration": false,
-
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-
     "moduleResolution": "node",
-    "rootDirs": ["../common"],
-    "typeRoots": ["node_modules/@types"],
-
-    "inlineSourceMap": false,
-    "inlineSources": false,
-
+    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-
-  "include": ["./src/", "../common/src/"]
+    "target": "es5",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  }
 }
