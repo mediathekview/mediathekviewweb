@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { SearchService } from './services/search.service';
 
 @Component({
   selector: 'mvw-root',
@@ -6,5 +7,14 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'mvw';
+  private readonly searchService: SearchService;
+
+  constructor(searchService: SearchService) {
+    this.searchService = searchService;
+  }
+
+  async onSearchStringChanged(searchString: string) {
+    const result = await this.searchService.search(searchString);
+    console.log(result);
+  }
 }

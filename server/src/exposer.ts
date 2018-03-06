@@ -3,7 +3,7 @@ import { Server } from 'http';
 import { ErrorType, Result } from './api/exposer';
 import { MiddlewareExposer, ParameterVerifierExposerMiddleware } from './api/exposer/middleware';
 import { RestExposer } from './api/exposer/rest';
-import { AggregatedEntry } from './common/api';
+import { AggregatedEntry } from './common/model';
 import { SearchEngine, SearchQuery } from './common/search-engine';
 import { InstanceProvider } from './instance-provider';
 

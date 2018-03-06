@@ -1,4 +1,5 @@
-import { AnyIterable, isAsyncIterable } from '../';
+import { AnyIterable } from '../any-iterable';
+import { isAsyncIterable } from './is-async-iterable';
 import { AsyncIteratorFunction } from './types';
 
 export function forEachAsync<T>(iterable: AnyIterable<T>, func: AsyncIteratorFunction<T, void>): Promise<void> {

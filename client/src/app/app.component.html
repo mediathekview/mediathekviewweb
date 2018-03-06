@@ -3,7 +3,7 @@
 <div class="vertical-spacer-1-5"></div>
 
 <div class="container">
-  <mvw-search-input></mvw-search-input>
+  <mvw-search-input (searchStringChanged)="onSearchStringChanged($event)"></mvw-search-input>
 </div>
 
 <router-outlet></router-outlet>

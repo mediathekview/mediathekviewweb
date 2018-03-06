@@ -28,20 +28,20 @@ async function init() {
   const indexer = new MediathekViewWebIndexer();
   const importer = new MediathekViewWebImporter();
 
+  const filmlistManager = await InstanceProvider.filmlistManager();
+
   const lockProvider = await InstanceProvider.lockProvider();
   const lock = lockProvider.get('init');
 
   await lock.acquire(async () => {
-    const filmlistManager = await InstanceProvider.filmlistManager();
-
     await exposer.initialize();
     await indexer.initialize();
     await importer.initialize();
-
-    exposer.expose();
-    filmlistManager.run();
-    server.listen(8080);
   });
+
+  exposer.expose();
+  filmlistManager!.run();
+  server.listen(8080);
 
   await Promise.all([
     indexer.run(),

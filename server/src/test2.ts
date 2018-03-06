@@ -1,14 +1,12 @@
 import * as Elasticsearch from 'elasticsearch';
+import * as Redis from 'ioredis';
 
-import { AggregatedEntry, SearchQuery } from './common/api';
+import { AggregatedEntry } from './common/model';
+import { SearchQuery } from './common/search-engine';
 import { SearchStringParser } from './common/search-string-parser/parser';
 import { ElasticsearchMapping, ElasticsearchSettings } from './elasticsearch-definitions';
-import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
-import { TextQueryBuilder, MatchAllQueryBuilder } from './common/search-engine/query/builder';
-import { Field } from './common/model';
 import { RedisLockProvider } from './lock/redis';
-import * as Redis from 'ioredis';
-import { EventLoopWatcher } from './utils';
+import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 
 const INDEX_NAME = 'mediathekviewweb';
 const TYPE_NAME = 'entry';

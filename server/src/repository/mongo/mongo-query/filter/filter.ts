@@ -4,7 +4,7 @@ import { ElementOperator } from './element-operator';
 import { EvaluationOperator, WhereEvaluation } from './evaluation-operator';
 import { ArrayOperator } from './array-operator';
 import { BitOperator } from './bit-operator';
-import { ObjectID } from 'bson';
+import { ObjectID } from 'mongodb';
 
 type EqualType = string | number | Date | ObjectID | RegExp
 

@@ -41,6 +41,7 @@ export class RestExposer implements Exposer {
       this.router.prefix(this.prefix);
     }
 
+    this.koa.use(RestExposer.corsMiddleware);
     this.koa.use(RestExposer.responseTimeMiddleware);
     this.koa.use(this.bodyParser);
     this.koa.use(this.router.routes());
@@ -63,7 +64,16 @@ export class RestExposer implements Exposer {
     await next();
   }
 
-  private static async responseTimeMiddleware(context: Koa.Context, next: () => Promise<any>) {
+  private static corsMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<any> {
+    context.response.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': '*',
+      'Access-Control-Allow-Headers': context.request.get('Access-Control-Request-Headers')
+    });
+    return next();
+  }
+
+  private static async responseTimeMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<void> {
     const ms = await HighPrecisionTimer.measure(next);
     const roundedMs = Math.precisionRound(ms, 2);
 

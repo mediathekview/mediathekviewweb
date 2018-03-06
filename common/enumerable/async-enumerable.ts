@@ -176,15 +176,6 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(source).interruptEvery(value);
   }
 
-  async toSync(): Promise<SyncEnumerable<T>> {
-    const array = await this.toArray();
-    return new SyncEnumerable(array);
-  }
-
-  static async toSync<T>(source: AnyIterable<T>): Promise<SyncEnumerable<T>> {
-    return new AsyncEnumerable(source).toSync();
-  }
-
   toAsync(): AsyncEnumerable<T> {
     return this;
   }

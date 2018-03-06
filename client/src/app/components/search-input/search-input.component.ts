@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, Input } from '@angular/core';
+
+import { SearchQuery } from '../../common/search-engine';
 
 @Component({
   selector: 'mvw-search-input',
@@ -6,10 +8,19 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./search-input.component.scss']
 })
 export class SearchInputComponent implements OnInit {
+  @Input() searchString: string;
 
-  constructor() { }
+  @Output() searchStringChanged: EventEmitter<string>;
+
+  constructor() {
+    this.searchString = '';
+    this.searchStringChanged = new EventEmitter();
+  }
 
   ngOnInit() {
   }
 
+  onSearchStringChanged(searchString: string) {
+    this.searchStringChanged.emit(searchString);
+  }
 }

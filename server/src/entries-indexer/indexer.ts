@@ -65,8 +65,8 @@ export class EntriesIndexer {
 
   private async indexEntries(ids: string[]) {
     const entries = await this.aggregatedEntryRepository.loadMany(ids);
-    const entriesArray = await AsyncEnumerable.toSync(entries);
-    const searchEngineItems = entriesArray.map((entry) => ({ id: entry.id, document: entry })).toArray();
+    const entriesArray = await AsyncEnumerable.toArray(entries);
+    const searchEngineItems = entriesArray.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);
 

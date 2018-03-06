@@ -2,10 +2,10 @@ import * as Mongo from 'mongodb';
 
 import { AsyncEnumerable } from '../../common/enumerable';
 import { Document } from '../../common/model';
-import { MongoFilter, MongoUpdate } from '../../common/mongo-query';
 import { AnyIterable } from '../../common/utils';
 import { SaveItem } from '../save-item';
 import { InsertedMongoDocument, MongoDocument } from './mongo-document';
+import { MongoFilter, MongoUpdate } from './mongo-query';
 
 const CREATED_PROPERTY = 'created';
 const UPDATED_PROPERTY = 'updated';

@@ -1,5 +1,3 @@
-<form class="example-form">
-  <mat-form-field class="w-100">
-    <input matInput placeholder="Suche">
-  </mat-form-field>
-</form>
+<mat-form-field class="w-100">
+  <input matInput type="text" placeholder="Suche" [(ngModel)]="searchString" (ngModelChange)="onSearchStringChanged($event)">
+</mat-form-field>

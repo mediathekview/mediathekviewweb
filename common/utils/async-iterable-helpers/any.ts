@@ -1,4 +1,5 @@
-import { AnyIterable, isAsyncIterable } from '../';
+import { AnyIterable } from '../any-iterable';
+import { isAsyncIterable } from './is-async-iterable';
 import { AsyncPredicate } from './types';
 
 export async function anyAsync<T>(iterable: AnyIterable<T>, predicate: AsyncPredicate<T>): Promise<boolean> {

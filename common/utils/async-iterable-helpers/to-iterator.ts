@@ -1,4 +1,6 @@
-import { AnyIterable, ResetPromise, isIterable, isAsyncIterable } from '../';
+import { AnyIterable } from '../any-iterable';
+import { isIterable } from '../iterable-helpers/is-iterable';
+import { isAsyncIterable } from './is-async-iterable';
 
 export function toAsyncIterator<T>(iterable: AnyIterable<T>): AsyncIterator<T> {
   let asyncIterator: AsyncIterator<T>;
