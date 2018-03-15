@@ -71,7 +71,7 @@ app.use(compression());
 
 app.use((request, response, next) => {
   response.set({
-    'Content-Security-Policy': `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; media-src *; base-uri 'none'; form-action 'none';`,
+    'Content-Security-Policy': `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; media-src *; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
     'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '1; mode=block',
     'X-Content-Type-Options': 'nosniff',
