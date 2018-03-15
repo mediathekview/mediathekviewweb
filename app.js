@@ -29,7 +29,7 @@ if (config.piwik.enabled) {
   var origTrack = piwik.track.bind(piwik);
   piwik.track = (options) => {
     if (options.action_name != 'index') {
-        return;
+      return;
     }
 
     origTrack(options);
@@ -68,6 +68,19 @@ if (!!piwik) {
 }
 
 app.use(compression());
+
+app.use((request, response, next) => {
+  response.set({
+    'Content-Security-Policy': `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; media-src *`,
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
+  });
+
+  next();
+});
+
 app.use('/static', express.static(path.join(__dirname, '/static')));
 app.use('/api', bodyParser.text());
 
