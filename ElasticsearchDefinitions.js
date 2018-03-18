@@ -8,7 +8,7 @@ const mapping = {
       fielddata: true,
       fields: {
         keyword: {
-          type: "keyword"
+          type: 'keyword'
         }
       }
     },
@@ -74,25 +74,25 @@ const settings = {
     analyzer: {
       mvw_index_analyzer: {
         type: 'custom',
-        tokenizer: 'mvw_tokenizer',
+        tokenizer: 'mvw_index_tokenizer',
         char_filter: ['toLatin'],
         filter: [
           'lowercase',
-          'asciifoldingPreserveOriginal'
+          'asciifolding'
         ]
       },
       mvw_search_analyzer: {
         type: 'custom',
-        tokenizer: 'standard',
+        tokenizer: 'mvw_search_tokenizer',
         char_filter: ['toLatin'],
         filter: [
           'lowercase',
-          'asciifoldingPreserveOriginal'
+          'asciifolding'
         ]
       }
     },
     tokenizer: {
-      mvw_tokenizer: {
+      mvw_index_tokenizer: {
         type: 'edge_ngram',
         min_gram: 1,
         max_gram: 25,
@@ -100,6 +100,10 @@ const settings = {
           'letter',
           'digit'
         ]
+      },
+      mvw_search_tokenizer: {
+          type: 'simple_pattern',
+          pattern: '[a-zA-Z0-9]+'
       }
     },
     filter: {
