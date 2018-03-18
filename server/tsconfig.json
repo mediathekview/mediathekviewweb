@@ -3,25 +3,30 @@
   "compilerOptions": {
     "target": "es5",
     "lib": ["esnext"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./build",
+    "rootDir": "./src",
     "sourceMap": true,
-    "outDir": "build",
     "removeComments": true,
-    "downlevelIteration": true,
     "declaration": false,
+    
+    "importHelpers": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "downlevelIteration": true,
+
+    "alwaysStrict": true,
     "strict": true,
-    "noImplicitAny": true,
+    "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": false,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
+
     "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "node",
-    "inlineSourceMap": false,
-    "inlineSources": false,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true
   }
 }
