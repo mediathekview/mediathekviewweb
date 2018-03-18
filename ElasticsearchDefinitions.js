@@ -78,7 +78,7 @@ const settings = {
         char_filter: ['toLatin'],
         filter: [
           'lowercase',
-          'asciifolding'
+          'asciifoldingPreserveOriginal'
         ]
       },
       mvw_search_analyzer: {
@@ -87,7 +87,7 @@ const settings = {
         char_filter: ['toLatin'],
         filter: [
           'lowercase',
-          'asciifolding'
+          'asciifoldingPreserveOriginal'
         ]
       }
     },
@@ -103,7 +103,7 @@ const settings = {
       }
     },
     filter: {
-      asciifoldingpreserveorig: {
+      asciifoldingPreserveOriginal: {
         type: 'asciifolding',
         'preserve_original': true
       }
