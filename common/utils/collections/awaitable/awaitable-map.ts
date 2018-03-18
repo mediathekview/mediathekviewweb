@@ -3,9 +3,9 @@ import { ResetPromise } from '../../reset-promise';
 export class AwaitableMap<K, V> implements Map<K, V> {
   private readonly backingMap: Map<K, V>;
 
-  setted: ResetPromise<[K, V]>;
-  cleared: ResetPromise<void>;
-  deleted: ResetPromise<K>;
+  readonly setted: ResetPromise<[K, V]>;
+  readonly cleared: ResetPromise<void>;
+  readonly deleted: ResetPromise<K>;
 
   constructor() {
     this.backingMap = new Map();

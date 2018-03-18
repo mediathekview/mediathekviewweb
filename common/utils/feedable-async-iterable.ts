@@ -1,13 +1,12 @@
-import { ResetPromise } from './reset-promise';
 import { AwaitableList } from './collections/awaitable';
-import { AnyIterable } from './any-iterable';
+import { ResetPromise } from './reset-promise';
 
 export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
   private _closed: boolean;
   private buffer: AwaitableList<{ item?: T, error?: Error }>;
 
-  read: ResetPromise<void>;
-  empty: ResetPromise<void>;
+  readonly read: ResetPromise<void>;
+  readonly empty: ResetPromise<void>;
 
   get closed(): boolean {
     return this._closed;

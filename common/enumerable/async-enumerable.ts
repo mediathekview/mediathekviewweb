@@ -1,13 +1,13 @@
 import {
   anyAsync, AsyncIteratorFunction, AsyncPredicate, batchAsync,
-  BufferedAsyncIterable, filterAsync, forEachAsync, interceptAsync, interruptEveryAsync,
-  isAsyncIterable, isIterable, mapAsync, mapManyAsync, ParallelizableIteratorFunction,
-  ParallelizablePredicate, singleAsync, toArrayAsync, toAsyncIterable, toAsyncIterator,
+  BufferedAsyncIterable, filterAsync, forEachAsync, interceptAsync,
+  interruptEveryAsync, isAsyncIterable, isIterable, mapAsync,
+  mapManyAsync, ParallelizableIteratorFunction, ParallelizablePredicate,
+  singleAsync, toArrayAsync, toAsyncIterable, toAsyncIterator, toSync,
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
-import { parallelFilter, parallelForEach, parallelIntercept, parallelMap } from '../utils/async-iterable-helpers/parallel';
-import { parallelGroup } from '../utils/async-iterable-helpers/parallel/group';
+import { parallelFilter, parallelForEach, parallelGroup, parallelIntercept, parallelMap } from '../utils/async-iterable-helpers/parallel';
 import { SyncEnumerable } from './sync-enumerable';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
@@ -102,6 +102,15 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
 
   static group<T, TGroup>(source: Iterable<T>, selector: AsyncIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
     return new AsyncEnumerable(source).group(selector);
+  }
+
+  async toSync(): Promise<SyncEnumerable<T>> {
+    const syncIterable = await toSync(this.source);
+    return new SyncEnumerable(syncIterable);
+  }
+
+  static async toSync<T>(source: Iterable<T>): Promise<SyncEnumerable<T>> {
+    return new AsyncEnumerable(source).toSync();
   }
 
   toArray(): Promise<T[]> {

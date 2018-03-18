@@ -12,3 +12,4 @@ export * from './to-iterator';
 export * from './intercept';
 export * from './map-many';
 export * from './to-async-iterable';
+export * from './to-sync-iterable';

@@ -3,9 +3,9 @@ import { ResetPromise } from '../../reset-promise';
 export class AwaitableList<T> implements Iterable<T> {
   private backingArray: T[];
 
-  added: ResetPromise<T>;
-  removed: ResetPromise<T>;
-  cleared: ResetPromise<T>;
+  readonly added: ResetPromise<T>;
+  readonly removed: ResetPromise<T>;
+  readonly cleared: ResetPromise<T>;
 
   constructor() {
     this.backingArray = [];

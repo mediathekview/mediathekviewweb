@@ -3,8 +3,6 @@ export class ResetPromise<T> implements Promise<T> {
   private resolvePromise: (value?: T | PromiseLike<T>) => void;
   private rejectPromise: (reason?: any) => void;
 
-  readonly [Symbol.toStringTag]: 'Promise' = 'Promise';
-
   constructor() {
     this.reset();
   }
@@ -40,4 +38,6 @@ export class ResetPromise<T> implements Promise<T> {
 
     return this;
   }
+
+  readonly [Symbol.toStringTag]: 'Promise' = 'Promise';
 }

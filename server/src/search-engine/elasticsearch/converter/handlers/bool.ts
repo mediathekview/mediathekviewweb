@@ -13,13 +13,13 @@ export class BoolQueryConvertHandler implements ConvertHandler {
     }
 
     const queryObj: ElasticsearchBooleanQuery = {
-      bool: {}
+      bool: {
+        must: this.convertArray(query.bool.must, index, type),
+        should: this.convertArray(query.bool.should, index, type),
+        must_not: this.convertArray(query.bool.not, index, type),
+        filter: this.convertArray(query.bool.filter, index, type)
+      }
     };
-
-    queryObj.bool.must = this.convertArray(query.bool.must, index, type);
-    queryObj.bool.should = this.convertArray(query.bool.should, index, type);
-    queryObj.bool.must_not = this.convertArray(query.bool.not, index, type);
-    queryObj.bool.filter = this.convertArray(query.bool.filter, index, type);
 
     return queryObj;
   }

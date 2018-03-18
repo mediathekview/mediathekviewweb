@@ -3,9 +3,9 @@ import { ResetPromise } from '../../reset-promise';
 export class AwaitableSet<T> implements Set<T> {
   private readonly backingSet: Set<T>;
 
-  added: ResetPromise<T>;
-  cleared: ResetPromise<void>;
-  deleted: ResetPromise<T>;
+  readonly added: ResetPromise<T>;
+  readonly cleared: ResetPromise<void>;
+  readonly deleted: ResetPromise<T>;
 
   constructor() {
     this.backingSet = new Set();
@@ -61,10 +61,6 @@ export class AwaitableSet<T> implements Set<T> {
     return this.backingSet.union(...sets);
   }
 
-  [Symbol.iterator](): IterableIterator<T> {
-    return this.backingSet.values();
-  }
-
   entries(): IterableIterator<[T, T]> {
     return this.backingSet.entries()
   }
@@ -75,6 +71,10 @@ export class AwaitableSet<T> implements Set<T> {
 
   values(): IterableIterator<T> {
     return this.backingSet.values()
+  }
+
+  [Symbol.iterator](): IterableIterator<T> {
+    return this.backingSet[Symbol.iterator]();
   }
 
   [Symbol.toStringTag]: 'Set' = 'Set';

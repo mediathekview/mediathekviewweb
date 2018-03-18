@@ -12,10 +12,10 @@ export class TermQueryConvertHandler implements ConvertHandler {
     }
 
     const queryObject: ElasticsearchTermQuery = {
-      term: {}
+      term: {
+        [query.term.field]: query.term.value
+      }
     };
-
-    queryObject.term[query.term.field] = query.term.value;
 
     return queryObject;
   }

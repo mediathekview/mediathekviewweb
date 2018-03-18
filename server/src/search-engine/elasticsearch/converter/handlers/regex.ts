@@ -13,10 +13,10 @@ export class RegexQueryConvertHandler implements ConvertHandler {
     }
 
     const queryObject: ElasticsearchRegexQuery = {
-      regexp: {}
+      regexp: {
+        [query.regex.field]: query.regex.expression
+      }
     };
-
-    queryObject.regexp[query.regex.field] = query.regex.expression;
 
     return queryObject;
   }

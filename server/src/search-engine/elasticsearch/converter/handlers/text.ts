@@ -41,10 +41,10 @@ export class TextQueryConvertHandler implements ConvertHandler {
 
   convertToMatch(field: string, text: string): ElasticsearchMatchQuery {
     const queryObj: ElasticsearchMatchQuery = {
-      match: {}
+      match: {
+        [field]: text
+      }
     };
-
-    queryObj.match[field] = text;
 
     return queryObj;
   }

@@ -11,7 +11,6 @@
     "removeComments": true,
     "declaration": false,
     
-    "importHelpers": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "downlevelIteration": true,
