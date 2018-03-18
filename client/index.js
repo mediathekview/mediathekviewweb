@@ -1030,17 +1030,17 @@ $(() => {
             clearButton.animate({
                 opacity: 0
             }, {
-                    easing: 'swing',
-                    duration: 20
-                });
+                easing: 'swing',
+                duration: 20
+            });
             queryInputClearButtonState = 'hidden';
         } else if (currentQueryString.length > 0 && queryInputClearButtonState == 'hidden') {
             clearButton.animate({
                 opacity: 1
             }, {
-                    easing: 'swing',
-                    duration: 20
-                });
+                easing: 'swing',
+                duration: 20
+            });
             queryInputClearButtonState = 'shown';
         }
     });
@@ -1150,7 +1150,7 @@ $(() => {
 
     $('#searchSpan').popover();
 
-    $('[onclick-return-false]').click(() => {
+    $('[data-onclick-return-false]').click(() => {
         return false;
     });
 

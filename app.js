@@ -70,8 +70,10 @@ if (!!piwik) {
 app.use(compression());
 
 app.use((request, response, next) => {
+  const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.hostname;
+
   response.set({
-    'Content-Security-Policy': `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; media-src *; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
+    'Content-Security-Policy': `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' data:; connect-src 'self' ${webSocketSource}; media-src *; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
     'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '1; mode=block',
     'X-Content-Type-Options': 'nosniff',
