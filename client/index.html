@@ -6,6 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="/static/favicon.png" sizes="96x96">
+
     <link rel="stylesheet" href="/static/index.css" />
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/DataTables/datatables.min.css" />
@@ -14,18 +15,18 @@
     <link rel="stylesheet" href="/static/icons/material-icons.css">
     <link rel="stylesheet" href="/static/roboto/roboto.css">
 
-    <script src="/static/jquery.min.js"></script>
-    <script src="/static/js.cookie.js"></script>
-    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/static/moment.min.js"></script>
-    <script src="/static/DataTables/datatables.min.js"></script>
-    <script src="/static/lodash.min.js"></script>
-    <script src="/static/video.min.js"></script>
-    <script src="/static/videojs-contrib-hls.min.js"></script>
-    <script src="/static/cast_sender.js"></script>
-    <script src="/static/videojs-chromecast.min.js"></script>
-    <script src="/static/index-compiled.min.js"></script>
+    <script src="/static/jquery.min.js" defer></script>
+    <script src="/static/js.cookie.js" defer></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js" defer></script>
+    <script src="/socket.io/socket.io.js" defer></script>
+    <script src="/static/moment.min.js" defer></script>
+    <script src="/static/DataTables/datatables.min.js" defer></script>
+    <script src="/static/lodash.min.js" defer></script>
+    <script src="/static/video.min.js" defer></script>
+    <script src="/static/videojs-contrib-hls.min.js" defer></script>
+    <script src="/static/cast_sender.js" defer></script>
+    <script src="/static/videojs-chromecast.min.js" defer></script>
+    <script src="/static/index-compiled.min.js" defer></script>
 
     <style>
         html * {
@@ -36,7 +37,7 @@
 
 <body>
     <div id="videooverlay" class="overlay initiallyHidden" tabindex="0">
-        <a href="#" id="videocloseButton" class="closeButton" onclick="return false;">&times;</a>
+        <a href="#" id="videocloseButton" class="closeButton" onclick-return-false></a>&times;</a>
         <div class="row overlay-content">
             <div class="col-lg-3 col-md-2 col-sm-2 col-xs-1"></div>
             <div class="col-lg-6 col-md-8 col-sm-8 col-xs-10 noPadding">
@@ -62,11 +63,11 @@
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
                         <li><a id="forumButton" target="_blank" href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb">Forum</a></li>
-                        <li><a id="contactButton" href="mailto:kontakt@mediathekviewweb.de" onclick="return false;">Kontakt</a></li>
+                        <li><a id="contactButton" href="mailto:kontakt@mediathekviewweb.de" onclick-return-false>Kontakt</a></li>
                         <li><a id="githubButton" target="_blank" href="https://github.com/mediathekview/mediathekviewweb">GitHub</a></li>
 
                         <li class="dropdown">
-                            <a class="dropdown-toggle" data-toggle="dropdown" href="#" onclick="return false;">Über
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#" onclick-return-false>Über
                               <span class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <li><a id="donateButton" target="_blank" href="/donate">Spenden</a></li>
@@ -92,7 +93,7 @@
                             <span id="searchSpan" class="input-group-addon" data-toggle="popover" title="Selektoren" data-trigger="hover" data-html="true" data-placement="bottom" data-content="!Sender</br>#Thema</br>+Titel</br>*Beschreibung">Suche</span>
                             <input id="queryInput" type="text" class="form-control" autofocus>
                         </div>
-                        <a onclick="return false;" tabIndex="-1"><i id="queryInputClearButton" class="material-icons" tabIndex="-1">clear</i></a>
+                        <a onclick-return-false tabIndex="-1"><i id="queryInputClearButton" class="material-icons">clear</i></a>
                     </div>
 
                     <div class="col-lg-4 col-md-5 col-sm-5">
@@ -109,7 +110,7 @@
 
                             <span class="input-group-btn">
                               <button id="rssFeedButton" class="btn btn-default" type="button"><i class="material-icons icon-small">rss_feed</i></button>
-                              <button onclick="window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md', '_blank');" class="btn btn-default" type="button">Hilfe</button>
+                              <button id="helpButton" class="btn btn-default" type="button">Hilfe</button>
                             </span>
                         </div>
                     </div>

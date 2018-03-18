@@ -1,3 +1,7 @@
+html * {
+    font-family: 'Roboto';
+}
+
 .spin-left {
     animation: spinleft 2s infinite linear;
     -webkit-animation: spinleft2 2s infinite linear;

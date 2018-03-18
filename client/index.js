@@ -1150,6 +1150,14 @@ $(() => {
 
     $('#searchSpan').popover();
 
+    $('[onclick-return-false]').click(() => {
+        return false;
+    });
+
+    $('#helpButton').click(() => {
+        window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md', '_blank');
+    });
+
     setQueryFromURIHash();
     query();
 });
