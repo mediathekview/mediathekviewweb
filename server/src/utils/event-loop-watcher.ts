@@ -2,7 +2,7 @@ import '../common/extensions/math';
 
 import { Observable, Subject } from 'rxjs';
 
-import { HighPrecisionTimer } from './high-precision-timer';
+import { Timer } from '../common/utils';
 
 type AggregationMode = 'min' | 'max' | 'avg';
 
@@ -35,7 +35,7 @@ export class EventLoopWatcher {
 
   async measureDelay(): Promise<number> {
     return new Promise<number>((resolve) => {
-      const stopwatch = new HighPrecisionTimer();
+      const stopwatch = new Timer();
       stopwatch.start();
 
       setImmediate(setImmediate, () => { // inner setImmediate, to measure an full event-loop-cycle

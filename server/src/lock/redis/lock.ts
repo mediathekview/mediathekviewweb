@@ -3,8 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import { Lock, LockedFunction } from '../../common/lock';
-import { interrupt, sleep } from '../../common/utils';
-import { HighPrecisionTimer } from '../../utils/';
+import { interrupt, sleep, Timer } from '../../common/utils';
 import { AcquireResult } from './acquire-result';
 
 const EXPIRE_MS = 10000;
@@ -45,7 +44,7 @@ export class RedisLock implements Lock {
       func = funcOrTimeout;
     }
 
-    const timer = new HighPrecisionTimer(true);
+    const timer = new Timer(true);
     let success = false;
 
     do {

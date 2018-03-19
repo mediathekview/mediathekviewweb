@@ -1,5 +1,4 @@
-import { HighPrecisionTimer } from './utils';
-import { timedBenchmark, benchmark } from './utils/benchmark';
+import { benchmark } from './utils/benchmark';
 
 (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator');
 

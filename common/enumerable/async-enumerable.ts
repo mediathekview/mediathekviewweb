@@ -1,9 +1,9 @@
 import {
   anyAsync, AsyncIteratorFunction, AsyncPredicate, batchAsync,
   BufferedAsyncIterable, filterAsync, forEachAsync, interceptAsync,
-  interruptEveryAsync, isAsyncIterable, isIterable, mapAsync,
-  mapManyAsync, ParallelizableIteratorFunction, ParallelizablePredicate,
-  singleAsync, toArrayAsync, toAsyncIterable, toAsyncIterator, toSync,
+  interruptEveryAsync, interruptPerSecondAsync, isAsyncIterable, isIterable,
+  mapAsync, mapManyAsync, ParallelizableIteratorFunction, ParallelizablePredicate,
+  singleAsync, toArrayAsync, toAsyncIterable, toAsyncIterator, toSync
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
@@ -183,6 +183,15 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
 
   static interruptEvery<T>(source: AnyIterable<T>, value: number): AsyncEnumerable<T> {
     return new AsyncEnumerable(source).interruptEvery(value);
+  }
+
+  interruptPerSecond(value: number): AsyncEnumerable<T> {
+    const interrupted = interruptPerSecondAsync(this.source, value);
+    return new AsyncEnumerable(interrupted);
+  }
+
+  static interruptPerSecond<T>(source: AnyIterable<T>, value: number): AsyncEnumerable<T> {
+    return new AsyncEnumerable(source).interruptPerSecond(value);
   }
 
   toAsync(): AsyncEnumerable<T> {

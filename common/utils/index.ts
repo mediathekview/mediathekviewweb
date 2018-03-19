@@ -11,3 +11,4 @@ export * from './reset-promise';
 export * from './feedable-async-iterable';
 export * from './ordered-feedable-async-iterable';
 export * from './provider-function-iterable';
+export * from './timer';

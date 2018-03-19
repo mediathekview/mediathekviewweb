@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import * as KoaBodyParser from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 
-import { HighPrecisionTimer } from '../../../utils';
+import { Timer } from '../../../common/utils';
 import { ExposedFunction, Exposer } from '../exposer';
 
 export class RestExposer implements Exposer {
@@ -74,7 +74,7 @@ export class RestExposer implements Exposer {
   }
 
   private static async responseTimeMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<void> {
-    const ms = await HighPrecisionTimer.measure(next);
+    const ms = await Timer.measure(next);
     const roundedMs = Math.precisionRound(ms, 2);
 
     context.response.set('X-Response-Time', `${roundedMs}ms`);

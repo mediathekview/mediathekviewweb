@@ -2,8 +2,35 @@ const NS_PER_SEC = 1e9;
 const NS_PER_MS = 1e6;
 const NS_PER_US = 1e3;
 
-export class HighPrecisionTimer {
-  private begin: [number, number] | null;
+declare const performance: any;
+declare const process: any;
+
+let getBegin: () => any;
+let getDuration: (begin: any) => number;
+
+if (typeof process == 'object' && typeof process.hrtime == 'function') {
+  console.log('using hrtime');
+  getBegin = () => process.hrtime();
+  getDuration = (begin: any) => {
+    const [secondsDiff, nanosecondsDiff] = process.hrtime(begin);
+    const nanoseconds = (secondsDiff * NS_PER_SEC) + nanosecondsDiff;
+
+    return nanoseconds;
+  };
+}
+else if (typeof performance == 'object' && typeof performance.now == 'function') {
+  console.log('using performance');
+  getBegin = () => performance.now();
+  getDuration = (begin: number) => (performance.now() - begin) * NS_PER_MS;
+}
+else {
+  console.log('using date');
+  getBegin = () => Date.now();
+  getDuration = (begin: number) => (Date.now() - begin) * NS_PER_MS;
+}
+
+export class Timer {
+  private begin: any | null;
 
   constructor();
   constructor(start: boolean);
@@ -20,7 +47,7 @@ export class HighPrecisionTimer {
   }
 
   reset() {
-    this.begin = process.hrtime();
+    this.begin = getBegin();
   }
 
   get nanoseconds(): number {
@@ -56,7 +83,7 @@ export class HighPrecisionTimer {
   static measure(func: () => void): number;
   static measure(func: () => Promise<void>): Promise<number>;
   static measure(func: () => void | Promise<void>): number | Promise<number> {
-    return new HighPrecisionTimer().measure(func);
+    return new Timer().measure(func);
   }
 
   private read(): number;
@@ -66,8 +93,7 @@ export class HighPrecisionTimer {
       throw new Error('timer not started');
     }
 
-    const [secondsDiff, nanosecondsDiff] = process.hrtime(this.begin);
-    let result = (secondsDiff * NS_PER_SEC) + nanosecondsDiff;
+    let result = getDuration(this.begin);
 
     if (divider != undefined) {
       result /= divider;

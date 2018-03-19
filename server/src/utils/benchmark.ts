@@ -1,12 +1,11 @@
-import { HighPrecisionTimer } from './high-precision-timer';
-import { getGetter } from '../common/utils';
+import { getGetter, Timer } from '../common/utils';
 
 const millisecondsPerTimerRead = measureTimerOverhead(3);
 
 export type BenchmarkResult = { operationsPerMillisecond: number, millisecondsPerOperation: number };
 
 export function benchmark(runs: number, func: (...args: any[]) => any, ...parameters: any[]): BenchmarkResult {
-  const timer = new HighPrecisionTimer(true);
+  const timer = new Timer(true);
 
   for (let i = 0; i < runs; i++) {
     func(...parameters);
@@ -16,7 +15,7 @@ export function benchmark(runs: number, func: (...args: any[]) => any, ...parame
 }
 
 export function timedBenchmark(ms: number, func: (...args: any[]) => any, ...parameters: any[]): BenchmarkResult {
-  const timer = new HighPrecisionTimer(true);
+  const timer = new Timer(true);
 
   let runs = 0;
   do {
@@ -29,7 +28,7 @@ export function timedBenchmark(ms: number, func: (...args: any[]) => any, ...par
 }
 
 export async function benchmarkAsync(runs: number, func: (...args: any[]) => Promise<any>, ...parameters: any[]): Promise<BenchmarkResult> {
-  const timer = new HighPrecisionTimer(true);
+  const timer = new Timer(true);
 
   for (let i = 0; i < runs; i++) {
     await func(...parameters);
@@ -39,7 +38,7 @@ export async function benchmarkAsync(runs: number, func: (...args: any[]) => Pro
 }
 
 export async function timedBenchmarkAsync(ms: number, func: (...args: any[]) => Promise<any>, ...parameters: any[]): Promise<BenchmarkResult> {
-  const timer = new HighPrecisionTimer(true);
+  const timer = new Timer(true);
 
   let runs = 0;
   do {
@@ -67,7 +66,7 @@ function calculateResult(runs: number, time: number): BenchmarkResult {
 }
 
 function measureTimerOverhead(runs: number) {
-  const timer = new HighPrecisionTimer(true);
+  const timer = new Timer(true);
   const millisecondsGetter = getGetter<number>(timer, 'milliseconds', true);
 
   const results: number[] = [];
