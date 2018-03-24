@@ -1,13 +1,13 @@
-import { Timer } from '../timer';
 import { AnyIterable } from '../any-iterable';
-import { interrupt } from '../timing';
+import { Timer } from '../timer';
+import { immediate } from '../timing';
 
 export async function* interruptEveryAsync<T>(iterable: AnyIterable<T>, every: number): AsyncIterableIterator<T> {
   let counter = 0;
 
   for await (const item of iterable) {
     if ((counter++ % every) == 0) {
-      await interrupt();
+      await immediate();
     }
 
     yield item;
@@ -22,8 +22,8 @@ export async function* interruptPerSecondAsync<T>(iterable: AnyIterable<T>, valu
     const elapsed = stopwatch.nanoseconds;
 
     if (elapsed >= delay) {
-      stopwatch.reset();
-      await interrupt();
+      stopwatch.restart();
+      await immediate();
     }
 
     yield item;

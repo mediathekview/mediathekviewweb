@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import { Lock, LockedFunction } from '../../common/lock';
-import { interrupt, sleep, Timer } from '../../common/utils';
+import { immediate, timeout, Timer } from '../../common/utils';
 import { AcquireResult } from './acquire-result';
 
 const EXPIRE_MS = 10000;
@@ -36,10 +36,10 @@ export class RedisLock implements Lock {
   async acquire(func: LockedFunction): Promise<boolean>;
   async acquire(timeout: number, func: LockedFunction): Promise<boolean>;
   async acquire(funcOrTimeout?: number | LockedFunction, func?: LockedFunction): Promise<boolean> {
-    let timeout = 1000;
+    let acquireTimeout = 1000;
 
     if (typeof funcOrTimeout == 'number') {
-      timeout = funcOrTimeout;
+      acquireTimeout = funcOrTimeout;
     } else {
       func = funcOrTimeout;
     }
@@ -56,9 +56,9 @@ export class RedisLock implements Lock {
       success = result == AcquireResult.Acquired;
 
       if (!success) {
-        await sleep(RETRY_DELAY);
+        await timeout(RETRY_DELAY);
       }
-    } while (!success && (timeout > 0) && (timer.milliseconds < timeout));
+    } while (!success && (acquireTimeout > 0) && (timer.milliseconds < acquireTimeout));
 
 
     if (success) {
@@ -67,7 +67,7 @@ export class RedisLock implements Lock {
       if (func != undefined) {
         try {
           await func();
-          await interrupt();
+          await immediate();
         }
         finally {
           await this.release();
@@ -95,7 +95,7 @@ export class RedisLock implements Lock {
 
     (async () => {
       while (run) {
-        await sleep(EXPIRE_MS / 2.5);
+        await timeout(EXPIRE_MS / 2.5);
 
         if (run) {
           const success = await this.tryRefresh();

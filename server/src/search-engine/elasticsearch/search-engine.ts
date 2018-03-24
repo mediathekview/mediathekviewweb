@@ -1,7 +1,7 @@
 import * as Elasticsearch from 'elasticsearch';
 
 import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
-import { sleep } from '../../common/utils';
+import { timeout } from '../../common/utils';
 import { LoggerFactoryProvider } from '../../logger-factory-provider';
 import { Converter } from './converter';
 
@@ -131,7 +131,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
         logger.warn(`couldn't connect to elasticsearch, trying again...`)
       }
 
-      await sleep(50);
+      await timeout(50);
     } while (!success);
   }
 }

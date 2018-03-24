@@ -9,7 +9,6 @@ let getBegin: () => any;
 let getDuration: (begin: any) => number;
 
 if (typeof process == 'object' && typeof process.hrtime == 'function') {
-  console.log('using hrtime');
   getBegin = () => process.hrtime();
   getDuration = (begin: any) => {
     const [secondsDiff, nanosecondsDiff] = process.hrtime(begin);
@@ -19,12 +18,10 @@ if (typeof process == 'object' && typeof process.hrtime == 'function') {
   };
 }
 else if (typeof performance == 'object' && typeof performance.now == 'function') {
-  console.log('using performance');
   getBegin = () => performance.now();
   getDuration = (begin: number) => (performance.now() - begin) * NS_PER_MS;
 }
 else {
-  console.log('using date');
   getBegin = () => Date.now();
   getDuration = (begin: number) => (Date.now() - begin) * NS_PER_MS;
 }
@@ -43,10 +40,10 @@ export class Timer {
   }
 
   start() {
-    this.reset();
+    this.restart();
   }
 
-  reset() {
+  restart() {
     this.begin = getBegin();
   }
 
@@ -69,7 +66,7 @@ export class Timer {
   measure(func: () => void): number;
   measure(func: () => Promise<void>): Promise<number>;
   measure(func: () => void | Promise<void>): number | Promise<number> {
-    this.reset();
+    this.restart();
 
     const voidOrPromise = func();
 
@@ -90,7 +87,7 @@ export class Timer {
   private read(divider: number): number;
   private read(divider?: number): number {
     if (this.begin == null) {
-      throw new Error('timer not started');
+      return 0;
     }
 
     let result = getDuration(this.begin);

@@ -1,72 +1,98 @@
 import '../common/extensions/math';
 
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { bufferCount, filter, map } from 'rxjs/operators';
+import { Subject } from 'rxjs/Subject';
 
-import { Timer } from '../common/utils';
+import { timeout, Timer, immediate } from '../common/utils';
 
-type AggregationMode = 'min' | 'max' | 'avg';
+export enum AggregationMode {
+  Minimum,
+  Maximum,
+  Average
+}
 
 export class EventLoopWatcher {
   private readonly subject: Subject<number>;
-  private started = false;
+  private run: boolean;
+  private running: boolean;
 
-  interval: number;
+  measureInterval: number;
 
   constructor();
-  constructor(interval: number);
-  constructor(interval: number = 1000) {
-    this.interval = interval;
+  constructor(measureInterval: number);
+  constructor(measureInterval: number = 1000) {
+    this.measureInterval = measureInterval;
+
+    this.run = false;
     this.subject = new Subject();
   }
 
-  watch(threshold: number): Observable<number>
-  watch(threshold: number, samples: number, aggregation: AggregationMode): Observable<number>
-  watch(threshold: number, samples: number = 1, aggregation: AggregationMode = 'max'): Observable<number> {
-    if (!this.started) {
-      this.startTimer();
-      this.started = true;
-    }
+  start() {
+    if (!this.run) {
+      this.run = true;
 
-    return this.subject
-      .bufferCount(samples)
-      .map((measures) => this.aggregate(aggregation, measures))
-      .filter((ms) => ms >= threshold);
+      if (!this.running) {
+        this.running = true;
+        this.runMeasureLoop()
+          .then(() => this.running = false);
+      }
+    }
+  }
+
+  stop() {
+    this.run = false;
+  }
+
+  watch(): Observable<number>
+  watch(threshold: number): Observable<number>
+  watch(threshold: number, samples: number): Observable<number>
+  watch(threshold: number, samples: number, aggregation: AggregationMode): Observable<number>
+  watch(threshold: number = 0, samples: number = 1, aggregation: AggregationMode = AggregationMode.Maximum): Observable<number> {
+    const observable = this.subject.pipe(
+      bufferCount(samples),
+      map((measures) => this.aggregate(aggregation, measures)),
+      filter((ms) => ms >= threshold)
+    );
+
+    return observable;
   }
 
   async measureDelay(): Promise<number> {
     return new Promise<number>((resolve) => {
       const stopwatch = new Timer();
-      stopwatch.start();
 
-      setImmediate(setImmediate, () => { // inner setImmediate, to measure an full event-loop-cycle
-        resolve(stopwatch.milliseconds);
+      setImmediate(() => {
+        stopwatch.start();
+
+        // inner setImmediate, to measure an full event-loop-cycle
+        setImmediate(() => resolve(stopwatch.milliseconds));
       });
     });
   }
 
-  private async startTimer() {
-    const timer = setInterval(() => this.measureTick(), this.interval);
-    timer.unref();
-  }
+  private async runMeasureLoop() {
+    while (this.run) {
+      const delay = await this.measureDelay();
+      this.subject.next(delay);
 
-  private async measureTick() {
-    const delay = await this.measureDelay();
-    this.subject.next(delay);
+      await timeout(this.measureInterval);
+    }
   }
 
   private aggregate(aggregation: AggregationMode, values: number[]): number {
     switch (aggregation) {
-      case 'min':
+      case AggregationMode.Minimum:
         return Math.min(...values);
 
-      case 'max':
+      case AggregationMode.Maximum:
         return Math.max(...values);
 
-      case 'avg':
+      case AggregationMode.Average:
         return Math.average(...values);
 
       default:
-        throw new Error(`aggregation ${aggregation} not implemented`);
+        throw new Error(`aggregation mode ${AggregationMode[aggregation]} not implemented`);
     }
   }
 }

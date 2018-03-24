@@ -2,12 +2,11 @@ import { AsyncEnumerable } from '../common/enumerable';
 import { LockProvider } from '../common/lock';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
-import { ProviderFunctionIterable, sleep } from '../common/utils';
+import { ProviderFunctionIterable, timeout } from '../common/utils';
 import { DatastoreFactory, DataType, Set } from '../datastore';
-import { InstanceProvider } from '../instance-provider';
 import { Keys } from '../keys';
-import { AggregatedEntryRepository } from '../repository';
 import { LoggerFactoryProvider } from '../logger-factory-provider';
+import { AggregatedEntryRepository } from '../repository';
 
 const BATCH_SIZE = 250;
 const BATCH_BUFFER_SIZE = 10;
@@ -55,7 +54,7 @@ export class EntriesIndexer {
       }
 
       if (ids.length == 0) {
-        await sleep(1000);
+        await timeout(1000);
       }
     }
     while (ids.length == 0);

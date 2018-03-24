@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs/Subject';
 
 import { LockProvider } from '../common/lock';
-import { ResetPromise, sleep, Timer } from '../common/utils';
+import { ResetPromise, timeout, Timer } from '../common/utils';
 import { LoopController } from './controller';
 
 export type LoopFunction = (controller: LoopController) => Promise<void>;
@@ -47,7 +47,7 @@ export class DistributedLoop {
       while (!stop) {
         await pause;
 
-        timer.reset();
+        timer.restart();
 
         const success = await lock.acquire(0);
         const acquireDuration = timer.milliseconds;
@@ -65,13 +65,13 @@ export class DistributedLoop {
           }
 
           const timeLeft = interval - timer.milliseconds;
-          await sleep(timeLeft);
+          await timeout(timeLeft);
           await lock.release();
 
-          await sleep(interval - acquireDuration);
+          await timeout(interval - acquireDuration);
         }
         else {
-          await sleep(accuracy - acquireDuration);
+          await timeout(accuracy - acquireDuration);
         }
       }
 
