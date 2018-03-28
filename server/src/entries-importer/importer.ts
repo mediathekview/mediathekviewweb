@@ -2,10 +2,13 @@ import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import { DatastoreFactory, DataType, Set } from '../datastore';
 import { EntrySource } from '../entry-source';
 import { Keys } from '../keys';
+import { LoggerFactoryProvider } from '../logger-factory-provider';
 import { EntryRepository } from '../repository/entry-repository';
 
 const BUFFER_SIZE = 10;
 const CONCURRENCY = 3;
+
+const logger = LoggerFactoryProvider.factory.create('[IMPORTER]');
 
 export class EntriesImporter {
   private readonly entryRepository: EntryRepository;
@@ -24,6 +27,8 @@ export class EntriesImporter {
 
         await this.entryRepository.saveMany(batch);
         await this.entriesToBeIndexed.addMany(ids);
+
+        logger.verbose(`imported ${ids.length} entries`);
       });
   }
 }
