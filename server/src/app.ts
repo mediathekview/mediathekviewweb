@@ -34,7 +34,7 @@ async function init() {
   const lockProvider = await InstanceProvider.lockProvider();
   const lock = lockProvider.get('init');
 
-  await lock.acquire(async () => {
+  await lock.acquire(Number.POSITIVE_INFINITY, async () => {
     await exposer.initialize();
     await indexer.initialize();
     await importer.initialize();
