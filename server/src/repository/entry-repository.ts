@@ -1,12 +1,12 @@
-import { Document, Entry } from '../common/model';
+import { Entry } from '../common/model';
 import { AnyIterable } from '../common/utils';
 
 export interface EntryRepository {
-  save(entry: Entry): Promise<Document<Entry>>;
-  saveMany(entries: Entry[]): Promise<Document<Entry>[]>;
+  save(entry: Entry): Promise<Entry>;
+  saveMany(entries: Entry[]): AsyncIterable<Entry>;
 
-  load(id: string): Promise<Document<Entry> | null>;
-  loadMany(ids: AnyIterable<string>): AsyncIterable<Document<Entry>>;
+  load(id: string): Promise<Entry | null>;
+  loadMany(ids: AnyIterable<string>): AsyncIterable<Entry>;
 
   drop(): Promise<void>;
 }

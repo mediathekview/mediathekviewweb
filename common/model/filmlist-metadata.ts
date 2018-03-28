@@ -1,4 +1,4 @@
-export interface FilmlistMetadata {
+export type FilmlistMetadata = {
   timestamp: number;
   hash: string;
 }

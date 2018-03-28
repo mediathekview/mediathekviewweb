@@ -1,4 +1,4 @@
-import { AggregatedEntry, Document } from '../common/model';
+import { AggregatedEntry } from '../common/model';
 import { AnyIterable } from '../common/utils';
 
 export interface AggregatedEntryRepository {

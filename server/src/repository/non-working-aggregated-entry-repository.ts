@@ -1,6 +1,6 @@
 import { AggregatedEntryRepository } from './aggregated-entry-repository';
 import { EntryRepository } from './entry-repository';
-import { AggregatedEntry, Entry, Document } from '../common/model';
+import { AggregatedEntry, Entry } from '../common/model';
 import { AnyIterable } from '../common/utils';
 import { AsyncEnumerable } from '../common/enumerable/index';
 
@@ -30,13 +30,10 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
     return result;
   }
 
-  private toAggregated(entryDocument: Document<Entry>): AggregatedEntry {
-    const lastSeenTimestamp = Math.floor(entryDocument.updated.valueOf() / 1000);
-
-    const entry = {
-      ...entryDocument.item,
+  private toAggregated(entry: Entry): AggregatedEntry {
+    const aggregatedEntry = {
+      ...entry,
       metadata: {
-        lastSeenTimestamp: lastSeenTimestamp,
         downloads: 1234,
         plays: 1234,
         comments: 0,
@@ -46,6 +43,6 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
       }
     };
 
-    return entry;
+    return aggregatedEntry;
   }
 }

@@ -1,102 +1,100 @@
 import * as Mongo from 'mongodb';
 
 import { AsyncEnumerable } from '../../common/enumerable';
-import { Document } from '../../common/model';
-import { AnyIterable } from '../../common/utils';
-import { SaveItem } from '../save-item';
-import { InsertedMongoDocument, MongoDocument } from './mongo-document';
-import { MongoFilter, MongoUpdate } from './mongo-query';
+import { Entity } from '../../common/model';
+import { AnyIterable, Omit, PartialProperty } from '../../common/utils';
+import { MongoDocument, toEntity, toMongoDocument, toMongoDocumentWithPartialId } from './mongo-document';
+import { MongoFilter } from './mongo-query';
+import { objectIdOrStringToString } from './utils';
 
 const CREATED_PROPERTY = 'created';
 const UPDATED_PROPERTY = 'updated';
 const ITEM_PROPERTY = 'item';
+const BATCH_SIZE = 100;
 
-export class MongoBaseRepository<T> {
-  private readonly collection: Mongo.Collection<InsertedMongoDocument<T>>;
+export class MongoBaseRepository<T extends Entity, TWithPartialId extends PartialProperty<T, 'id'> = PartialProperty<T, 'id'>> {
+  private readonly collection: Mongo.Collection<MongoDocument<T>>;
 
-  constructor(collection: Mongo.Collection<InsertedMongoDocument<T>>) {
+  constructor(collection: Mongo.Collection<MongoDocument<T>>) {
     this.collection = collection;
   }
 
-  save(item: T): Promise<Document<T>>;
-  save(item: T, id: string): Promise<Document<T>>;
-  async save(item: T, id?: string): Promise<Document<T>> {
-    const result = await this.saveMany([{ item: item, id: id }]);
-    return result[0];
+  save(entity: TWithPartialId): Promise<T> {
+    const result = this.saveMany([entity]);
+    return AsyncEnumerable.single(result);
   }
 
-  async saveMany(items: SaveItem<T>[]): Promise<Document<T>[]> {
-    const mongoDocuments = items.map((item) => new MongoDocument(item.item, item.id));
-    const operations = mongoDocuments.map((document) => this.getUpdateOneOperation(document));
+  saveMany(entities: AnyIterable<TWithPartialId>): AsyncIterable<T> {
+    const result = AsyncEnumerable.from(entities)
+      .batch(BATCH_SIZE)
+      .map((operations) => operations.map(this.getReplaceOneOperation))
+      .parallelMap(3, false, async (operations) => {
+        const result = await this.collection.bulkWrite(operations);
 
-    const result = await this.collection.bulkWrite(operations);
+        const saved = AsyncEnumerable.from(entities)
+          .map((entity, index) => {
+            let id = entity.id;
 
-    const documents = mongoDocuments.map((mongoDocument, index) => {
-      let id = mongoDocument._id;
+            const hasUpsertedId = (result.upsertedIds as Object).hasOwnProperty(index);
 
-      const hasUpsertedId = (result.upsertedIds as Object).hasOwnProperty(index);
-      if (hasUpsertedId) {
-        id = result.upsertedIds[index]._id;
-      }
+            if (hasUpsertedId) {
+              id = result.upsertedIds[index]._id;
+            }
 
-      return mongoDocument.toDocument(id);
-    });
+            return entity as any as T;
+          });
 
-    return documents;
+        return saved;
+      })
+      .mapMany((entities) => entities);
+
+    return result;
   }
 
-  async load(id: string): Promise<Document<T> | null> {
-    const filter: MongoFilter = {
+  async load(id: string): Promise<T | null> {
+    const filter = {
       _id: id
     };
 
-    const result = await this.collection.findOne(filter);
+    const document = await this.collection.findOne(filter);
+    const entity = (document == null) ? null : toEntity(document);
 
-    if (result == null) {
-      return null;
-    }
-
-    const document = MongoDocument.fromInserted(result).toDocument();
-    return document;
+    return entity;
   }
 
-  async *loadMany(ids: AnyIterable<string>): AsyncIterable<Document<T>> {
+  async *loadMany(ids: AnyIterable<string>): AsyncIterable<T> {
     const idsArray = await AsyncEnumerable.toArray(ids);
 
     const filter: MongoFilter = {
       _id: { $in: idsArray }
     }
 
-    const cursor = this.collection.find(filter);
+    const cursor = this.collection.find<MongoDocument<T>>(filter);
 
-    let insertedDocument: InsertedMongoDocument<T>;
-    while ((insertedDocument = await cursor.next()) != null) {
-      const document = MongoDocument.fromInserted(insertedDocument).toDocument();
-      yield document;
+    let document: MongoDocument<T>;
+    while ((document = await cursor.next()) != null) {
+      const entity = toEntity(document);
+      yield entity;
     }
   }
 
-  async drop():Promise<void> {
+  async drop(): Promise<void> {
     await this.collection.drop();
   }
 
-  private getUpdateOneOperation(document: MongoDocument<T>): { updateOne: { filter: MongoFilter, update: MongoUpdate, upsert: boolean } } {
+  private getReplaceOneOperation(entity: TWithPartialId) {
     const filter: MongoFilter = {};
 
-    if (document._id != undefined) {
-      filter['_id'] = document._id;
+    if (entity.id != undefined) {
+      filter['_id'] = entity.id;
     }
 
-    const update: MongoUpdate = {
-      $setOnInsert: { created: document[CREATED_PROPERTY] },
-      $max: { updated: document[UPDATED_PROPERTY] },
-      $set: { item: document[ITEM_PROPERTY] }
-    }
+    const replacement = toMongoDocumentWithPartialId(entity);
 
     const operation = {
-      updateOne: {
-        filter: filter,
-        update: update,
+      replaceOne: {
+        filter,
+        replacement,
         upsert: true
       }
     };

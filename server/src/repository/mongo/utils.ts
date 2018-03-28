@@ -1,6 +1,11 @@
 import { ObjectID } from 'mongodb';
 
-export function objectIDOrStringToString(id: string | ObjectID): string {
+import { Entity } from '../../common/model';
+import { PartialProperty } from '../../common/utils';
+
+export type EntityWithPartialId<T extends Entity = Entity> = PartialProperty<Entity, 'id'>;
+
+export function objectIdOrStringToString(id: string | ObjectID): string {
   if (typeof id == 'string') {
     return id;
   }
@@ -8,7 +13,7 @@ export function objectIDOrStringToString(id: string | ObjectID): string {
   return id.toHexString();
 }
 
-export function stringToObjectIDOrString(id: string): string | ObjectID {
+export function stringToObjectIdOrString(id: string): string | ObjectID {
   const valid = ObjectID.isValid(id);
 
   if (valid) {

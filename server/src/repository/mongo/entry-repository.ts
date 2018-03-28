@@ -1,35 +1,34 @@
 import * as Mongo from 'mongodb';
 
 import { EntryRepository } from '../';
-import { Document, Entry } from '../../common/model';
+import { Entry } from '../../common/model';
 import { AnyIterable } from '../../common/utils';
 import { MongoBaseRepository } from './base-repository';
-import { InsertedMongoDocument } from './mongo-document';
+import { MongoDocument, toMongoDocument, toEntity } from './mongo-document';
+import { MongoFilter } from './mongo-query';
 
 export class MongoEntryRepository implements EntryRepository {
-  private readonly collection: Mongo.Collection<InsertedMongoDocument<Entry>>;
+  private readonly collection: Mongo.Collection<MongoDocument<Entry>>;
   private readonly baseRepository: MongoBaseRepository<Entry>;
 
-  constructor(collection: Mongo.Collection<InsertedMongoDocument<Entry>>) {
+  constructor(collection: Mongo.Collection<MongoDocument<Entry>>) {
     this.collection = collection;
     this.baseRepository = new MongoBaseRepository(collection);
   }
 
-  save(entry: Entry): Promise<Document<Entry>> {
-    return this.baseRepository.save(entry, entry.id);
+  save(entry: Entry): Promise<Entry> {
+    return this.baseRepository.save(entry);
   }
 
-  saveMany(entries: Entry[]): Promise<Document<Entry>[]> {
-    const saveItems = entries.map((entry) => ({ item: entry, id: entry.id }));
-
-    return this.baseRepository.saveMany(saveItems);
+  saveMany(entries: Entry[]): AsyncIterable<Entry> {
+    return this.baseRepository.saveMany(entries);
   }
 
-  load(id: string): Promise<Document<Entry> | null> {
+  load(id: string): Promise<Entry | null> {
     return this.baseRepository.load(id);
   }
 
-  loadMany(ids: AnyIterable<string>): AsyncIterable<Document<Entry>> {
+  loadMany(ids: AnyIterable<string>): AsyncIterable<Entry> {
     return this.baseRepository.loadMany(ids);
   }
 

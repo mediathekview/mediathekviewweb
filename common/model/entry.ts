@@ -10,6 +10,7 @@ export type Entry = Entity & {
   description: string;
   website: string;
   media: Media[];
+  lastSeen: number;
 
   source: {
     identifier: string,
@@ -21,21 +22,21 @@ export type AggregatedEntry = Entry & {
   metadata: EntryMetadata;
 }
 
-export const Field = {
-  ID: 'id',
-  Channel: 'channel',
-  Topic: 'topic',
-  Title: 'title',
-  Timestamp: 'timestamp',
-  Duration: 'duration',
-  Description: 'description',
-  Website: 'website',
-  MediaType: 'media.type',
-  MediaUrl: 'media.url',
-  MediaSize: 'media.size',
-  VideoQuality: 'media.quality',
-  AudioQuality: 'media.quality',
-  LastSeen: 'metadata.lastSeen'
+export enum Field {
+  ID = 'id',
+  Channel = 'channel',
+  Topic = 'topic',
+  Title = 'title',
+  Timestamp = 'timestamp',
+  Duration = 'duration',
+  Description = 'description',
+  Website = 'website',
+  LastSeen = 'lastSeen',
+  MediaType = 'media.type',
+  MediaUrl = 'media.url',
+  MediaSize = 'media.size',
+  VideoQuality = 'media.quality',
+  AudioQuality = 'media.quality'
 }
 
 export enum MediaType {

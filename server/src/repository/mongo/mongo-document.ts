@@ -1,92 +1,49 @@
-import { ObjectID } from 'mongodb';
-import { Document } from '../../common/model';
-import { now } from '../../common/utils';
-import { objectIDOrStringToString, stringToObjectIDOrString } from './utils';
+import { ObjectId } from 'mongodb';
 
-export type InsertedMongoDocument<T> = {
-  _id: string | ObjectID;
-  created: Date;
-  updated: Date;
-  item: T;
+import { Entity } from '../../common/model';
+import { Omit, PartialProperty } from '../../common/utils';
+import { objectIdOrStringToString, stringToObjectIdOrString, EntityWithPartialId } from './utils';
+
+export type MongoDocument<T extends Entity> = Omit<T, 'id'> & {
+  _id: string | ObjectId;
 }
 
-export class MongoDocument<T> {
-  _id?: string | ObjectID;
-  created: Date;
-  updated: Date;
-  item: T;
+export type MongoDocumentWitPartialId<T extends PartialProperty<Entity, 'id'>> = Omit<T, 'id'> & {
+  _id?: string | ObjectId;
+}
 
-  constructor(item: T);
-  constructor(item: T, id?: string | ObjectID);
-  constructor(item: T, id?: string | ObjectID, created?: Date);
-  constructor(item: T, id?: string | ObjectID, created?: Date, updated?: Date);
-  constructor(item: T, id?: string | ObjectID, created?: Date, updated?: Date) {
-    if (id != undefined) {
-      if (typeof id == 'string') {
-        this._id = stringToObjectIDOrString(id);
-      } else {
-        this._id == id;
-      }
-    }
+export function toEntity<T extends Entity>(document: MongoDocument<T>): T {
+  const entity: T = {
+    id: objectIdOrStringToString(document._id),
+    ...(document as ObjectMap)
+  } as T;
 
-    this.item = item;
+  delete (entity as any as MongoDocument<T>)._id;
 
-    const date = now();
-    this.created = (created != undefined) ? created : date;
-    this.updated = (updated != undefined) ? updated : date;
+  return entity;
+}
+
+export function toMongoDocument<T extends Entity>(entity: T): MongoDocument<T> {
+  const document: MongoDocument<T> = {
+    _id: stringToObjectIdOrString(entity.id),
+    ...(entity as ObjectMap)
+  } as MongoDocument<T>;
+
+  delete (document as any as T).id;
+
+  return document;
+}
+
+export function toMongoDocumentWithPartialId<T extends EntityWithPartialId>(entity: T): MongoDocumentWitPartialId<T> {
+  const document: MongoDocumentWitPartialId<T> = {
+    ...(entity as ObjectMap)
+  } as MongoDocumentWitPartialId<T>;
+
+  if (entity.id != undefined) {
+    document._id = entity.id;
   }
 
-  toDocument(id?: string | ObjectID): Document<T> {
-    if (id == undefined) {
-      if (this._id == undefined) {
-        throw new Error('id of document not yet set');
-      }
+  delete (document as any as T).id;
 
-      id = this._id;
-    }
-
-    id = objectIDOrStringToString(id);
-
-    if ((this._id != null) && (this._id != id)) {
-      throw new Error('paramter id differs from documents id');
-    }
-
-    const document = {
-      id: id,
-      created: this.created,
-      updated: this.updated,
-      item: this.item
-    };
-
-    return document;
-  }
-
-  toInserted(id?: string | ObjectID): InsertedMongoDocument<T> {
-    if (id == undefined) {
-      if (this._id == undefined) {
-        throw new Error('id of document not yet set');
-      }
-
-      id = this._id;
-    }
-
-    if ((this._id != null) && (this._id != id)) {
-      throw new Error('paramter id differs from documents id');
-    }
-
-    return {
-      _id: id,
-      created: this.created,
-      updated: this.updated,
-      item: this.item
-    }
-  }
-
-  static fromInserted<T>(mongoDocument: InsertedMongoDocument<T>): MongoDocument<T> {
-    return new MongoDocument<T>(mongoDocument.item, mongoDocument._id, mongoDocument.created, mongoDocument.updated);
-  }
-
-  static fromDocument<T>(document: Document<T>): MongoDocument<T> {
-    return new MongoDocument<T>(document.item, document.id, document.created, document.updated);
-  }
+  return document;
 }

@@ -2,6 +2,7 @@ import './common/async-iterator-symbol';
 
 import * as Cluster from 'cluster';
 import * as Http from 'http';
+import { map } from 'rxjs/operators';
 
 import { Serializer } from './serializer';
 import { Filmlist } from './entry-source/filmlist/filmlist';
@@ -10,15 +11,15 @@ import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
 import { LoggerFactoryProvider } from './logger-factory-provider';
-import { EventLoopWatcher } from './utils';
+import { AggregationMode, EventLoopWatcher } from './utils';
 
 const watcher = new EventLoopWatcher(10);
 const logger = LoggerFactoryProvider.factory.create('[APP]');
 
 watcher
-  .watch(0, 250, 'avg')
-  .map((measure) => Math.round(measure * 10000) / 10000)
-  .subscribe((delay) => logger.silly(`eventloop-${process.pid}: ${delay} ms`));
+  .watch(0, 250, AggregationMode.Maximum)
+  .pipe(map((measure) => Math.round(measure * 10000) / 10000))
+  .subscribe((delay) => logger.silly(`eventloop-${process.pid}: ${delay} ms`))
 
 Serializer.registerPrototype(Filmlist);
 

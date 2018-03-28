@@ -41,12 +41,17 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(source).map(mapper);
   }
 
-  single(predicate: AsyncPredicate<T>): Promise<T> {
+  single(): Promise<T>
+  single(predicate: AsyncPredicate<T>): Promise<T>
+  single(predicate?: AsyncPredicate<T>): Promise<T>
+  single(predicate?: AsyncPredicate<T>): Promise<T> {
     const result = singleAsync(this.source, predicate);
     return result;
   }
 
-  static single<T>(source: AnyIterable<T>, predicate: AsyncPredicate<T>): Promise<T> {
+  static single<T>(source: AnyIterable<T>): Promise<T>
+  static single<T>(source: AnyIterable<T>, predicate: AsyncPredicate<T>): Promise<T>
+  static single<T>(source: AnyIterable<T>, predicate?: AsyncPredicate<T>): Promise<T> {
     return new AsyncEnumerable(source).single(predicate);
   }
 

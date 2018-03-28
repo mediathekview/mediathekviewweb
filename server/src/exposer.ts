@@ -1,13 +1,13 @@
 import { Server } from 'http';
 
-import { ErrorType, Result } from './api/exposer';
+import { ErrorType, Result, ResultError } from './api/exposer';
 import { MiddlewareExposer, ParameterVerifierExposerMiddleware } from './api/exposer/middleware';
 import { RestExposer } from './api/exposer/rest';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine, SearchQuery } from './common/search-engine';
 import { InstanceProvider } from './instance-provider';
 
-const REST_PREFIX = '/api';
+const REST_PREFIX = '/api/v2';
 const SEARCH_PATH = ['search'];
 
 export class MediathekViewWebExposer {
@@ -48,16 +48,31 @@ export class MediathekViewWebExposer {
       .addOptional(SEARCH_PATH, 'sort', 'skip', 'limit');
 
     this.exposer!.expose(SEARCH_PATH, async (parameters) => {
-      const out: Result = {};
+      const result: Result = {};
 
       try {
-        out.result = await this.searchEngine!.search(parameters as SearchQuery);
+        result.result = await this.searchEngine!.search(parameters as SearchQuery);
       }
       catch (error) {
-        out.errors = [{ type: ErrorType.ServerError, details: (error as Error).message }];
+        result.errors = this.getResultErrors(error);
       }
 
-      return out;
+      return result;
     });
+  }
+
+  private getResultErrors(...errors: Error[]): ResultError[] {
+    const resultErrors = errors.map(this.getResultError);
+    return resultErrors;
+  }
+
+  private getResultError(error: Error): ResultError {
+    const details = `${error.name}: ${error.message}`;
+    const resultError = {
+      type: ErrorType.ServerError,
+      details
+    };
+
+    return resultError;
   }
 }

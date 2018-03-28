@@ -1,1 +1,1 @@
-declare type ObjectMap<TValue> = { [key: string]: TValue }
+declare type ObjectMap<TValue = any> = { [key: string]: TValue }
