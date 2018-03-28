@@ -36,7 +36,24 @@ export class EntriesIndexer {
       }
       catch (error) {
         logger.error(error);
+
+        await this.pushBack(batch);
+        await timeout(2500);
+      }
+    }
+  }
+
+  private async pushBack(batch: string[]): Promise<void> {
+    let success = false;
+    while (!success) {
+      try {
         await this.entriesToBeIndexed.addMany(batch);
+        success = true;
+      }
+      catch (error) {
+        logger.error(error);
+
+        await timeout(2500);
       }
     }
   }

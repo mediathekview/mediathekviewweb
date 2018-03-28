@@ -9,7 +9,7 @@ import { encode } from 'punycode';
 const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
 
-const READ_SIZE = 25 * 1024; // 25 KB
+const READ_SIZE = 100 * 1024; // 100 KB
 
 export class FilmlistParser implements AsyncIterable<Entry[]> {
   private readonly stream: Readable;

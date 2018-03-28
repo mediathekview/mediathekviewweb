@@ -39,9 +39,9 @@ const staticConfig: Config = {
   },
 
   importer: {
-    latestCheckInterval: 60 * 2,
+    latestCheckInterval: 60 * 5,
     archiveCheckInterval: 60 * 45,
-    archiveRange: 10,
+    archiveRange: 1,
     cache: true
   }
 }

@@ -58,10 +58,10 @@ async function init() {
       }
     }
     else {
-      logger.info(`Worker ${process.pid} started`);
+      logger.info(`worker ${process.pid} started`);
       await init();
 
-      logger.info(`Worker ${process.pid} initialized`);
+      logger.info(`worker ${process.pid} initialized`);
     }
   }
   catch (error) {

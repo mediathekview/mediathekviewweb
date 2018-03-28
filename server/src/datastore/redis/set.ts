@@ -121,9 +121,8 @@ export class RedisSet<T> implements Set<T> {
 
   private async *popMany(count: number): AsyncIterableIterator<T> {
     const serialized = await this.redis.spop(this.key, count) as string[];
-
     const values = serialized.map((value) => deserialize(value, this.dataType));
-
+    
     yield* values;
   }
 }

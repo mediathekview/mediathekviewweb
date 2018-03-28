@@ -1,9 +1,11 @@
-import { RedisOptions } from 'ioredis';
 import * as Bull from 'bull';
 
-import { Queue, ProcessFunction, Job, EnqueueOptions } from '../';
-import { BullJob } from './job';
+import { EnqueueOptions, Job, ProcessFunction, Queue } from '../';
+import { LoggerFactoryProvider } from '../../logger-factory-provider';
 import { Serializer } from '../../serializer/serializer';
+import { BullJob } from './job';
+
+const logger = LoggerFactoryProvider.factory.create('[BullQueueWrapper]');
 
 export class BullQueue<T> implements Queue<T> {
   private readonly queue: Bull.Queue;
@@ -41,7 +43,7 @@ export class BullQueue<T> implements Queue<T> {
       try {
         await func(job);
       } catch (error) {
-        console.error('error at processing queue-job', error);
+        logger.error(`error at processing job: ${error}`);
         throw error;
       }
     });
