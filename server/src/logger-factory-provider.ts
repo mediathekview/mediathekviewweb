@@ -6,7 +6,7 @@ export class LoggerFactoryProvider {
 
   static get factory(): LoggerFactory {
     if (this.loggerFactory == null) {
-      this.loggerFactory = new ConsoleLoggerFactory(LogLevel.Info);
+      this.loggerFactory = new ConsoleLoggerFactory(LogLevel.Silly);
     }
 
     return this.loggerFactory;
