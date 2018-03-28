@@ -131,7 +131,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
         logger.warn(`couldn't connect to elasticsearch, trying again...`)
       }
 
-      await timeout(50);
+      await timeout(1000);
     } while (!success);
   }
 }
