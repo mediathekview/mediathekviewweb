@@ -3,7 +3,7 @@ import { ObjectID } from 'mongodb';
 import { Entity } from '../../common/model';
 import { PartialProperty } from '../../common/utils';
 
-export type EntityWithPartialId<T extends Entity = Entity> = PartialProperty<Entity, 'id'>;
+export type EntityWithPartialId<T extends Entity = Entity> = PartialProperty<T, 'id'>;
 
 export function objectIdOrStringToString(id: string | ObjectID): string {
   if (typeof id == 'string') {

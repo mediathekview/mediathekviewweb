@@ -22,7 +22,7 @@ export class RedisDatastoreFactory implements DatastoreFactory {
     return 'unnamed:' + uniqueID();
   }
 
-  construct<TInstance, TValue>(constructor: RedisDatastoreConstructable<TInstance>, keyOrDataType: string | DataType, dataType?: DataType): TInstance {
+  construct<TInstance>(constructor: RedisDatastoreConstructable<TInstance>, keyOrDataType: string | DataType, dataType?: DataType): TInstance {
     let key: string;
 
     if (typeof keyOrDataType != 'string') {
