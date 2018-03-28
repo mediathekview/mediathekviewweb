@@ -15,6 +15,11 @@ export class Segment {
 
   static fromString(segmentString: string): Segment {
     const match = segmentString.match(SEGMENT_PARSE_REGEX);
+
+    if (match == null) {
+      throw new Error('should not happen');
+    }
+
     const [, invertedString, selectorA, selectorB, quotedText, nonQuotedText] = match;
 
     const selector = (selectorA != undefined) ? selectorA : selectorB;

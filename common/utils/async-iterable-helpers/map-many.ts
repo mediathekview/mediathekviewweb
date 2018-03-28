@@ -4,7 +4,12 @@ export async function* mapManyAsync<TIn, TOut>(iterable: AnyIterable<TIn>, mappe
   let index = 0;
 
   for await (const item of iterable) {
-    const mapped = mapper(item, index++);
+    let mapped = mapper(item, index++);
+
+    if (mapped instanceof Promise) {
+      mapped = await mapped;
+    }
+
     yield* mapped;
   }
 }
