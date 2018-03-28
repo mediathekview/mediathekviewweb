@@ -3,15 +3,19 @@ import '../extensions/array';
 import { SyncEnumerable } from '../enumerable';
 import { QueryBody } from '../search-engine/query';
 import { BoolQueryBuilder } from '../search-engine/query/builder';
-import { Segment } from './segment';
-import { SegmentConverter, SegmentConverterResultArray } from './segment-converter';
-import { Segmentizer } from './segmentizer';
-import { SegmentConverterResult, SegmentConverterResultType } from './index';
 import { ChannelSegmentConverter } from './converters/channel';
 import { DescriptionSegmentConverter } from './converters/description';
 import { DurationSegmentConverter } from './converters/duration';
 import { TitleSegmentConverter } from './converters/title';
 import { TopicSegmentConverter } from './converters/topic';
+import { Segment } from './segment';
+import {
+  SegmentConverter,
+  SegmentConverterResult,
+  SegmentConverterResultArray,
+  SegmentConverterResultType
+} from './segment-converter';
+import { Segmentizer } from './segmentizer';
 
 const CONVERTERS: SegmentConverter[] = [
   new ChannelSegmentConverter(),
