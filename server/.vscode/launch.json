@@ -8,11 +8,13 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}/build/test2.js",
-      "preLaunchTask": "tsc: build - tsconfig.json",
-      "outFiles": [
-        "${workspaceFolder}/build/**/*.js"
-      ]
+      "preLaunchTask": "build",
+      "outFiles": ["${workspaceFolder}/build/**/*.js"],
+      "program": "${workspaceFolder}/build/app.js",
+      "sourceMaps": true,
+      "showAsyncStacks": true,
+      "autoAttachChildProcesses": true,
+      "protocol": "inspector"      
     }
   ]
 }

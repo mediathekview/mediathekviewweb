@@ -19,8 +19,7 @@
     "@types/kue": "^0.11.8",
     "@types/mongodb": "^3.0.9",
     "@types/needle": "^2.0.2",
-    "@types/node": "^9.6.0",
-    "@types/socket.io": "^1.4.32",
+    "@types/node": "^9.6.1",
     "nodemon": "^1.17.2",
     "ts-node": "^5.0.1",
     "typescript": "^2.8.1"
@@ -38,7 +37,6 @@
     "lzma-native": "^3.0.7",
     "mongodb": "^3.0.5",
     "needle": "^2.2.0",
-    "rxjs": "^5.5.8",
-    "socket.io": "^2.0.4"
+    "rxjs": "^5.5.8"
   }
 }

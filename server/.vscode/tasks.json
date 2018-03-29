@@ -4,9 +4,15 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "npm",
-      "script": "build",
-      "problemMatcher": []
+      "identifier": "build",
+      "type": "typescript",
+      "tsconfig": "server/tsconfig.json",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "group": {
+        "kind": "build"
+      }
     }
   ]
 }
