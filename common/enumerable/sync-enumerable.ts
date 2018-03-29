@@ -12,6 +12,10 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     this.iterator = null;
   }
 
+  static from<T>(iterable: Iterable<T>): SyncEnumerable<T> {
+    return new SyncEnumerable(iterable);
+  }
+
   filter(predicate: Predicate<T>): SyncEnumerable<T> {
     const filtered = filter(this.source, predicate);
     return new SyncEnumerable(filtered);
@@ -75,12 +79,12 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(source).intercept(func);
   }
 
-  group<TGroup>(selector: IteratorFunction<T, TGroup>): Map<TGroup, T[]> {
+  group<TGroup>(selector: IteratorFunction<T, TGroup>): SyncEnumerable<[TGroup, T[]]> {
     const grouped = group<T, TGroup>(this.source, selector);
-    return grouped;
+    return new SyncEnumerable(grouped);
   }
 
-  static group<T, TGroup>(source: Iterable<T>, selector: IteratorFunction<T, TGroup>): Map<TGroup, T[]> {
+  static group<T, TGroup>(source: Iterable<T>, selector: IteratorFunction<T, TGroup>): SyncEnumerable<[TGroup, T[]]> {
     return new SyncEnumerable(source).group(selector);
   }
 

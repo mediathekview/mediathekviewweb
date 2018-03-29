@@ -4,6 +4,7 @@ import { SyncEnumerable } from '../enumerable';
 import { QueryBody } from '../search-engine/query';
 import { BoolQueryBuilder } from '../search-engine/query/builder';
 import { ChannelSegmentConverter } from './converters/channel';
+import { DefaultSegmentConverter } from './converters/default';
 import { DescriptionSegmentConverter } from './converters/description';
 import { DurationSegmentConverter } from './converters/duration';
 import { TitleSegmentConverter } from './converters/title';
@@ -13,7 +14,7 @@ import {
   SegmentConverter,
   SegmentConverterResult,
   SegmentConverterResultArray,
-  SegmentConverterResultType
+  SegmentConverterResultType,
 } from './segment-converter';
 import { Segmentizer } from './segmentizer';
 
@@ -22,7 +23,8 @@ const CONVERTERS: SegmentConverter[] = [
   new DescriptionSegmentConverter(),
   new DurationSegmentConverter(),
   new TitleSegmentConverter(),
-  new TopicSegmentConverter()
+  new TopicSegmentConverter(),
+  new DefaultSegmentConverter()
 ];
 
 export class SearchStringParser {
@@ -37,28 +39,36 @@ export class SearchStringParser {
   parse(text: string): QueryBody {
     const segments = this.segmentizer.segmentize(text).toEnumerable();
 
-    const resultArrays = segments
+    const groupedResults = (segments
       .map((result) => this.convertSegment(result))
-      .filter((result) => result != null) as SyncEnumerable<SegmentConverterResultArray>;
-
-    const groupedResults = resultArrays
+      .filter((result) => result != null) as SyncEnumerable<SegmentConverterResultArray>)
       .mapMany((items) => items)
-      .group((result) => result.field);
+      .group((result) => this.groupResultSelector(result))
+      .map(([, results]) => results);
 
     const query = this.createQuery(groupedResults);
     return query;
   }
 
-  private createQuery(groupedResults: Map<string, SegmentConverterResult[]>): QueryBody {
+  private groupResultSelector(result: SegmentConverterResult): string {
+    return result.fields.sort().join('+');
+  }
+
+  private createQuery(groupedResults: Iterable<SegmentConverterResult[]>): QueryBody {
     const boolQueryBuilder = new BoolQueryBuilder();
 
-    for (const [field, results] of groupedResults) {
+    for (const results of groupedResults) {
       const innerBoolQueryBuilder = new BoolQueryBuilder();
 
       for (const result of results) {
         switch (result.type) {
           case SegmentConverterResultType.Include:
-            innerBoolQueryBuilder.should(result.query);
+            console.log(result)
+            if (result.joinSameFieldsResults) {
+              innerBoolQueryBuilder.must(result.query);
+            } else {
+              innerBoolQueryBuilder.should(result.query);
+            }
             break;
 
           case SegmentConverterResultType.Exclude:

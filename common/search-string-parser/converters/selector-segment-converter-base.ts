@@ -1,12 +1,14 @@
-import { SegmentConverter, SegmentConverterResultArray, Segment, SegmentConverterResultType as SegmentType } from '../';
+import { Segment, SegmentConverter, SegmentConverterResultArray, SegmentConverterResultType } from '../';
 import { QueryBody } from '../../search-engine/query';
 
 export abstract class SelectorSegmentConverterBase implements SegmentConverter {
-  private readonly field: string;
+  private readonly fields: string[];
   private readonly selectorRegex: RegExp;
 
-  constructor(field: string, selectorRegex: RegExp) {
-    this.field = field;
+  constructor(field: string, selectorRegex: RegExp)
+  constructor(fields: string[], selectorRegex: RegExp)
+  constructor(fieldOrFields: string | string[], selectorRegex: RegExp) {
+    this.fields = Array.isArray(fieldOrFields) ? fieldOrFields : [fieldOrFields];
     this.selectorRegex = selectorRegex;
   }
 
@@ -21,10 +23,11 @@ export abstract class SelectorSegmentConverterBase implements SegmentConverter {
     const query = this.textToQuery(segment.text);
 
     if (query != null) {
-      const type = segment.inverted ? SegmentType.Exclude : SegmentType.Include;
+      const type = segment.inverted ? SegmentConverterResultType.Exclude : SegmentConverterResultType.Include;
 
       result = [{
-        field: this.field,
+        fields: this.fields,
+        joinSameFieldsResults: false,
         type: type,
         query: query
       }];

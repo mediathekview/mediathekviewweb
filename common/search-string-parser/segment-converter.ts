@@ -6,8 +6,14 @@ export enum SegmentConverterResultType {
   Exclude
 }
 
-export type SegmentConverterResult = { field: string, type: SegmentConverterResultType, query: QueryBody }
-export type SegmentConverterResultArray = SegmentConverterResult[]
+export type SegmentConverterResult = {
+  fields: string[],
+  type: SegmentConverterResultType,
+  joinSameFieldsResults: boolean,
+  query: QueryBody
+};
+
+export type SegmentConverterResultArray = SegmentConverterResult[];
 
 export interface SegmentConverter {
   tryConvert(segment: Segment): SegmentConverterResultArray | null;

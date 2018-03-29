@@ -24,9 +24,13 @@ export class SearchService {
       body: queryBody
     };
 
-    const response = await this.httpClient.post('http://localhost:8080/api/search', query, { responseType: 'text' }).toPromise();
+    const response = await this.httpClient.post('https://testing.mediathekviewweb.de/api/v2/search', query, { responseType: 'text' }).toPromise();
 
-    document.getElementsByTagName('body')[0].innerHTML = response;
+    const formattedQuery = JSON.stringify(query, null, 2);
+    const formattedResponse = JSON.stringify(JSON.parse(response), null, 2);
+
+    (document.getElementById('query') as HTMLElement).innerHTML = formattedQuery;
+    (document.getElementById('response') as HTMLElement).innerHTML = formattedResponse;
 
     return (response as any).result as SearchResult<AggregatedEntry>;
   }
