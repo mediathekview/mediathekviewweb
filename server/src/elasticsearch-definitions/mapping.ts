@@ -3,8 +3,8 @@ export const ElasticsearchMapping = {
     channel: {
       type: 'text',
       index: true,
-      analyzer: 'german',
-      search_analyzer: 'german',
+      analyzer: 'mvw_index_analyzer',
+      search_analyzer: 'mvw_search_analyzer',
       fielddata: true,
       fields: {
         keyword: {
@@ -15,8 +15,8 @@ export const ElasticsearchMapping = {
     topic: {
       type: 'text',
       index: true,
-      analyzer: 'german',
-      search_analyzer: 'german',
+      analyzer: 'mvw_index_analyzer',
+      search_analyzer: 'mvw_search_analyzer',
       fielddata: true,
       fields: {
         keyword: {
@@ -27,14 +27,14 @@ export const ElasticsearchMapping = {
     title: {
       type: 'text',
       index: true,
-      analyzer: 'german',
-      search_analyzer: 'german'
+      analyzer: 'mvw_index_analyzer',
+      search_analyzer: 'mvw_search_analyzer'
     },
     description: {
       type: 'text',
       index: true,
-      analyzer: 'german',
-      search_analyzer: 'german'
+      analyzer: 'mvw_index_analyzer',
+      search_analyzer: 'mvw_search_analyzer'
     },
     timestamp: {
       type: 'date',
@@ -71,14 +71,14 @@ export const ElasticsearchMapping = {
         }
       }
     },
+    lastSeen: {
+      type: 'long',
+      index: true
+    },
     metadata: {
       type: 'object',
       dynamic: 'strict',
       properties: {
-        lastSeenTimestamp: {
-          type: 'long',
-          index: true
-        },
         downloads: {
           type: 'long',
           index: true

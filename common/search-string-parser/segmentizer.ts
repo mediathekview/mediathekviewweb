@@ -1,6 +1,6 @@
 import { Segment } from './segment';
 
-const SEGMENTATION_REGEX = /[^"\s]+[\""].+?[\""]|[^\s]+/g;
+const SEGMENTATION_REGEX = /[^"\s]*[\""].+?[\""]|[^\s]+/g;
 
 export class Segmentizer {
   segmentize(search: string): Segment[] {
