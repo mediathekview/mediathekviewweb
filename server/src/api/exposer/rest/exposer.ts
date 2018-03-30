@@ -1,22 +1,24 @@
-import * as Http from 'http';
 import * as Koa from 'koa';
 import * as KoaBodyParser from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
+import * as KoaSend from 'koa-send';
+import * as Path from 'path';
 
 import { Timer } from '../../../common/utils';
 import { ExposedFunction, Exposer } from '../exposer';
+import { IncomingMessage, ServerResponse } from 'http';
+import { Server } from 'mongodb';
 
 export class RestExposer implements Exposer {
-  private readonly server: Http.Server;
   private readonly prefix: string | null;
   private readonly koa: Koa;
   private readonly router: KoaRouter;
   private readonly bodyParser: Koa.Middleware;
+  private requestHandler: (req: IncomingMessage, res: ServerResponse) => void;
 
-  constructor(server: Http.Server);
-  constructor(server: Http.Server, prefix: string);
-  constructor(server: Http.Server, prefix: string | null = null) {
-    this.server = server;
+  constructor();
+  constructor(prefix: string);
+  constructor(prefix: string | null = null) {
     this.prefix = prefix;
 
     this.koa = new Koa();
@@ -34,6 +36,10 @@ export class RestExposer implements Exposer {
     return this;
   }
 
+  handleRequest(request: IncomingMessage, response: ServerResponse) {
+    this.requestHandler(request, response);
+  }
+
   private initialize() {
     this.koa.proxy = true;
 
@@ -41,13 +47,28 @@ export class RestExposer implements Exposer {
       this.router.prefix(this.prefix);
     }
 
-    this.koa.use(RestExposer.corsMiddleware);
     this.koa.use(RestExposer.responseTimeMiddleware);
+    this.koa.use(RestExposer.corsMiddleware);
     this.koa.use(this.bodyParser);
     this.koa.use(this.router.routes());
     this.koa.use(this.router.allowedMethods());
 
-    this.server.on('request', this.koa.callback());
+    this.requestHandler = this.koa.callback();
+
+    this.exposeClient();
+  }
+
+  private exposeClient() {
+    const clientRoot = Path.resolve(__dirname, '../../../client');
+    const indexHtml = Path.resolve(clientRoot, 'index.html');
+
+    this.koa.use(async (context, next) => {
+      if (context.path.startsWith('/api')) {
+        await next();
+      } else {
+        await KoaSend(context, context.path, { root: clientRoot, index: 'index.html' });
+      }
+    });
   }
 
   private async onRequest(context: KoaRouter.IRouterContext, next: () => Promise<any>, func: ExposedFunction): Promise<void> {

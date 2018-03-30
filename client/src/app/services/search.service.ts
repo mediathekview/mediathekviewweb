@@ -24,8 +24,9 @@ export class SearchService {
       body: queryBody
     };
 
-    const url = 'https://testing.mediathekviewweb.de/api/v2/search';
+    const url = '/api/v2/search';
     // const url = 'http://localhost:8080/api/v2/search';
+    // const url = 'https://testing.mediathekviewweb.de/api/v2/search';
     const response = await this.httpClient.post(url, query, { responseType: 'text' }).toPromise();
 
     const formattedQuery = JSON.stringify(query, null, 2);

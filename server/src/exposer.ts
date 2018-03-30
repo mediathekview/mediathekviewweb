@@ -1,4 +1,5 @@
-import { Server } from 'http';
+import { IncomingMessage, Server, ServerResponse } from 'http';
+import { URL } from 'url';
 
 import { ErrorType, Result, ResultError } from './api/exposer';
 import { MiddlewareExposer, ParameterVerifierExposerMiddleware } from './api/exposer/middleware';
@@ -6,6 +7,8 @@ import { RestExposer } from './api/exposer/rest';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine, SearchQuery } from './common/search-engine';
 import { InstanceProvider } from './instance-provider';
+import * as FS from 'fs';
+import * as Path from 'path';
 
 const REST_PREFIX = '/api/v2';
 const SEARCH_PATH = ['search'];
@@ -14,6 +17,7 @@ export class MediathekViewWebExposer {
   private readonly server: Server;
 
   private searchEngine: SearchEngine<AggregatedEntry> | null;
+  private restExposer: RestExposer;
   private exposer: MiddlewareExposer | null;
   private parameterVerifier: ParameterVerifierExposerMiddleware | null;
 
@@ -26,10 +30,18 @@ export class MediathekViewWebExposer {
   }
 
   async initialize() {
-    const restExposer = new RestExposer(this.server, REST_PREFIX);
-    this.exposer = new MiddlewareExposer(restExposer);
+    this.restExposer = new RestExposer(REST_PREFIX);
+    this.exposer = new MiddlewareExposer(this.restExposer);
     this.parameterVerifier = new ParameterVerifierExposerMiddleware();
     this.searchEngine = await InstanceProvider.entrySearchEngine();
+
+    this.initRequestHandler();
+  }
+
+  private initRequestHandler() {
+    this.server.on('request', (request: IncomingMessage, response: ServerResponse) => {
+      this.restExposer.handleRequest(request, response);
+    });
   }
 
   expose() {
