@@ -4,10 +4,10 @@
   "license": "MIT",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --preserve-symlinks",
-    "build": "ng build --prod --preserve-symlinks",
+    "start": "ng serve --preserve-symlinks --extract-css false",
+    "build": "ng build --prod --preserve-symlinks --extract-css false",
     "lint": "ng lint",
-    "analyze": "ng build --prod --preserve-symlinks --sourcemaps true --stats-json && webpack-bundle-analyzer dist/stats.json"
+    "analyze": "ng build --prod --preserve-symlinks --extract-css false --sourcemaps true --stats-json && webpack-bundle-analyzer dist/stats.json"
   },
   "private": true,
   "dependencies": {
