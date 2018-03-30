@@ -3,7 +3,7 @@ import 'rxjs/add/operator/toPromise';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { AggregatedEntry } from '../common/model';
+import { AggregatedEntry, Field } from '../common/model';
 import { QueryBody, SearchQuery, SearchResult } from '../common/search-engine';
 import { SearchStringParser } from '../common/search-string-parser/parser';
 
@@ -21,7 +21,17 @@ export class SearchService {
     const queryBody: QueryBody = this.searchStringParser.parse(searchString);
 
     const query: SearchQuery = {
-      body: queryBody
+      body: queryBody,
+      sort: [{
+        field: Field.Topic,
+        order: 'ascending'
+      },
+      {
+        field: Field.Duration,
+        order: 'descending'
+      }],
+      skip: 0,
+      limit: 50
     };
 
     const url = '/api/v2/search';
