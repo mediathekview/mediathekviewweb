@@ -6,7 +6,8 @@
     "resources": {
       "files": [
         "/favicon.ico",
-        "/index.html"
+        "/index.html",
+        "/manifest.json"
       ],
       "versionedFiles": [
         "/*.bundle.css",
@@ -26,7 +27,7 @@
   }],
   "dataGroups": [{
     "name": "api",
-    "urls": ["/api/*"],
+    "urls": ["/api/**"],
     "cacheConfig": {
       "maxSize": 0,
       "maxAge": "0u",

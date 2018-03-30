@@ -63,7 +63,6 @@ export class SearchStringParser {
       for (const result of results) {
         switch (result.type) {
           case SegmentConverterResultType.Include:
-            console.log(result)
             if (result.joinSameFieldsResults) {
               innerBoolQueryBuilder.must(result.query);
             } else {

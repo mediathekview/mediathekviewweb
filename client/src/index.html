@@ -3,15 +3,88 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Mediathekviewweb</title>
+  <title>MediathekViewWeb</title>
   <base href="/">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2c3e50">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    .loading-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 100vh;
+      left: 0;
+      opacity: 0;
+      overflow: hidden;
+      background-color: #2c3e50;
+      color: white;
+      transition: opacity 0.25s ease-in, bottom 0.25s ease-in;
+      font-family: sans-serif;
+      font-size: calc(1rem + 5vw);
+      line-height: 1.5;
+    }
+
+    mvw-root:empty+.loading-screen {
+      opacity: 1;
+      bottom: 0;
+    }
+
+    .spinner {
+      display: flex;
+      justify-content: space-between;
+      width: 6rem;
+    }
+
+    .spinner>div {
+      width: 18px;
+      height: 18px;
+      background-color: white;
+      border-radius: 100%;
+      display: inline-block;
+      animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+    }
+
+    .spinner .bounce1 {
+      animation-delay: -0.32s;
+    }
+
+    .spinner .bounce2 {
+      animation-delay: -0.16s;
+    }
+
+    @keyframes sk-bouncedelay {
+      0%,
+      80%,
+      100% {
+        transform: scale(0);
+      }
+      40% {
+        transform: scale(1.0);
+      }
+    }
+
+  </style>
 </head>
 
 <body>
   <mvw-root></mvw-root>
+
+  <div class="loading-screen">
+    <span>MediahtekViewWeb</span>
+    <div class="spinner">
+      <div class="bounce1"></div>
+      <div class="bounce2"></div>
+      <div class="bounce3"></div>
+    </div>
+  </div>
 
   <p id="query"></p>
   <br>

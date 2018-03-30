@@ -59,7 +59,7 @@ export class RestExposer implements Exposer {
   }
 
   private exposeClient() {
-    const clientRoot = Path.resolve(__dirname, '../../../client');
+    const clientRoot = Path.resolve(__dirname, '../../../../../client/dist/');
     const indexHtml = Path.resolve(clientRoot, 'index.html');
 
     this.koa.use(async (context, next) => {

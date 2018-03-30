@@ -20,7 +20,8 @@
     },
     {
       "type": "npm",
-      "script": "build"
+      "script": "build",
+      "problemMatcher": []
     },
     {
       "type": "npm",

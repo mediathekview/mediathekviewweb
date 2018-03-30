@@ -1,6 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, Input } from '@angular/core';
-
-import { SearchQuery } from '../../common/search-engine';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 @Component({
   selector: 'mvw-search-input',

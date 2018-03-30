@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
+
 import { SearchService } from './services/search.service';
+import { throttle } from './common/utils';
 
 @Component({
   selector: 'mvw-root',
@@ -14,7 +16,19 @@ export class AppComponent {
   }
 
   async onSearchStringChanged(searchString: string) {
-    const result = await this.searchService.search(searchString);
-    console.log(result);
+    this.throttledSearch(searchString);
+  }
+
+  private throttledSearch(searchString: string) {
+    const throttled = throttle((searchString: string) => {
+      (async () => {
+        const result = await this.searchService.search(searchString);
+        console.log('search result', result);
+      })();
+    }, 250);
+
+    this.throttledSearch = throttled;
+
+    this.throttledSearch(searchString);
   }
 }

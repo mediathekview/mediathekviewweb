@@ -6,7 +6,8 @@
     "ng": "ng",
     "start": "ng serve --preserve-symlinks",
     "build": "ng build --prod --preserve-symlinks",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "analyze": "ng build --prod --preserve-symlinks --sourcemaps true --stats-json && webpack-bundle-analyzer dist/stats.json"
   },
   "private": true,
   "dependencies": {
@@ -33,6 +34,7 @@
     "@angular/cli": "1.7.3",
     "@angular/compiler-cli": "5.2.9",
     "@angular/language-service": "5.2.9",
-    "typescript": "2.6.2"
+    "typescript": "2.6.2",
+    "webpack-bundle-analyzer": "^2.11.1"
   }
 }
