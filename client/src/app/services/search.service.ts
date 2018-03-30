@@ -23,12 +23,12 @@ export class SearchService {
     const query: SearchQuery = {
       body: queryBody,
       sort: [{
-        field: Field.Topic,
-        order: 'ascending'
+        field: Field.Timestamp,
+        order: 'descending'
       },
       {
-        field: Field.Duration,
-        order: 'descending'
+        field: Field.Channel,
+        order: 'ascending'
       }],
       skip: 0,
       limit: 50
