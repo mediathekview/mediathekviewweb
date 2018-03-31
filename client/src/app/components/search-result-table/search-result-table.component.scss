@@ -1,0 +1,23 @@
+.mat-row {
+  min-height: 42px;
+}
+
+.mat-column-channel {
+  flex: 0.25 2 2rem;
+}
+
+.mat-column-topic {
+  flex: 0.75 1.5 5rem;
+}
+
+.mat-column-title {
+  flex: 3 1 2rem;
+}
+
+.mat-column-timestamp {
+  flex: 0 0 6rem;
+}
+
+.mat-column-duration {
+  flex: 0 0 3rem;
+}

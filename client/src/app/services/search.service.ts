@@ -34,16 +34,13 @@ export class SearchService {
       limit: 50
     };
 
-    const url = '/api/v2/search';
+    //const url = '/api/v2/search';
     // const url = 'http://localhost:8080/api/v2/search';
-    // const url = 'https://testing.mediathekviewweb.de/api/v2/search';
+    const url = 'https://testing.mediathekviewweb.de/api/v2/search';
     const response = await this.httpClient.post(url, query, { responseType: 'json' }).toPromise();
 
     const formattedQuery = JSON.stringify(query, null, 2);
     const formattedResponse = JSON.stringify(response, null, 2);
-
-    (document.getElementById('query') as HTMLElement).innerHTML = formattedQuery;
-    (document.getElementById('response') as HTMLElement).innerHTML = formattedResponse;
 
     return (response as any).result as SearchResult<AggregatedEntry>;
   }

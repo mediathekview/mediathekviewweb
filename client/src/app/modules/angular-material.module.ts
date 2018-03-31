@@ -4,17 +4,23 @@ import {
   MatCardModule,
   MatCheckboxModule,
   MatFormFieldModule,
+  MatIconModule,
   MatInputModule,
+  MatPaginatorModule,
+  MatTableModule,
   MatToolbarModule,
 } from '@angular/material';
 
 const modules = [
   MatButtonModule,
+  MatCardModule,
   MatCheckboxModule,
-  MatToolbarModule,
   MatFormFieldModule,
+  MatIconModule,
   MatInputModule,
-  MatCardModule
+  MatPaginatorModule,
+  MatTableModule,
+  MatToolbarModule
 ];
 
 @NgModule({

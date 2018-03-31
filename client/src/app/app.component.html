@@ -3,7 +3,10 @@
 <div class="vertical-spacer-1-5"></div>
 
 <div class="container">
-  <mvw-search-input (searchStringChanged)="onSearchStringChanged($event)"></mvw-search-input>
+  <mvw-search-input searchString="Hallo Welt!" (searchStringChanged)="onSearchStringChanged($event)"></mvw-search-input>
+
+  <mvw-search-result-table *ngIf="searchResult != null" [searchResult]="searchResult"></mvw-search-result-table>
 </div>
+
 
 <router-outlet></router-outlet>

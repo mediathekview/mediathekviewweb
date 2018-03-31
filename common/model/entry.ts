@@ -19,6 +19,7 @@ export type Entry = Entity & {
 }
 
 export type AggregatedEntry = Entry & {
+  time: number;
   metadata: EntryMetadata;
 }
 

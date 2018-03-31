@@ -1,3 +1,6 @@
-<mat-form-field class="w-100">
-  <input matInput type="text" placeholder="Suche" [(ngModel)]="searchString" (ngModelChange)="onSearchStringChanged($event)">
-</mat-form-field>
+<mat-input-container floatLabel="never" class="w-100">
+  <input matInput type="text" placeholder="Suche" [formControl]="inputControl">
+  <button mat-icon-button matSuffix class="hover-scale hide-disabled" [disabled]="inputControl.value == 0" (click)="clear()" aria-label="Clear Input">
+    <mat-icon>clear</mat-icon>
+  </button>
+</mat-input-container>

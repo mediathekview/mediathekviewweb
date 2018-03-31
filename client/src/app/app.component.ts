@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 
 import { SearchService } from './services/search.service';
 import { throttle } from './common/utils';
+import { SearchResult } from './common/search-engine';
+import { AggregatedEntry } from './common/model';
 
 @Component({
   selector: 'mvw-root',
@@ -11,8 +13,11 @@ import { throttle } from './common/utils';
 export class AppComponent {
   private readonly searchService: SearchService;
 
+  searchResult: SearchResult<AggregatedEntry> | null;
+
   constructor(searchService: SearchService) {
     this.searchService = searchService;
+    this.searchResult = { total: 0, milliseconds: 0, items: [] };
   }
 
   async onSearchStringChanged(searchString: string) {
@@ -22,13 +27,12 @@ export class AppComponent {
   private throttledSearch(searchString: string) {
     const throttled = throttle((searchString: string) => {
       (async () => {
-        const result = await this.searchService.search(searchString);
-        console.log('search result', result);
+        this.searchResult = await this.searchService.search(searchString);
+        console.log('search result', this.searchResult);
       })();
-    }, 250);
+    }, 25);
 
     this.throttledSearch = throttled;
-
     this.throttledSearch(searchString);
   }
 }

@@ -15,15 +15,22 @@
   }
 }
 
-p {
-  white-space: pre;
-  display: inline-block;
-  background-color: lightgray;
-  width: auto;
-  display: inline-block;
+.pointer {
+  cursor: pointer;
 }
 
-p:not(:empty) {
-  margin: 0.5rem;
-  padding: 0.5rem;
+.hover-scale {
+  transition: transform 0.2s ease-in-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.15);
+}
+
+.hide-disabled {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.hide-disabled:disabled {
+  opacity: 0;
 }

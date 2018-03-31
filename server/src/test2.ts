@@ -7,9 +7,24 @@ import { SearchStringParser } from './common/search-string-parser/parser';
 import { ElasticsearchMapping, ElasticsearchSettings } from './elasticsearch-definitions';
 import { RedisLockProvider } from './lock/redis';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
+import { SyncEnumerable } from './common/enumerable';
 
 const INDEX_NAME = 'mediathekviewweb';
 const TYPE_NAME = 'entry';
+
+const parser = new SearchStringParser();
+
+const query = parser.parse('channel:ARD title:tagesschau ^title:gebärdensprache duration:55m-2h');
+
+const queryString = JSON.stringify(query, null, 1);
+
+const searchQuery: SearchQuery = {
+  body: query
+};
+
+console.log(JSON.stringify(searchQuery, null, 2));
+
+process.exit(0);
 
 const elasticsearch = new Elasticsearch.Client({
   log: [{
@@ -38,13 +53,17 @@ const entrySearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elastic
 
   const parser = new SearchStringParser();
 
-  const query = parser.parse('channel:ARD title:tagesschau ^title:gebärdensprache');
+  const query = parser.parse('channel:ARD title:tagesschau ^title:gebärdensprache duration:55m-2h');
 
   const queryString = JSON.stringify(query, null, 1);
 
   const searchQuery: SearchQuery = {
     body: query
   };
+
+  console.log(searchQuery);
+
+  throw '';
 
   try {
     const result = await entrySearchEngine.search(searchQuery);

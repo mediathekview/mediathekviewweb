@@ -33,6 +33,8 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
   private toAggregated(entry: Entry): AggregatedEntry {
     const aggregatedEntry = {
       ...entry,
+      time: this.getTime(entry.timestamp),
+
       metadata: {
         downloads: 1234,
         plays: 1234,
@@ -44,5 +46,9 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
     };
 
     return aggregatedEntry;
+  }
+
+  private getTime(timestamp: number): number {
+    return timestamp % 86400;
   }
 }
