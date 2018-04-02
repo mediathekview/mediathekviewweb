@@ -29,7 +29,7 @@ const ELASTICSEARCH_INDEX_SETTINGS = ElasticsearchSettings;
 const ELASTICSEARCH_INDEX_MAPPING = ElasticsearchMapping;
 
 export class InstanceProvider {
-  private static instances: ObjectMap<any> = {};
+  private static instances: StringMap = {};
 
   static redis(): Promise<Redis.Redis> {
     return this.singleton(Redis, () => new Redis());

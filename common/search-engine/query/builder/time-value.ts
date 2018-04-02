@@ -1,4 +1,19 @@
-export type TimeUnit = 'second' | 'seconds' | 'minute' | 'minutes' | 'hour' | 'hours' | 'day' | 'days' | 'week' | 'weeks' | 'month' | 'months' | 'year' | 'years';
+export enum TimeUnit {
+  Second = 's',
+  Seconds = 's',
+  Minute = 'm',
+  Minutes = 'm',
+  Hour = 'h',
+  Hours = 'h',
+  Day = 'd',
+  Days = 'd',
+  Week = 'w',
+  Weeks = 'w',
+  Month = 'M',
+  Months = 'M',
+  Year = 'y',
+  Years = 'y'
+}
 
 export class TimeQueryValueBuilder {
   private _time: 'now' | Date | null;
@@ -11,9 +26,11 @@ export class TimeQueryValueBuilder {
     this.offsets = [];
   }
 
-  time(time: 'now' | Date): TimeQueryValueBuilder;
-  time(time: 'now' | Date, requiredPrecision: TimeUnit): TimeQueryValueBuilder;
-  time(time: 'now' | Date, requiredPrecision: TimeUnit = 'seconds'): TimeQueryValueBuilder {
+  time(time: 'now'): TimeQueryValueBuilder;
+  time(time: 'now', requiredPrecision: TimeUnit): TimeQueryValueBuilder;
+  time(time: Date): TimeQueryValueBuilder;
+  time(time: Date, requiredPrecision: TimeUnit): TimeQueryValueBuilder;
+  time(time: 'now' | Date, requiredPrecision: TimeUnit = TimeUnit.Seconds): TimeQueryValueBuilder {
     this._time = time;
     this.requiredPrecision = requiredPrecision;
 

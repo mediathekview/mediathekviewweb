@@ -1,4 +1,4 @@
-import { UnitParser, Unit } from './unit';
+import { Unit, UnitParser } from './unit';
 
 const UNITS: Unit[] = [
   { pattern: '', factor: 1 },
@@ -6,8 +6,6 @@ const UNITS: Unit[] = [
   { pattern: /^(m(i(n(u(t(e(n|s)?)?)?)?)?)?)$/, factor: 60 },
   { pattern: /^(std|(s(t(u(n(d(e(n)?)?)?)?)?)?)|(h(o(u(r(s)?)?)?)?))$/, factor: 60 * 60 }
 ];
-
-const RANGE_INCLUSIVE = true;
 
 export class TimeParser extends UnitParser {
   constructor() {

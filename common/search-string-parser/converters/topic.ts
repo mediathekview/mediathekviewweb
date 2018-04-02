@@ -1,8 +1,8 @@
 import { SegmentConverter } from '../';
-import { QueryBody } from '../../search-engine/index';
-import { Field } from '../../model/index';
-import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
+import { Field } from '../../model';
+import { Operator, QueryBody } from '../../search-engine';
 import { TextQueryBuilder } from '../../search-engine/query/builder';
+import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
 
 const FIELD = Field.Topic;
 const SELECTOR_REGEX = /^(?:to(?:p(?:i(?:c)?)?)?|th(?:e(?:m(?:a)?)?)?|#)$/;
@@ -14,7 +14,7 @@ export class TopicSegmentConverter extends SelectorSegmentConverterBase implemen
 
     protected textToQuery(text: string): QueryBody {
         const builder = new TextQueryBuilder();
-        const query = builder.fields(FIELD).text(text).operator('and').build();
+        const query = builder.fields(FIELD).text(text).operator(Operator.And).build();
 
         return query;
     }

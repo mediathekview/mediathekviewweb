@@ -4,6 +4,6 @@ type ExistsOperator = { $exists: boolean }
 type TypeOperator = { $type: BSONType }
 
 type NonFieldedElementOperator = ExistsOperator | TypeOperator
-type FieldedElementOperator = NonFieldedElementOperator | ObjectMap<NonFieldedElementOperator>
+type FieldedElementOperator = NonFieldedElementOperator | StringMap<NonFieldedElementOperator>
 
 export type ElementOperator = NonFieldedElementOperator | FieldedElementOperator

@@ -1,8 +1,21 @@
-export type Aggregation = 'min' | 'max' | 'sum' | 'average' | 'median' | 'length';
+export const enum Aggregation {
+  'Min' = 'min',
+  'Max' = 'max',
+  'Sum' = 'sum',
+  'Average' = 'average',
+  'Median' = 'median',
+  'Length' = 'length'
+};
 
-export type Order = 'ascending' | 'descending';
+export const enum Order {
+  Ascending = 'ascending',
+  Descending = 'descending'
+};
 
-export type Operator = 'and' | 'or';
+export const enum Operator {
+  And = 'and',
+  Or = 'or'
+};
 
 export type Sort = {
   field: string;
@@ -10,7 +23,7 @@ export type Sort = {
   aggregation?: Aggregation;
 }
 
-export type QueryBody = TermQuery | IDsQuery | MatchAllQuery | BoolQuery | RangeQuery | TextQuery | RegexQuery;
+export type QueryBody = Partial<TermQuery & IDsQuery & MatchAllQuery & BoolQuery & RangeQuery & TextQuery & RegexQuery>;
 
 export type SearchQuery = {
   body: QueryBody;

@@ -48,31 +48,26 @@ export class RangeQueryBuilder extends QueryBuilder {
 
   field(field: string): RangeQueryBuilder {
     this._field = field;
-
     return this;
   }
 
   lt(value: number | TimeQueryValueBuilder): RangeQueryBuilder {
     this._lt = (value instanceof TimeQueryValueBuilder) ? value.build() : value;
-
     return this;
   }
 
   lte(value: number | TimeQueryValueBuilder): RangeQueryBuilder {
     this._lte = (value instanceof TimeQueryValueBuilder) ? value.build() : value;
-
     return this;
   }
 
   gt(value: number | TimeQueryValueBuilder): RangeQueryBuilder {
     this._gt = (value instanceof TimeQueryValueBuilder) ? value.build() : value;
-
     return this;
   }
 
   gte(value: number | TimeQueryValueBuilder): RangeQueryBuilder {
     this._gte = (value instanceof TimeQueryValueBuilder) ? value.build() : value;
-
     return this;
   }
 }

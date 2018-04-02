@@ -20,7 +20,7 @@
     "@types/mongodb": "^3.0.9",
     "@types/needle": "^2.0.2",
     "@types/node": "^9.6.1",
-    "nodemon": "^1.17.2",
+    "nodemon": "^1.17.3",
     "ts-node": "^5.0.1",
     "typescript": "^2.8.1"
   },

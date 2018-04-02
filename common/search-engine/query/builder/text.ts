@@ -11,7 +11,7 @@ export class TextQueryBuilder extends QueryBuilder {
 
     this._fields = [];
     this._text = null;
-    this._operator = 'and';
+    this._operator = Operator.And;
   }
 
   fields(...fields: string[]): TextQueryBuilder {

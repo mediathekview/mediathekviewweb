@@ -2,7 +2,7 @@ import { Aggregation, Sort } from '../../../../common/search-engine';
 
 type ElasticsearchSortOrder = 'asc' | 'desc'
 type ElasticsearchSortMode = 'min' | 'max' | 'sum' | 'avg' | 'median'
-type ElasticsearchSort = string | ObjectMap<{ order?: ElasticsearchSortOrder, mode?: ElasticsearchSortMode }> | ObjectMap<ElasticsearchSortOrder>
+type ElasticsearchSort = string | StringMap<{ order?: ElasticsearchSortOrder, mode?: ElasticsearchSortMode }> | StringMap<ElasticsearchSortOrder>
 
 export class SortConverter {
 
@@ -33,17 +33,20 @@ export class SortConverter {
 
   private aggregationToMode(aggregation: Aggregation): ElasticsearchSortMode {
     switch (aggregation) {
-      case 'min':
-      case 'max':
-      case 'sum':
-      case 'median':
+      case Aggregation.Min:
+      case Aggregation.Max:
+      case Aggregation.Sum:
+      case Aggregation.Median:
         return aggregation;
 
-      case 'average':
+      case Aggregation.Average:
         return 'avg';
 
-      case 'length':
+      case Aggregation.Length:
         throw new Error('call lengthSort for sorting by length');
+
+      default:
+        throw new Error(`${aggregation} not implemented`);
     }
   }
 

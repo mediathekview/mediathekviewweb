@@ -15,13 +15,17 @@ import { SearchResultTableComponent } from './components/search-result-table/sea
 import { AngularMaterialModule } from './modules/angular-material.module';
 import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
+import { DevComponent } from './components/dev/dev.component';
+import { HomeComponent } from './components/home/home.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     SearchInputComponent,
     NavbarComponent,
-    SearchResultTableComponent
+    SearchResultTableComponent,
+    DevComponent,
+    HomeComponent
   ],
   imports: [
     BrowserModule,

@@ -1,3 +1,4 @@
+import { IncomingMessage, ServerResponse } from 'http';
 import * as Koa from 'koa';
 import * as KoaBodyParser from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
@@ -6,8 +7,6 @@ import * as Path from 'path';
 
 import { Timer } from '../../../common/utils';
 import { ExposedFunction, Exposer } from '../exposer';
-import { IncomingMessage, ServerResponse } from 'http';
-import { Server } from 'mongodb';
 
 export class RestExposer implements Exposer {
   private readonly prefix: string | null;
@@ -28,7 +27,7 @@ export class RestExposer implements Exposer {
     this.initialize();
   }
 
-  expose(path: string[], func: ExposedFunction): this {
+  expose<T>(path: string[], func: ExposedFunction<T>): this {
     const urlPath = `/${path.join('/')}`;
 
     this.router.all(urlPath, (context, next) => this.onRequest(context, next, func));
@@ -71,7 +70,7 @@ export class RestExposer implements Exposer {
     });
   }
 
-  private async onRequest(context: KoaRouter.IRouterContext, next: () => Promise<any>, func: ExposedFunction): Promise<void> {
+  private async onRequest<T>(context: KoaRouter.IRouterContext, next: () => Promise<any>, func: ExposedFunction<T>): Promise<void> {
     const parameters = context.request.body;
 
     try {

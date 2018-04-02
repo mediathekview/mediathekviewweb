@@ -1,10 +1,10 @@
 import { SegmentConverter } from '../';
-import { QueryBody } from '../../search-engine/index';
-import { Field } from '../../model/index';
-import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
-import { TextQueryBuilder, TimeQueryValueBuilder, RangeQueryBuilder, TermQueryBuilder } from '../../search-engine/query/builder';
-import { RangeParser, Range, RangeType } from '../parsers/range';
+import { Field } from '../../model';
+import { QueryBody } from '../../search-engine';
+import { RangeQueryBuilder, TermQueryBuilder } from '../../search-engine/query/builder';
+import { Range, RangeParser, RangeType } from '../parsers/range';
 import { TimeParser } from '../parsers/time';
+import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
 
 const FIELD = Field.Duration;
 const SELECTOR_REGEX = /^(?:du(?:r(?:a(?:t(?:i(?:o(?:n)?)?)?)?)?)?|dau(?:e(?:r)?)?)$/;

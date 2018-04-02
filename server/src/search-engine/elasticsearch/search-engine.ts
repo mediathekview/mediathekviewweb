@@ -7,7 +7,7 @@ import { Converter } from './converter';
 
 const logger = LoggerFactoryProvider.factory.create('[ELASTIC_SEARCH_ENGINE]');
 
-type ElasticsearchBulkResponse = { took: number, errors: boolean, items: ObjectMap<{ [key: string]: any, status: number, error?: any }>[] };
+type ElasticsearchBulkResponse = { took: number, errors: boolean, items: StringMap<{ [key: string]: any, status: number, error?: any }>[] };
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly client: Elasticsearch.Client;
@@ -112,8 +112,8 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     return created;
   }
 
-  private createElasticsearchMappingObject(mapping: object): ObjectMap<object> {
-    const actualMapping: ObjectMap<object> = {};
+  private createElasticsearchMappingObject(mapping: object): StringMap<object> {
+    const actualMapping: StringMap<object> = {};
     actualMapping[this.typeName] = mapping;
 
     return actualMapping;

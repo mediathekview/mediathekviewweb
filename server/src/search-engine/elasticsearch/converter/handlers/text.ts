@@ -5,7 +5,7 @@ type ElasticsearchMatchOperator = 'and' | 'or';
 type ElasticsearchMatchType = { query: string, operator: ElasticsearchMatchOperator };
 
 type ElasticsearchMatchQuery = {
-  match: ObjectMap<ElasticsearchMatchType>
+  match: StringMap<ElasticsearchMatchType>
 };
 
 type ElasticsearchMultiMatchType = 'best_fields' | 'most_fields' | 'cross_fields' | 'phrase' | 'phrase_prefix';

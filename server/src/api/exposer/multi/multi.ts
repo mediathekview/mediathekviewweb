@@ -1,13 +1,13 @@
 import { ExposedFunction, Exposer } from '../';
 
-type RegisteredExposedFunction = {
+type RegisteredExposedFunction<T>= {
   path: string[],
-  func: ExposedFunction
+  func: ExposedFunction<T>
 }
 
 export class MultiExposer implements Exposer {
   private readonly exposers: Set<Exposer>;
-  private readonly functionRegistrations: Map<string, RegisteredExposedFunction>;
+  private readonly functionRegistrations: Map<string, RegisteredExposedFunction<any>>;
 
   constructor() {
     this.exposers = new Set();
@@ -30,7 +30,7 @@ export class MultiExposer implements Exposer {
     return this;
   }
 
-  expose(path: string[], func: ExposedFunction): this {
+  expose<T>(path: string[], func: ExposedFunction<T>): this {
     const key = this.getKey(path);
 
     this.ensureKeyUniqueness(key);
@@ -55,8 +55,8 @@ export class MultiExposer implements Exposer {
     }
   }
 
-  private getRegistration(path: string[], func: ExposedFunction): RegisteredExposedFunction {
-    const registration: RegisteredExposedFunction = {
+  private getRegistration<T>(path: string[], func: ExposedFunction<T>): RegisteredExposedFunction<T> {
+    const registration: RegisteredExposedFunction<T> = {
       path: path,
       func: func
     }
