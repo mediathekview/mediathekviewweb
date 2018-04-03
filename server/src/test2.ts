@@ -7,7 +7,6 @@ import { SearchStringParser } from './common/search-string-parser/parser';
 import { ElasticsearchMapping, ElasticsearchSettings } from './elasticsearch-definitions';
 import { RedisLockProvider } from './lock/redis';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
-import { SyncEnumerable } from './common/enumerable';
 
 const INDEX_NAME = 'mediathekviewweb';
 const TYPE_NAME = 'entry';
@@ -63,7 +62,7 @@ const entrySearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elastic
 
   console.log(searchQuery);
 
-  throw '';
+  if (1 == 1) throw '';
 
   try {
     const result = await entrySearchEngine.search(searchQuery);

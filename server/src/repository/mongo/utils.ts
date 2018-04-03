@@ -1,7 +1,6 @@
 import { ObjectID } from 'mongodb';
 
 import { Entity } from '../../common/model';
-import { PartialProperty } from '../../common/utils';
 
 export type EntityWithPartialId<T extends Entity = Entity> = PartialProperty<T, 'id'>;
 

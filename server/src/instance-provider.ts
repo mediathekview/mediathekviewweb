@@ -8,7 +8,7 @@ import { SearchEngine } from './common/search-engine';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
-import { ElasticsearchMapping, ElasticsearchSettings } from './elasticsearch-definitions';
+import { ElasticsearchMapping, ElasticsearchSettings, TextTypeFields } from './elasticsearch-definitions';
 import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
 import { RedisLockProvider } from './lock/redis';
@@ -18,6 +18,8 @@ import { AggregatedEntryRepository, EntryRepository } from './repository';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
+import { Converter } from './search-engine/elasticsearch/converter';
+import { TextQueryConvertHandler, IDsQueryConvertHandler, MatchAllQueryConvertHandler, RegexQueryConvertHandler, TermQueryConvertHandler, BoolQueryConvertHandler, RangeQueryConvertHandler, SortConverter } from './search-engine/elasticsearch/converter/handlers';
 
 const MONGO_CONNECTION_STRING = 'mongodb://localhost:27017';
 const MONGO_DATABASE_NAME = 'mediathekviewweb';
@@ -105,10 +107,31 @@ export class InstanceProvider {
   static entrySearchEngine(): Promise<SearchEngine<AggregatedEntry>> {
     return this.singleton(ElasticsearchSearchEngine, async () => {
       const elasticsearch = await this.elasticsearch();
-      const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
+      const converter = await this.elasticsearchConverter();
+      const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
       await elasticsearchSearchEngine.initialize();
 
       return elasticsearchSearchEngine;
+    });
+  }
+
+  static elasticsearchConverter(): Promise<Converter> {
+    return this.singleton(Converter, () => {
+      const handlers = [
+        new TextQueryConvertHandler(),
+        new IDsQueryConvertHandler(),
+        new MatchAllQueryConvertHandler(),
+        new RegexQueryConvertHandler(),
+        new TermQueryConvertHandler(),
+        new BoolQueryConvertHandler(),
+        new RangeQueryConvertHandler()
+      ];
+
+      const keywordRewrites = new Set(TextTypeFields);
+      const sortConverter = new SortConverter(keywordRewrites);
+
+      const converter = new Converter(handlers, sortConverter);
+      return converter;
     });
   }
 
@@ -125,7 +148,8 @@ export class InstanceProvider {
 
   private static async singleton<T>(type: any, builder: () => T | Promise<T>): Promise<T> {
     if (this.instances[type] == undefined) {
-      this.instances[type] = await builder();
+      const instance = await builder();
+      this.instances[type] = instance;
     }
 
     return this.instances[type];

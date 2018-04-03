@@ -1,10 +1,9 @@
 import * as Crypto from 'crypto';
 import { Readable } from 'stream';
 
-import { StreamIterable } from '../../utils/stream-iterable';
-import { Entry, FilmlistMetadata, Video, Subtitle, Quality, MediaFactory } from '../../common/model';
+import { Entry, FilmlistMetadata, MediaFactory, Quality } from '../../common/model';
 import { base62Encode } from '../../utils';
-import { encode } from 'punycode';
+import { StreamIterable } from '../../utils/stream-iterable';
 
 const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
@@ -171,6 +170,9 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
     }
     if (url_hd.length > 0) {
       entry.media.push(MediaFactory.createVideo(this.createUrlFromBase(url, url_hd), null, Quality.High));
+    }
+    if (url_subtitle.length > 0) {
+      entry.media.push(MediaFactory.createSubtitle(url_subtitle, null));
     }
 
     const urlsString = `${url_small}_${url}_${url_hd}`;

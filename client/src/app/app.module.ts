@@ -9,23 +9,23 @@ import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { SearchStringParser } from './common/search-string-parser/parser';
+import { DevComponent } from './components/dev/dev.component';
+import { HomeComponent } from './components/home/home.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { SearchInputComponent } from './components/search-input/search-input.component';
-import { SearchResultTableComponent } from './components/search-result-table/search-result-table.component';
+import { SearchComponent } from './components/search/search.component';
 import { AngularMaterialModule } from './modules/angular-material.module';
 import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
-import { DevComponent } from './components/dev/dev.component';
-import { HomeComponent } from './components/home/home.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     SearchInputComponent,
     NavbarComponent,
-    SearchResultTableComponent,
     DevComponent,
-    HomeComponent
+    HomeComponent,
+    SearchComponent
   ],
   imports: [
     BrowserModule,

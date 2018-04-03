@@ -1,4 +1,4 @@
-import { ErrorType, ResultError } from '../exposer';
+import { ErrorType, ResultError } from '../../../common/api/rest';
 
 export class InvalidRequestError implements ResultError {
   type = ErrorType.InvalidRequest;

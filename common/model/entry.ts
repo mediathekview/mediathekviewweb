@@ -79,18 +79,26 @@ export class MediaFactory {
   static createVideo(url: string, size: number | null, quality: Quality): Video {
     return {
       type: MediaType.Video,
-      url: url,
-      size: size,
-      quality: quality
-    }
+      url,
+      size,
+      quality
+    };
   }
 
   static createAudio(url: string, size: number | null, quality: Quality): Audio {
     return {
       type: MediaType.Audio,
-      url: url,
-      size: size,
-      quality: quality
-    }
+      url,
+      size,
+      quality
+    };
+  }
+
+  static createSubtitle(url: string, size: number | null): Subtitle {
+    return {
+      type: MediaType.Subtitle,
+      url,
+      size
+    };
   }
 }

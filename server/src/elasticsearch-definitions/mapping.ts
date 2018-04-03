@@ -5,10 +5,10 @@ export const ElasticsearchMapping = {
       index: true,
       analyzer: 'mvw_index_analyzer',
       search_analyzer: 'mvw_search_analyzer',
-      fielddata: true,
       fields: {
         keyword: {
-          type: 'keyword'
+          type: 'keyword',
+          ignore_above: 256
         }
       }
     },
@@ -17,10 +17,10 @@ export const ElasticsearchMapping = {
       index: true,
       analyzer: 'mvw_index_analyzer',
       search_analyzer: 'mvw_search_analyzer',
-      fielddata: true,
       fields: {
         keyword: {
-          type: 'keyword'
+          type: 'keyword',
+          ignore_above: 256
         }
       }
     },
@@ -28,13 +28,25 @@ export const ElasticsearchMapping = {
       type: 'text',
       index: true,
       analyzer: 'mvw_index_analyzer',
-      search_analyzer: 'mvw_search_analyzer'
+      search_analyzer: 'mvw_search_analyzer',
+      fields: {
+        keyword: {
+          type: 'keyword',
+          ignore_above: 256
+        }
+      }
     },
     description: {
       type: 'text',
       index: true,
       analyzer: 'mvw_index_analyzer',
-      search_analyzer: 'mvw_search_analyzer'
+      search_analyzer: 'mvw_search_analyzer',
+      fields: {
+        keyword: {
+          type: 'keyword',
+          ignore_above: 256
+        }
+      }
     },
     timestamp: {
       type: 'date',
@@ -116,3 +128,12 @@ export const ElasticsearchMapping = {
     }
   }
 }
+
+const textTypeFields = Object.getOwnPropertyNames(ElasticsearchMapping.properties)
+  .filter((property) => {
+    const type = (ElasticsearchMapping.properties as StringMap)[property].type;
+    const isTextType = type == 'text';
+    return isTextType;
+  });
+
+export const TextTypeFields = textTypeFields;

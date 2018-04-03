@@ -1,35 +1,35 @@
-<mat-table [dataSource]="searchResult.items">
+<mvw-search-input></mvw-search-input>
+{{ sort.active }}
+<mat-table matSort [dataSource]="dataSource">
   <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
 
   <ng-container matColumnDef="channel">
-    <mat-header-cell *matHeaderCellDef>Sender</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Sender</mat-header-cell>
     <mat-cell *matCellDef="let entry">{{ entry.channel }}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="topic">
-    <mat-header-cell *matHeaderCellDef>Thema</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Thema</mat-header-cell>
     <mat-cell *matCellDef="let entry">{{ entry.topic }}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="title">
-    <mat-header-cell *matHeaderCellDef>Titel</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Titel</mat-header-cell>
     <mat-cell *matCellDef="let entry">{{ entry.title }}</mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="timestamp">
-    <mat-header-cell *matHeaderCellDef>Timestamp</mat-header-cell>
+  <ng-container matColumnDef="timestamp" disableClear="true" start="desc">
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
     <mat-cell *matCellDef="let entry">{{ entry.timestamp }}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="duration">
-    <mat-header-cell *matHeaderCellDef>Dauer</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header start="desc">Dauer</mat-header-cell>
     <mat-cell *matCellDef="let entry">{{ entry.duration }}</mat-cell>
   </ng-container>
 
   <mat-row *matRowDef="let entry; columns: columnsToDisplay"></mat-row>
 </mat-table>
 
-
-<mat-paginator [length]="searchResult.total" [pageSize]="settingsService.pageSize | async" [pageSizeOptions]="[5, 10, 15, 25, 50, 75, 100]"
-  (page)="onPageEvent($event)">
+<mat-paginator [pageSize]="settingsService.pageSize | async" [pageSizeOptions]="[5, 10, 15, 25, 50, 75, 100]">
 </mat-paginator>

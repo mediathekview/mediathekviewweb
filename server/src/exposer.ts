@@ -1,14 +1,11 @@
 import { IncomingMessage, Server, ServerResponse } from 'http';
-import { URL } from 'url';
 
-import { ErrorType, Result, ResultError } from './api/exposer';
 import { MiddlewareExposer, ParameterVerifierExposerMiddleware } from './api/exposer/middleware';
 import { RestExposer } from './api/exposer/rest';
-import { AggregatedEntry } from './common/model';
-import { SearchEngine, SearchQuery } from './common/search-engine';
+import { ErrorType, Result, ResultError } from './common/api/rest';
+import { AggregatedEntry, Field } from './common/model';
+import { SearchEngine, SearchQuery, SearchResult } from './common/search-engine';
 import { InstanceProvider } from './instance-provider';
-import * as FS from 'fs';
-import * as Path from 'path';
 
 const REST_PREFIX = '/api/v2';
 const SEARCH_PATH = ['search'];
@@ -19,7 +16,7 @@ export class MediathekViewWebExposer {
   private searchEngine: SearchEngine<AggregatedEntry> | null;
   private restExposer: RestExposer;
   private exposer: MiddlewareExposer | null;
-  private parameterVerifier: ParameterVerifierExposerMiddleware | null;
+  private parameterVerifier: ParameterVerifierExposerMiddleware<any> | null;
 
   constructor(server: Server) {
     this.server = server;
@@ -60,7 +57,7 @@ export class MediathekViewWebExposer {
       .addOptional(SEARCH_PATH, 'sort', 'skip', 'limit');
 
     this.exposer!.expose(SEARCH_PATH, async (parameters) => {
-      const result: Result = {};
+      const result: Result<SearchResult<AggregatedEntry>> = {};
 
       try {
         result.result = await this.searchEngine!.search(parameters as SearchQuery);

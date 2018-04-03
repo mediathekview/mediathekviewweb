@@ -1,4 +1,4 @@
-import { AnyIterable, Undefinable } from '../common/utils';
+import { AnyIterable } from '../common/utils';
 
 export interface Set<T> {
     add(value: T): Promise<void>;

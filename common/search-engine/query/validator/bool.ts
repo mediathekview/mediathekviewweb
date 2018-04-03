@@ -1,6 +1,6 @@
 import { BoolQuery, QueryBody } from '../';
 import { QueryBodyValidator } from './search-body';
-import { ObjectValidator, PropertyValidationFunction, PropertyValidationResult } from './validator';
+import { ObjectValidator, PropertyValidationResult } from './validator';
 
 type BoolQueryBody = PropertyOf<BoolQuery, 'bool'>;
 

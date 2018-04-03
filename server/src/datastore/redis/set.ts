@@ -1,8 +1,8 @@
 import * as Redis from 'ioredis';
 
 import { DataType, Set } from '../';
-import { AsyncEnumerable, getEnumerable } from '../../common/enumerable';
-import { AnyIterable, Nullable, Undefinable } from '../../common/utils';
+import { AsyncEnumerable } from '../../common/enumerable';
+import { AnyIterable, Nullable } from '../../common/utils';
 import { BATCH_SIZE, CONCURRENCY } from './constants';
 import { deserialize, serialize } from './serializer';
 
@@ -122,7 +122,7 @@ export class RedisSet<T> implements Set<T> {
   private async *popMany(count: number): AsyncIterableIterator<T> {
     const serialized = await this.redis.spop(this.key, count) as string[];
     const values = serialized.map((value) => deserialize(value, this.dataType));
-    
+
     yield* values;
   }
 }

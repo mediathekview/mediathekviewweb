@@ -9,13 +9,13 @@ export class QueryBodyValidator extends ObjectValidator<QueryBody> {
   protected required = [];
   protected optional = [];
   protected propertyValidators = {
-    term: (value?: PropertyOf<TermQuery, 'term'>) => null,
-    ids: (value?: PropertyOf<IDsQuery, 'ids'>) => null,
-    matchAll: (value?: PropertyOf<MatchAllQuery, 'matchAll'>) => null,
+    term: (_value?: PropertyOf<TermQuery, 'term'>) => null,
+    ids: (_value?: PropertyOf<IDsQuery, 'ids'>) => null,
+    matchAll: (_value?: PropertyOf<MatchAllQuery, 'matchAll'>) => null,
     bool: (value?: PropertyOf<BoolQuery, 'bool'>) => this.boolQueryBodyValidator.validate(value as PropertyOf<BoolQuery, 'bool'>),
-    range: (value?: PropertyOf<RangeQuery, 'range'>) => null,
-    text: (value?: PropertyOf<TextQuery, 'text'>) => null,
-    regex: (value?: PropertyOf<RegexQuery, 'regex'>) => null
+    range: (_value?: PropertyOf<RangeQuery, 'range'>) => null,
+    text: (_value?: PropertyOf<TextQuery, 'text'>) => null,
+    regex: (_value?: PropertyOf<RegexQuery, 'regex'>) => null
   };
 
   constructor() {

@@ -5,6 +5,13 @@ type ElasticsearchSortMode = 'min' | 'max' | 'sum' | 'avg' | 'median'
 type ElasticsearchSort = string | StringMap<{ order?: ElasticsearchSortOrder, mode?: ElasticsearchSortMode }> | StringMap<ElasticsearchSortOrder>
 
 export class SortConverter {
+  private readonly sortKeywordRewrite: Set<string>;
+
+  constructor();
+  constructor(sortKeywordRewrite: Set<string>);
+  constructor(sortKeywordRewrite: Set<string> = new Set()) {
+    this.sortKeywordRewrite = sortKeywordRewrite;
+  }
 
   convert(sort: Sort): object {
     if (sort.aggregation == 'length') {
@@ -14,15 +21,17 @@ export class SortConverter {
 
     const sortObj: ElasticsearchSort = {};
 
+    const field = this.sortKeywordRewrite.has(sort.field) ? `${sort.field}.keyword` : sort.field;
+
     if (sort.aggregation == undefined) {
       const order = (sort.order == 'ascending') ? 'asc' : 'desc';
-      sortObj[sort.field] = order;
+      sortObj[field] = order;
     }
     else {
       const order = (sort.order == 'ascending') ? 'asc' : 'desc';
       const mode = this.aggregationToMode(sort.aggregation);
 
-      sortObj[sort.field] = {
+      sortObj[field] = {
         order: order,
         mode: mode
       }

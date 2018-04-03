@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 
 import { Result as RestApiResult } from '../common/api/rest';
 import { AggregatedEntry, Field } from '../common/model';
-import { Order, QueryBody, SearchQuery, SearchResult } from '../common/search-engine';
+import { Order, QueryBody, SearchQuery, SearchResult, Sort } from '../common/search-engine';
 import { SearchStringParser } from '../common/search-string-parser/parser';
 
 @Injectable()
@@ -18,21 +18,14 @@ export class SearchService {
     this.searchStringParser = searchStringParser;
   }
 
-  searchByString(searchString: string): Promise<SearchResult<AggregatedEntry>> {
-    const queryBody: QueryBody = this.searchStringParser.parse(searchString);
+  searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Promise<SearchResult<AggregatedEntry>> {
+    const body: QueryBody = this.searchStringParser.parse(searchString);
 
     const query: SearchQuery = {
-      body: queryBody,
-      sort: [{
-        field: Field.Timestamp,
-        order: Order.Descending
-      },
-      {
-        field: Field.Channel,
-        order: Order.Ascending
-      }],
-      skip: 0,
-      limit: 50
+      body,
+      sort,
+      skip,
+      limit
     };
 
     return this.search(query);

@@ -2,10 +2,9 @@ import * as Mongo from 'mongodb';
 
 import { AsyncEnumerable } from '../../common/enumerable';
 import { Entity } from '../../common/model';
-import { AnyIterable, Omit, PartialProperty } from '../../common/utils';
-import { MongoDocument, toEntity, toMongoDocument, toMongoDocumentWithPartialId } from './mongo-document';
+import { AnyIterable } from '../../common/utils';
+import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter } from './mongo-query';
-import { objectIdOrStringToString } from './utils';
 
 const CREATED_PROPERTY = 'created';
 const UPDATED_PROPERTY = 'updated';

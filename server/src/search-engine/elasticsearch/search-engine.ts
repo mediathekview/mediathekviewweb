@@ -15,9 +15,14 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly typeName: string;
   private readonly indexSettings: object | undefined;
   private readonly indexMapping: object | undefined;
+  private readonly converter: Converter;
 
-  constructor(client: Elasticsearch.Client, indexName: string, typeName: string, indexSettings?: object, indexMapping?: object) {
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, indexSettings: object);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, indexSettings: object, indexMapping: object);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, indexSettings?: object, indexMapping?: object) {
     this.client = client;
+    this.converter = converter;
     this.indexName = indexName;
     this.typeName = typeName;
     this.indexSettings = indexSettings;
@@ -59,7 +64,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   }
 
   async search(query: SearchQuery): Promise<SearchResult<T>> {
-    const elasticsearchQuery = Converter.convert(query, this.indexName, this.typeName);
+    const elasticsearchQuery = this.converter.convert(query, this.indexName, this.typeName);
 
     const result = await this.client.search<T>(elasticsearchQuery);
     const items = result.hits.hits.map((hit) => hit._source);

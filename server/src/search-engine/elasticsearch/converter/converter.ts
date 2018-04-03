@@ -17,10 +17,15 @@ const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
 
 export class Converter {
-  private static readonly handlers: ConvertHandler[] = [];
-  private static readonly sortConverter = new SortConverter();
+  private readonly handlers: ConvertHandler[];
+  private readonly sortConverter: SortConverter;
 
-  static convert(query: SearchQuery, index: string, type: string): object {
+  constructor(handlers: ConvertHandler[], sortConverter: SortConverter) {
+    this.handlers = handlers;
+    this.sortConverter = sortConverter;
+  }
+
+  convert(query: SearchQuery, index: string, type: string): SearchParams {
     if (query.skip == undefined) {
       query.skip = 0;
     }
@@ -34,29 +39,32 @@ export class Converter {
     const queryBody = this.convertBody(query.body, index, type);
 
     const elasticQuery: SearchParams = {
-      index: index,
-      type: type,
+      index,
+      type,
       from: query.skip,
       size: query.limit,
       body: {
         query: queryBody
       }
-    } as any;
+    };
 
-    if (query.sort != undefined && query.sort.length > 0) {
-      const sort = query.sort.map((sort) => this.sortConverter.convert(sort));
-
-      elasticQuery.body['sort'] = sort;
-    }
+    this.setSort(query, elasticQuery);
 
     return elasticQuery;
   }
 
-  static registerHandler(...handlers: ConvertHandler[]) {
+  private setSort(query: SearchQuery, elasticQuery: SearchParams) {
+    if (query.sort != undefined && query.sort.length > 0) {
+      const sort = query.sort.map((sort) => this.sortConverter.convert(sort));
+      elasticQuery.body['sort'] = sort;
+    }
+  }
+
+  registerHandler(...handlers: ConvertHandler[]) {
     this.handlers.push(...handlers);
   }
 
-  static convertBody(queryBody: QueryBody, index: string, type: string): object {
+  convertBody(queryBody: QueryBody, index: string, type: string): object {
     for (const handler of this.handlers) {
       const converted = handler.tryConvert(queryBody, index, type);
 
@@ -68,13 +76,3 @@ export class Converter {
     throw new Error('not suitable handler for query available');
   }
 }
-
-Converter.registerHandler(
-  new TextQueryConvertHandler(),
-  new IDsQueryConvertHandler(),
-  new MatchAllQueryConvertHandler(),
-  new RegexQueryConvertHandler(),
-  new TermQueryConvertHandler(),
-  new BoolQueryConvertHandler(),
-  new RangeQueryConvertHandler()
-);

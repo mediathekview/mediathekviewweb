@@ -1,8 +1,9 @@
 import '../../../common/extensions/set';
 
+import { Result, ResultError } from '../../../common/api/rest';
 import { SyncEnumerable } from '../../../common/enumerable';
 import { InvalidRequestError } from '../errors/invalid-request';
-import { Parameters, Result, ResultError } from '../exposer';
+import { Parameters } from '../exposer';
 import { ExposerMiddleware, ExposerMiddlewareNextFunction } from './exposer';
 
 type Verification = {
@@ -10,7 +11,7 @@ type Verification = {
   optional: Set<string>;
 }
 
-export class ParameterVerifierExposerMiddleware implements ExposerMiddleware {
+export class ParameterVerifierExposerMiddleware<T> implements ExposerMiddleware<T> {
   private readonly verifications: Map<string, Verification>;
 
   constructor() {
@@ -37,7 +38,7 @@ export class ParameterVerifierExposerMiddleware implements ExposerMiddleware {
     return this;
   }
 
-  async handle(path: string[], parameters: Parameters, next: ExposerMiddlewareNextFunction): Promise<Result> {
+  async handle(path: string[], parameters: Parameters, next: ExposerMiddlewareNextFunction<T>): Promise<Result<T>> {
     const verification = this.getVerification(path);
 
     const propertyNames = Object.getOwnPropertyNames(parameters);

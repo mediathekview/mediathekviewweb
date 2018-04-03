@@ -2,7 +2,7 @@ import * as Redis from 'ioredis';
 
 import { DataType, Entry, Map } from '../';
 import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
-import { Nullable, Undefinable } from '../../common/utils';
+import { Nullable } from '../../common/utils';
 import { AnyIterable } from '../../common/utils/any-iterable';
 import { deserialize, serialize } from './serializer';
 

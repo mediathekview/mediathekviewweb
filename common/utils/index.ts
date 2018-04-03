@@ -4,7 +4,6 @@ export * from './buffered-async-iterable';
 export * from './math';
 export * from './any-iterable';
 export * from './nullable';
-export * from './types';
 export * from './timing';
 export * from './helpers';
 export * from './reset-promise';

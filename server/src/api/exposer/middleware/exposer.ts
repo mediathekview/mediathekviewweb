@@ -1,35 +1,36 @@
-import { ExposedFunction, Exposer, Parameters, Result } from '../';
+import { ExposedFunction, Exposer, Parameters } from '../';
+import { Result } from '../../../common/api/rest';
 
-type RegisteredExposedFunction = {
+type RegisteredExposedFunction<T> = {
   path: string[],
-  func: ExposedFunction
+  func: ExposedFunction<T>
 }
 
-export interface ExposerMiddleware {
-  handle: ExposerMiddlewareFunction;
+export interface ExposerMiddleware<T> {
+  handle: ExposerMiddlewareFunction<T>;
 }
 
-export type ExposerMiddlewareNextFunction = (path: string[], parameters: Parameters) => Promise<Result>;
-export type ExposerMiddlewareFunction = (path: string[], parameters: Parameters, next: ExposerMiddlewareNextFunction) => Promise<Result>;
+export type ExposerMiddlewareNextFunction<T> = (path: string[], parameters: Parameters) => Promise<Result<T>>;
+export type ExposerMiddlewareFunction<T> = (path: string[], parameters: Parameters, next: ExposerMiddlewareNextFunction<T>) => Promise<Result<T>>;
 
 export class MiddlewareExposer implements Exposer {
   private readonly backingExposer: Exposer;
-  private readonly middleware: ExposerMiddlewareFunction[];
+  private readonly middleware: ExposerMiddlewareFunction<any>[];
 
   constructor(backingExposer: Exposer) {
     this.backingExposer = backingExposer;
     this.middleware = [];
   }
 
-  expose(path: string[], func: ExposedFunction): this {
+  expose<T>(path: string[], func: ExposedFunction<T>): this {
     const wrappedFunction = this.getWrappedFunction(path, func);
     this.backingExposer.expose(path, wrappedFunction);
 
     return this;
   }
 
-  registerMiddleware(middleware: ExposerMiddleware | ExposerMiddlewareFunction): this {
-    let middlewareFunction: ExposerMiddlewareFunction;
+  registerMiddleware<T>(middleware: ExposerMiddleware<T> | ExposerMiddlewareFunction<T>): this {
+    let middlewareFunction: ExposerMiddlewareFunction<T>;
 
     if (typeof middleware == 'function') {
       middlewareFunction = middleware;
@@ -42,9 +43,9 @@ export class MiddlewareExposer implements Exposer {
     return this;
   }
 
-  private getWrappedFunction(path: string[], func: ExposedFunction): ExposedFunction {
-    const wrappedFunction: ExposedFunction = (parameters) => {
-      let next: ExposerMiddlewareNextFunction = this.getEndware(func);
+  private getWrappedFunction<T>(path: string[], func: ExposedFunction<T>): ExposedFunction<T> {
+    const wrappedFunction: ExposedFunction<T> = (parameters) => {
+      let next: ExposerMiddlewareNextFunction<T> = this.getEndware(func);
 
       for (let i = this.middleware.length - 1; i >= 0; i--) {
         const middleware = this.middleware[i];
@@ -59,15 +60,15 @@ export class MiddlewareExposer implements Exposer {
     return wrappedFunction;
   }
 
-  private getEndware(func: ExposedFunction): ExposerMiddlewareNextFunction {
-    const endware: ExposerMiddlewareNextFunction = (_path, parameters) => {
+  private getEndware<T>(func: ExposedFunction<T>): ExposerMiddlewareNextFunction<T> {
+    const endware: ExposerMiddlewareNextFunction<T> = (_path, parameters) => {
       return func(parameters);
     };
 
     return endware;
   }
 
-  private wrapMiddleware(middleware: ExposerMiddlewareFunction, next: ExposerMiddlewareNextFunction): ExposerMiddlewareNextFunction {
+  private wrapMiddleware<T>(middleware: ExposerMiddlewareFunction<T>, next: ExposerMiddlewareNextFunction<T>): ExposerMiddlewareNextFunction<T> {
     return (path, parameters) => middleware(path, parameters, next);
   }
 }
