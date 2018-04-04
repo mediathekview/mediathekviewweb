@@ -18,7 +18,7 @@ export class SearchService {
     this.searchStringParser = searchStringParser;
   }
 
-  searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Promise<SearchResult<AggregatedEntry>> {
+  async searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Promise<SearchResult<AggregatedEntry>> {
     const body: QueryBody = this.searchStringParser.parse(searchString);
 
     const query: SearchQuery = {
@@ -28,7 +28,7 @@ export class SearchService {
       limit
     };
 
-    return this.search(query);
+    return await this.search(query);
   }
 
   async search(query: SearchQuery): Promise<SearchResult<AggregatedEntry>> {
@@ -39,7 +39,8 @@ export class SearchService {
     const response = await this.httpClient.post<RestApiResult<SearchResult<AggregatedEntry>>>(url, query, { responseType: 'json' }).toPromise();
 
     if (response.errors != undefined) {
-      throw new Error(JSON.stringify(response.errors, null, 2));
+      const errorMessage = JSON.stringify(response.errors, null, 2);
+      throw new Error(errorMessage);
     }
 
     return response.result!;

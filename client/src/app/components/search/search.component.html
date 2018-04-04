@@ -1,6 +1,6 @@
 <mvw-search-input></mvw-search-input>
-{{ sort.active }}
-<mat-table matSort [dataSource]="dataSource">
+
+<mat-table matSort [dataSource]="dataSource" matSortActive="timestamp" matSortDirection="desc" matSortDisableClear>
   <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
 
   <ng-container matColumnDef="channel">
@@ -18,18 +18,18 @@
     <mat-cell *matCellDef="let entry">{{ entry.title }}</mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="timestamp" disableClear="true" start="desc">
-    <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
+  <ng-container matColumnDef="timestamp">
+    <mat-header-cell *matHeaderCellDef mat-sort-header start="desc">Timestamp</mat-header-cell>
     <mat-cell *matCellDef="let entry">{{ entry.timestamp }}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="duration">
-    <mat-header-cell *matHeaderCellDef mat-sort-header start="desc">Dauer</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Dauer</mat-header-cell>
     <mat-cell *matCellDef="let entry">{{ entry.duration }}</mat-cell>
   </ng-container>
 
   <mat-row *matRowDef="let entry; columns: columnsToDisplay"></mat-row>
 </mat-table>
 
-<mat-paginator [pageSize]="settingsService.pageSize | async" [pageSizeOptions]="[5, 10, 15, 25, 50, 75, 100]">
+<mat-paginator [pageSize]="settingsService.pageSize | async" [pageSizeOptions]="[5, 10, 15, 20, 25, 50, 75, 100]">
 </mat-paginator>
