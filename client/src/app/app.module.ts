@@ -14,6 +14,7 @@ import { HomeComponent } from './components/home/home.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { SearchInputComponent } from './components/search-input/search-input.component';
 import { SearchComponent } from './components/search/search.component';
+import { UpdateDialogComponent } from './components/update-dialog/update-dialog.component';
 import { AngularMaterialModule } from './modules/angular-material.module';
 import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
@@ -25,7 +26,8 @@ import { SettingsService } from './services/settings.service';
     NavbarComponent,
     DevComponent,
     HomeComponent,
-    SearchComponent
+    SearchComponent,
+    UpdateDialogComponent
   ],
   imports: [
     BrowserModule,
