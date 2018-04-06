@@ -7,8 +7,8 @@
 
   <div class="collapse navbar-collapse">
     <div class="navbar-nav">
-      <a class="nav-item nav-link" routerLink="/" routerLinkActive="active">Home</a>
-      <a class="nav-item nav-link" routerLink="/dev" routerLinkActive="active">Dev</a>
+      <a class="nav-item nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+      <a class="nav-item nav-link" routerLink="/dev" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Dev</a>
     </div>
   </div>
 </nav>
