@@ -95,7 +95,6 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async search(): Promise<SearchResult<AggregatedEntry> | Error> {
-    await timeout(500)
     const skip = this.paginator.pageIndex * this.paginator.pageSize;
     const limit = this.paginator.pageSize;
 
