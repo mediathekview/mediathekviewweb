@@ -20,9 +20,12 @@ export class Converter {
   private readonly handlers: ConvertHandler[];
   private readonly sortConverter: SortConverter;
 
-  constructor(handlers: ConvertHandler[], sortConverter: SortConverter) {
-    this.handlers = handlers;
+  constructor(sortConverter: SortConverter) {
     this.sortConverter = sortConverter;
+  }
+
+  registerHandler(...handlers: ConvertHandler[]) {
+    this.handlers.push(...handlers);
   }
 
   convert(query: SearchQuery, index: string, type: string): SearchParams {
@@ -58,10 +61,6 @@ export class Converter {
       const sort = query.sort.map((sort) => this.sortConverter.convert(sort));
       elasticQuery.body['sort'] = sort;
     }
-  }
-
-  registerHandler(...handlers: ConvertHandler[]) {
-    this.handlers.push(...handlers);
   }
 
   convertBody(queryBody: QueryBody, index: string, type: string): object {

@@ -117,20 +117,20 @@ export class InstanceProvider {
 
   static elasticsearchConverter(): Promise<Converter> {
     return this.singleton(Converter, () => {
-      const handlers = [
+      const keywordRewrites = new Set(TextTypeFields);
+      const sortConverter = new SortConverter(keywordRewrites);
+      const converter = new Converter(sortConverter);
+
+      converter.registerHandler(
         new TextQueryConvertHandler(),
         new IDsQueryConvertHandler(),
         new MatchAllQueryConvertHandler(),
         new RegexQueryConvertHandler(),
         new TermQueryConvertHandler(),
-        new BoolQueryConvertHandler(),
+        new BoolQueryConvertHandler(converter),
         new RangeQueryConvertHandler()
-      ];
+      );
 
-      const keywordRewrites = new Set(TextTypeFields);
-      const sortConverter = new SortConverter(keywordRewrites);
-
-      const converter = new Converter(handlers, sortConverter);
       return converter;
     });
   }
