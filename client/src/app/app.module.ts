@@ -1,5 +1,7 @@
+import { registerLocaleData } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { NgModule } from '@angular/core';
+import localeDe from '@angular/common/locales/de';
+import { NgModule, LOCALE_ID } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -19,6 +21,9 @@ import { AngularMaterialModule } from './modules/angular-material.module';
 import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
 import { UpdateService } from './services/update.service';
+import { VideoPlayerComponent } from './components/video-player/video-player.component';
+
+registerLocaleData(localeDe, 'de');
 
 @NgModule({
   declarations: [
@@ -28,7 +33,8 @@ import { UpdateService } from './services/update.service';
     DevComponent,
     HomeComponent,
     SearchComponent,
-    UpdateDialogComponent
+    UpdateDialogComponent,
+    VideoPlayerComponent
   ],
   imports: [
     BrowserModule,
@@ -40,7 +46,9 @@ import { UpdateService } from './services/update.service';
     AngularMaterialModule,
     ServiceWorkerModule.register('/ngsw-worker.js', { enabled: environment.production })
   ],
-  providers: [SearchService, SettingsService, UpdateService, { provide: SearchStringParser, useClass: SearchStringParser }],
+  providers: [SearchService, SettingsService, UpdateService,
+    { provide: SearchStringParser, useClass: SearchStringParser },
+    { provide: LOCALE_ID, useValue: 'de_DE' }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -20,8 +20,8 @@ export class EntriesImporter {
   }
 
   import(source: EntrySource): Promise<void> {
-    return AsyncEnumerable
-      .buffer(source, BUFFER_SIZE)
+    return AsyncEnumerable.from(source)
+      .buffer(BUFFER_SIZE)
       .parallelForEach(CONCURRENCY, async (batch) => {
         const ids = batch.map((entry) => entry.id);
 

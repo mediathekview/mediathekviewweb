@@ -50,13 +50,13 @@ export class ParameterVerifierExposerMiddleware<T> implements ExposerMiddleware<
     const errors: ResultError[] = [];
 
     if (missingProperties.size > 0) {
-      const missingPropertiesArray = SyncEnumerable.toArray(missingProperties);
+      const missingPropertiesArray = SyncEnumerable.from(missingProperties).toArray();
       const error = new InvalidRequestError('request is missing parameters', missingPropertiesArray);
       errors.push(error);
     }
 
     if (unknownProperties.size > 0) {
-      const unknownPropertiesArray = SyncEnumerable.toArray(unknownProperties);
+      const unknownPropertiesArray = SyncEnumerable.from(unknownProperties).toArray();
       const error = new InvalidRequestError('request has unknown parameters', unknownPropertiesArray);
       errors.push(error);
     }

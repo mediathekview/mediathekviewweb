@@ -19,6 +19,7 @@ export type Entry = Entity & {
 }
 
 export type AggregatedEntry = Entry & {
+  date: number;
   time: number;
   metadata: EntryMetadata;
 }
@@ -29,6 +30,8 @@ export enum Field {
   Topic = 'topic',
   Title = 'title',
   Timestamp = 'timestamp',
+  Date = 'date',
+  Time = 'time',
   Duration = 'duration',
   Description = 'description',
   Website = 'website',

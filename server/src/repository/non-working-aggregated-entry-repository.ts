@@ -26,13 +26,14 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
   loadMany(ids: AnyIterable<string>): AsyncIterable<AggregatedEntry> {
     const entryDocuments = this.entryRepository.loadMany(ids);
 
-    const result = AsyncEnumerable.map(entryDocuments, (entryDocument) => this.toAggregated(entryDocument));
+    const result = AsyncEnumerable.from(entryDocuments).map((entryDocument) => this.toAggregated(entryDocument));
     return result;
   }
 
   private toAggregated(entry: Entry): AggregatedEntry {
     const aggregatedEntry = {
       ...entry,
+      date: this.getDate(entry.timestamp),
       time: this.getTime(entry.timestamp),
 
       metadata: {
@@ -46,6 +47,13 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
     };
 
     return aggregatedEntry;
+  }
+
+  private getDate(timestamp: number): number {
+    const date = new Date(timestamp * 1000);
+    const dateWithoutTime = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+
+    return Math.floor(dateWithoutTime.valueOf() / 1000);
   }
 
   private getTime(timestamp: number): number {

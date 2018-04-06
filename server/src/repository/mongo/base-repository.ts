@@ -20,7 +20,7 @@ export class MongoBaseRepository<T extends Entity, TWithPartialId extends Partia
 
   save(entity: TWithPartialId): Promise<T> {
     const result = this.saveMany([entity]);
-    return AsyncEnumerable.single(result);
+    return AsyncEnumerable.from(result).single();
   }
 
   saveMany(entities: AnyIterable<TWithPartialId>): AsyncIterable<T> {
@@ -62,7 +62,7 @@ export class MongoBaseRepository<T extends Entity, TWithPartialId extends Partia
   }
 
   async *loadMany(ids: AnyIterable<string>): AsyncIterable<T> {
-    const idsArray = await AsyncEnumerable.toArray(ids);
+    const idsArray = await AsyncEnumerable.from(ids).toArray();
 
     const filter: MongoFilter = {
       _id: { $in: idsArray }

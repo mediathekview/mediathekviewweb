@@ -1,7 +1,8 @@
 import { RangeQuery } from '../../../../common/search-engine';
 import { ConvertHandler } from '../convert-handler';
 
-type ElasticsearchRangeQueryValue = number | string
+type ElasticsearchRangeQueryValue = number | string;
+
 type ElasticsearchRangeQuery = {
   range: {
     [key: string]: {
@@ -12,9 +13,7 @@ type ElasticsearchRangeQuery = {
       format?: string
     }
   }
-}
-
-const MILLISECONDS_TYPE = 'epoch_millis';
+};
 
 export class RangeQueryConvertHandler implements ConvertHandler {
   tryConvert(query: RangeQuery, _index: string, _type: string): object | null {
@@ -35,26 +34,7 @@ export class RangeQueryConvertHandler implements ConvertHandler {
       }
     };
 
-    const anyIsDate = this.anyIsDate(query);
-
-    if (anyIsDate) {
-      queryObj.range[query.range.field].format = MILLISECONDS_TYPE;
-    }
-
     return queryObj;
-  }
-
-  private anyIsDate(query: RangeQuery): boolean {
-    if (
-      query.range.lt instanceof Date ||
-      query.range.gt instanceof Date ||
-      query.range.lte instanceof Date ||
-      query.range.gte instanceof Date
-    ) {
-      return true;
-    }
-
-    return false;
   }
 
   private convertValue(value: string | number | Date | undefined): ElasticsearchRangeQueryValue | undefined {

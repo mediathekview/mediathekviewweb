@@ -8,7 +8,7 @@ import { mergeMap } from 'rxjs/operators/mergeMap';
 import { throttleTime } from 'rxjs/operators/throttleTime';
 import { Subscription } from 'rxjs/Subscription';
 
-import { AggregatedEntry } from '../../common/model';
+import { AggregatedEntry, Field } from '../../common/model';
 import { Order, SearchResult } from '../../common/search-engine';
 import { SortBuilder } from '../../common/search-engine/query/builder/sort';
 import { SearchService } from '../../services/search.service';
@@ -17,6 +17,9 @@ import { SearchInputComponent } from '../search-input/search-input.component';
 import { timeout } from '../../common/utils';
 import { exhaustWithLastMap } from '../../common/rxjs/exhaustWithLastMap';
 import { HttpErrorResponse } from '@angular/common/http';
+
+const DEFAULT_SORT_FIELD = Field.Timestamp;
+const DEFAULT_SORT_ORDER = Order.Descending;
 
 @Component({
   selector: 'mvw-search',
@@ -32,7 +35,7 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
   private pageSizeChangeSubscription: Subscription;
 
   dataSource = new MatTableDataSource<AggregatedEntry>();
-  columnsToDisplay = ['channel', 'topic', 'title', 'timestamp', 'duration'];
+  columnsToDisplay = ['channel', 'topic', 'title', 'date', 'time', 'duration', 'play'];
   isFetching = false;
 
   @ViewChild(SearchInputComponent) searchInput: SearchInputComponent;
@@ -98,9 +101,12 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     const skip = this.paginator.pageIndex * this.paginator.pageSize;
     const limit = this.paginator.pageSize;
 
+    const sortField = this.getSortField();
+    const sortOrder = this.getSortOrder();
+
     const sort =
       new SortBuilder()
-        .add(this.sort.active, this.sort.direction == 'desc' ? Order.Descending : Order.Ascending)
+        .add(sortField, sortOrder)
         .build();
 
     try {
@@ -109,6 +115,27 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       console.error(error);
       return error;
+    }
+  }
+
+  private getSortField(): string {
+    const sortField = (this.sort.direction == '') ? DEFAULT_SORT_FIELD : this.sort.active;
+    return sortField;
+  }
+
+  private getSortOrder(): Order {
+    switch (this.sort.direction) {
+      case 'asc':
+        return Order.Ascending;
+
+      case 'desc':
+        return Order.Descending;
+
+      case '':
+        return DEFAULT_SORT_ORDER;
+
+      default:
+        throw new Error(`unknown direction '${this.sort.direction}'`);
     }
   }
 }

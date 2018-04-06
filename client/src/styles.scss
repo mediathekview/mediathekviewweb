@@ -34,3 +34,7 @@
 .hide-disabled:disabled {
   opacity: 0;
 }
+
+button:focus {
+  outline: none;
+}

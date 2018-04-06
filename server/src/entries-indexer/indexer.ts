@@ -64,7 +64,7 @@ export class EntriesIndexer {
     do {
       try {
         const popped = this.entriesToBeIndexed.pop(BATCH_SIZE);
-        ids = await AsyncEnumerable.toArray(popped);
+        ids = await AsyncEnumerable.from(popped).toArray();
       }
       catch (error) {
         logger.error(error);
@@ -81,7 +81,7 @@ export class EntriesIndexer {
 
   private async indexEntries(ids: string[]) {
     const entries = await this.aggregatedEntryRepository.loadMany(ids);
-    const entriesArray = await AsyncEnumerable.toArray(entries);
+    const entriesArray = await AsyncEnumerable.from(entries).toArray();
     const searchEngineItems = entriesArray.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);

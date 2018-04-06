@@ -1,6 +1,9 @@
 import { Predicate } from './types';
 
-export function single<T>(iterable: Iterable<T>, predicate: Predicate<T>): T {
+export function single<T>(iterable: Iterable<T>): T;
+export function single<T>(iterable: Iterable<T>, predicate: Predicate<T>): T;
+export function single<T>(iterable: Iterable<T>, predicate?: Predicate<T>): T;
+export function single<T>(iterable: Iterable<T>, predicate: Predicate<T> = (() => true)): T {
   let matched = false;
   let result: T | undefined;
 

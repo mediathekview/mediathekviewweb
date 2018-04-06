@@ -16,10 +16,18 @@
   flex: 3 1 2rem;
 }
 
-.mat-column-timestamp {
-  flex: 0 0 6rem;
+.mat-column-date {
+  flex: 0 0 5rem;
+}
+
+.mat-column-time {
+  flex: 0 0 4rem;
 }
 
 .mat-column-duration {
   flex: 0 0 3rem;
+}
+
+.mat-column-play {
+  flex: 0 0 2.25rem;
 }

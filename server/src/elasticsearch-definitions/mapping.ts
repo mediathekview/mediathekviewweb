@@ -53,8 +53,17 @@ export const ElasticsearchMapping = {
       index: true,
       format: 'epoch_second',
     },
+    date: {
+      type: 'date',
+      index: true,
+      format: 'epoch_second',
+    },
+    time: {
+      type: 'integer',
+      index: true
+    },
     duration: {
-      type: 'long',
+      type: 'integer',
       index: true,
     },
     website: {
@@ -84,8 +93,9 @@ export const ElasticsearchMapping = {
       }
     },
     lastSeen: {
-      type: 'long',
-      index: true
+      type: 'date',
+      index: true,
+      format: 'epoch_second',
     },
     metadata: {
       type: 'object',

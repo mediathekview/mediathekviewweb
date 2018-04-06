@@ -1,7 +1,9 @@
 import {
   any, batch, filter, forEach, group, intercept,
-  IteratorFunction, map, mapMany, Predicate, single
+  IteratorFunction, map, mapMany, Predicate, single, Comparator
 } from '../utils';
+import { sort } from '../utils/iterable-helpers/sort';
+import { first } from '../utils/iterable-helpers/first';
 
 export class SyncEnumerable<T> implements IterableIterator<T> {
   private readonly source: Iterable<T>;
@@ -16,13 +18,17 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(iterable);
   }
 
+  cast<TNew extends T>(): SyncEnumerable<TNew> {
+    return this as any as SyncEnumerable<TNew>;
+  }
+
+  forceCast<TNew>(): SyncEnumerable<TNew> {
+    return this as any as SyncEnumerable<TNew>;
+  }
+
   filter(predicate: Predicate<T>): SyncEnumerable<T> {
     const filtered = filter(this.source, predicate);
     return new SyncEnumerable(filtered);
-  }
-
-  static filter<T>(source: Iterable<T>, predicate: Predicate<T>): SyncEnumerable<T> {
-    return new SyncEnumerable(source).filter(predicate);
   }
 
   map<TOut>(mapper: IteratorFunction<T, TOut>): SyncEnumerable<TOut> {
@@ -30,17 +36,21 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(mapped);
   }
 
-  static map<T, TOut>(source: Iterable<T>, mapper: IteratorFunction<T, TOut>): SyncEnumerable<TOut> {
-    return new SyncEnumerable(source).map(mapper);
-  }
 
-  single(predicate: Predicate<T>): T {
-    const result = single(this.source, predicate);
+  first(): T;
+  first(predicate: Predicate<T>): T;
+  first(predicate?: Predicate<T>): T;
+  first(predicate?: Predicate<T>): T {
+    const result = first(this.source, predicate);
     return result;
   }
 
-  static single<T>(source: Iterable<T>, predicate: Predicate<T>): T {
-    return new SyncEnumerable(source).single(predicate);
+  single(): T;
+  single(predicate: Predicate<T>): T;
+  single(predicate?: Predicate<T>): T;
+  single(predicate?: Predicate<T>): T {
+    const result = single(this.source, predicate);
+    return result;
   }
 
   batch(size: number): SyncEnumerable<T[]> {
@@ -48,17 +58,12 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(batched);
   }
 
-  static batch<T>(source: Iterable<T>, size: number): SyncEnumerable<T[]> {
-    return new SyncEnumerable(source).batch(size);
-  }
-
-  any(predicate: Predicate<T>): boolean {
+  any(): boolean;
+  any(predicate: Predicate<T>): boolean;
+  any(predicate?: Predicate<T>): boolean;
+  any(predicate?: Predicate<T>): boolean {
     const result = any(this.source, predicate);
     return result;
-  }
-
-  static any<T>(source: Iterable<T>, predicate: Predicate<T>): boolean {
-    return new SyncEnumerable(source).any(predicate);
   }
 
   mapMany<TOut>(mapper: IteratorFunction<T, Iterable<TOut>>): SyncEnumerable<TOut> {
@@ -66,8 +71,12 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(result);
   }
 
-  static mapMany<T, TOut>(source: Iterable<T>, mapper: IteratorFunction<T, Iterable<TOut>>): SyncEnumerable<TOut> {
-    return new SyncEnumerable(source).mapMany(mapper);
+  sort(): SyncEnumerable<T>;
+  sort(comparator: Comparator<T>): SyncEnumerable<T>;
+  sort(comparator?: Comparator<T>): SyncEnumerable<T>;
+  sort(comparator?: Comparator<T>): SyncEnumerable<T> {
+    const sorted = sort(this.source, comparator);
+    return new SyncEnumerable(sorted);
   }
 
   intercept(func: IteratorFunction<T, void>): SyncEnumerable<T> {
@@ -75,17 +84,9 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(iterator);
   }
 
-  static intercept<T>(source: Iterable<T>, func: IteratorFunction<T, void>): SyncEnumerable<T> {
-    return new SyncEnumerable(source).intercept(func);
-  }
-
   group<TGroup>(selector: IteratorFunction<T, TGroup>): SyncEnumerable<[TGroup, T[]]> {
     const grouped = group<T, TGroup>(this.source, selector);
     return new SyncEnumerable(grouped);
-  }
-
-  static group<T, TGroup>(source: Iterable<T>, selector: IteratorFunction<T, TGroup>): SyncEnumerable<[TGroup, T[]]> {
-    return new SyncEnumerable(source).group(selector);
   }
 
   toArray(): T[] {
@@ -93,25 +94,13 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return array;
   }
 
-  static toArray<T>(source: Iterable<T>): T[] {
-    return new SyncEnumerable(source).toArray();
-  }
-
   forEach(func: IteratorFunction<T, void>) {
     forEach(this.source, func);
-  }
-
-  static forEach<T>(source: Iterable<T>, func: IteratorFunction<T, void>) {
-    return new SyncEnumerable(source).forEach(func);
   }
 
   toIterator(): Iterator<T> {
     const iterator = this.source[Symbol.iterator]();
     return iterator;
-  }
-
-  static toIterator<T>(source: Iterable<T>): Iterator<T> {
-    return new SyncEnumerable(source).toIterator();
   }
 
   next(value?: any): IteratorResult<T> {
