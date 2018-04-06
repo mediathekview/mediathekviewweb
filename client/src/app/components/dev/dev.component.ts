@@ -13,7 +13,7 @@ import { SearchService } from '../../services/search.service';
   styleUrls: ['./dev.component.scss']
 })
 export class DevComponent implements OnInit {
-  private readonly searchService: SearchService;
+  readonly searchService: SearchService;
 
   queryString: string;
   searchResult: string;

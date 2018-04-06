@@ -1,6 +1,6 @@
 <div class="container">
   <mat-form-field>
-    <textarea matInput matTextareaAutosize matAutosizeMaxRows="20" matAutosizeMinRows="5" placeholder="Query" [(ngModel)]="queryString" (ngModelChange)="onInputChanged($event)"></textarea>
+    <textarea matInput matTextareaAutosize matAutosizeMaxRows="20" matAutosizeMinRows="5" placeholder="Query" [(ngModel)]="queryString" (ngModelChange)="onInputChanged()"></textarea>
   </mat-form-field>
 
   <p>{{ searchResult }}</p>

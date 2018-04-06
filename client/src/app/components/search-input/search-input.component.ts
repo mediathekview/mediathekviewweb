@@ -13,8 +13,9 @@ export class SearchInputComponent implements OnInit, OnDestroy {
   @Input() searchString: string;
   @Output() searchStringChanged: EventEmitter<string>;
 
-  private inputControl: FormControl;
   private inputChangeSubscription: Subscription;
+
+  inputControl: FormControl;
 
   constructor() {
     this.searchString = '';

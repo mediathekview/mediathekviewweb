@@ -16,6 +16,7 @@ import { SettingsService } from '../../services/settings.service';
 import { SearchInputComponent } from '../search-input/search-input.component';
 import { timeout } from '../../common/utils';
 import { exhaustWithLastMap } from '../../common/rxjs/exhaustWithLastMap';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'mvw-search',
@@ -23,8 +24,9 @@ import { exhaustWithLastMap } from '../../common/rxjs/exhaustWithLastMap';
   styleUrls: ['./search.component.scss']
 })
 export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly settingsService: SettingsService;
   private readonly searchService: SearchService;
+
+  readonly settingsService: SettingsService;
 
   private searchChangeSubscription: Subscription;
   private pageSizeChangeSubscription: Subscription;
@@ -80,7 +82,7 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private applyResult(result: SearchResult<AggregatedEntry> | Error) {
-    if (result instanceof Error) {
+    if ((result instanceof Error) || (result instanceof HttpErrorResponse)) {
       this.applyError(result);
     } else {
       this.dataSource.data = result.items;
@@ -88,9 +90,8 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private applyError(error: Error) {
-    window.alert(error.name);
-    window.alert(error.message);
+  private applyError(error: Error | HttpErrorResponse) {
+    window.alert(JSON.stringify(error, null, 2));
   }
 
   private async search(): Promise<SearchResult<AggregatedEntry> | Error> {
@@ -107,9 +108,8 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
       const result = await this.searchService.searchByString(this.searchInput.searchString, skip, limit, ...sort);
       return result;
     } catch (error) {
-      console.log('ERR')
-      alert(error)
-      return error as Error;
+      console.error(error);
+      return error;
     }
   }
 }
