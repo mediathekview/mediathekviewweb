@@ -18,6 +18,7 @@ import { UpdateDialogComponent } from './components/update-dialog/update-dialog.
 import { AngularMaterialModule } from './modules/angular-material.module';
 import { SearchService } from './services/search.service';
 import { SettingsService } from './services/settings.service';
+import { UpdateService } from './services/update.service';
 
 @NgModule({
   declarations: [
@@ -39,7 +40,7 @@ import { SettingsService } from './services/settings.service';
     AngularMaterialModule,
     ServiceWorkerModule.register('/ngsw-worker.js', { enabled: environment.production })
   ],
-  providers: [SearchService, SettingsService, { provide: SearchStringParser, useClass: SearchStringParser }],
+  providers: [SearchService, SettingsService, UpdateService, { provide: SearchStringParser, useClass: SearchStringParser }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
