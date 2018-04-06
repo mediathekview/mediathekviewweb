@@ -21,6 +21,7 @@ export class Converter {
   private readonly sortConverter: SortConverter;
 
   constructor(sortConverter: SortConverter) {
+    this.handlers = [];
     this.sortConverter = sortConverter;
   }
 
