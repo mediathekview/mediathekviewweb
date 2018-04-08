@@ -1,8 +1,8 @@
-import { AnyIterable } from '../../';
-import { ParallelizableIteratorFunction } from '../types';
+import { AnyIterable } from '../../any-iterable';
 import { AwaitableSet } from '../../collections/awaitable';
+import { ParallelizableIteratorFunction } from '../types';
 
-export async function parallelForEach<T>(iterable: AnyIterable<T>, concurrency: number, func: ParallelizableIteratorFunction<T, void>): Promise<void> {
+export async function parallelForEach<T>(iterable: AnyIterable<T>, concurrency: number, func: ParallelizableIteratorFunction<T, any>): Promise<void> {
   const runningPromises = new AwaitableSet<Promise<void>>();
   let thrown = false;
   let error: any;

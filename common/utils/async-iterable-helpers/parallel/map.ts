@@ -1,4 +1,5 @@
-import { AnyIterable, ParallelizableIteratorFunction } from '../../';
+import { AnyIterable } from '../../any-iterable';
+import { ParallelizableIteratorFunction } from '../types';
 import { parallelFeed } from './feed';
 
 export function parallelMap<TIn, TOut>(iterable: AnyIterable<TIn>, concurrency: number, keepOrder: boolean, mapper: ParallelizableIteratorFunction<TIn, TOut>): AsyncIterable<TOut> {

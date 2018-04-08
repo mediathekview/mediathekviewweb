@@ -1,4 +1,5 @@
-import { AnyIterable, ParallelizableIteratorFunction } from '../../';
+import { AnyIterable } from '../../any-iterable';
+import { ParallelizableIteratorFunction } from '../types';
 import { parallelForEach } from './for-each';
 
 export async function parallelGroup<TIn, TGroup>(iterable: AnyIterable<TIn>, concurrency: number, selector: ParallelizableIteratorFunction<TIn, TGroup>): Promise<Map<TGroup, TIn[]>> {

@@ -94,7 +94,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return result;
   }
 
-  parallelForEach(concurrency: number, func: ParallelizableIteratorFunction<T, void>): Promise<void> {
+  parallelForEach(concurrency: number, func: ParallelizableIteratorFunction<T, any>): Promise<void> {
     const result = parallelForEach(this.source, concurrency, func);
     return result;
   }

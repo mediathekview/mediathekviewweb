@@ -1,5 +1,6 @@
+import { AnyIterable } from '../any-iterable';
+import { toArrayAsync } from './to-array';
 import { AsyncComparator } from './types';
-import { AnyIterable, toArrayAsync, forEach } from '..';
 
 export function sort<T>(iterable: AnyIterable<T>): AsyncIterable<T>
 export function sort<T>(iterable: AnyIterable<T>, comparator: AsyncComparator<T>): AsyncIterable<T>

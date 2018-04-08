@@ -1,5 +1,5 @@
+import { AnyIterable } from '../any-iterable';
 import { AsyncIteratorFunction } from './types';
-import { AnyIterable } from '../';
 
 export async function groupAsync<TIn, TGroup>(iterable: AnyIterable<TIn>, selector: AsyncIteratorFunction<TIn, TGroup>): Promise<Map<TGroup, TIn[]>> {
   const map = new Map<TGroup, TIn[]>();

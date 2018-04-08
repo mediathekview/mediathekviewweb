@@ -5,47 +5,46 @@ import { Entity } from '../../common/model';
 import { AnyIterable } from '../../common/utils';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter } from './mongo-query';
+import { objectIdOrStringToString, UpsertedIds } from './utils';
 
-const CREATED_PROPERTY = 'created';
-const UPDATED_PROPERTY = 'updated';
-const ITEM_PROPERTY = 'item';
 const BATCH_SIZE = 100;
 
-export class MongoBaseRepository<T extends Entity, TWithPartialId extends PartialProperty<T, 'id'> = PartialProperty<T, 'id'>> {
+type TWithPartialId<T extends Entity> = PartialProperty<T, 'id'>;
+
+export class MongoBaseRepository<T extends Entity> {
   private readonly collection: Mongo.Collection<MongoDocument<T>>;
 
   constructor(collection: Mongo.Collection<MongoDocument<T>>) {
     this.collection = collection;
   }
 
-  save(entity: TWithPartialId): Promise<T> {
+  save(entity: TWithPartialId<T>): Promise<T> {
     const result = this.saveMany([entity]);
     return AsyncEnumerable.from(result).single();
   }
 
-  saveMany(entities: AnyIterable<TWithPartialId>): AsyncIterable<T> {
+  saveMany(entities: AnyIterable<TWithPartialId<T>>): AsyncIterable<T> {
     const result = AsyncEnumerable.from(entities)
       .batch(BATCH_SIZE)
-      .map((operations) => operations.map(this.getReplaceOneOperation))
-      .parallelMap(3, false, async (operations) => {
-        const result = await this.collection.bulkWrite(operations);
-
-        const saved = AsyncEnumerable.from(entities)
-          .map((entity, index) => {
-            let id = entity.id;
-
-            const hasUpsertedId = (result.upsertedIds as Object).hasOwnProperty(index);
-
-            if (hasUpsertedId) {
-              id = result.upsertedIds[index]._id;
-            }
-
-            return entity as any as T;
-          });
-
-        return saved;
+      .map((entitiesBatch) => {
+        const operations = entitiesBatch.map((entity) => this.toReplaceOneOperation(entity));
+        return ({ entitiesBatch, operations });
       })
-      .mapMany((entities) => entities);
+      .parallelMap(3, false, async ({ entitiesBatch, operations }) => {
+        const bulkWriteResult = await this.collection.bulkWrite(operations);
+        return { entitiesBatch, upsertedIds: bulkWriteResult.upsertedIds as UpsertedIds };
+      })
+      .mapMany(({ entitiesBatch, upsertedIds }) => entitiesBatch.map((entity) => ({ entity, upsertedIds })))
+      .map(({ entity, upsertedIds }, index) => {
+        const entityCopy = { ...entity };
+
+        const hasUpsertedId = upsertedIds.hasOwnProperty(index);
+        if (hasUpsertedId) {
+          entityCopy.id = objectIdOrStringToString(upsertedIds[index]._id);
+        }
+
+        return entityCopy as any as T;
+      });
 
     return result;
   }
@@ -81,7 +80,7 @@ export class MongoBaseRepository<T extends Entity, TWithPartialId extends Partia
     await this.collection.drop();
   }
 
-  private getReplaceOneOperation(entity: TWithPartialId) {
+  private toReplaceOneOperation(entity: TWithPartialId<T>): Object {
     const filter: MongoFilter = {};
 
     if (entity.id != undefined) {
