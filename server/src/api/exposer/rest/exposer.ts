@@ -4,6 +4,7 @@ import * as KoaBodyParser from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 import * as KoaSend from 'koa-send';
 import * as Path from 'path';
+import * as FS from 'fs';
 
 import { Timer } from '../../../common/utils';
 import { ExposedFunction, Exposer } from '../exposer';
@@ -59,13 +60,16 @@ export class RestExposer implements Exposer {
 
   private exposeClient() {
     const clientRoot = Path.resolve(__dirname, '../../../../../client/dist/');
-    const indexHtml = Path.resolve(clientRoot, 'index.html');
 
     this.koa.use(async (context, next) => {
       if (context.path.startsWith('/api')) {
         await next();
       } else {
-        await KoaSend(context, context.path, { root: clientRoot, index: 'index.html' });
+        const file = Path.join(clientRoot, context.path);
+        const exists = await new Promise<boolean>((resolve) => FS.exists(file, resolve));
+        const path = exists ? context.path : 'index.html';
+        
+        await KoaSend(context, path, { root: clientRoot, index: 'index.html' });
       }
     });
   }
