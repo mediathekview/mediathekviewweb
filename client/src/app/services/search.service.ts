@@ -32,8 +32,8 @@ export class SearchService {
   }
 
   async search(query: SearchQuery): Promise<SearchResult<AggregatedEntry>> {
-    // const url = '/api/v2/search';
-    const url = 'http://localhost:8080/api/v2/search';
+    const url = '/api/v2/search';
+    // const url = 'http://localhost:8080/api/v2/search';
     // const url = 'https://testing.mediathekviewweb.de/api/v2/search';
 
     const response = await this.httpClient.post<RestApiResult<SearchResult<AggregatedEntry>>>(url, query, { responseType: 'json' }).toPromise();
