@@ -153,8 +153,8 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
       duration,
       description,
       website: url_website,
-      media: [],
       lastSeen: this.metadata!.timestamp,
+      media: [],
 
       source: {
         identifier: 'filmlist',

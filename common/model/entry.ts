@@ -9,8 +9,8 @@ export type Entry = Entity & {
   duration: number;
   description: string;
   website: string;
-  media: Media[];
   lastSeen: number;
+  media: Media[];
 
   source: {
     identifier: string,
@@ -43,10 +43,10 @@ export enum Field {
   AudioQuality = 'media.quality'
 }
 
-export enum MediaType {
-  Video = 0,
-  Audio = 1,
-  Subtitle = 2
+export const enum MediaType {
+  Video = 'video',
+  Audio = 'audio',
+  Subtitle = 'subtitle'
 }
 
 export interface Media {

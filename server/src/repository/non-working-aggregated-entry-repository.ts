@@ -14,10 +14,10 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
   async load(id: string): Promise<AggregatedEntry | null> {
     let result: AggregatedEntry | null = null;
 
-    const entryDocument = await this.entryRepository.load(id);
+    const entry = await this.entryRepository.load(id);
 
-    if (entryDocument != null) {
-      result = this.toAggregated(entryDocument);
+    if (entry != null) {
+      result = this.toAggregated(entry);
     }
 
     return result;

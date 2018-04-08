@@ -70,12 +70,17 @@ export const ElasticsearchMapping = {
       type: 'keyword',
       index: false,
     },
+    lastSeen: {
+      type: 'date',
+      index: true,
+      format: 'epoch_second',
+    },
     media: {
       type: 'nested',
       dynamic: false,
       properties: {
         type: {
-          type: 'byte',
+          type: 'keyword',
           index: true
         },
         url: {
@@ -91,11 +96,6 @@ export const ElasticsearchMapping = {
           index: true
         }
       }
-    },
-    lastSeen: {
-      type: 'date',
-      index: true,
-      format: 'epoch_second',
     },
     metadata: {
       type: 'object',
