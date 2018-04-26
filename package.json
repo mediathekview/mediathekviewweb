@@ -18,29 +18,29 @@
     "body-parser": "^1.18.2",
     "bootstrap": "^3.3.7",
     "compression": "^1.7.2",
-    "elasticsearch": "^14.2.1",
+    "elasticsearch": "^14.2.2",
     "express": "^4.16.3",
     "hjson": "^3.1.1",
     "jquery": "^3.3.1",
     "js-cookie": "^2.2.0",
     "line-reader": "^0.4.0",
-    "lodash": "^4.17.5",
-    "lzma-native": "^3.0.5",
-    "matomo-tracker": "^2.1.0",
-    "moment": "^2.21.0",
+    "lodash": "^4.17.10",
+    "lzma-native": "^3.0.7",
+    "matomo-tracker": "^2.2.0",
+    "moment": "^2.22.1",
     "redis": "^2.8.0",
     "request": "^2.85.0",
     "request-progress": "^3.0.0",
     "rss": "^1.2.2",
-    "socket.io": "^2.0.4",
-    "video.js": "^6.7.4",
+    "socket.io": "^2.1.0",
+    "video.js": "^6.8.0",
     "videojs-chromecast": "^2.0.8",
-    "videojs-contrib-hls": "^5.14.0"
+    "videojs-contrib-hls": "^5.14.1"
   },
   "devDependencies": {
     "babel": "^6.23.0",
     "babel-cli": "^6.26.0",
-    "babel-eslint": "^8.2.2",
+    "babel-eslint": "^8.2.3",
     "babel-preset-latest": "^6.24.1"
   }
 }
