@@ -25,7 +25,7 @@
     "js-cookie": "^2.2.0",
     "line-reader": "^0.4.0",
     "lodash": "^4.17.10",
-    "lzma-native": "^3.0.7",
+    "lzma-native": "^3.0.8",
     "matomo-tracker": "^2.2.0",
     "moment": "^2.22.1",
     "redis": "^2.8.0",
@@ -33,7 +33,7 @@
     "request-progress": "^3.0.0",
     "rss": "^1.2.2",
     "socket.io": "^2.1.0",
-    "video.js": "^6.8.0",
+    "video.js": "^6.9.0",
     "videojs-chromecast": "^2.0.8",
     "videojs-contrib-hls": "^5.14.1"
   },
