@@ -1,8 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { distinctUntilChanged } from 'rxjs/operators/distinctUntilChanged';
-import { map } from 'rxjs/operators/map';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 @Component({
   selector: 'mvw-search-input',
@@ -13,7 +12,7 @@ export class SearchInputComponent implements OnInit, OnDestroy {
   @Input() searchString: string;
   @Output() searchStringChanged: EventEmitter<string>;
 
-  private inputChangeSubscription: Subscription;
+  private inputChangeSubscription!: Subscription;
 
   inputControl: FormControl;
 

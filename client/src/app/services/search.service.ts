@@ -1,11 +1,9 @@
-import 'rxjs/add/operator/toPromise';
-
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Result as RestApiResult } from '../common/api/rest';
-import { AggregatedEntry, Field } from '../common/model';
-import { Order, QueryBody, SearchQuery, SearchResult, Sort } from '../common/search-engine';
+import { AggregatedEntry } from '../common/model';
+import { QueryBody, SearchQuery, SearchResult, Sort } from '../common/search-engine';
 import { SearchStringParser } from '../common/search-string-parser/parser';
 
 @Injectable()

@@ -1,22 +1,17 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, MatSort, MatTable, MatTableDataSource } from '@angular/material';
-import { merge } from 'rxjs/observable/merge';
-import { of } from 'rxjs/observable/of';
-import { distinctUntilKeyChanged } from 'rxjs/operators/distinctUntilKeyChanged';
-import { startWith } from 'rxjs/operators/startWith';
-import { mergeMap } from 'rxjs/operators/mergeMap';
-import { throttleTime } from 'rxjs/operators/throttleTime';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription, merge } from 'rxjs';
+import { distinctUntilKeyChanged, startWith, throttleTime } from 'rxjs/operators';
 
 import { AggregatedEntry, Field } from '../../common/model';
+import { exhaustWithLastMap } from '../../common/rxjs/exhaustWithLastMap';
 import { Order, SearchResult } from '../../common/search-engine';
 import { SortBuilder } from '../../common/search-engine/query/builder/sort';
 import { SearchService } from '../../services/search.service';
 import { SettingsService } from '../../services/settings.service';
 import { SearchInputComponent } from '../search-input/search-input.component';
-import { timeout } from '../../common/utils';
-import { exhaustWithLastMap } from '../../common/rxjs/exhaustWithLastMap';
-import { HttpErrorResponse } from '@angular/common/http';
+
 
 const DEFAULT_SORT_FIELD = Field.Timestamp;
 const DEFAULT_SORT_ORDER = Order.Descending;
@@ -31,17 +26,17 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly settingsService: SettingsService;
 
-  private searchChangeSubscription: Subscription;
-  private pageSizeChangeSubscription: Subscription;
+  private searchChangeSubscription!: Subscription;
+  private pageSizeChangeSubscription!: Subscription;
 
   dataSource = new MatTableDataSource<AggregatedEntry>();
   columnsToDisplay = ['channel', 'topic', 'title', 'date', 'time', 'duration', 'play'];
   isFetching = false;
 
-  @ViewChild(SearchInputComponent) searchInput: SearchInputComponent;
-  @ViewChild(MatPaginator) paginator: MatPaginator;
-  @ViewChild(MatTable) table: MatTable<AggregatedEntry>;
-  @ViewChild(MatSort) sort: MatSort;
+  @ViewChild(SearchInputComponent) searchInput!: SearchInputComponent;
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatTable) table!: MatTable<AggregatedEntry>;
+  @ViewChild(MatSort) sort!: MatSort;
 
   constructor(settingsService: SettingsService, searchService: SearchService) {
     this.settingsService = settingsService;
@@ -52,14 +47,14 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     this.table.trackBy = (_index, entry) => entry.id;
   }
 
-  ngOnDestroy() {
-    this.searchChangeSubscription.unsubscribe();
-    this.pageSizeChangeSubscription.unsubscribe();
-  }
-
   ngAfterViewInit() {
     this.searchChangeSubscription = this.subscribeChanges();
     this.pageSizeChangeSubscription = this.subscribePageSizeChange();
+  }
+
+  ngOnDestroy() {
+    this.searchChangeSubscription.unsubscribe();
+    this.pageSizeChangeSubscription.unsubscribe();
   }
 
   private subscribeChanges(): Subscription {

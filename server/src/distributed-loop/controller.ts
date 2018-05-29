@@ -1,4 +1,4 @@
-import { Observable } from "rxjs/Observable";
+import { Observable } from 'rxjs';
 
 export interface LoopController {
   stop: () => Promise<void>;

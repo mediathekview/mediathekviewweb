@@ -1,6 +1,4 @@
-import { OperatorFunction } from 'rxjs/interfaces';
-import { Observable, ObservableInput } from 'rxjs/Observable';
-import { from } from 'rxjs/observable/from';
+import { Observable, from, ObservableInput, OperatorFunction } from 'rxjs';
 
 export function exhaustWithLastMap<T, I>(project: (value: T, index: number) => ObservableInput<I>): OperatorFunction<T, I> {
   return (source) => {
@@ -18,7 +16,7 @@ export function exhaustWithLastMap<T, I>(project: (value: T, index: number) => O
         function projectNextValue() {
           currentProjection = from(project(nextValue, index));
           hasNextValue = false;
-          
+
           currentProjection.subscribe({
             next: (value) => subscriber.next(value),
             error: (error) => subscriber.error(error),

@@ -1,10 +1,8 @@
 import '../common/extensions/math';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable, Subject } from 'rxjs';
 import { bufferCount, filter, map } from 'rxjs/operators';
-import { Subject } from 'rxjs/Subject';
-
-import { timeout, Timer, immediate } from '../common/utils';
+import { Timer, timeout } from '../common/utils';
 
 export enum AggregationMode {
   Minimum,

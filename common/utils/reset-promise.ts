@@ -1,7 +1,7 @@
 export class ResetPromise<T> implements Promise<T> {
-  private backingPromise: Promise<T>;
-  private resolvePromise: (value?: T | PromiseLike<T>) => void;
-  private rejectPromise: (reason?: any) => void;
+  private backingPromise!: Promise<T>;
+  private resolvePromise!: (value?: T | PromiseLike<T>) => void;
+  private rejectPromise!: (reason?: any) => void;
 
   readonly [Symbol.toStringTag] = 'Promise';
 

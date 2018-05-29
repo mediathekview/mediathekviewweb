@@ -11,11 +11,11 @@ import { SyncEnumerable } from '../../common/enumerable';
 export class VideoPlayerComponent implements OnInit, AfterViewInit {
   private static instance = 0;
 
-  @Input() entry: AggregatedEntry;
-  private player: VideoJs.Player;
+  @Input() entry!: AggregatedEntry;
+  private player!: VideoJs.Player;
 
   playerId: string;
-  src: string;
+  src!: string;
 
   private get isFullscreen(): boolean {
     return (document.fullscreenElement != null);
@@ -37,7 +37,7 @@ export class VideoPlayerComponent implements OnInit, AfterViewInit {
     if (this.isFullscreen) {
       this.player.exitFullscreen();
     } else {
-      this.player.requestFullscreen();
+      this.player.requestFullScreen();
     }
   }
 

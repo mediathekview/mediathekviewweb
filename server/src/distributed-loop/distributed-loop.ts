@@ -1,7 +1,7 @@
-import { Subject } from 'rxjs/Subject';
+import { Subject } from 'rxjs';
 
 import { LockProvider } from '../common/lock';
-import { ResetPromise, timeout, Timer } from '../common/utils';
+import { ResetPromise, Timer, timeout } from '../common/utils';
 import { LoopController } from './controller';
 
 export type LoopFunction = (controller: LoopController) => Promise<void>;
