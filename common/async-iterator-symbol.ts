@@ -1,1 +1,5 @@
-(Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator');
+const hasAsyncIteratorSymbol = 'asyncIterator' in Symbol;
+
+if (!hasAsyncIteratorSymbol) {
+  (Symbol as any).asyncIterator = Symbol.for('Symbol.asyncIterator');
+}
