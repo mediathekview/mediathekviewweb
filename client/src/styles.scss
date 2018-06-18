@@ -3,12 +3,13 @@
 @import '~bootstrap/dist/css/bootstrap.css';
 //
 @for $i from 0 through 10 {
-  @if $i>0 {
+  @if ($i > 0) {
     .vertical-spacer-#{$i} {
       height: #{$i}rem;
     }
   }
-  @if $i < 10 {
+
+  @if ($i < 10) {
     .vertical-spacer-#{$i}-5 {
       height: #{$i + 0.5}rem;
     }
