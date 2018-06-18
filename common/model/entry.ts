@@ -15,7 +15,7 @@ export type Entry = Entity & {
   source: {
     identifier: string,
     data?: any
-  };
+  }
 }
 
 export type AggregatedEntry = Entry & {
@@ -67,7 +67,7 @@ export type Audio = Media & {
 
 export type Subtitle = Media & {
   type: MediaType.Subtitle;
-};
+}
 
 export enum Quality {
   UltraLow = 0,
@@ -80,28 +80,34 @@ export enum Quality {
 
 export class MediaFactory {
   static createVideo(url: string, size: number | null, quality: Quality): Video {
-    return {
+    const video: Video = {
       type: MediaType.Video,
       url,
       size,
       quality
     };
+
+    return video;
   }
 
   static createAudio(url: string, size: number | null, quality: Quality): Audio {
-    return {
+    const audio: Audio = {
       type: MediaType.Audio,
       url,
       size,
       quality
     };
+
+    return audio;
   }
 
   static createSubtitle(url: string, size: number | null): Subtitle {
-    return {
+    const subtitle: Subtitle = {
       type: MediaType.Subtitle,
       url,
       size
     };
+
+    return subtitle;
   }
 }

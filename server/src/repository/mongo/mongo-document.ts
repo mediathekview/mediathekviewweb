@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-import { Entity } from '../../common/model';
-import { EntityWithPartialId, objectIdOrStringToString, stringToObjectIdOrString } from './utils';
+import { Entity, EntityWithPartialId } from '../../common/model';
+import { objectIdOrStringToString, stringToObjectIdOrString } from './utils';
 
 export type MongoDocument<T extends Entity> = Omit<T, 'id'> & {
   _id: string | ObjectId;
@@ -12,37 +12,25 @@ export type MongoDocumentWitPartialId<T extends PartialProperty<Entity, 'id'>> =
 }
 
 export function toEntity<T extends Entity>(document: MongoDocument<T>): T {
-  const entity: T = {
-    id: objectIdOrStringToString(document._id),
-    ...(document as StringMap)
-  } as T;
+  const { _id, ...entity } = document as StringMap;
+  (entity as T).id = objectIdOrStringToString(_id);
 
-  delete (entity as any as MongoDocument<T>)._id;
-
-  return entity;
+  return entity as T;
 }
 
 export function toMongoDocument<T extends Entity>(entity: T): MongoDocument<T> {
-  const document: MongoDocument<T> = {
-    _id: stringToObjectIdOrString(entity.id),
-    ...(entity as StringMap)
-  } as MongoDocument<T>;
+  const { id, ...document } = entity as StringMap;
+  (document as MongoDocument<T>)._id = stringToObjectIdOrString(entity.id);
 
-  delete (document as any as T).id;
-
-  return document;
+  return document as MongoDocument<T>;
 }
 
 export function toMongoDocumentWithPartialId<T extends EntityWithPartialId>(entity: T): MongoDocumentWitPartialId<T> {
-  const document: MongoDocumentWitPartialId<T> = {
-    ...(entity as StringMap)
-  } as MongoDocumentWitPartialId<T>;
+  const { id, ...document } = entity as StringMap;
 
-  if (entity.id != undefined) {
-    document._id = entity.id;
+  if (id != undefined) {
+    (document as MongoDocumentWitPartialId<T>)._id = stringToObjectIdOrString(id);
   }
 
-  delete (document as any as T).id;
-
-  return document;
+  return document as MongoDocumentWitPartialId<T>;
 }

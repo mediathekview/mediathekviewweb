@@ -1,5 +1,4 @@
 import { AnyIterable } from '../any-iterable';
-import { isIterable } from '../iterable-helpers/is-iterable';
 
 export function isAsyncIterable<T>(anyIterable: AnyIterable<T>): anyIterable is AsyncIterable<T>;
 export function isAsyncIterable<T = any>(obj: any): obj is AsyncIterable<T> {
@@ -16,8 +15,4 @@ export function isAsyncIterableIterator<T = any>(obj: any): obj is AsyncIterable
   const isIterator = typeof (obj as Partial<AsyncIterableIterator<any>>).next == 'function';
 
   return isIterable && isIterator;
-}
-
-export function isAnyIterable<T = any>(obj: any): obj is AsyncIterable<T> | Iterable<T> {
-  return isIterable(obj) || isAsyncIterable(obj);
 }

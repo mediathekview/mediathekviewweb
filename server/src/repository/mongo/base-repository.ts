@@ -60,13 +60,17 @@ export class MongoBaseRepository<T extends Entity> {
     return entity;
   }
 
-  async *loadMany(ids: AnyIterable<string>): AsyncIterable<T> {
+  async *loadManyById(ids: AnyIterable<string>): AsyncIterable<T> {
     const idsArray = await AsyncEnumerable.from(ids).toArray();
 
     const filter: MongoFilter = {
       _id: { $in: idsArray }
-    }
+    };
 
+    yield* this.loadManyByFilter(filter);
+  }
+
+  async *loadManyByFilter(filter: MongoFilter) {
     const cursor = this.collection.find<MongoDocument<T>>(filter);
 
     let document: MongoDocument<T>;

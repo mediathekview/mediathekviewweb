@@ -1,4 +1,4 @@
-import { Entity } from './entity';
+import { Entity, EntityWithPartialId } from './entity';
 
 export enum UserType {
   Guest = 'guest',
@@ -25,3 +25,7 @@ export type RegisteredUser = Entity & {
   email: string;
   birthday: Date;
 }
+
+export type UserWithPartialId = EntityWithPartialId<User>;
+export type GuestUserWithPartialId = EntityWithPartialId<GuestUser>;
+export type RegisteredUserWithPartialId = EntityWithPartialId<RegisteredUser>;

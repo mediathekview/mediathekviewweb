@@ -1,8 +1,5 @@
-import { User } from '../common/model/user';
+import { User, UserWithPartialId } from '../common/model/user';
 import { AnyIterable } from '../common/utils';
-import { EntityWithPartialId } from './mongo/utils';
-
-export type UserWithPartialId = EntityWithPartialId<User>;
 
 export interface UserRepository {
   save(user: UserWithPartialId): Promise<User>;

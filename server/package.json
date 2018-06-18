@@ -26,6 +26,7 @@
     "typescript": "^2.9.2"
   },
   "dependencies": {
+    "ajv": "^6.5.1",
     "base-x": "^3.0.4",
     "bull": "^3.4.2",
     "elasticsearch": "^15.0.0",

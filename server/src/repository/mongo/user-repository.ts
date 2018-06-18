@@ -1,7 +1,7 @@
 import * as Mongo from 'mongodb';
 
-import { UserRepository, UserWithPartialId } from '../';
-import { User } from '../../common/model';
+import { UserRepository } from '../';
+import { User, UserWithPartialId } from '../../common/model';
 import { AnyIterable } from '../../common/utils';
 import { MongoBaseRepository } from './base-repository';
 import { MongoDocument } from './mongo-document';
@@ -28,7 +28,7 @@ export class MongoUserRepository implements UserRepository {
   }
 
   loadMany(ids: AnyIterable<string>): AsyncIterable<User> {
-    return this.baseRepository.loadMany(ids);
+    return this.baseRepository.loadManyById(ids);
   }
 
   drop(): Promise<void> {

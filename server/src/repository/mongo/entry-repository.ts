@@ -36,7 +36,7 @@ export class MongoEntryRepository implements EntryRepository {
   }
 
   loadMany(ids: AnyIterable<string>): AsyncIterable<Entry> {
-    return this.baseRepository.loadMany(ids);
+    return this.baseRepository.loadManyById(ids);
   }
 
   drop(): Promise<void> {

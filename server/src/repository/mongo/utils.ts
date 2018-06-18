@@ -1,9 +1,5 @@
 import { ObjectId } from 'mongodb';
 
-import { Entity } from '../../common/model';
-
-export type EntityWithPartialId<T extends Entity = Entity> = PartialProperty<T, 'id'>;
-
 export type UpsertedIds = NumberMap<{ _id: ObjectId }>;
 
 export function objectIdOrStringToString(id: string | ObjectId): string {
