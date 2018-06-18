@@ -1,7 +1,6 @@
 import { EntriesImporter } from './entries-importer/importer';
 import { EntrySource } from './entry-source';
 import { InstanceProvider } from './instance-provider';
-import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 
 export class MediathekViewWebImporter {
   private importer: EntriesImporter | null;
@@ -18,13 +17,9 @@ export class MediathekViewWebImporter {
 
   async initialize() {
     if (this.importer == null) {
-      const datastoreFactory = await InstanceProvider.datastoreFactory();
-      const queueProvider = await InstanceProvider.queueProvider();
-      const entryRepository = await InstanceProvider.entryRepository();
+      this.importer = await InstanceProvider.entriesImporter();
+      const filmlistEntrySource = await InstanceProvider.filmlistEntrySource();
 
-      this.importer = new EntriesImporter(entryRepository, datastoreFactory);
-
-      const filmlistEntrySource = new FilmlistEntrySource(datastoreFactory, queueProvider);
       this.prepares.push(() => filmlistEntrySource.run());
 
       this.sources.push(filmlistEntrySource);
@@ -67,3 +62,4 @@ export class MediathekViewWebImporter {
     await Promise.all(promises);
   }
 }
+

@@ -1,4 +1,4 @@
-import { Logger, LogLevel, LoggerFactory } from './common/logger';
+import { LoggerFactory, LogLevel } from './common/logger';
 import { ConsoleLoggerFactory } from './common/logger/console';
 
 export class LoggerFactoryProvider {

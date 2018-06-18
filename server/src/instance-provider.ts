@@ -3,15 +3,20 @@ import * as Redis from 'ioredis';
 import * as Mongo from 'mongodb';
 
 import { LockProvider } from './common/lock';
+import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
 import { ElasticsearchMapping, ElasticsearchSettings, TextTypeFields } from './elasticsearch-definitions';
+import { EntriesImporter } from './entries-importer/importer';
+import { Filmlist } from './entry-source/filmlist/filmlist';
+import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
 import { RedisLockProvider } from './lock/redis';
+import { LoggerFactoryProvider } from './logger-factory-provider';
 import { QueueProvider } from './queue';
 import { BullQueueProvider } from './queue/bull/provider';
 import { AggregatedEntryRepository, EntryRepository } from './repository';
@@ -19,19 +24,43 @@ import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
-import { TextQueryConvertHandler, IDsQueryConvertHandler, MatchAllQueryConvertHandler, RegexQueryConvertHandler, TermQueryConvertHandler, BoolQueryConvertHandler, RangeQueryConvertHandler, SortConverter } from './search-engine/elasticsearch/converter/handlers';
+import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
+import { Serializer } from './serializer';
+
+const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
 const MONGO_CONNECTION_STRING = 'mongodb://localhost:27017';
 const MONGO_DATABASE_NAME = 'mediathekviewweb';
 const MONGO_ENTRIES_COLLECTION_NAME = 'entries';
-const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
+
 const ELASTICSEARCH_INDEX_NAME = 'mediathekviewweb';
 const ELASTICSEARCH_TYPE_NAME = 'entry';
 const ELASTICSEARCH_INDEX_SETTINGS = ElasticsearchSettings;
 const ELASTICSEARCH_INDEX_MAPPING = ElasticsearchMapping;
 
+const CORE_LOG = '[CORE]';
+const FILMLIST_MANAGER_LOG = '[FILMLIST_MANAGER]';
+const QUEUE_LOG = '[QUEUE]';
+const ENTRIES_IMPORTER_LOG = '[IMPORTER]';
+const FILMLIST_ENTRY_SOURCE = '[FILMLIST_SOURCE]';
+const SEARCH_ENGINE_LOG = '[SEARCH_ENGINE]';
+
 export class InstanceProvider {
   private static instances: StringMap = {};
+  private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
+
+  static appLogger(): Promise<Logger> {
+    return this.singleton('appLogger', () => this.loggerFactory.create(CORE_LOG));
+  }
+
+  static serializer(): Promise<Serializer> {
+    return this.singleton(Serializer, () => {
+      const serializer = new Serializer();
+      serializer.registerPrototype(Filmlist);
+
+      return serializer;
+    });
+  }
 
   static redis(): Promise<Redis.Redis> {
     return this.singleton(Redis, () => new Redis());
@@ -74,9 +103,7 @@ export class InstanceProvider {
   }
 
   static filmlistRepository(): Promise<FilmlistRepository> {
-    return this.singleton(MediathekViewWebVerteilerFilmlistRepository, async () => {
-      return new MediathekViewWebVerteilerFilmlistRepository(MEDIATHEKVIEWWEB_VERTEILER_URL);
-    });
+    return this.singleton(MediathekViewWebVerteilerFilmlistRepository, () => new MediathekViewWebVerteilerFilmlistRepository(MEDIATHEKVIEWWEB_VERTEILER_URL));
   }
 
   static distributedLoopProvider(): Promise<DistributedLoopProvider> {
@@ -87,7 +114,22 @@ export class InstanceProvider {
   }
 
   static queueProvider(): Promise<QueueProvider> {
-    return this.singleton(BullQueueProvider, () => new BullQueueProvider());
+    return this.singleton(BullQueueProvider, async () => {
+      const serializer = await this.serializer();
+      const queue = new BullQueueProvider(serializer, this.loggerFactory, QUEUE_LOG);
+
+      return queue;
+    });
+  }
+
+  static entriesImporter(): Promise<EntriesImporter> {
+    return this.singleton(EntriesImporter, async () => {
+      const datastoreFactory = await this.datastoreFactory();
+      const entryRepository = await this.entryRepository();
+      const logger = LoggerFactoryProvider.factory.create(ENTRIES_IMPORTER_LOG);
+
+      return new EntriesImporter(entryRepository, datastoreFactory, logger);
+    });
   }
 
   static entryRepository(): Promise<EntryRepository> {
@@ -108,7 +150,9 @@ export class InstanceProvider {
     return this.singleton(ElasticsearchSearchEngine, async () => {
       const elasticsearch = await this.elasticsearch();
       const converter = await this.elasticsearchConverter();
-      const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
+      const logger = LoggerFactoryProvider.factory.create(SEARCH_ENGINE_LOG);
+
+      const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
       await elasticsearchSearchEngine.initialize();
 
       return elasticsearchSearchEngine;
@@ -118,20 +162,30 @@ export class InstanceProvider {
   static elasticsearchConverter(): Promise<Converter> {
     return this.singleton(Converter, () => {
       const keywordRewrites = new Set(TextTypeFields);
-      const sortConverter = new SortConverter(keywordRewrites);
+      const sortConverter = new ConvertHandlers.SortConverter(keywordRewrites);
       const converter = new Converter(sortConverter);
 
       converter.registerHandler(
-        new TextQueryConvertHandler(),
-        new IDsQueryConvertHandler(),
-        new MatchAllQueryConvertHandler(),
-        new RegexQueryConvertHandler(),
-        new TermQueryConvertHandler(),
-        new BoolQueryConvertHandler(converter),
-        new RangeQueryConvertHandler()
+        new ConvertHandlers.TextQueryConvertHandler(),
+        new ConvertHandlers.IDsQueryConvertHandler(),
+        new ConvertHandlers.MatchAllQueryConvertHandler(),
+        new ConvertHandlers.RegexQueryConvertHandler(),
+        new ConvertHandlers.TermQueryConvertHandler(),
+        new ConvertHandlers.BoolQueryConvertHandler(converter),
+        new ConvertHandlers.RangeQueryConvertHandler()
       );
 
       return converter;
+    });
+  }
+
+  static filmlistEntrySource(): Promise<FilmlistEntrySource> {
+    return this.singleton(FilmlistEntrySource, async () => {
+      const datastoreFactory = await this.datastoreFactory();
+      const queueProvider = await this.queueProvider();
+      const logger = this.loggerFactory.create(FILMLIST_ENTRY_SOURCE);
+
+      return new FilmlistEntrySource(datastoreFactory, queueProvider, logger);
     });
   }
 
@@ -141,8 +195,9 @@ export class InstanceProvider {
       const filmlistRepository = await this.filmlistRepository();
       const distributedLoopProvider = await this.distributedLoopProvider();
       const queueProvider = await this.queueProvider();
+      const logger = this.loggerFactory.create(FILMLIST_MANAGER_LOG);
 
-      return new FilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider);
+      return new FilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider, logger);
     });
   }
 

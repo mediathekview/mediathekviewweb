@@ -3,6 +3,12 @@ import { Serializer, SerializedElement, SerializeHandler } from '../';
 const TYPE = 'array';
 
 export class ArraySerializeHandler implements SerializeHandler {
+  private readonly serializer: Serializer;
+
+  constructor(serializer: Serializer) {
+    this.serializer = serializer;
+  }
+
   canSerialize(obj: any): boolean {
     return Array.isArray(obj);
   }
@@ -15,7 +21,7 @@ export class ArraySerializeHandler implements SerializeHandler {
     for (let i = 0; i < array.length; i++) {
       const value = array[i];
 
-      const serializedElement = Serializer.serialize(value, false);
+      const serializedElement = this.serializer.serialize(value, false);
       serializedElements[i] = serializedElement;
     }
 
@@ -37,7 +43,7 @@ export class ArraySerializeHandler implements SerializeHandler {
     for (let i = 0; i < serializedElements.length; i++) {
       const serializedElement = serializedElements[i];
 
-      const value = Serializer.deserialize(serializedElement);
+      const value = this.serializer.deserialize(serializedElement);
       resultArray[i] = value;
     }
 

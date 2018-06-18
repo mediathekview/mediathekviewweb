@@ -1,11 +1,11 @@
-import { SerializerStatic, SerializedElement, SerializeHandler } from '../';
+import { Serializer, SerializedElement, SerializeHandler } from '../';
 
 const TYPE = 'object';
 
 export class ObjectSerializeHandler implements SerializeHandler {
-  private readonly serializer: SerializerStatic;
+  private readonly serializer: Serializer;
 
-  constructor(serializer: SerializerStatic) {
+  constructor(serializer: Serializer) {
     this.serializer = serializer;
   }
 

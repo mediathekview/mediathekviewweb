@@ -1,30 +1,32 @@
-import { Keys } from '../../keys';
-import config from '../../config';
-import { FilmlistRepository } from './repository';
-import { Set, Key, DatastoreFactory, DataType } from '../../datastore';
-import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
-import { QueueProvider, Queue } from '../../queue';
-import { random, now } from '../../common/utils/index';
-import { Filmlist } from './filmlist';
 import { AsyncEnumerable } from '../../common/enumerable/index';
-import { LoggerFactoryProvider } from '../../logger-factory-provider';
+import { Logger } from '../../common/logger';
+import { now } from '../../common/utils/index';
+import config from '../../config';
+import { DatastoreFactory, DataType, Key, Set } from '../../datastore';
+import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
+import { Keys } from '../../keys';
+import { Queue, QueueProvider } from '../../queue';
+import { Filmlist } from './filmlist';
+import { FilmlistRepository } from './repository';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
 
-const logger = LoggerFactoryProvider.factory.create('[FILMLIST_MANAGER]');
+//const logger = LoggerFactoryProvider.factory.create('[FILMLIST_MANAGER]');
 
 export class FilmlistManager {
-  private filmlistRepository: FilmlistRepository;
-  private importedFilmlistDates: Set<Date>;
-  private lastLatestCheck: Key<Date>;
-  private lastArchiveCheck: Key<Date>;
-  private importQueue: Queue<Filmlist>;
-  private distributedLoop: DistributedLoop;
+  private readonly filmlistRepository: FilmlistRepository;
+  private readonly importedFilmlistDates: Set<Date>;
+  private readonly lastLatestCheck: Key<Date>;
+  private readonly lastArchiveCheck: Key<Date>;
+  private readonly importQueue: Queue<Filmlist>;
+  private readonly distributedLoop: DistributedLoop;
+  private readonly logger: Logger;
 
-  constructor(datastoreFactory: DatastoreFactory, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider) {
+  constructor(datastoreFactory: DatastoreFactory, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider, logger: Logger) {
     this.filmlistRepository = filmlistRepository;
+    this.logger = logger;
 
     this.lastLatestCheck = datastoreFactory.key(Keys.LastLatestCheck, DataType.Date);
     this.lastArchiveCheck = datastoreFactory.key(Keys.LastArchiveCheck, DataType.Date);
@@ -60,13 +62,13 @@ export class FilmlistManager {
   }
 
   private async checkLatest() {
-    logger.info('checking for new current-filmlist');
+    this.logger.info('checking for new current-filmlist');
     const filmlist = await this.filmlistRepository.getLatest();
     await this.checkFilmlist(filmlist);
   }
 
   private async checkArchive(): Promise<void> {
-    logger.info('checking for new archive-filmlist');
+    this.logger.info('checking for new archive-filmlist');
 
     const minimumDate = now();
     minimumDate.setDate(minimumDate.getDate() - MAX_AGE_DAYS);

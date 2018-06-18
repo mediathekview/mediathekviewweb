@@ -1,10 +1,8 @@
-import { FilmlistRepository } from './repository';
-import { Filmlist } from '../filmlist';
-import { Listing, File } from '../../../listing/';
+import { mapAsync, singleAsync } from '../../../common/utils';
+import { File, Listing } from '../../../listing/';
 import { NginxListing } from '../../../listing/nginx';
-import { decompress } from '../../../utils/decompressor';
-import { singleAsync, mapAsync } from '../../../common/utils';
-import { Readable } from 'stream';
+import { Filmlist } from '../filmlist';
+import { FilmlistRepository } from './repository';
 
 const FILENAME_DATE_REGEX = /^(\d+)-(\d+)-(\d+)-filme\.xz$/;
 

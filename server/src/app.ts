@@ -1,27 +1,14 @@
-import './common/async-iterator-symbol';
-
 import * as Cluster from 'cluster';
 import * as Http from 'http';
 import { map } from 'rxjs/operators';
 
-import { Serializer } from './serializer';
-import { Filmlist } from './entry-source/filmlist/filmlist';
+import './common/async-iterator-symbol';
+import { Logger } from './common/logger';
 import { MediathekViewWebExposer } from './exposer';
 import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
-import { LoggerFactoryProvider } from './logger-factory-provider';
 import { AggregationMode, EventLoopWatcher } from './utils';
-
-const watcher = new EventLoopWatcher(10);
-const logger = LoggerFactoryProvider.factory.create('[APP]');
-
-watcher
-  .watch(0, 250, AggregationMode.Maximum)
-  .pipe(map((measure) => Math.round(measure * 10000) / 10000))
-  .subscribe((delay) => logger.silly(`eventloop-${process.pid}: ${delay} ms`))
-
-Serializer.registerPrototype(Filmlist);
 
 async function init() {
   const server = new Http.Server();
@@ -50,7 +37,20 @@ async function init() {
   ]);
 }
 
+async function initEventLoopWatcher(logger: Logger) {
+  const watcher = new EventLoopWatcher(10);
+
+  watcher
+    .watch(0, 250, AggregationMode.Maximum)
+    .pipe(map((measure) => Math.round(measure * 10000) / 10000))
+    .subscribe((delay) => logger.debug(`eventloop-${process.pid}: ${delay} ms`));
+}
+
 (async () => {
+  const logger = await InstanceProvider.appLogger();
+
+  initEventLoopWatcher(logger);
+
   try {
     if (Cluster.isMaster) {
       for (let i = 0; i < 4; i++) {
@@ -59,6 +59,7 @@ async function init() {
     }
     else {
       logger.info(`worker ${process.pid} started`);
+
       await init();
 
       logger.info(`worker ${process.pid} initialized`);

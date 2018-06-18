@@ -1,30 +1,30 @@
 import * as Elasticsearch from 'elasticsearch';
 
+import { Logger } from '../../common/logger';
 import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
 import { timeout } from '../../common/utils';
-import { LoggerFactoryProvider } from '../../logger-factory-provider';
 import { Converter } from './converter';
-
-const logger = LoggerFactoryProvider.factory.create('[ELASTIC_SEARCH_ENGINE]');
 
 type ElasticsearchBulkResponse = { took: number, errors: boolean, items: StringMap<{ [key: string]: any, status: number, error?: any }>[] };
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly client: Elasticsearch.Client;
+  private readonly converter: Converter;
   private readonly indexName: string;
   private readonly typeName: string;
+  private readonly logger: Logger;
   private readonly indexSettings: object | undefined;
   private readonly indexMapping: object | undefined;
-  private readonly converter: Converter;
 
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, indexSettings: object);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, indexSettings: object, indexMapping: object);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, indexSettings?: object, indexMapping?: object) {
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger, indexSettings: object);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger, indexSettings: object, indexMapping: object);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger, indexSettings?: object, indexMapping?: object) {
     this.client = client;
     this.converter = converter;
     this.indexName = indexName;
     this.typeName = typeName;
+    this.logger = logger;
     this.indexSettings = indexSettings;
     this.indexMapping = indexMapping;
   }
@@ -38,7 +38,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       await this.putIndexOptions();
     }
 
-    logger.info('initialized elasticsearch search-engine');
+    this.logger.info('initialized elasticsearch search-engine');
   }
 
   async index(items: SearchEngineItem<T>[]): Promise<void> {
@@ -131,9 +131,9 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       try {
         await this.client.ping({ requestTimeout: 250 });
         success = true;
-        logger.info('connected to elasticsearch');
+        this.logger.info('connected to elasticsearch');
       } catch {
-        logger.warn(`couldn't connect to elasticsearch, trying again...`)
+        this.logger.warn(`couldn't connect to elasticsearch, trying again...`)
       }
 
       await timeout(1000);
