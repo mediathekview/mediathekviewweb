@@ -9,8 +9,8 @@
 			"path": "server"
 		},
 		{
-			"name": "common",
-			"path": "common"
+			"name": "docker",
+			"path": "docker"
 		},
 		{
 			"name": "root",
