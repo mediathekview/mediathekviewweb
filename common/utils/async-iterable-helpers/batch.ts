@@ -2,12 +2,10 @@ import { AnyIterable } from '../any-iterable';
 import { isAsyncIterable } from './is-async-iterable';
 
 export function batchAsync<T>(iterable: AnyIterable<T>, size: number): AsyncIterableIterator<T[]> {
-  const isAsync = isAsyncIterable(iterable);
-
-  if (isAsync) {
-    return async(iterable as AsyncIterable<T>, size);
+  if (isAsyncIterable(iterable)) {
+    return async(iterable, size);
   } else {
-    return sync(iterable as Iterable<T>, size);
+    return sync(iterable, size);
   }
 }
 

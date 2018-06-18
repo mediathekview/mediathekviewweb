@@ -2,12 +2,10 @@ import { AnyIterable } from '../any-iterable';
 import { isIterable } from '../iterable-helpers/is-iterable';
 
 export async function toSync<T>(iterable: AnyIterable<T>): Promise<Iterable<T>> {
-  const isSync = isIterable(iterable);
-
-  if (isSync) {
-    return iterable as Iterable<T>;
+  if (isIterable(iterable)) {
+    return iterable;
   } else {
-    return toSyncAsync(iterable as AsyncIterable<T>);
+    return toSyncAsync(iterable);
   }
 }
 

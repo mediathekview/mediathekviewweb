@@ -1,9 +1,9 @@
 import {
   anyAsync, AsyncIteratorFunction, AsyncPredicate, batchAsync,
   BufferedAsyncIterable, filterAsync, forEachAsync, interceptAsync,
-  interruptEveryAsync, interruptPerSecondAsync, isAsyncIterable, isIterable,
-  mapAsync, mapManyAsync, ParallelizableIteratorFunction, ParallelizablePredicate,
-  singleAsync, toArrayAsync, toAsyncIterable, toAsyncIterator, toSync
+  interruptEveryAsync, interruptPerSecondAsync, isIterable, mapAsync,
+  mapManyAsync, ParallelizableIteratorFunction, ParallelizablePredicate, singleAsync,
+  toArrayAsync, toAsyncIterableIterator, toAsyncIterator, toSync, isAsyncIterableIterator
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
@@ -147,11 +147,11 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   }
 
   [Symbol.asyncIterator](): AsyncIterableIterator<T> {
-    if (isAsyncIterable(this.source)) {
-      return (this.source as AsyncIterableIterator<T>)[Symbol.asyncIterator]();
+    if (isAsyncIterableIterator(this.source)) {
+      return this.source[Symbol.asyncIterator]();
     }
     else if (isIterable(this.source)) {
-      return toAsyncIterable(this.source as Iterable<T>);
+      return toAsyncIterableIterator(this.source);
     }
 
     throw new Error('source is neither iterable nor async-iterable');

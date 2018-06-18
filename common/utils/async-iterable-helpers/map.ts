@@ -3,9 +3,7 @@ import { isAsyncIterable } from './is-async-iterable';
 import { AsyncIteratorFunction } from './types';
 
 export function mapAsync<TIn, TOut>(iterable: AnyIterable<TIn>, mapper: AsyncIteratorFunction<TIn, TOut>): AsyncIterableIterator<TOut> {
-  const isAsync = isAsyncIterable(iterable);
-
-  if (isAsync) {
+  if (isAsyncIterable(iterable)) {
     return async(iterable as AsyncIterable<TIn>, mapper);
   } else {
     return sync(iterable as Iterable<TIn>, mapper);

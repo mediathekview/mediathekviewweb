@@ -12,14 +12,14 @@ export type User = Entity & {
   birthday: null | Date;
 }
 
-export type GuestUser = {
+export type GuestUser = Entity & {
   type: UserType.Guest;
   username: null;
   email: null;
   birthday: null;
 }
 
-export type RegisteredUser = {
+export type RegisteredUser = Entity & {
   type: UserType.Registered;
   username: string;
   email: string;

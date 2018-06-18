@@ -6,11 +6,11 @@ export function toAsyncIterator<T>(iterable: AnyIterable<T>): AsyncIterator<T> {
   let asyncIterator: AsyncIterator<T>;
 
   if (isIterable(iterable)) {
-    const iterator = (iterable as Iterable<T>)[Symbol.iterator]();
+    const iterator = iterable[Symbol.iterator]();
     asyncIterator = iteratorToAsyncIterator(iterator);
   }
   else if (isAsyncIterable(iterable)) {
-    asyncIterator = (iterable as AsyncIterable<T>)[Symbol.asyncIterator]();
+    asyncIterator = iterable[Symbol.asyncIterator]();
   } else {
     throw new Error('parameter is neither iterable nor async-iterable');
   }
