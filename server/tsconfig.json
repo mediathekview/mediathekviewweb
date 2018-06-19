@@ -20,7 +20,7 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": false,
-    "keyofStringsOnly": false,
+    "keyofStringsOnly": true,
 
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,

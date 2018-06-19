@@ -5,22 +5,22 @@ export type PropertyValidationError = {
   hint?: string
 };
 
-export type PropertyValidationResult<T> = null | PropertyValidationError | PropertyValidationError[] | ObjectValidationResult<T> | {[P in keyof T]: PropertyValidationResult<T[P]>};
+export type PropertyValidationResult = null | PropertyValidationError | PropertyValidationError[] | ObjectValidationResult | { [key: string]: PropertyValidationResult } | { [key: number]: PropertyValidationResult };
 
-export type ObjectValidationResult<T> = {
+export type ObjectValidationResult = {
   missing?: string[],
   unknown?: string[],
-  properties?: {[P in keyof T]?: PropertyValidationError | PropertyValidationError[] | ObjectValidationResult<T[P]> }
+  properties?: StringMap<PropertyValidationError | PropertyValidationError[] | ObjectValidationResult>
 };
 
-export type PropertyValidationFunction<T> = (value: T) => PropertyValidationResult<T>;
+export type PropertyValidationFunction<T> = (value: T) => PropertyValidationResult;
 
-export abstract class ObjectValidator<T extends StringMap | NumberMap> {
+export abstract class ObjectValidator<T extends object> {
   protected abstract required: string[];
   protected abstract optional: string[];
-  protected abstract propertyValidators: {[P in keyof T]: PropertyValidationFunction<T[P]>};
+  protected abstract propertyValidators: { [P in keyof Required<T>]: PropertyValidationFunction<Required<T>[P]> };
 
-  validate(object: T): null | ObjectValidationResult<T> {
+  validate(object: T): null | ObjectValidationResult {
     const propertyNames = Object.getOwnPropertyNames(object);
     const properties = new Set(propertyNames);
 
@@ -31,7 +31,7 @@ export abstract class ObjectValidator<T extends StringMap | NumberMap> {
     const unknownProperties = properties.difference(required, optional);
     const knownProperties = required.union(optional).intersect(properties);
 
-    let result: ObjectValidationResult<T> | null = null;
+    let result: ObjectValidationResult | null = null;
 
     if (missingProperties.size > 0) {
       if (result == null) {

@@ -57,9 +57,7 @@ function difference<T>(this: Set<T>, ...sets: Set<T>[]): Set<T> {
 }
 
 function union<T>(this: Set<T>, ...sets: Set<T>[]): Set<T> {
-  const union = new Set<T>();
-
-  sets.unshift(this);
+  const union = new Set<T>(this);
 
   for (const set of sets) {
     for (const value of set) {

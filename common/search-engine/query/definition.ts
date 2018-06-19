@@ -1,3 +1,9 @@
+export type Aggregations = 'min' | 'max' | 'sum' | 'average' | 'median' | 'length';
+
+export type Orders = 'ascending' | 'descending';
+
+export type Operators = 'and' | 'or';
+
 export const enum Aggregation {
   'Min' = 'min',
   'Max' = 'max',
@@ -58,13 +64,15 @@ export type BoolQuery = {
   }
 }
 
+export type RangeQueryValue = number | string | Date;
+
 export type RangeQuery = {
   range: {
     field: string;
-    lt?: number | string | Date;
-    lte?: number | string | Date;
-    gt?: number | string | Date;
-    gte?: number | string | Date;
+    lt?: RangeQueryValue;
+    lte?: RangeQueryValue;
+    gt?: RangeQueryValue;
+    gte?: RangeQueryValue;
   }
 }
 
@@ -72,7 +80,7 @@ export type TextQuery = {
   text: {
     fields: string[];
     text: string;
-    operator: 'and' | 'or';
+    operator: Operators;
   }
 }
 
@@ -82,3 +90,11 @@ export type RegexQuery = {
     expression: string;
   }
 }
+
+export type TermQueryBody = PropertyOf<TermQuery, 'term'>;
+export type IDsQueryBody = TypeOf<IDsQuery, 'ids'>;
+export type MatchAllQueryBody = PropertyOf<MatchAllQuery, 'matchAll'>;
+export type BoolQueryBody = PropertyOf<BoolQuery, 'bool'>;
+export type RangeQueryBody = PropertyOf<RangeQuery, 'range'>;
+export type TextQueryBody = PropertyOf<TextQuery, 'text'>;
+export type RegexQueryBody = PropertyOf<RegexQuery, 'regex'>;
