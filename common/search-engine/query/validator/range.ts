@@ -1,6 +1,6 @@
+import { validateString, validateType } from '../../../validator/common';
+import { ObjectValidator } from '../../../validator/validator';
 import { RangeQueryBody, RangeQueryValue } from '../definition';
-import { validateString, validateType } from './common';
-import { ObjectValidator } from './validator';
 
 const RANGE_QUERY_VALUE_TYPES = ['string', 'number', 'date'];
 

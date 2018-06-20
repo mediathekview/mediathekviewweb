@@ -1,6 +1,22 @@
 import { Entity, EntityWithPartialId } from './entity';
 import { Quality } from './entry';
 
+export type Agent = {
+  userAgent: string,
+  language: string,
+  resolution: {
+    width: number,
+    height: number
+  },
+  referrer: string,
+  timestamp: number
+}
+
+export type Timing = {
+  source: string,
+  data: StringMap
+}
+
 export enum UserActionType {
   Visit = 'visit',
   Download = 'download',
@@ -13,46 +29,50 @@ export enum UserActionType {
 export type UserActionFilter = Partial<Visit | Download | Play | Pause | Comment | Rating>;
 
 export type UserAction = Entity & {
-  actionType: UserActionType;
-  userID: string;
-  timestamp: number;
+  actionType: UserActionType,
+  userID: string,
+  timestamp: number,
+  visitId: string,
+  pageViewId: string
 }
 
 type EntryAction = UserAction & {
-  entryID: string;
+  entryID: string
 }
 
 type PlayPause = EntryAction & {
-  seconds: number;
+  seconds: number
 }
 
 export type Visit = UserAction & {
-  actionType: UserActionType.Visit;
-  route: string;
+  actionType: UserActionType.Visit,
+  route: string,
+  agent: Agent,
+  timings: Timing[]
 }
 
 export type Download = EntryAction & {
-  actionType: UserActionType.Download;
-  quality: Quality;
+  actionType: UserActionType.Download,
+  quality: Quality
 }
 
 export type Play = PlayPause & {
-  actionType: UserActionType.Play;
-  quality: Quality;
+  actionType: UserActionType.Play,
+  quality: Quality
 }
 
 export type Pause = PlayPause & {
-  actionType: UserActionType.Pause;
+  actionType: UserActionType.Pause,
 }
 
 export type Comment = EntryAction & {
-  actionType: UserActionType.Comment;
-  text: string;
+  actionType: UserActionType.Comment,
+  text: string
 }
 
 export type Rating = EntryAction & {
-  actionType: UserActionType.Rating;
-  value: number;
+  actionType: UserActionType.Rating,
+  value: number
 }
 
 export type UserActionWithPartialId = EntityWithPartialId<UserAction>;

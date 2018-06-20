@@ -1,5 +1,5 @@
-import { validateArray, validateString } from './common';
-import { PropertyValidationResult } from './validator';
+import { validateArray, validateString } from '../../../validator/common';
+import { PropertyValidationResult } from '../../../validator/validator';
 
 export class IdsQueryValidator {
   public validate(ids: string[]): PropertyValidationResult {

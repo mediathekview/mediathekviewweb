@@ -1,6 +1,6 @@
+import { validateArray, validateString, validateValue } from '../../../validator/common';
+import { ObjectValidator } from '../../../validator/validator';
 import { Operators, TextQueryBody } from '../definition';
-import { validateArray, validateString, validateValue } from './common';
-import { ObjectValidator } from './validator';
 
 export class TextQueryValidator extends ObjectValidator<TextQueryBody> {
   protected required = ['fields', 'text', 'operator'];

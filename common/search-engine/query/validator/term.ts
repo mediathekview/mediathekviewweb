@@ -1,6 +1,6 @@
 import { TermQueryBody, TermQueryValue } from '../definition';
-import { validateString, validateType } from './common';
-import { ObjectValidator } from './validator';
+import { ObjectValidator } from '../../../validator/validator';
+import { validateString, validateType } from '../../../validator/common';
 
 export class TermQueryValidator extends ObjectValidator<TermQueryBody> {
   protected required = ['field', 'value'];

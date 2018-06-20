@@ -1,6 +1,6 @@
+import { validateString } from '../../../validator/common';
+import { ObjectValidator } from '../../../validator/validator';
 import { RegexQueryBody } from '../definition';
-import { validateString } from './common';
-import { ObjectValidator } from './validator';
 
 export class RegexQueryValidator extends ObjectValidator<RegexQueryBody> {
   protected required = ['field', 'expression'];
