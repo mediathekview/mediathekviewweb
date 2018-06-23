@@ -75,3 +75,7 @@ export function throttle(func: (...args: any[]) => void, interval: number): (...
 
   return throttled;
 }
+
+export function objectToDotNotation(_obj: object): StringMap {
+  throw new Error('not implemented');
+}

@@ -4,27 +4,31 @@ import { DataType, Set } from '../';
 import { AsyncEnumerable } from '../../common/enumerable';
 import { AnyIterable, Nullable } from '../../common/utils';
 import { BATCH_SIZE, CONCURRENCY } from './constants';
-import { deserialize, serialize } from './serializer';
+import { SerializeFunction, getSerializer, getDeserializer, DeserializeFunction } from './serializer';
 
 export class RedisSet<T> implements Set<T> {
   private readonly redis: Redis.Redis;
   private readonly key: string;
-  private readonly dataType: DataType;
+
+  private serialize: SerializeFunction<T>;
+  private deserialize: DeserializeFunction<T>;
 
   constructor(redis: Redis.Redis, key: string, dataType: DataType) {
     this.key = key;
     this.redis = redis;
-    this.dataType = dataType;
+
+    this.serialize = getSerializer(dataType);
+    this.deserialize = getDeserializer(dataType);
   }
 
   add(value: T): Promise<void> {
-    const serialized = serialize(value, this.dataType);
+    const serialized = this.serialize(value);
     return this.redis.sadd(this.key, serialized);
   }
 
   addMany(iterable: AnyIterable<T>): Promise<void> {
     return AsyncEnumerable.from(iterable)
-      .map((value) => serialize(value, this.dataType))
+      .map(this.serialize)
       .batch(BATCH_SIZE)
       .parallelForEach(3, async (batch) => {
         await this.redis.sadd(this.key, ...batch);
@@ -32,7 +36,7 @@ export class RedisSet<T> implements Set<T> {
   }
 
   async has(value: T): Promise<boolean> {
-    const serialized = serialize(value, this.dataType);
+    const serialized = this.serialize(value);
     const result = await this.redis.sismember(this.key, serialized);
 
     return result == 1;
@@ -40,20 +44,20 @@ export class RedisSet<T> implements Set<T> {
 
   hasMany(iterable: AnyIterable<T>): AsyncIterable<boolean> {
     return AsyncEnumerable.from(iterable)
-      .map((value) => serialize(value, this.dataType))
+      .map(this.serialize)
       .batch(BATCH_SIZE)
       .parallelMap(3, true, (batch) => this.hasPipeline(batch))
       .mapMany((results) => results);
   }
 
   async delete(value: T): Promise<void> {
-    const serialized = serialize(value, this.dataType);
+    const serialized = this.serialize(value);
     await this.redis.srem(serialized);
   }
 
   deleteMany(iterable: AnyIterable<T>): Promise<void> {
     return AsyncEnumerable.from(iterable)
-      .map((value) => serialize(value, this.dataType))
+      .map(this.serialize)
       .batch(BATCH_SIZE)
       .parallelForEach(CONCURRENCY, async (batch) => {
         await this.redis.srem(this.key, ...batch);
@@ -68,8 +72,7 @@ export class RedisSet<T> implements Set<T> {
     if (count == undefined) {
       result = this.popOne();
     } else {
-      const popped = this.popMany(count);
-      result = new AsyncEnumerable(popped);
+      result = this.popMany(count);
     }
 
     return result;
@@ -77,7 +80,7 @@ export class RedisSet<T> implements Set<T> {
 
   async *values(): AsyncIterable<T> {
     const serialized: string[] = await this.redis.smembers(this.key);
-    const values = serialized.map((value) => deserialize(value, this.dataType));
+    const values = serialized.map(this.deserialize);
 
     yield* values;
   }
@@ -114,14 +117,13 @@ export class RedisSet<T> implements Set<T> {
 
     console.log('popOne response (function to be verified)', serialized);
 
-    const result = deserialize(serialized, this.dataType);
-
+    const result = this.deserialize(serialized);
     return result;
   }
 
   private async *popMany(count: number): AsyncIterableIterator<T> {
     const serialized = await this.redis.spop(this.key, count) as string[];
-    const values = serialized.map((value) => deserialize(value, this.dataType));
+    const values = serialized.map(this.deserialize);
 
     yield* values;
   }

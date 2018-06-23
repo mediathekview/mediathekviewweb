@@ -4,19 +4,22 @@ import { DataType, Entry, Map } from '../';
 import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
 import { Nullable } from '../../common/utils';
 import { AnyIterable } from '../../common/utils/any-iterable';
-import { deserialize, serialize } from './serializer';
+import { getSerializer, getDeserializer, SerializeFunction, DeserializeFunction } from './serializer';
 
 const BATCH_SIZE = 100;
-
 export class RedisMap<T> implements Map<T> {
   private readonly key: string;
-  private readonly dataType: DataType;
   private readonly redis: Redis.Redis;
+
+  private readonly serialize: SerializeFunction<T>;
+  private readonly deserialize: DeserializeFunction<T>;
 
   constructor(redis: Redis.Redis, key: string, dataType: DataType) {
     this.redis = redis;
     this.key = key;
-    this.dataType = dataType;
+
+    this.serialize = getSerializer(dataType);
+    this.deserialize = getDeserializer(dataType);
   }
 
   set(keyOrIterable: string | AnyIterable<Entry<T>>, value?: T): Promise<void> {
@@ -24,7 +27,7 @@ export class RedisMap<T> implements Map<T> {
       return this.setKeyValue(keyOrIterable, value as T);
     }
 
-    return this.setIterable(keyOrIterable);
+    return this.setMany(keyOrIterable);
   }
 
   get(): AsyncIterable<Entry<T>>;
@@ -55,11 +58,10 @@ export class RedisMap<T> implements Map<T> {
   async delete(keyOrIterable: string | AnyIterable<string>): Promise<number> {
     if (typeof keyOrIterable == 'string') {
       return this.redis.hdel(this.key, keyOrIterable);
-    } else {
-      const enumerable = new AsyncEnumerable(keyOrIterable);
-      const array = await enumerable.toArray();
-
-      return this.redis.hdel(this.key, ...array);
+    }
+    else {
+      const keys = await AsyncEnumerable.from(keyOrIterable).toArray();
+      return this.redis.hdel(this.key, ...keys);
     }
   }
 
@@ -72,24 +74,23 @@ export class RedisMap<T> implements Map<T> {
   }
 
   private async setKeyValue(key: string, value: T): Promise<void> {
-    const serialized = serialize(value, this.dataType);
+    const serialized = this.serialize(value);
     await this.redis.hmset(this.key, key, serialized);
   }
 
-  private async setIterable(iterable: Iterable<Entry<T>> | AsyncIterable<Entry<T>>): Promise<void> {
-    const enumerable = new AsyncEnumerable(iterable);
-    const batches = enumerable.batch(BATCH_SIZE);
+  private async setMany(iterable: AnyIterable<Entry<T>>): Promise<void> {
+    await AsyncEnumerable.from(iterable)
+      .map((entry) => this.setManySerialize(entry))
+      .batch(BATCH_SIZE)
+      .map((batch) => new Map(batch))
+      .parallelForEach(3, async (map) => {
+        await this.redis.hmset(this.key, map);
+      });
+  }
 
-    for await (const batch of batches) {
-      const map = new Map<string, string>();
-
-      for (let entry of batch) {
-        const serialized = serialize(entry.value, this.dataType);
-        map.set(entry.key, serialized);
-      }
-
-      await this.redis.hmset(this.key, map);
-    }
+  private setManySerialize(entry: Entry<T>): [string, string] {
+    const serialized = this.serialize(entry.value);
+    return [entry.key, serialized];
   }
 
   private async *getAll(): AsyncIterable<Entry<T>> {
@@ -98,9 +99,9 @@ export class RedisMap<T> implements Map<T> {
     for (let i = 0; i < result.length; i += 2) {
       const key = result[i];
       const serialized = result[i + 1];
-      const value = deserialize(serialized, this.dataType);
+      const value = this.deserialize(serialized);
 
-      yield { key: key, value: value };
+      yield { key, value };
     }
   }
 
@@ -111,15 +112,12 @@ export class RedisMap<T> implements Map<T> {
       return undefined;
     }
 
-    const value = deserialize(result, this.dataType);
+    const value = this.deserialize(result);
     return value;
   }
 
   private async *getKeys(iterable: AnyIterable<string>): AsyncIterable<Undefinable<T>> {
-    const enumerable = new AsyncEnumerable(iterable);
-
-    const keys = await enumerable.toArray();
-
+    const keys = await AsyncEnumerable.from(iterable).toArray();
     const result = await this.redis.hmget(this.key, ...keys) as Nullable<string>[];
 
     for (const item of result) {
@@ -128,7 +126,7 @@ export class RedisMap<T> implements Map<T> {
         continue;
       }
 
-      const value = deserialize(item, this.dataType);
+      const value = this.deserialize(item);
       yield value;
     }
   }
@@ -138,9 +136,9 @@ export class RedisMap<T> implements Map<T> {
     return result == 1;
   }
 
-  async *hasKeys(iterable: AnyIterable<string>): AsyncIterable<boolean> {
-    const enumerable = new AsyncEnumerable(iterable);
-    const batches = enumerable.batch(BATCH_SIZE);
+  private async *hasKeys(iterable: AnyIterable<string>): AsyncIterable<boolean> {
+    const batches = AsyncEnumerable.from(iterable)
+      .batch(BATCH_SIZE);
 
     for await (const batch of batches) {
       const transaction = this.redis.multi();

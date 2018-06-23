@@ -1,7 +1,7 @@
 import * as Mongo from 'mongodb';
 
 import { UserAction, UserActionFilter, UserActionWithPartialId } from '../../common/model/user-actions';
-import { AnyIterable } from '../../common/utils';
+import { AnyIterable, objectToDotNotation } from '../../common/utils';
 import { UserActionRepository } from '../user-action-repository';
 import { MongoBaseRepository } from './base-repository';
 import { MongoDocument } from './mongo-document';
@@ -31,8 +31,9 @@ export class MongoUserActionRepository implements UserActionRepository {
     return this.baseRepository.loadManyById(ids);
   }
 
-  loadManyByFilter(filter: Partial<UserActionFilter>): AsyncIterable<UserAction> {
-    return this.baseRepository.loadManyByFilter(filter);
+  loadManyByFilter(filter: UserActionFilter): AsyncIterable<UserAction> {
+    const dotNotatedFilter = objectToDotNotation(filter);
+    return this.baseRepository.loadManyByFilter(dotNotatedFilter);
   }
 
   drop(): Promise<void> {

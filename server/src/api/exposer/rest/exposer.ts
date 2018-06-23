@@ -68,14 +68,14 @@ export class RestExposer implements Exposer {
         const file = Path.join(clientRoot, context.path);
         const exists = await new Promise<boolean>((resolve) => FS.exists(file, resolve));
         const path = exists ? context.path : 'index.html';
-        
+
         await KoaSend(context, path, { root: clientRoot, index: 'index.html' });
       }
     });
   }
 
   private async onRequest<T>(context: KoaRouter.IRouterContext, next: () => Promise<any>, func: ExposedFunction<T>): Promise<void> {
-    const parameters = context.request.body;
+    const parameters = { ...context.request.body };
 
     try {
       context.response.body = await func(parameters);

@@ -1,4 +1,5 @@
-import { getGetter, Timer } from '../common/utils';
+import { Timer } from './timer';
+import { getGetter } from './helpers';
 
 const millisecondsPerTimerRead = measureTimerOverhead(3);
 
