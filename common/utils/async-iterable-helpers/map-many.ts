@@ -4,9 +4,9 @@ import { AsyncIteratorFunction } from './types';
 
 export function mapManyAsync<TIn, TOut>(iterable: AnyIterable<TIn>, mapper: AsyncIteratorFunction<TIn, AnyIterable<TOut>>): AsyncIterableIterator<TOut> {
   if (isAsyncIterable(iterable)) {
-    return async(iterable as AsyncIterable<TIn>, mapper);
+    return async(iterable, mapper);
   } else {
-    return sync(iterable as Iterable<TIn>, mapper);
+    return sync(iterable, mapper);
   }
 }
 

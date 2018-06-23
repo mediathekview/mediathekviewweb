@@ -46,12 +46,12 @@ export function destroyPrototype(obj: any): any {
   return result;
 }
 
-export function throttle(func: () => void, interval: number): () => void
-export function throttle<T>(func: (arg: T) => void, interval: number): (arg: T) => void
-export function throttle<T1, T2>(func: (arg1: T1, arg2: T2) => void, interval: number): (arg1: T1, arg2: T2) => void
-export function throttle<T1, T2, T3>(func: (arg1: T1, arg2: T2, arg3: T3) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3) => void
-export function throttle<T1, T2, T3, T4>(func: (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void
-export function throttle(func: (...args: any[]) => void, interval: number): (...args: any[]) => void {
+export function throttleFunction(func: () => void, interval: number): () => void
+export function throttleFunction<T>(func: (arg: T) => void, interval: number): (arg: T) => void
+export function throttleFunction<T1, T2>(func: (arg1: T1, arg2: T2) => void, interval: number): (arg1: T1, arg2: T2) => void
+export function throttleFunction<T1, T2, T3>(func: (arg1: T1, arg2: T2, arg3: T3) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3) => void
+export function throttleFunction<T1, T2, T3, T4>(func: (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void
+export function throttleFunction(func: (...args: any[]) => void, interval: number): (...args: any[]) => void {
   let lastCall = 0;
   let nextArguments: any[];
   let callPending = false;

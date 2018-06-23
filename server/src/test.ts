@@ -1,37 +1,17 @@
-import { Timer, timeout } from './common/utils';
+import { AsyncEnumerable } from './common/enumerable';
+import { AnyIterable, Timer } from './common/utils';
 
-async function* counter(): AsyncIterableIterator<number> {
+async function* counter(milliseconds: number): AsyncIterableIterator<number> {
   const timer = new Timer(true);
 
   let i = 0;
-  while (timer.milliseconds < 1) {
+  while (timer.milliseconds < milliseconds) {
     yield ++i;
   }
 }
 
-async function* passThrough<T>(iterable: AsyncIterable<T>): AsyncIterableIterator<T> {
-  yield* iterable;
-}
-
-async function test() {
-  let iterable = counter();
-
-  for (let i = 0; i < 20; i++) {
-    iterable = passThrough(iterable);
-  }
-
-  let end = 0;
-
-  for await (const i of iterable) {
-    end = i;
-  }
-
-  console.log(end);
-}
-
 (async () => {
-  const timer = new Timer(true);
+  const enumerable = AsyncEnumerable.from(counter(1000));
 
-  console.log(timer.milliseconds);
-  //test();
+  enumerable.intercept((n) => (n % 100000 == 0) ? console.log(n) : void 0).drain();
 })();

@@ -2,11 +2,19 @@ import { AwaitableList } from './collections/awaitable';
 import { ResetPromise } from './reset-promise';
 
 export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
+  private readonly _read: ResetPromise<void>;
+  private readonly _empty: ResetPromise<void>;
   private _closed: boolean;
   private buffer: AwaitableList<{ item?: T, error?: Error }>;
 
-  readonly read: ResetPromise<void>;
-  readonly empty: ResetPromise<void>;
+
+  get read(): Promise<void> {
+    return this._read;
+  }
+
+  get empty(): Promise<void> {
+    return this._empty;
+  }
 
   get closed(): boolean {
     return this._closed;
@@ -19,8 +27,8 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
   constructor() {
     this._closed = false;
     this.buffer = new AwaitableList();
-    this.read = new ResetPromise();
-    this.empty = new ResetPromise();
+    this._read = new ResetPromise();
+    this._empty = new ResetPromise();
   }
 
   feed(item: T): void {
@@ -54,16 +62,15 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
       this.buffer = new AwaitableList();;
 
       for (const item of out) {
-
         if (item.error != undefined) {
           throw item.error;
         }
 
         yield item.item as T;
-        this.read.resolve().reset();
+        this._read.resolve().reset();
 
         if (this.buffer.size == 0) {
-          this.empty.resolve().reset();
+          this._empty.resolve().reset();
         }
       }
     }

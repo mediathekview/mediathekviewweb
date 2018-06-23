@@ -1,9 +1,9 @@
 import {
-  anyAsync, AsyncIteratorFunction, AsyncPredicate, batchAsync,
-  BufferedAsyncIterable, filterAsync, forEachAsync, interceptAsync,
-  interruptEveryAsync, interruptPerSecondAsync, isIterable, mapAsync,
-  mapManyAsync, ParallelizableIteratorFunction, ParallelizablePredicate, singleAsync,
-  toArrayAsync, toAsyncIterableIterator, toAsyncIterator, toSync, isAsyncIterableIterator
+  anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable,
+  drain, filterAsync, forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync,
+  isAsyncIterableIterator, isIterable, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction,
+  ParallelizablePredicate, reduce, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator,
+  toAsyncIterator, toSync
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
@@ -24,11 +24,11 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   }
 
   cast<TNew extends T>(): AsyncEnumerable<TNew> {
-    return this as any as AsyncEnumerable<TNew>;
+    return this as AsyncEnumerable<any> as AsyncEnumerable<TNew>;
   }
 
   forceCast<TNew>(): AsyncEnumerable<TNew> {
-    return this as any as AsyncEnumerable<TNew>;
+    return this as AsyncEnumerable<any> as AsyncEnumerable<TNew>;
   }
 
   filter(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {
@@ -41,11 +41,18 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(result);
   }
 
+  reduce(reducer: AsyncReducer<T, T>): Promise<T>;
+  reduce<U>(reducer: AsyncReducer<T, U>, initialValue: U): Promise<U>;
+  async reduce<U>(reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
+    const result = await reduce(this.source, reducer, initialValue);
+    return result;
+  }
+
   single(): Promise<T>
   single(predicate: AsyncPredicate<T>): Promise<T>
   single(predicate?: AsyncPredicate<T>): Promise<T>
-  single(predicate?: AsyncPredicate<T>): Promise<T> {
-    const result = singleAsync(this.source, predicate);
+  async single(predicate?: AsyncPredicate<T>): Promise<T> {
+    const result = await singleAsync(this.source, predicate);
     return result;
   }
 
@@ -59,8 +66,8 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(result);
   }
 
-  any(predicate: AsyncPredicate<T>): Promise<boolean> {
-    const result = anyAsync(this.source, predicate);
+  async any(predicate: AsyncPredicate<T>): Promise<boolean> {
+    const result = await anyAsync(this.source, predicate);
     return result;
   }
 
@@ -74,8 +81,15 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(iterator);
   }
 
-  group<TGroup>(selector: AsyncIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
-    const grouped = groupAsync<T, TGroup>(this.source, selector);
+  throttle(delay: number): AsyncEnumerable<T>;
+  throttle(throttleFunction: ThrottleFunction): AsyncEnumerable<T>;
+  throttle(delayOrThrottleFunction: number | ThrottleFunction): AsyncEnumerable<T> {
+    const result = throttle(this.source, delayOrThrottleFunction);
+    return new AsyncEnumerable(result);
+  }
+
+  async group<TGroup>(selector: AsyncIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
+    const grouped = await groupAsync<T, TGroup>(this.source, selector);
     return grouped;
   }
 
@@ -84,19 +98,30 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new SyncEnumerable(syncIterable);
   }
 
-  toArray(): Promise<T[]> {
-    const array = toArrayAsync(this.source);
+  async toArray(): Promise<T[]> {
+    const array = await toArrayAsync(this.source);
     return array;
   }
 
-  forEach(func: AsyncIteratorFunction<T, void>): Promise<void> {
-    const result = forEachAsync(this.source, func);
-    return result;
+  async forEach(func: AsyncIteratorFunction<T, void>): Promise<void> {
+    await forEachAsync(this.source, func);
   }
 
-  parallelForEach(concurrency: number, func: ParallelizableIteratorFunction<T, any>): Promise<void> {
-    const result = parallelForEach(this.source, concurrency, func);
-    return result;
+  async drain(): Promise<void> {
+    await drain(this.source);
+  }
+
+  multiplex(count: number): AsyncEnumerable<T>[];
+  multiplex(count: number, bufferSize: number): AsyncEnumerable<T>[];
+  multiplex(count: number, bufferSize: number = 0): AsyncEnumerable<T>[] {
+    const iterables = multiplex(this.source, count, bufferSize);
+    const enumerables = iterables.map((iterable) => new AsyncEnumerable(iterable));
+
+    return enumerables;
+  }
+
+  async parallelForEach(concurrency: number, func: ParallelizableIteratorFunction<T, any>): Promise<void> {
+    await parallelForEach(this.source, concurrency, func);
   }
 
   parallelFilter(concurrency: number, keepOrder: boolean, predicate: ParallelizablePredicate<T>): AsyncEnumerable<T> {
@@ -114,8 +139,8 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(result);
   }
 
-  parallelGroup<TGroup>(concurrency: number, selector: ParallelizableIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
-    const grouped = parallelGroup(this.source, concurrency, selector);
+  async parallelGroup<TGroup>(concurrency: number, selector: ParallelizableIteratorFunction<T, TGroup>): Promise<Map<TGroup, T[]>> {
+    const grouped = await parallelGroup(this.source, concurrency, selector);
     return grouped;
   }
 
@@ -138,12 +163,13 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return iterator;
   }
 
-  next(value?: any): Promise<IteratorResult<T>> {
+  async next(value?: any): Promise<IteratorResult<T>> {
     if (this.asyncIterator == null) {
       this.asyncIterator = this.toIterator();
     }
 
-    return this.asyncIterator.next(value);
+    const result = await this.asyncIterator.next(value);
+    return result;
   }
 
   [Symbol.asyncIterator](): AsyncIterableIterator<T> {
