@@ -4,10 +4,10 @@
   "license": "MIT",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --preserve-symlinks --extract-css false --proxy-config proxy.conf.json --poll 1000 --host 0.0.0.0",
-    "build": "ng build --prod --preserve-symlinks --extract-css false",
+    "start": "ng serve --extract-css false --proxy-config proxy.conf.json --poll 1000 --host 0.0.0.0",
+    "build": "ng build --prod --preserve-symlinks --extract-css false --service-worker --subresource-integrity",
     "lint": "ng lint",
-    "analyze": "ng build --prod --preserve-symlinks --extract-css false --sourcemaps true --stats-json && webpack-bundle-analyzer dist/stats.json"
+    "analyze": "ng build --prod --preserve-symlinks --extract-css false --service-worker --subresource-integrity --source-map --stats-json && webpack-bundle-analyzer dist/stats.json"
   },
   "private": true,
   "dependencies": {
