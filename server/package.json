@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "npm run build-live",
+    "start": "node ./dist/app.js",
     "build": "tsc",
-    "build-live": "nodemon --exec ./node_modules/.bin/ts-node -- ./src/app.ts"
+    "build-watch": "tsc --watch",
+    "debug": "nodemon --legacy-watch --watch ./dist --inspect=0.0.0.0:9222 --nolazy ./dist/app.js",
+    "docker-debug": "docker-compose up"
   },
   "author": "Patrick Hein",
   "license": "GPLv3",
@@ -13,23 +15,22 @@
     "@types/bull": "^3.3.12",
     "@types/elasticsearch": "^5.0.24",
     "@types/hjson": "^2.4.0",
-    "@types/ioredis": "^3.2.9",
+    "@types/ioredis": "^3.2.11",
     "@types/koa-bodyparser": "^5.0.0",
-    "@types/koa-router": "^7.0.29",
+    "@types/koa-router": "^7.0.30",
     "@types/koa-send": "^4.1.1",
     "@types/kue": "^0.11.9",
-    "@types/mongodb": "^3.0.21",
+    "@types/mongodb": "^3.1.1",
     "@types/needle": "^2.0.2",
-    "@types/node": "^10.3.4",
+    "@types/node": "^10.5.1",
     "nodemon": "^1.17.5",
-    "ts-node": "^6.1.2",
+    "ts-node": "^7.0.0",
     "typescript": "^2.9.2"
   },
   "dependencies": {
-    "ajv": "^6.5.1",
     "base-x": "^3.0.4",
     "bull": "^3.4.2",
-    "elasticsearch": "^15.0.0",
+    "elasticsearch": "^15.1.1",
     "hjson": "^3.1.1",
     "ioredis": "^3.2.2",
     "koa": "^2.5.1",
@@ -38,7 +39,7 @@
     "koa-send": "^5.0.0",
     "kue": "^0.11.6",
     "lzma-native": "^3.0.8",
-    "mongodb": "^3.1.0-beta4",
+    "mongodb": "^3.1.0",
     "needle": "^2.2.1",
     "rxjs": "^6.2.1"
   }

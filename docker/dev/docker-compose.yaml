@@ -10,7 +10,7 @@ services:
       - "6379:6379"
 
   mongodb:
-    image: mongo:3.6
+    image: mongo:4
     container_name: mongodb
     tmpfs:
       - /data/db
@@ -24,3 +24,26 @@ services:
       - /usr/share/elasticsearch/data
     ports:
       - "9200:9200"
+
+  server: 
+    container_name: server
+    image: node:10-alpine
+    volumes:
+      - ../../server/:/server/
+      - ../../common/:/server/src/common/
+    ports:
+      - "8080:8080"
+      - "9222:9222"
+    working_dir: "/server"
+    command: "npm run debug"
+
+  angular:
+    container_name: angular
+    image: node:10-alpine
+    volumes: 
+      - ../../client/:/client/
+      - ../../common/:/client/src/app/common/
+    ports:
+      - "4200:4200"
+    working_dir: "/client"
+    command: "npm start"
