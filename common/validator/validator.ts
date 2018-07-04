@@ -18,7 +18,8 @@ export type PropertyValidationFunction<T> = (value: T) => PropertyValidationResu
 export abstract class ObjectValidator<T extends object> {
   protected abstract required: string[];
   protected abstract optional: string[];
-  protected abstract propertyValidators: { [P in keyof Required<T>]: PropertyValidationFunction<Required<T>[P]> };
+  //protected abstract propertyValidators: { [P in keyof Required<T>]: PropertyValidationFunction<Required<T>[P]> };
+  protected abstract propertyValidators: { [P in keyof T]: PropertyValidationFunction<T[P]> };
 
   validate(object: T): null | ObjectValidationResult {
     const propertyNames = Object.getOwnPropertyNames(object);

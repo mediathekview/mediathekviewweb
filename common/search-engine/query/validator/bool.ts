@@ -1,5 +1,5 @@
 import { BoolQuery, QueryBody } from '../';
-import { validateArray } from '../../../validator/common';
+import { validateArray, nullOrUndefined } from '../../../validator/common';
 import { ObjectValidator, PropertyValidationResult } from '../../../validator/validator';
 import { QueryBodyValidator } from './search-body';
 
@@ -28,10 +28,10 @@ export class BoolQueryBodyValidator extends ObjectValidator<BoolQueryBody> {
   protected optional = ['must', 'should', 'not', 'filter'];
 
   protected propertyValidators = {
-    must: (value: QueryBody[]) => this.validateQueryBody(value),
-    should: (value: QueryBody[]) => this.validateQueryBody(value),
-    not: (value: QueryBody[]) => this.validateQueryBody(value),
-    filter: (value: QueryBody[]) => this.validateQueryBody(value)
+    must: (value: QueryBody[] | undefined) => nullOrUndefined(value, (value) => this.validateQueryBody(value)),
+    should: (value: QueryBody[] | undefined) => nullOrUndefined(value, (value) => this.validateQueryBody(value)),
+    not: (value: QueryBody[] | undefined) => nullOrUndefined(value, (value) => this.validateQueryBody(value)),
+    filter: (value: QueryBody[] | undefined) => nullOrUndefined(value, (value) => this.validateQueryBody(value))
   };
 
   constructor(queryBodyValidator: QueryBodyValidator) {

@@ -10,10 +10,10 @@ export class RangeQueryValidator extends ObjectValidator<RangeQueryBody> {
 
   protected propertyValidators = {
     field: (value: string) => validateString(value),
-    lt: (value: RangeQueryValue) => validateType(value, RANGE_QUERY_VALUE_TYPES),
-    lte: (value: RangeQueryValue) => validateType(value, RANGE_QUERY_VALUE_TYPES),
-    gt: (value: RangeQueryValue) => validateType(value, RANGE_QUERY_VALUE_TYPES),
-    gte: (value: RangeQueryValue) => validateType(value, RANGE_QUERY_VALUE_TYPES)
+    lt: (value: RangeQueryValue | undefined) => validateType(value, RANGE_QUERY_VALUE_TYPES),
+    lte: (value: RangeQueryValue | undefined) => validateType(value, RANGE_QUERY_VALUE_TYPES),
+    gt: (value: RangeQueryValue | undefined) => validateType(value, RANGE_QUERY_VALUE_TYPES),
+    gte: (value: RangeQueryValue | undefined) => validateType(value, RANGE_QUERY_VALUE_TYPES)
   };
 
   constructor() {

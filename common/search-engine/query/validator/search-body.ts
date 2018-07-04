@@ -8,6 +8,7 @@ import { RangeQueryValidator } from './range';
 import { RegexQueryValidator } from './regex';
 import { TermQueryValidator } from './term';
 import { TextQueryValidator } from './text';
+import { nullOrUndefined, NULL_OR_UNDEFINED_ERROR } from '../../../validator/common';
 
 export class QueryBodyValidator extends ObjectValidator<QueryBody> {
   private readonly termQueryValidator: TermQueryValidator;
@@ -22,13 +23,13 @@ export class QueryBodyValidator extends ObjectValidator<QueryBody> {
   protected optional = ['term', 'ids', 'matchAll', 'bool', 'range', 'text', 'regex'];
 
   protected propertyValidators = {
-    term: (value: TermQueryBody) => this.termQueryValidator.validate(value),
-    ids: (value: IDsQueryBody) => this.idsQueryValidator.validate(value),
-    matchAll: (value: MatchAllQueryBody) => this.matchAllQueryValidator.validate(value),
-    bool: (value: BoolQueryBody) => this.boolQueryBodyValidator.validate(value),
-    range: (value: RangeQueryBody) => this.rangeQueryValidator.validate(value),
-    text: (value: TextQueryBody) => this.textQueryValidator.validate(value),
-    regex: (value: RegexQueryBody) => this.regexQueryValidator.validate(value)
+    term: (value: TermQueryBody | undefined) => nullOrUndefined(value, (value) => this.termQueryValidator.validate(value)),
+    ids: (value: IDsQueryBody | undefined) => nullOrUndefined(value, (value) => this.idsQueryValidator.validate(value)),
+    matchAll: (value: MatchAllQueryBody | undefined) => nullOrUndefined(value, (value) => this.matchAllQueryValidator.validate(value)),
+    bool: (value: BoolQueryBody | undefined) => nullOrUndefined(value, (value) => this.boolQueryBodyValidator.validate(value)),
+    range: (value: RangeQueryBody | undefined) => nullOrUndefined(value, (value) => this.rangeQueryValidator.validate(value)),
+    text: (value: TextQueryBody | undefined) => nullOrUndefined(value, (value) => this.textQueryValidator.validate(value)),
+    regex: (value: RegexQueryBody | undefined) => nullOrUndefined(value, (value) => this.regexQueryValidator.validate(value))
   };
 
   constructor() {

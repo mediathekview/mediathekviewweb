@@ -1,4 +1,9 @@
-import { PropertyValidationError, PropertyValidationFunction, PropertyValidationResult } from './validator';
+import { PropertyValidationError, PropertyValidationFunction, PropertyValidationResult, ObjectValidationResult } from './validator';
+import { AnyIterable } from '../utils';
+
+export const NULL_OR_UNDEFINED_ERROR: PropertyValidationError = Object.freeze({
+  message: 'value is null or undefined'
+});
 
 export function validateValue<T>(value: T, allowedValues: T[]): PropertyValidationResult {
   let result: PropertyValidationResult = null;
@@ -71,6 +76,20 @@ export function validateType(value: any, types: string[]): PropertyValidationRes
     }
 
     return error;
+  }
+
+  return null;
+}
+
+export function nullOrUndefined<T>(value: T | null | undefined): PropertyValidationResult;
+export function nullOrUndefined<T>(value: T | null | undefined, ifNotThen: (value: T) => PropertyValidationResult): PropertyValidationResult;
+export function nullOrUndefined<T>(value: T | null | undefined, ifNotThen?: (value: T) => PropertyValidationResult): PropertyValidationResult {
+  if ((value == undefined) || (value == null)) {
+    return NULL_OR_UNDEFINED_ERROR;
+  }
+
+  if (ifNotThen != undefined) {
+    return ifNotThen(value);
   }
 
   return null;
