@@ -6,8 +6,8 @@
     "start": "node ./dist/app.js",
     "build": "tsc",
     "build-watch": "tsc --watch",
-    "debug": "nodemon --legacy-watch --watch ./dist --inspect=0.0.0.0:9222 --nolazy ./dist/app.js",
-    "docker-debug": "docker-compose up"
+    "debug": "npm run build-watch & nodemon --delay 1 --legacy-watch --watch ./dist --inspect=0.0.0.0:9222 --nolazy ./dist/app.js",
+    "docker-debug": "npm install && npm run debug"
   },
   "author": "Patrick Hein",
   "license": "GPLv3",

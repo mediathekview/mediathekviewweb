@@ -15,6 +15,8 @@ export class Serializer {
   private readonly handlers: SerializeHandler[] = [];
 
   constructor() {
+    this.prototypeSerializeHandler = new PrototypeSerializeHandler();
+
     const handlers: SerializeHandler[] = [
       new PrimitivesSerializeHandler(),
       new ObjectSerializeHandler(this),

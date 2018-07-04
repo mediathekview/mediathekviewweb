@@ -6,6 +6,7 @@ import { LockProvider } from './common/lock';
 import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
+import config from './config';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
@@ -26,6 +27,7 @@ import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { Serializer } from './serializer';
+
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -63,7 +65,7 @@ export class InstanceProvider {
   }
 
   static redis(): Promise<Redis.Redis> {
-    return this.singleton(Redis, () => new Redis());
+    return this.singleton(Redis, () => new Redis(config.redis));
   }
 
   static elasticsearch(): Promise<ElasticsearchClient> {

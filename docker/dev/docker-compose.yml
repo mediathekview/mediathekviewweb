@@ -1,4 +1,4 @@
-version: '3'
+version: '3.6'
 
 services:
   redis:
@@ -31,11 +31,16 @@ services:
     volumes:
       - ../../server/:/server/
       - ../../common/:/server/src/common/
+      - server-node-modules:/server/node_modules
+      - server-npm-cache:/root/.npm
     ports:
       - "8080:8080"
       - "9222:9222"
+    environment:
+      - elasticsearch_host=elasticsearch
+      - redis_host=redis
     working_dir: "/server"
-    command: "npm run debug"
+    command: "npm run docker-debug"
 
   angular:
     container_name: angular
@@ -43,7 +48,15 @@ services:
     volumes: 
       - ../../client/:/client/
       - ../../common/:/client/src/app/common/
+      - angular-node-modules:/client/node_modules
+      - angular-npm-cache:/root/.npm
     ports:
       - "4200:4200"
     working_dir: "/client"
-    command: "npm start"
+    command: "npm run docker-start"
+
+volumes:
+  server-node-modules:
+  server-npm-cache:
+  angular-node-modules:
+  angular-npm-cache:
