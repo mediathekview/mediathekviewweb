@@ -1,18 +1,30 @@
+import '../../../extensions/set';
 import { ResetPromise } from '../../reset-promise';
 
 export class AwaitableSet<T> implements Set<T> {
   private readonly backingSet: Set<T>;
+  private readonly _added: ResetPromise<T>;
+  private readonly _deleted: ResetPromise<T>;
+  private readonly _cleared: ResetPromise<void>;
 
-  readonly added: ResetPromise<T>;
-  readonly cleared: ResetPromise<void>;
-  readonly deleted: ResetPromise<T>;
+  get added(): Promise<T | T[]> {
+    return this._added;
+  }
+
+  get cleared(): Promise<void> {
+    return this._cleared;
+  }
+
+  get deleted(): Promise<T> {
+    return this._deleted;
+  }
 
   constructor() {
     this.backingSet = new Set();
 
-    this.added = new ResetPromise();
-    this.cleared = new ResetPromise();
-    this.deleted = new ResetPromise();
+    this._added = new ResetPromise();
+    this._cleared = new ResetPromise();
+    this._deleted = new ResetPromise();
   }
 
   get size(): number {
@@ -21,21 +33,21 @@ export class AwaitableSet<T> implements Set<T> {
 
   add(value: T): this {
     this.backingSet.add(value);
-    this.added.resolve(value).reset();
+    this._added.resolve(value).reset();
 
     return this;
   }
 
   clear(): void {
     this.backingSet.clear();
-    this.cleared.resolve().reset();
+    this._cleared.resolve().reset();
   }
 
   delete(value: T): boolean {
     const success = this.backingSet.delete(value);
 
     if (success) {
-      this.deleted.resolve(value).reset();
+      this._deleted.resolve(value).reset();
     }
 
     return success;

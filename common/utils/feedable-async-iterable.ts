@@ -7,7 +7,6 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
   private _closed: boolean;
   private buffer: AwaitableList<{ item?: T, error?: Error }>;
 
-
   get read(): Promise<void> {
     return this._read;
   }
@@ -36,7 +35,7 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
       throw new Error('closed');
     }
 
-    this.buffer.push({ item: item });
+    this.buffer.append({ item: item });
   }
 
   end() {
@@ -48,7 +47,7 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
       throw new Error('closed');
     }
 
-    this.buffer.push({ error: error });
+    this.buffer.append({ error: error });
     this.end();
   }
 
@@ -61,12 +60,12 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
       const out = this.buffer;
       this.buffer = new AwaitableList();;
 
-      for (const item of out) {
-        if (item.error != undefined) {
-          throw item.error;
+      for (const { item, error } of out) {
+        if (error != undefined) {
+          throw error;
         }
 
-        yield item.item as T;
+        yield item as T;
         this._read.resolve().reset();
 
         if (this.buffer.size == 0) {

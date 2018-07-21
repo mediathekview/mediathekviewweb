@@ -1,48 +1,109 @@
 import { ResetPromise } from '../../reset-promise';
 
 export class AwaitableList<T> implements Iterable<T> {
+  private readonly _added: ResetPromise<T | T[]>;
+  private readonly _removed: ResetPromise<T | T[]>;
+  private readonly _cleared: ResetPromise<void>;
+
   private backingArray: T[];
 
-  readonly added: ResetPromise<T>;
-  readonly removed: ResetPromise<T>;
-  readonly cleared: ResetPromise<T>;
+  get added(): Promise<T | T[]> {
+    return this._added;
+  }
+
+  get removed(): Promise<T | T[]> {
+    return this._removed;
+  }
+
+  get cleared(): Promise<void> {
+    return this._cleared;
+  }
 
   constructor() {
     this.backingArray = [];
 
-    this.added = new ResetPromise();
-    this.removed = new ResetPromise();
-    this.cleared = new ResetPromise();
+    this._added = new ResetPromise();
+    this._removed = new ResetPromise();
+    this._cleared = new ResetPromise();
   }
 
   get size(): number {
     return this.backingArray.length;
   }
 
-  push(...items: T[]): number {
+  get(index: number): T {
+    if (index >= this.size || index < 0) {
+      throw new Error('index out of range');
+    }
+
+    return this.backingArray[index];
+  }
+
+  append(...items: T[]): number {
     const result = this.backingArray.push(...items);
-    items.forEach((value) => this.added.resolve(value).reset());
+    this._added.resolve(items).reset();
 
     return result;
   }
 
-  pop(): T | undefined {
-    const result = this.backingArray.pop();
-    this.removed.resolve(result).reset();
+  prepend(...items: T[]): number {
+    const result = this.backingArray.unshift(...items);
+    this._added.resolve(items).reset();
 
     return result;
   }
 
-  shift(): T | undefined {
-    const result = this.backingArray.shift();
-    this.removed.resolve(result).reset();
+  insert(index: number, ...items: T[]) {
+    if (index >= this.size || index < 0) {
+      throw new Error('index out of range');
+    }
+
+    this.backingArray.splice(index, 0, ...items);
+    this._added.resolve(items).reset();
+  }
+
+  remove(index: number): T[];
+  remove(index: number, count: number): T[];
+  remove(index: number, count: number = 1): T[] {
+    if (index >= this.size || index < 0) {
+      throw new Error('index out of range');
+    }
+
+    if ((index + count) > this.size) {
+      throw new Error('count out of range');
+    }
+
+    const removedItems = this.backingArray.splice(index, count);
+    this._removed.resolve(removedItems).reset();
+
+    return removedItems;
+  }
+
+  pop(): T {
+    if (this.size == 0) {
+      throw new Error('list contains no items');
+    }
+
+    const result = this.backingArray.pop() as T;
+    this._removed.resolve(result).reset();
+
+    return result;
+  }
+
+  shift(): T {
+    if (this.size == 0) {
+      throw new Error('list contains no items');
+    }
+
+    const result = this.backingArray.shift() as T;
+    this._removed.resolve(result).reset();
 
     return result;
   }
 
   clear() {
     this.backingArray = [];
-    this.cleared.resolve().reset();
+    this._cleared.resolve().reset();
   }
 
   [Symbol.iterator](): IterableIterator<T> {

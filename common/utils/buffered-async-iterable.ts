@@ -9,8 +9,12 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
   private end: boolean = false;
 
   constructor(source: AnyIterable<T>, size: number) {
+    if (size <= 0) {
+      throw new Error('size must be greater than 0');
+    }
+
     this.source = source;
-    this.size = Math.max(size, 1);
+    this.size = size;
 
     this.buffer = new AwaitableList();
   }
@@ -36,7 +40,7 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
 
   private async read() {
     for await (const element of this.source) {
-      this.buffer.push(element);
+      this.buffer.append(element);
 
       if (this.buffer.size >= this.size) {
         await this.buffer.removed;

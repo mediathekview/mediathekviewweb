@@ -2,6 +2,10 @@ import { AnyIterable } from '../any-iterable';
 import { FeedableAsyncIterable } from '../feedable-async-iterable';
 
 export function multiplex<T>(iterable: AnyIterable<T>, count: number, bufferSize: number): AsyncIterable<T>[] {
+  if (bufferSize <= 0) {
+    throw new Error('bufferSize must be greater than 0');
+  }
+
   const feedableIterables: FeedableAsyncIterable<T>[] = [];
 
   for (let i = 0; i < count; i++) {
@@ -28,7 +32,7 @@ async function multiplexTo<T>(input: AnyIterable<T>, outputs: FeedableAsyncItera
 
 async function waitForDrain(feedableIterables: FeedableAsyncIterable<any>[], bufferSize: number): Promise<void> {
   for (const feedableIterable of feedableIterables) {
-    while (feedableIterable.bufferSize > bufferSize) {
+    while (feedableIterable.bufferSize >= bufferSize) {
       await feedableIterable.read;
     }
   }

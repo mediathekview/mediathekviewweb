@@ -2,17 +2,28 @@ import { ResetPromise } from '../../reset-promise';
 
 export class AwaitableMap<K, V> implements Map<K, V> {
   private readonly backingMap: Map<K, V>;
+  private readonly _setted: ResetPromise<[K, V]>;
+  private readonly _cleared: ResetPromise<void>;
+  private readonly _deleted: ResetPromise<K>;
 
-  readonly setted: ResetPromise<[K, V]>;
-  readonly cleared: ResetPromise<void>;
-  readonly deleted: ResetPromise<K>;
+  get setted(): Promise<[K, V]> {
+    return this._setted;
+  }
+
+  get cleared(): Promise<void> {
+    return this._cleared;
+  }
+
+  get deleted(): Promise<K> {
+    return this._deleted;
+  }
 
   constructor() {
     this.backingMap = new Map();
 
-    this.setted = new ResetPromise();
-    this.cleared = new ResetPromise();
-    this.deleted = new ResetPromise();
+    this._setted = new ResetPromise();
+    this._cleared = new ResetPromise();
+    this._deleted = new ResetPromise();
   }
 
   get size(): number {
@@ -37,14 +48,14 @@ export class AwaitableMap<K, V> implements Map<K, V> {
 
   clear(): void {
     this.backingMap.clear();
-    this.cleared.resolve().reset();
+    this._cleared.resolve().reset();
   }
 
   delete(key: K): boolean {
     const success = this.backingMap.delete(key);
 
     if (success) {
-      this.deleted.resolve(key).reset();
+      this._deleted.resolve(key).reset();
     }
 
     return success;
@@ -65,7 +76,7 @@ export class AwaitableMap<K, V> implements Map<K, V> {
   set(key: K, value: V): this {
     this.backingMap.set(key, value);
 
-    this.setted.resolve([key, value]).reset();
+    this._setted.resolve([key, value]).reset();
 
     return this;
   }

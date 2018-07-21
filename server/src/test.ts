@@ -1,5 +1,5 @@
 import { AsyncEnumerable } from './common/enumerable';
-import { AnyIterable, Timer } from './common/utils';
+import { Timer } from './common/utils';
 
 async function* counter(milliseconds: number): AsyncIterableIterator<number> {
   const timer = new Timer(true);
