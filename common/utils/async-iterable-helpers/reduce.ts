@@ -15,8 +15,8 @@ export function reduce<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, 
 
 export async function reduceSync<T, U>(iterable: Iterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
   let accumulator: T | U | undefined = initialValue;
-
   let index = 0;
+
   for (const currentValue of iterable) {
     if (accumulator == undefined) {
       accumulator = currentValue;
@@ -38,6 +38,7 @@ export async function reduceSync<T, U>(iterable: Iterable<T>, reducer: AsyncRedu
 async function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
   let accumulator: T | U | undefined = initialValue;
   let index = 0;
+  
   for await (const currentValue of iterable) {
     if (accumulator == undefined) {
       accumulator = currentValue;
