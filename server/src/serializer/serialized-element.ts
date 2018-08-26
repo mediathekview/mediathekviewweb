@@ -1,4 +1,4 @@
-export type SerializedElement = {
+export type SerializedElement<T = any> = {
   type: string;
-  data: any;
+  data: T;
 }

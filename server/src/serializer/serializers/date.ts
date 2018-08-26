@@ -1,5 +1,7 @@
 import { SerializedElement, SerializeHandler } from '../';
 
+type SerializedDate = SerializedElement<number>;
+
 const TYPE = 'date';
 
 export class DateSerializeHandler implements SerializeHandler {
@@ -7,7 +9,7 @@ export class DateSerializeHandler implements SerializeHandler {
     return obj instanceof Date;
   }
 
-  serialize(obj: any): SerializedElement {
+  serialize(obj: any): SerializedDate {
     return {
       type: TYPE,
       data: (obj as Date).valueOf()
@@ -18,7 +20,7 @@ export class DateSerializeHandler implements SerializeHandler {
     return serialized.type == TYPE;
   }
 
-  deserialize(serialized: SerializedElement): any {
+  deserialize(serialized: SerializedDate): any {
     return new Date(serialized.data);
   }
 }

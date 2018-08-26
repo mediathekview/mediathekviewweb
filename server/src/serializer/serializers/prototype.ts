@@ -1,42 +1,46 @@
 import { SerializableStatic, Serializable, SerializeHandler, SerializedElement } from '../';
+import { Serializer } from '../serializer';
 
-type SerializedInstance = {
-  constructor: string;
+type SerializedInstanceData = {
+  prototype: string;
   data: any;
 }
 
-interface PrototypeSerializerStatic {
-  register(prototype: SerializableStatic): void;
-  serialize(instance: Serializable): string;
-  deserialize(serializedString: string): Serializable;
-}
+type SerializedInstance = SerializedElement<SerializedInstanceData>;
 
 const TYPE = 'prototype';
 
 export class PrototypeSerializeHandler implements SerializeHandler {
-  private readonly registered: Map<string, SerializableStatic> = new Map();
+  private readonly serializer: Serializer;
+  private readonly prototypes: Map<string, SerializableStatic>;
+
+  constructor(serializer: Serializer) {
+    this.serializer = serializer;
+    this.prototypes = new Map();
+  }
 
   register(prototype: SerializableStatic) {
-    this.registered.set(prototype.name, prototype);
+    this.prototypes.set(prototype.name, prototype);
   }
 
   canSerialize(obj: any): boolean {
     return typeof (obj as Serializable).serialize == 'function';
   }
 
-  serialize(obj: any): SerializedElement {
+  serialize(obj: any): SerializedInstance {
     const instance = obj as Serializable;
 
     const data = instance.serialize();
+    const serializedData = this.serializer.serialize(data, false);
 
-    const serializedInstance: SerializedInstance = {
-      constructor: instance.constructor.name,
-      data: data
+    const serializedInstanceData: SerializedInstanceData = {
+      prototype: instance.constructor.name,
+      data: serializedData
     };
 
     return {
       type: TYPE,
-      data: serializedInstance
+      data: serializedInstanceData
     };
   }
 
@@ -44,15 +48,17 @@ export class PrototypeSerializeHandler implements SerializeHandler {
     return serialized.type == TYPE;
   }
 
-  deserialize(serialized: SerializedElement): any {
-    const serializedInstance = serialized.data as SerializedInstance;
-    const prototype = this.registered.get(serializedInstance.constructor);
+  deserialize(serializedInstance: SerializedInstance): any {
+    const serializedInstanceData = serializedInstance.data;
+    const prototype = this.prototypes.get(serializedInstanceData.prototype);
 
     if (prototype == undefined) {
-      throw new Error(`no prototype named ${serializedInstance.constructor} registered`);
+      throw new Error(`no prototype named ${serializedInstanceData.prototype} registered`);
     }
 
-    const instance = prototype.deserialize(serializedInstance.data);
+    const deserializedData = this.serializer.deserialize(serializedInstanceData.data);
+    const instance = prototype.deserialize(deserializedData);
+
     return instance;
   }
 }
