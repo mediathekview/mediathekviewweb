@@ -5,7 +5,9 @@ import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../..
 import { timeout } from '../../common/utils';
 import { Converter } from './converter';
 
-type ElasticsearchBulkResponse = { took: number, errors: boolean, items: StringMap<{ [key: string]: any, status: number, error?: any }>[] };
+
+type ElasticsearchBulkResponse = { took: number, errors: boolean, items: StringMap<ElasticsearchBulkResponseItem>[] };
+type ElasticsearchBulkResponseItem = { [key: string]: any, status: number, error?: any };
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly client: Elasticsearch.Client;
