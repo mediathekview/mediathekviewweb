@@ -1,41 +1,11 @@
-@import '~@angular/material/prebuilt-themes/indigo-pink.css';
-@import '~material-design-icons/iconfont/material-icons.css';
-@import '~bootstrap/dist/css/bootstrap.css';
-//
-@for $i from 0 through 10 {
-  @if ($i > 0) {
-    .vertical-spacer-#{$i} {
-      height: #{$i}rem;
-    }
-  }
+@import '~bulma/css/bulma.css';
 
-  @if ($i < 10) {
-    .vertical-spacer-#{$i}-5 {
-      height: #{$i + 0.5}rem;
-    }
-  }
+html,
+body {
+  height: 100%;
 }
 
-.pointer {
-  cursor: pointer;
-}
-
-.hover-scale {
-  transition: transform 0.2s ease-in-out;
-}
-
-.hover-scale:hover {
-  transform: scale(1.15);
-}
-
-.hide-disabled {
-  transition: opacity 0.2s ease-in-out;
-}
-
-.hide-disabled:disabled {
-  opacity: 0;
-}
-
-button:focus {
-  outline: none;
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
 }

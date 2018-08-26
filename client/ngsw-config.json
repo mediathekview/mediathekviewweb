@@ -8,10 +8,8 @@
         "files": [
           "/favicon.ico",
           "/index.html",
-          "/manifest.json",
-          "/*.bundle.css",
-          "/*.bundle.js",
-          "/*.chunk.js"
+          "/*.css",
+          "/*.js"
         ]
       }
     },
@@ -32,9 +30,11 @@
       "urls": [
         "/api/**"
       ],
+      "version": 2,
       "cacheConfig": {
         "maxSize": 0,
-        "maxAge": "0u",
+        "maxAge": "0s",
+        "timeout": "5s",
         "strategy": "freshness"
       }
     }
