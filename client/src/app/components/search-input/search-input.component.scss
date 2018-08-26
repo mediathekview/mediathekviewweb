@@ -1,0 +1,14 @@
+input {
+  &:placeholder-shown {
+    + .icon > i {
+      opacity: 0;
+      cursor: initial;
+    }
+  }
+
+  &:not(:placeholder-shown) {
+    + .icon > i {
+      cursor: pointer;
+    }
+  }
+}

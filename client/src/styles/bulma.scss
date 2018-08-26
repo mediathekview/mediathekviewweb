@@ -1,0 +1,5 @@
+@import '~bulma/bulma';
+
+.control.has-icons-right .icon.is-interactive {
+  pointer-events: initial;
+}

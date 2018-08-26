@@ -24,6 +24,7 @@
     "@angular/pwa": "^0.7.5",
     "@angular/router": "^6.1.0",
     "@angular/service-worker": "^6.1.0",
+    "@fortawesome/fontawesome-free": "^5.2.0",
     "bulma": "^0.7.1",
     "core-js": "^2.5.4",
     "rxjs": "^6.0.0",

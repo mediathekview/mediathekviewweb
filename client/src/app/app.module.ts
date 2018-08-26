@@ -1,15 +1,18 @@
 import { registerLocaleData } from '@angular/common';
 import german from '@angular/common/locales/de';
 import { LOCALE_ID, NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
+import { SearchInputComponent } from './components/search-input/search-input.component';
+import { AngularMaterialModule } from './modules/angular-material.module';
 import { DevComponent } from './sites/dev/dev.component';
 import { HomeComponent } from './sites/home/home.component';
-import { AngularMaterialModule } from './modules/angular-material.module';
 
 registerLocaleData(german, 'de');
 
@@ -17,14 +20,17 @@ registerLocaleData(german, 'de');
   declarations: [
     AppComponent,
     DevComponent,
-    HomeComponent
+    HomeComponent,
+    NavbarComponent,
+    SearchInputComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    AngularMaterialModule,
     ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    ReactiveFormsModule,
+    AngularMaterialModule
   ],
   providers: [{ provide: LOCALE_ID, useValue: 'de_DE' }],
   bootstrap: [AppComponent]

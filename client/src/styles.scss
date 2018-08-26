@@ -1,5 +1,3 @@
-@import '~bulma/css/bulma.css';
-
 html,
 body {
   height: 100%;
@@ -8,4 +6,44 @@ body {
 body {
   margin: 0;
   font-family: 'Roboto', sans-serif;
+}
+
+@for $i from 1 through 10 {
+  @if ($i > 0) {
+    .is-width-#{$i} {
+      width: #{$i/2}rem;
+    }
+    
+    .is-height-#{$i} {
+      height: #{$i/2}rem;
+    }
+  }
+}
+
+.has-pointer {
+  cursor: pointer;
+}
+
+.is-transparent {
+  opacity: 0;
+}
+
+.is-hover-scale:hover {
+  transform: scale(1.15);
+}
+
+*:hover > .is-parent-hover-scale {
+  transform: scale(1.15);
+}
+
+.is-animated {
+  transition: all 0.3s;
+
+  &.fast {
+    transition: all 0.15s;
+  }
+
+  &.slow {
+    transition: all 0.5s;
+  }
 }
