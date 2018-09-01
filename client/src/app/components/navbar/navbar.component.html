@@ -12,9 +12,14 @@
 
   <div class="navbar-menu container is-fluid">
     <div class="navbar-start">
-      <a class="navbar-item">
-        Home
-      </a>
+      <div class="tabs">
+        <ul>
+          <li routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"><a class="is-animated fast" routerLink="/">Home</a></li>
+          <li routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"><a class="is-animated fast" routerLink="/1">Abonnements</a></li>
+          <li routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"><a class="is-animated fast" routerLink="/2">Spenden</a></li>
+          <li routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"><a class="is-animated fast" routerLink="/3">Über</a></li>
+        </ul>
+      </div>
     </div>
 
   </div>

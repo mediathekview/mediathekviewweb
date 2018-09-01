@@ -1,6 +1,7 @@
 html,
 body {
   height: 100%;
+  overflow: auto;
 }
 
 body {
@@ -13,7 +14,7 @@ body {
     .is-width-#{$i} {
       width: #{$i/2}rem;
     }
-    
+
     .is-height-#{$i} {
       height: #{$i/2}rem;
     }
