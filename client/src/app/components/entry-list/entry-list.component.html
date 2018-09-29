@@ -1,0 +1,46 @@
+<mat-table matSort [dataSource]="dataSource">
+  <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
+
+  <ng-container matColumnDef="channel">
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Sender</mat-header-cell>
+    <mat-cell *matCellDef="let entry">{{ entry.channel }}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="topic">
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Thema</mat-header-cell>
+    <mat-cell *matCellDef="let entry">{{ entry.topic }}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="title">
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Titel</mat-header-cell>
+    <mat-cell *matCellDef="let entry">{{ entry.title }}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="date">
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Datum</mat-header-cell>
+    <mat-cell *matCellDef="let entry">{{ (entry.date * 1000) | date:'shortDate' }}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="time">
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Uhrzeit</mat-header-cell>
+    <mat-cell *matCellDef="let entry">{{ (entry.time * 1000) | date:'shortTime':'UTC' }}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="duration">
+    <mat-header-cell *matHeaderCellDef mat-sort-header>Dauer</mat-header-cell>
+    <mat-cell *matCellDef="let entry">{{ (entry.duration * 1000) | date:'HH:mm':'UTC' }}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="play">
+    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+    <mat-cell *matCellDef="let entry">
+      <button mat-icon-button disableRipple class="hover-scale" color="primary">
+        <mat-icon>ondemand_video</mat-icon>
+      </button>
+    </mat-cell>
+  </ng-container>
+
+  <mat-row *matRowDef="let entry; columns: columnsToDisplay"></mat-row>
+</mat-table>
+
+<mat-paginator></mat-paginator>

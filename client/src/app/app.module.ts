@@ -13,6 +13,8 @@ import { SearchInputComponent } from './components/search-input/search-input.com
 import { AngularMaterialModule } from './modules/angular-material.module';
 import { DevComponent } from './sites/dev/dev.component';
 import { HomeComponent } from './sites/home/home.component';
+import { EntryListComponent } from './components/entry-list/entry-list.component';
+import { SearchComponent } from './components/search/search.component';
 
 registerLocaleData(german, 'de');
 
@@ -22,7 +24,9 @@ registerLocaleData(german, 'de');
     DevComponent,
     HomeComponent,
     NavbarComponent,
-    SearchInputComponent
+    SearchInputComponent,
+    EntryListComponent,
+    SearchComponent
   ],
   imports: [
     BrowserModule,

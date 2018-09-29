@@ -3,7 +3,7 @@
     <p class="control has-icons-right">
       <input #searchInputElement class="input is-animated fast" type="text" placeholder="Suche" [formControl]="searchInput">
       <span class="icon is-right is-animated is-interactive" [ngClass]="{ 'is-transparent': searchInput.value == null || searchInput.value.length == 0 }">
-        <i class="fa fa-eraser is-animated fast" (click)="eraseClicked()"></i>
+        <i class="fa fa-eraser is-animated fast" (click)="clear()"></i>
       </span>
     </p>
   </div>
