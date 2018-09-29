@@ -39,3 +39,5 @@ jspm_packages
 #compiled index.js
 static/index-compiled.min.js
 static/index-compiled.min.js.map
+
+dist

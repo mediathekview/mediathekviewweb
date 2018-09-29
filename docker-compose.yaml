@@ -1,0 +1,75 @@
+version: '3'
+services:
+
+  application:
+    container_name: mediathekviewweb
+    image: test
+    restart: always
+    depends_on:
+      - elasticsearch
+      - redis
+    environment:
+      - DATA_DIRECTORY=/data
+      - WEBSERVER_PORT=8000
+      - INDEX=true
+      - WORKER_COUNT=
+      - WORKER_ARGS=
+      - REDIS_HOST=redis
+      - REDIS_PORT=
+      - REDIS_PASSWORD=
+      - REDIS_DB=
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - PIWIK_ENABLED=
+      - PIWIK_URL=
+      - PIWIK_SITE_URL=
+      - PIWIK_AUTH_TOKEN=
+      - PIWIK_SITE_ID=
+    volumes:
+      - 'mediathekviewweb:/data'
+    ports:
+      - '8000:8000'
+    networks:
+      - elasticsearch
+      - redis
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:6.4.1'
+    restart: always
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - 'elasticsearch:/usr/share/elasticsearch/data'
+    networks:
+      - elasticsearch
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:6.4.1
+    environment:
+      SERVER_NAME: localhost
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    ports: 
+      - 5601:5601
+    networks:
+      - elasticsearch
+
+  redis:
+    container_name: redis
+    image: 'redis:4.0-alpine'
+    restart: always
+    volumes:
+      - 'redis:/data'
+    networks:
+      - redis
+
+volumes:
+  mediathekviewweb:
+  redis:
+  elasticsearch:
+
+networks:
+  mediathekviewweb:
+  elasticsearch:
+  redis:
