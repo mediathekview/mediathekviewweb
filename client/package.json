@@ -19,8 +19,6 @@
     "js-cookie": "^2.2.0",
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
-    "socket.io": "^2.1.1",
-    "socket.io-client": "^2.1.1",
     "video.js": "^7.2.3"
   },
   "devDependencies": {
@@ -28,7 +26,6 @@
     "@types/bootstrap": "^3.3.39",
     "@types/jquery": "^3.3.10",
     "@types/lodash": "^4.14.116",
-    "@types/socket.io": "^1.4.38",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.2.5",
     "typescript": "^3.1.1"

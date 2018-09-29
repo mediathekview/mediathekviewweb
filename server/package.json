@@ -8,7 +8,7 @@
   },
   "main": "app.js",
   "scripts": {
-    "build": "tsc && cp -r node_modules dist/"
+    "build": "rm -rf dist && tsc && cp -r node_modules dist/"
   },
   "author": "Patrick Hein",
   "license": "GPLv3",

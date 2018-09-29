@@ -163,9 +163,9 @@ import * as utils from './utils';
       return;
     }
 
-    let begin = process.hrtime();
+    const begin = process.hrtime();
     searchEngine.search(query, (result, err) => {
-      let end = process.hrtime(begin);
+      const end = process.hrtime(begin);
 
       if (err) {
         if (err[0] == 'cannot query while indexing') {
@@ -181,9 +181,9 @@ import * as utils from './utils';
         return;
       }
 
-      let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
+      const searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
-      let queryInfo = {
+      const queryInfo = {
         filmlisteTimestamp: filmlisteTimestamp,
         searchEngineTime: searchEngineTime,
         resultCount: result.result.length,
@@ -216,6 +216,10 @@ import * as utils from './utils';
     let socketUid = null;
 
     console.log('client connected, ip: ' + clientIp);
+
+    socket.on('disconnect', () => {
+      console.log('client disconnected, ip: ' + clientIp);
+    });
 
     if (indexing && lastIndexingState != null) {
       socket.emit('indexState', lastIndexingState);
@@ -292,8 +296,8 @@ import * as utils from './utils';
           return;
         }
 
-        let host = URL.parse(data.href).hostname;
-        let siteHost = URL.parse(config.matomo.siteUrl).hostname;
+        const host = URL.parse(data.href).hostname;
+        const siteHost = URL.parse(config.matomo.siteUrl).hostname;
         if (siteHost != host) {
           return;
         }
@@ -355,18 +359,18 @@ import * as utils from './utils';
   });
 
   function queryEntries(query, callback) {
-    let begin = process.hrtime();
+    const begin = process.hrtime();
     searchEngine.search(query, (result, err) => {
-      let end = process.hrtime(begin);
+      const end = process.hrtime(begin);
 
       if (err) {
         callback(result, err);
         return;
       }
 
-      let searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
+      const searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
-      let queryInfo = {
+      const queryInfo = {
         filmlisteTimestamp: filmlisteTimestamp,
         searchEngineTime: searchEngineTime,
         resultCount: result.result.length,

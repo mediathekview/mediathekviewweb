@@ -29,6 +29,43 @@ let donate = null;
 let queryInputClearButtonState = 'hidden';
 let video;
 
+socket.on('connect', () => {
+  console.log('connected');
+});
+
+socket.on('disconnect', () => {
+  console.log('disconnected');
+  socket.connect();
+});
+
+socket.on('reconnect', (attemptNumber) => {
+  console.log('reconnected');
+});
+
+socket.on('reconnect_attempt', (attemptNumber) => {
+  console.log('attempting reconnect');
+});
+
+socket.on('reconnect_failed', () => {
+  console.log('reconnect failed');
+});
+
+socket.on('ping', () => {
+  console.log('ping');
+});
+
+socket.on('pong', (latency) => {
+  console.log('pong', latency);
+});
+
+socket.on('reconnect_error', (error) => {
+  console.error('reconnect_error', error);
+});
+
+socket.on('connect_error', (error) => {
+  console.error('connect_error', error);
+});
+
 const baseOpen = XMLHttpRequest.prototype.open;
 
 XMLHttpRequest.prototype.open = (method: string, url: string, async?: boolean, user?: string, password?: string) => {
