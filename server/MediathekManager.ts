@@ -19,7 +19,7 @@ export default class MediathekManager extends EventEmitter {
     super();
 
     this.stateEmitter = new StateEmitter(this);
-    this.mediathekIndexer = new MediathekIndexer();
+    this.mediathekIndexer = new MediathekIndexer(config.elasticsearch);
     this.redis = REDIS.createClient(config.redis);
 
     this.mediathekIndexer.on('state', (state) => {
@@ -43,15 +43,15 @@ export default class MediathekManager extends EventEmitter {
       if (err) {
         callback(err, null);
       } else if (response.statusCode == 200) {
-        let filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
-        let urlMatches = [];
+        const filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
+        const urlMatches = [];
 
         let match;
         while ((match = filmlisteUrlRegex.exec(body)) !== null) {
           urlMatches.push(match);
         }
 
-        let url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
+        const url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
 
         callback(null, url);
       } else {
@@ -79,9 +79,9 @@ export default class MediathekManager extends EventEmitter {
                 callback(err, null);
               }
             } else if (response.statusCode == 200 && response.headers['last-modified'] != undefined) {
-              var lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
-              let tolerance = 25 * 60; //25 minutes, as not all mirrors update at same time
-              let available = (lastModified - filmlisteTimestamp) >= tolerance;
+              const lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
+              const tolerance = 25 * 60; //25 minutes, as not all mirrors update at same time
+              const available = (lastModified - filmlisteTimestamp) >= tolerance;
 
               this.stateEmitter.setState({
                 step: 'checkUpdateAvailable',
@@ -154,12 +154,12 @@ export default class MediathekManager extends EventEmitter {
   downloadFilmliste(mirror, file, callback) {
     this.stateEmitter.setState('step', 'downloadFilmliste');
     fs.open(file, 'w', (err, fd) => {
-      let fileStream = fs.createWriteStream(null, {
+      const fileStream = fs.createWriteStream(null, {
         fd: fd,
         autoClose: true
       });
 
-      let req = requestProgress(request.get(mirror), {
+      const req = requestProgress(request.get(mirror), {
         throttle: 500
       });
 
@@ -185,7 +185,7 @@ export default class MediathekManager extends EventEmitter {
         });
       });
 
-      let decompressor = lzma.createDecompressor();
+      const decompressor = lzma.createDecompressor();
       req.pipe(decompressor).pipe(fileStream).on('finish', () => {
         fs.close(fd, () => {
           callback(null);

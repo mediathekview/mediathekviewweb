@@ -18,7 +18,6 @@ redis.on('error', (err) => {
 });
 
 ipc.on('parseFilmliste', (options) => {
-  console.log(options);
   parseFilmliste(options.file, options.setKey, options.timestampKey);
 });
 

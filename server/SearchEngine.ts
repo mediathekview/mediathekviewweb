@@ -1,14 +1,13 @@
 
-import elasticsearch from 'elasticsearch';
+import Elasticsearch from 'elasticsearch';
 import { arraysHasSameElements, timeout } from './utils';
 
 export default class SearchEngine {
-  client: elasticsearch.Client;
+  client: Elasticsearch.Client;
 
-  constructor(elasticsearchSettings) {
-    console.log(elasticsearchSettings);
-
-    this.client = new elasticsearch.Client(elasticsearchSettings);
+  constructor(elasticsearchOptions: Elasticsearch.ConfigOptions) {
+    const configClone = JSON.parse(JSON.stringify(elasticsearchOptions));
+    this.client = new Elasticsearch.Client(configClone);
   }
 
   async waitForConnection(): Promise<void> {
@@ -20,8 +19,7 @@ export default class SearchEngine {
         success = true;
         console.info('connected to elasticsearch');
       } catch (error) {
-        console.warn(`couldn't connect to elasticsearch, trying again...`)
-        console.error(error);
+        console.warn(`couldn't connect to elasticsearch (${error.message}), trying again...`)
         await timeout(2500);
       }
     } while (!success);
@@ -111,11 +109,11 @@ export default class SearchEngine {
     } else {
       let fieldsBasedQueries = [];
 
-      for (var i = 0; i < queries.length; i++) {
+      for (let i = 0; i < queries.length; i++) {
         let match = this.createMultiMatch(queries[i].fields, queries[i].query, 'and');
 
         let found = false;
-        for (var j = 0; j < fieldsBasedQueries.length; j++) {
+        for (let j = 0; j < fieldsBasedQueries.length; j++) {
           if (arraysHasSameElements(queries[i].fields, fieldsBasedQueries[j].fields)) {
             fieldsBasedQueries[j].matches.push(match);
             found = true;

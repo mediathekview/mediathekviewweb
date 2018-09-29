@@ -1,20 +1,23 @@
 FROM node:10-alpine as builder
 
-WORKDIR /
-COPY client client
-COPY server server
+WORKDIR /client
+COPY client/package.json client/package-lock.json ./
+RUN npm ci
+
+WORKDIR /server
+COPY server/package.json server/package-lock.json ./
+RUN npm ci
 
 WORKDIR /client
-RUN npm ci
+COPY client .
 RUN npm run build
 
 WORKDIR /server
-RUN npm ci
+COPY server .
 RUN npm run build
 
-RUN mv /client/dist /server/dist/client
-RUN mv /server/dist /dist
-
+RUN mv /server/dist /dist && \
+    mv /client/dist /dist/client
 
 FROM node:10-alpine
 

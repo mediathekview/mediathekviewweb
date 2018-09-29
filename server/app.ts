@@ -3,11 +3,12 @@ import compression from 'compression';
 import express from 'express';
 import fs from 'fs';
 import http from 'http';
-import PiwikTracker from 'matomo-tracker';
+import MatomoTracker from 'matomo-tracker';
 import moment from 'moment';
 import path from 'path';
 import REDIS from 'redis';
 import request from 'request';
+import SocketIO from 'socket.io';
 import URL from 'url';
 import config from './config';
 import MediathekManager from './MediathekManager';
@@ -16,14 +17,16 @@ import SearchEngine from './SearchEngine';
 import * as utils from './utils';
 
 (async () => {
-  var redis = REDIS.createClient(config.redis);
+  const redis = REDIS.createClient(config.redis);
   redis.on('error', (err) => console.error(err));
 
-  if (config.piwik.enabled) {
-    var piwik = new PiwikTracker(config.piwik.siteId, config.piwik.piwikUrl);
+  let matomo: MatomoTracker | null = null;
 
-    var origTrack = piwik.track.bind(piwik);
-    piwik.track = (options) => {
+  if (config.matomo.enabled) {
+    matomo = new MatomoTracker(config.matomo.siteId, config.matomo.matomoUrl);
+
+    const origTrack = matomo.track.bind(matomo);
+    matomo.track = (options) => {
       if (options.action_name != 'index') {
         return;
       }
@@ -32,25 +35,27 @@ import * as utils from './utils';
     }
   }
 
-  var app = express();
-  var httpServer = new http.Server(app);
-  var io = require('socket.io')(httpServer);
-
-  var elasticsearchSettings = JSON.stringify(config.elasticsearch);
-
-  var searchEngine = new SearchEngine(elasticsearchSettings);
-  await searchEngine.waitForConnection();
-
-  var mediathekManager = new MediathekManager();
-  var rssFeedGenerator = new RSSFeedGenerator(searchEngine);
-
-  var indexing = false;
-  var lastIndexingState;
-  var filmlisteTimestamp = 0;
+  const app = express();
+  const httpServer = new http.Server(app);
+  const io = SocketIO(httpServer);
 
   process.on('SIGTERM', () => httpServer.close(() => process.exit(0)));
 
+  const searchEngine = new SearchEngine(config.elasticsearch);
+  await searchEngine.waitForConnection();
+
+  const mediathekManager = new MediathekManager();
+  const rssFeedGenerator = new RSSFeedGenerator(searchEngine);
+
+  const indexing = false;
+  let lastIndexingState;
+  let filmlisteTimestamp = 0;
+
   mediathekManager.on('state', (state) => {
+    if (state == null) {
+      return;
+    }
+
     console.log();
     console.log(state);
     console.log();
@@ -60,19 +65,19 @@ import * as utils from './utils';
     filmlisteTimestamp = timestamp;
   });
 
-  if (!!piwik) {
-    piwik.on('error', function (err) {
-      console.error('piwik: error tracking request: ', err)
+  if (matomo != null) {
+    matomo.on('error', function (err) {
+      console.error('matomo: error tracking request: ', err)
     });
   }
 
   app.use(compression());
 
   app.use((request, response, next) => {
-    const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.hostname;
+    const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.get('host');
 
     response.set({
-      'Content-Security-Policy': `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' data:; connect-src 'self' ${webSocketSource}; media-src *; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
+      'Content-Security-Policy': `default-src 'none'; script-src 'self'; worker-src 'self' 'blob'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' data:; connect-src 'self' ${webSocketSource}; media-src *; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
       'X-Content-Type-Options': 'nosniff',
@@ -81,8 +86,6 @@ import * as utils from './utils';
 
     next();
   });
-
-  console.log(path.join(__dirname, '/client/static'));
 
   app.use('/static', express.static(path.join(__dirname, '/client/static')));
   app.use('/api', bodyParser.text());
@@ -101,7 +104,7 @@ import * as utils from './utils';
   });
 
   app.get('/stats', function (req, res) {
-    res.send(`Socket.io connections: ${io.engine.clientsCount}`);
+    res.send(`Socket.io connections: ${(io.engine as any).clientsCount}`);
   });
 
   app.get('/feed', function (req, res) {
@@ -112,10 +115,10 @@ import * as utils from './utils';
         res.set('Content-Type', 'application/rss+xml');
         res.send(result);
 
-        if (!!piwik) {
-          piwik.track({
-            token_auth: config.piwik.token_auth,
-            url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
+        if (!!matomo) {
+          matomo.track({
+            token_auth: config.matomo.token_auth,
+            url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
             uid: 'feed',
             action_name: 'feed'
           });
@@ -135,10 +138,10 @@ import * as utils from './utils';
         channels: channels
       });
 
-      if (!!piwik) {
-        piwik.track({
-          token_auth: config.piwik.token_auth,
-          url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
+      if (!!matomo) {
+        matomo.track({
+          token_auth: config.matomo.token_auth,
+          url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
           uid: 'api',
           action_name: 'api-channels'
         });
@@ -195,10 +198,10 @@ import * as utils from './utils';
         err: null
       });
 
-      if (!!piwik) {
-        piwik.track({
-          token_auth: config.piwik.token_auth,
-          url: config.piwik.siteUrl + (config.piwik.siteUrl.endsWith('/') ? '' : '/'),
+      if (!!matomo) {
+        matomo.track({
+          token_auth: config.matomo.token_auth,
+          url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
           uid: 'api',
           action_name: 'api-query'
         });
@@ -209,8 +212,8 @@ import * as utils from './utils';
   });
 
   io.on('connection', (socket) => {
-    var clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
-    var socketUid = null;
+    const clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
+    let socketUid = null;
 
     console.log('client connected, ip: ' + clientIp);
 
@@ -284,19 +287,19 @@ import * as utils from './utils';
         return;
       }
 
-      if (!!piwik) {
+      if (!!matomo) {
         if (!(typeof data.href === 'string' || data.href instanceof String)) {
           return;
         }
 
         let host = URL.parse(data.href).hostname;
-        let siteHost = URL.parse(config.piwik.siteUrl).hostname;
+        let siteHost = URL.parse(config.matomo.siteUrl).hostname;
         if (siteHost != host) {
           return;
         }
 
-        piwik.track({
-          token_auth: config.piwik.token_auth,
+        matomo.track({
+          token_auth: config.matomo.token_auth,
           url: data.href,
           uid: socketUid,
           cip: clientIp,

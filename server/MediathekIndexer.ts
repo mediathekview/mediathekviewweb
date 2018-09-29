@@ -2,22 +2,23 @@ import EventEmitter from 'events';
 import cp from 'child_process';
 import IPC from './IPC';
 import REDIS from 'redis';
-import elasticsearch from 'elasticsearch';
+import Elasticsearch from 'elasticsearch';
 import config from './config.js';
 import * as elasticsearchDefinitions from './ElasticsearchDefinitions';
 import StateEmitter from './StateEmitter.js';
 
 export default class MediathekIndexer extends EventEmitter {
   redis: REDIS.RedisClient;
-  searchClient: elasticsearch.Client;
+  searchClient: Elasticsearch.Client;
   stateEmitter: StateEmitter;
 
-  constructor() {
+  constructor(elasticsearchOptions: Elasticsearch.ConfigOptions) {
     super();
 
-    this.redis = REDIS.createClient(config.redis);
-    this.searchClient = new elasticsearch.Client(config.elasticsearch);
+    const configClone = JSON.parse(JSON.stringify(elasticsearchOptions));
 
+    this.searchClient = new Elasticsearch.Client(configClone);
+    this.redis = REDIS.createClient(config.redis);
     this.stateEmitter = new StateEmitter(this);
   }
 
@@ -231,7 +232,7 @@ export default class MediathekIndexer extends EventEmitter {
     let lastStatsUpdate = 0;
 
     for (let i = 0; i < config.workerCount; i++) {
-      let indexerWorker = cp.fork('./MediathekIndexerWorker.js', [], { execArgv: config.workerArgs });
+      let indexerWorker = cp.fork(__dirname + '/MediathekIndexerWorker.js', [], { execArgv: config.workerArgs });
 
       indexerWorkers[i] = indexerWorker;
 
@@ -261,7 +262,7 @@ export default class MediathekIndexer extends EventEmitter {
 
   parseFilmliste(file, setKey, timestampKey, callback) {
     this.stateEmitter.setState('step', 'parseFilmliste');
-    let filmlisteParser = cp.fork('./FilmlisteParser.js', [], { execArgv: config.workerArgs });
+    let filmlisteParser = cp.fork(__dirname + '/FilmlisteParser.js', [], { execArgv: config.workerArgs });
 
     let ipc = new IPC(filmlisteParser);
 

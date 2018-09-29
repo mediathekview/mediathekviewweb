@@ -10,24 +10,24 @@ declare const Cookies;
 declare const moment;
 declare const videojs;
 
-var socket = io();
-var currentPage = 0;
-var itemsPerPage = 15;
-var mediathekTable;
-var connectingModal;
-var contactModal;
-var indexingModal;
-var uid;
-var pv_id = randomString(6);
-var playingInterval;
-var lastQueryString = null;
-var ignoreNextHashChange = false;
-var impressum = null;
-var datenschutz = null;
-var donate = null;
-var queryInputClearButtonState = 'hidden';
-var video;
-var debugResponse = false;
+const debugResponse = false;
+const socket = io();
+const pv_id = randomString(6);
+const itemsPerPage = 15;
+let currentPage = 0;
+let mediathekTable;
+let connectingModal;
+let contactModal;
+let indexingModal;
+let uid;
+let playingInterval;
+let lastQueryString = null;
+let ignoreNextHashChange = false;
+let impressum = null;
+let datenschutz = null;
+let donate = null;
+let queryInputClearButtonState = 'hidden';
+let video;
 
 const baseOpen = XMLHttpRequest.prototype.open;
 
@@ -40,29 +40,28 @@ XMLHttpRequest.prototype.open = (method: string, url: string, async?: boolean, u
 }
 
 function isWDRm3u8(url) {
-  let regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
-
+  const regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
   return regex.test(url);
 }
 
 function WDRm3u8ToMP4s(url) {
-  let regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
-  let match = regex.exec(url);
+  const regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
+  const match = regex.exec(url);
 
   if (match == null) {
     return url;
   }
 
-  let region = (match[1] == 'weltweit') ? 'ww' : match[1];
-  let fsk = match[2];
-  let unknownNumber = match[3];
-  let id = match[4];
-  let qualities = match[5].split(',');
+  const region = (match[1] == 'weltweit') ? 'ww' : match[1];
+  const fsk = match[2];
+  const unknownNumber = match[3];
+  const id = match[4];
+  const qualities = match[5].split(',');
 
-  let mp4s = [];
+  const mp4s = [];
 
-  for (var i = 0; i < qualities.length; i++) {
-    let mp4 = `http://ondemand-${region}.wdr.de/medp/${fsk}/${unknownNumber}/${id}/${qualities[i]}.mp4`;
+  for (let i = 0; i < qualities.length; i++) {
+    const mp4 = `http://ondemand-${region}.wdr.de/medp/${fsk}/${unknownNumber}/${id}/${qualities[i]}.mp4`;
     mp4s.push(mp4);
   }
 
@@ -70,24 +69,24 @@ function WDRm3u8ToMP4s(url) {
 }
 
 function isBRm3u8(url) {
-  let regex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
+  const regex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
 
   return regex.test(url);
 }
 
 function BRm3u8ToMP4s(url) {
-  let regex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
-  let match = regex.exec(url);
+  const regex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
+  const match = regex.exec(url);
 
   if (match == null) {
     return url;
   }
 
 
-  let qualities = match[2].split(',');
-  let mp4s = [];
+  const qualities = match[2].split(',');
+  const mp4s = [];
 
-  for (var i = 0; i < qualities.length; i++) {
+  for (let i = 0; i < qualities.length; i++) {
     mp4s.push(`http://cdn-storage.br.de/${match[1]}${qualities[i]}.mp4`);
   }
 
@@ -97,12 +96,12 @@ function BRm3u8ToMP4s(url) {
 /*polyfills for stupid internet explorer*/
 if (!String.prototype.endsWith) {
   String.prototype.endsWith = function (searchString, position) {
-    var subjectString = this.toString();
+    const subjectString = this.toString();
     if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
       position = subjectString.length;
     }
     position -= searchString.length;
-    var lastIndex = subjectString.indexOf(searchString, position);
+    const lastIndex = subjectString.indexOf(searchString, position);
     return lastIndex !== -1 && lastIndex === position;
   };
 }
@@ -113,7 +112,7 @@ if (!String.prototype.startsWith) {
   };
 }
 
-var locale = (window.navigator as any).userLanguage || window.navigator.language;
+const locale = (window.navigator as any).userLanguage || window.navigator.language;
 moment.locale(locale);
 
 function pad(value: number, size: number) {
@@ -129,10 +128,10 @@ function modalIsOpen(modalDOM) {
 }
 
 function randomString(len) {
-  var text = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let text = "";
+  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-  for (var i = 0; i < len; i++)
+  for (let i = 0; i < len; i++)
     text += possible.charAt(Math.floor(Math.random() * possible.length));
 
   return text;
@@ -142,49 +141,49 @@ function formatBytes(bytes, decimals) {
   if (!(parseInt(bytes) >= 0)) return '?';
   else if (bytes == 0) return '0 Byte';
 
-  var k = 1000;
-  var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-  var i = Math.floor(Math.log(bytes) / Math.log(k));
+  const k = 1000;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
 }
 
 function parseQuery(query) {
-  let channels = [];
-  let topics = [];
-  let titles = [];
-  let descriptions = [];
+  const channels = [];
+  const topics = [];
+  const titles = [];
+  const descriptions = [];
   let generics = [];
 
-  let splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
+  const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
     return (split.length > 0);
   });
 
   for (let i = 0; i < splits.length; i++) {
-    let split = splits[i];
+    const split = splits[i];
 
     if (split[0] == '!') {
-      let c = split.slice(1, split.length).split(',').filter((split) => {
+      const c = split.slice(1, split.length).split(',').filter((split) => {
         return (split.length > 0);
       });
       if (c.length > 0) {
         channels.push(c);
       }
     } else if (split[0] == '#') {
-      let t = split.slice(1, split.length).split(',').filter((split) => {
+      const t = split.slice(1, split.length).split(',').filter((split) => {
         return (split.length > 0);
       });
       if (t.length > 0) {
         topics.push(t);
       }
     } else if (split[0] == '+') {
-      let t = split.slice(1, split.length).split(',').filter((split) => {
+      const t = split.slice(1, split.length).split(',').filter((split) => {
         return (split.length > 0);
       });
       if (t.length > 0) {
         titles.push(t);
       }
     } else if (split[0] == '*') {
-      let d = split.slice(1, split.length).split(',').filter((split) => {
+      const d = split.slice(1, split.length).split(',').filter((split) => {
         return (split.length > 0);
       });
       if (d.length > 0) {
@@ -205,7 +204,7 @@ function parseQuery(query) {
 }
 
 function track(action) {
-  let date = new Date();
+  const date = new Date();
   socket.emit('track', {
     uid: uid,
     pv_id: pv_id,
@@ -257,8 +256,8 @@ setInterval(() => {
 }, 20 * 60 * 1000); /*every 20 minutes*/
 
 socket.on('indexState', (state) => {
-  let parsingProgress = (state.parserProgress * 100).toFixed(0);
-  let indexingProgress = (state.indexingProgress * 100).toFixed(0);
+  const parsingProgress = (state.parserProgress * 100).toFixed(0);
+  const indexingProgress = (state.indexingProgress * 100).toFixed(0);
   $('#parsingProgressbar').css('width', (parsingProgress + '%')).text(parsingProgress + '%');
   $('#indexingProgressbar').css('width', (indexingProgress + '%')).text(indexingProgress + '%');
   $('#indexingMessage').text(state.entries);
@@ -285,7 +284,7 @@ function getQueryString() {
 }
 
 function setQueryFromURIHash() {
-  let props = parseURIHash(window.location.hash);
+  const props = parseURIHash(window.location.hash);
 
   if (props['query']) {
     $('#queryInput').val(props['query']).trigger('input');
@@ -317,11 +316,11 @@ function parseURIHash(hash) {
     hash = hash.slice(1);
   }
 
-  let props = hash.split('&');
-  let elements = {};
+  const props = hash.split('&');
+  const elements = {};
 
   for (let i = 0; i < props.length; i++) {
-    let element = props[i].split('=');
+    const element = props[i].split('=');
     elements[element[0]] = decodeURIComponent(element[1]);
   }
 
@@ -329,9 +328,9 @@ function parseURIHash(hash) {
 }
 
 function createURIHash(elements) {
-  let props = [];
+  const props = [];
 
-  for (let prop in elements) {
+  for (const prop in elements) {
     props.push(prop + '=' + encodeURIComponent(elements[prop].toString()));
   }
 
@@ -339,12 +338,12 @@ function createURIHash(elements) {
 }
 
 const query = _.throttle(() => {
-  let queryString = getQueryString();
-  let future = !!$('#futureCheckbox').prop('checked');
-  let everywhere = !!$('#everywhereCheckbox').prop('checked');
+  const queryString = getQueryString();
+  const future = !!$('#futureCheckbox').prop('checked');
+  const everywhere = !!$('#everywhereCheckbox').prop('checked');
   currentPage = Math.min(currentPage, Math.floor(10000 / itemsPerPage - 1));
 
-  let elements = {};
+  const elements = {};
 
   if (queryString.length > 0) {
     elements['query'] = queryString;
@@ -364,15 +363,15 @@ const query = _.throttle(() => {
     oldHash = oldHash.slice(1);
   }
 
-  let newHash = createURIHash(elements);
+  const newHash = createURIHash(elements);
 
   if (oldHash !== newHash) {
     ignoreNextHashChange = true;
     window.location.hash = newHash;
   }
 
-  let parsedQuery = parseQuery(queryString);
-  let queries = [];
+  const parsedQuery = parseQuery(queryString);
+  const queries = [];
 
   for (let i = 0; i < parsedQuery.channels.length; i++) {
     queries.push({
@@ -409,7 +408,7 @@ const query = _.throttle(() => {
     });
   }
 
-  let queryObj = {
+  const queryObj = {
     queries: queries,
     sortBy: 'timestamp',
     sortOrder: 'desc',
@@ -443,17 +442,17 @@ function handleQueryResult(result, err) {
     return;
   }
 
-  for (var i = 0; i < result.results.length; i++) {
-    let data = result.results[i];
+  for (let i = 0; i < result.results.length; i++) {
+    const data = result.results[i];
 
     if (isWDRm3u8(data.url_video)) {
-      let mp4s = WDRm3u8ToMP4s(data.url_video);
+      const mp4s = WDRm3u8ToMP4s(data.url_video);
 
       data.url_video_low = mp4s[0];
       data.url_video = mp4s[2];
       data.url_video_hd = mp4s[4];
     } else if (isBRm3u8(data.url_video)) {
-      let mp4s = BRm3u8ToMP4s(data.url_video);
+      const mp4s = BRm3u8ToMP4s(data.url_video);
 
       data.url_video_low = mp4s[2];
       data.url_video = mp4s[3];
@@ -467,9 +466,9 @@ function handleQueryResult(result, err) {
       data.timeString = moment.unix(data.timestamp).format('HH:mm');
     }
 
-    let durationMoment = moment.duration(data.duration, 'seconds');
-    let minutes = pad(durationMoment.hours() * 60 + durationMoment.minutes(), 2);
-    let seconds = pad(durationMoment.seconds(), 2);
+    const durationMoment = moment.duration(data.duration, 'seconds');
+    const minutes = pad(durationMoment.hours() * 60 + durationMoment.minutes(), 2);
+    const seconds = pad(durationMoment.seconds(), 2);
     data.durationString = isNaN(data.duration) ? '?' : (minutes + ':' + seconds);
 
     mediathekTable.row.add(data);
@@ -477,19 +476,19 @@ function handleQueryResult(result, err) {
 
   mediathekTable.draw();
 
-  let actualPagesCount = Math.ceil(result.queryInfo.totalResults / itemsPerPage);
-  let shownPagesCount = Math.min(actualPagesCount, Math.floor(10000 / itemsPerPage));
+  const actualPagesCount = Math.ceil(result.queryInfo.totalResults / itemsPerPage);
+  const shownPagesCount = Math.min(actualPagesCount, Math.floor(10000 / itemsPerPage));
 
   createPagination(shownPagesCount);
 
-  let filmlisteMoment = moment.unix(result.queryInfo.filmlisteTimestamp);
+  const filmlisteMoment = moment.unix(result.queryInfo.filmlisteTimestamp);
 
   $('#queryInfoLabel').html('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
     ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.</br>Filmliste zuletzt um ' + filmlisteMoment.format('HH:mm') + ' Uhr aktualisiert.');
 }
 
 function createPaginationButton(html, active, enabled, callback) {
-  let button = $('<li>').addClass(active ? 'active' : '').addClass(enabled ? '' : 'disabled').append($('<a>', {
+  const button = $('<li>').addClass(active ? 'active' : '').addClass(enabled ? '' : 'disabled').append($('<a>', {
     href: '#',
     html: html,
     click: () => {
@@ -506,25 +505,25 @@ function createPaginationButton(html, active, enabled, callback) {
 }
 
 function createPagination(totalPages) {
-  let pagination = $('#pagination');
+  const pagination = $('#pagination');
   pagination.empty();
 
-  let backButton = createPaginationButton('<i class="material-icons" style="margin: -6px;">keyboard_arrow_left</i>', false, currentPage > 0, () => {
+  const backButton = createPaginationButton('<i class="material-icons" style="margin: -6px;">keyboard_arrow_left</i>', false, currentPage > 0, () => {
     currentPage--;
   });
   pagination.append(backButton);
 
-  let pagingBegin = Math.max(0, currentPage - 2 - (2 - Math.min(2, totalPages - (currentPage + 1))));
-  let pagingEnd = Math.min(totalPages, pagingBegin + 5);
+  const pagingBegin = Math.max(0, currentPage - 2 - (2 - Math.min(2, totalPages - (currentPage + 1))));
+  const pagingEnd = Math.min(totalPages, pagingBegin + 5);
 
   for (let i = pagingBegin; i < pagingEnd; i++) {
-    let button = createPaginationButton(i + 1, currentPage == i, true, () => {
+    const button = createPaginationButton(i + 1, currentPage == i, true, () => {
       currentPage = i;
     });
     pagination.append(button);
   }
 
-  let nextButton = createPaginationButton('<i class="material-icons" style="margin: -6px">keyboard_arrow_right</i>', false, currentPage < (totalPages - 1), () => {
+  const nextButton = createPaginationButton('<i class="material-icons" style="margin: -6px">keyboard_arrow_right</i>', false, currentPage < (totalPages - 1), () => {
     currentPage++;
   });
   pagination.append(nextButton);
@@ -544,9 +543,9 @@ function getDescription(id, callback) {
 }
 
 function createSubtitleRow(text, url, filename, filesize?) {
-  let tableRow = $('<tr>');
+  const tableRow = $('<tr>');
 
-  let downloadButton = $('<a>', {
+  const downloadButton = $('<a>', {
     target: '_blank',
     href: url,
     download: filename
@@ -554,10 +553,10 @@ function createSubtitleRow(text, url, filename, filesize?) {
 
   downloadButton.click(() => track('download-subtitle'));
 
-  let downloadIcon = $('<i>').addClass('material-icons floatRight').text('save');
+  const downloadIcon = $('<i>').addClass('material-icons floatRight').text('save');
   downloadButton.append(downloadIcon);
 
-  let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2));
+  const filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2));
 
   tableRow.append($('<td>').text(text));
   tableRow.append(filesizeCell);
@@ -567,9 +566,9 @@ function createSubtitleRow(text, url, filename, filesize?) {
 }
 
 function createVideoRow(text, url, videoTitle, filename, filesize?) {
-  let tableRow = $('<tr>');
+  const tableRow = $('<tr>');
 
-  let watchButton = $('<a>', {
+  const watchButton = $('<a>', {
     target: '_blank',
     href: url,
     click: () => {
@@ -578,10 +577,10 @@ function createVideoRow(text, url, videoTitle, filename, filesize?) {
     }
   });
 
-  let watchIcon = $('<i>').addClass('material-icons floatLeft').text('ondemand_video');
+  const watchIcon = $('<i>').addClass('material-icons floatLeft').text('ondemand_video');
   watchButton.append(watchIcon);
 
-  let downloadButton = $('<a>', {
+  const downloadButton = $('<a>', {
     target: '_blank',
     href: url,
     download: filename
@@ -589,10 +588,10 @@ function createVideoRow(text, url, videoTitle, filename, filesize?) {
 
   downloadButton.click(() => track('download-video'));
 
-  let downloadIcon = $('<i>').addClass('material-icons floatRight').text('save');
+  const downloadIcon = $('<i>').addClass('material-icons floatRight').text('save');
   downloadButton.append(downloadIcon);
 
-  let filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2)).addClass('filesizeCell');
+  const filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2)).addClass('filesizeCell');
 
   tableRow.append($('<td>').text(text));
   tableRow.append(filesizeCell);
@@ -603,8 +602,8 @@ function createVideoRow(text, url, videoTitle, filename, filesize?) {
 
 function hidePopoverIfNotHovered(button, callback) {
   setTimeout(() => {
-    let popoverID = button.attr('aria-describedby');
-    let popover = $('#' + popoverID);
+    const popoverID = button.attr('aria-describedby');
+    const popover = $('#' + popoverID);
     if (popover.length) {
       if (!popover.is(':hover') && !button.is(':hover')) {
         button.popover('hide');
@@ -619,12 +618,12 @@ function hidePopoverIfNotHovered(button, callback) {
 
 function createDescriptionButton(entry) {
   let state = false;
-  let description = null;
+  const description = null;
 
-  let icon = $('<i>').addClass('material-icons').text('expand_more');
-  let popoverContent = $('<div>').html('<i class="material-icons spin-right" style="display: inline-flex; vertical-align: middle; font-size: 2.5em;">autorenew</i> <span style="font-size:1.2em; vertical-align: middle;">Laden...</span>');
+  const icon = $('<i>').addClass('material-icons').text('expand_more');
+  const popoverContent = $('<div>').html('<i class="material-icons spin-right" style="display: inline-flex; vertical-align: middle; font-size: 2.5em;">autorenew</i> <span style="font-size:1.2em; vertical-align: middle;">Laden...</span>');
 
-  let button = $('<a>', {
+  const button = $('<a>', {
     target: '_blank',
     href: '#',
     click: () => {
@@ -681,9 +680,9 @@ function resetVideoActionButton(button) {
 }
 
 function createVideoActionButton(entry) {
-  let highestQualityUrl = entry.url_video_hd ? entry.url_video_hd : (entry.url_video ? entry.url_video : entry.url_video_low);
+  const highestQualityUrl = entry.url_video_hd ? entry.url_video_hd : (entry.url_video ? entry.url_video : entry.url_video_low);
 
-  let button = $('<a>', {
+  const button = $('<a>', {
     target: '_blank',
     href: entry.url_video,
     click: () => {
@@ -699,10 +698,10 @@ function createVideoActionButton(entry) {
     }
   });
 
-  let icon = $('<i>').addClass('material-icons movie-icon').text('movie');
+  const icon = $('<i>').addClass('material-icons movie-icon').text('movie');
   button.append(icon);
 
-  let table = $('<table>').addClass('table-condensed');
+  const table = $('<table>').addClass('table-condensed');
   table.append(`<thead>
           <tr>
             <th>Qualität</th>
@@ -712,10 +711,10 @@ function createVideoActionButton(entry) {
         </thead>`);
 
 
-  let tableHead = $('<thead>');
-  let tableBody = $('<tbody>');
+  const tableHead = $('<thead>');
+  const tableBody = $('<tbody>');
 
-  let filenamebase = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + moment.unix(entry.timestamp).format('DD.MM.YYYY HH:mm');
+  const filenamebase = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + moment.unix(entry.timestamp).format('DD.MM.YYYY HH:mm');
 
   let lowRow, midRow, highRow, subtitleRow;
 
@@ -752,8 +751,8 @@ function createVideoActionButton(entry) {
 
   button.on('mouseenter', () => {
     button.popover('show');
-    let popoverID = button.attr('aria-describedby');
-    let popover = $('#' + popoverID);
+    const popoverID = button.attr('aria-describedby');
+    const popover = $('#' + popoverID);
     if (popover.length) {
       popover.on('mouseleave', () => {
         hidePopoverIfNotHovered(button, () => resetVideoActionButton(button));
@@ -841,14 +840,14 @@ function playVideo(title, url) {
   $('#videooverlay').show(200, () => {
     $('#blur').addClass('blur');
 
-    let vid = $('<video>', {
+    const vid = $('<video>', {
       class: 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9',
       id: 'video-player',
       preload: 'auto',
       controls: '',
       width: '100%'
     });
-    let source = $('<source>', {
+    const source = $('<source>', {
       src: url
     });
     if (url.endsWith('m3u8')) {
@@ -957,7 +956,7 @@ $(() => {
       data: null,
       render: returnEmptyString,
       createdCell: (td, cellData, rowData, row, col) => {
-        let link = $('<a>', {
+        const link = $('<a>', {
           target: '_blank',
           text: rowData.channel,
           href: rowData.url_website
@@ -1005,25 +1004,25 @@ $(() => {
   });
 
   $('#rssFeedButton').click(() => {
-    let search = window.location.hash.replace('#', '');
+    const search = window.location.hash.replace('#', '');
     window.open(window.location.origin + window.location.pathname + 'feed' + (search.length > 0 ? '?' : '') + search, '_blank');
     track('feed-create');
   });
 
-  let newQuery = () => {
+  const newQuery = () => {
     currentPage = 0;
     query();
   };
 
   $('#queryInput').on('input', () => {
-    let currentQueryString = getQueryString();
+    const currentQueryString = getQueryString();
 
     if (currentQueryString != lastQueryString) {
       newQuery();
       lastQueryString = currentQueryString;
     }
 
-    let clearButton = $('#queryInputClearButton');
+    const clearButton = $('#queryInputClearButton');
     if (currentQueryString.length == 0 && queryInputClearButtonState == 'shown') {
       clearButton.animate({
         opacity: 0

@@ -10,10 +10,10 @@ interface Config {
   workerArgs: string[];
   redis: Redis.ClientOpts;
   elasticsearch: Elasticsearch.ConfigOptions;
-  piwik: {
+  matomo: {
     enabled: boolean,
     siteUrl: string,
-    piwikUrl: string,
+    matomoUrl: string,
     token_auth: string,
     siteId: number
   }
@@ -82,12 +82,12 @@ const config: Config = {
     host: getEnvOrDefault('ELASTICSEARCH_HOST', 'localhost') + ':' + getEnvOrDefault('ELASTICSEARCH_PORT', '9200')
   },
 
-  piwik: {
-    enabled: getBooleanEnvOrDefault('PIWIK_ENABLED', false),
-    piwikUrl: getEnvOrDefault('PIWIK_URL', 'https://piwik.example.de/piwik.php'),
-    siteUrl: getEnvOrDefault('PIWIK_SITE_URL', 'http://domain.tld'),
-    token_auth: getEnvOrDefault('PIWIK_AUTH_TOKEN', 'abc123'),
-    siteId: getIntegerEnvOrDefault('PIWIK_SITE_ID', 1)
+  matomo: {
+    enabled: getBooleanEnvOrDefault('MATOMO_ENABLED', false),
+    matomoUrl: getEnvOrDefault('MATOMO_URL', 'https://matomo.example.de/piwik.php'),
+    siteUrl: getEnvOrDefault('MATOMO_SITE_URL', 'http://domain.tld'),
+    token_auth: getEnvOrDefault('MATOMO_AUTH_TOKEN', 'abc123'),
+    siteId: getIntegerEnvOrDefault('MATOMO_SITE_ID', 1)
   }
 }
 

@@ -5,8 +5,8 @@ cp *.html dist/ && \
 
 cp index.css dist/static/index.css && \
 mkdir dist/static/bootstrap && \
-cp node_modules/bootstrap/dist/css/bootstrap.min.css dist/static/bootstrap/bootstrap.min.css && \
-cp node_modules/bootstrap/dist/js/bootstrap.min.js dist/static/bootstrap/bootstrap.min.js && \
+cp node_modules/bootstrap/dist/css/bootstrap.min.css dist/static/bootstrap.min.css && \
+cp node_modules/bootstrap/dist/js/bootstrap.min.js dist/static/bootstrap.min.js && \
 cp node_modules/datatables.net/js/jquery.dataTables.min.js dist/static/jquery.dataTables.min.js && \
 cp node_modules/jquery/dist/jquery.min.js dist/static/jquery.min.js && \
 cp node_modules/js-cookie/src/js.cookie.js dist/static/js.cookie.js && \
