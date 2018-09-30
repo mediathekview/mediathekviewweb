@@ -10,11 +10,11 @@ export default class RSSFeedGenerator {
   }
 
   createFeed(requestUrl, callback) {
-    let url = URL.parse(requestUrl);
-    let urlQuery = querystring.parse(url.query);
+    const url = URL.parse(requestUrl);
+    const urlQuery = querystring.parse(url.query);
 
-    let parsedQuery = this.parseQuery(urlQuery.query || '');
-    let queries = [];
+    const parsedQuery = this.parseQuery(urlQuery.query || '');
+    const queries = [];
 
     for (let i = 0; i < parsedQuery.channels.length; i++) {
       queries.push({
@@ -51,7 +51,7 @@ export default class RSSFeedGenerator {
       });
     }
 
-    let queryObj = {
+    const queryObj = {
       queries: queries,
       sortBy: 'timestamp',
       sortOrder: 'desc',
@@ -64,7 +64,7 @@ export default class RSSFeedGenerator {
       if (err) {
         callback(err, null);
       } else {
-        let siteUrl = URL.format({
+        const siteUrl = URL.format({
           protocol: url.protocol,
           slashes: url.slashes,
           auth: url.auth,
@@ -75,7 +75,7 @@ export default class RSSFeedGenerator {
           pathname: '/'
         });
 
-        let rss = new RSS({
+        const rss = new RSS({
           title: 'MVW - ' + urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
           ttl: 75,
           description: urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
@@ -84,20 +84,20 @@ export default class RSSFeedGenerator {
         });
 
         for (let i = 0; i < result.result.length; i++) {
-          let item = result.result[i];
+          const item = result.result[i];
 
           rss.item({
             author: item.channel,
             categories: [item.topic],
             title: item.title,
             description: item.description,
-            url: siteUrl,
+            url: item.url_video_hd || item.url_video,
             guid: item.id,
             date: new Date(item.timestamp * 1000)
           });
         }
 
-        let feed = rss.xml({
+        const feed = rss.xml({
           indent: true
         });
 
@@ -107,42 +107,42 @@ export default class RSSFeedGenerator {
   }
 
   parseQuery(query) {
-    let channels = [];
-    let topics = [];
-    let titles = [];
-    let descriptions = [];
+    const channels = [];
+    const topics = [];
+    const titles = [];
+    const descriptions = [];
     let generics = [];
 
-    let splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
+    const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
       return (split.length > 0);
     });
 
     for (let i = 0; i < splits.length; i++) {
-      let split = splits[i];
+      const split = splits[i];
 
       if (split[0] == '!') {
-        let c = split.slice(1, split.length).split(',').filter((split) => {
+        const c = split.slice(1, split.length).split(',').filter((split) => {
           return (split.length > 0);
         });
         if (c.length > 0) {
           channels.push(c);
         }
       } else if (split[0] == '#') {
-        let t = split.slice(1, split.length).split(',').filter((split) => {
+        const t = split.slice(1, split.length).split(',').filter((split) => {
           return (split.length > 0);
         });
         if (t.length > 0) {
           topics.push(t);
         }
       } else if (split[0] == '+') {
-        let t = split.slice(1, split.length).split(',').filter((split) => {
+        const t = split.slice(1, split.length).split(',').filter((split) => {
           return (split.length > 0);
         });
         if (t.length > 0) {
           titles.push(t);
         }
       } else if (split[0] == '*') {
-        let d = split.slice(1, split.length).split(',').filter((split) => {
+        const d = split.slice(1, split.length).split(',').filter((split) => {
           return (split.length > 0);
         });
         if (d.length > 0) {
