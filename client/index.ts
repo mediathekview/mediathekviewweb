@@ -11,7 +11,7 @@ declare const moment;
 declare const videojs;
 
 const debugResponse = false;
-const socket = io();
+const socket = io({ transports: ['websocket'] });
 const pv_id = randomString(6);
 const itemsPerPage = 15;
 let currentPage = 0;
@@ -39,11 +39,11 @@ socket.on('disconnect', () => {
 });
 
 socket.on('reconnect', (attemptNumber) => {
-  console.log('reconnected');
+  console.log('reconnected', attemptNumber);
 });
 
 socket.on('reconnect_attempt', (attemptNumber) => {
-  console.log('attempting reconnect');
+  console.log('attempting reconnect', attemptNumber);
 });
 
 socket.on('reconnect_failed', () => {
