@@ -37,6 +37,7 @@
     "@types/node": "^10.11.3",
     "@types/redis": "^2.8.6",
     "@types/request": "^2.47.1",
+    "@types/rss": "0.0.28",
     "@types/socket.io": "^1.4.38",
     "typescript": "^3.1.1"
   }

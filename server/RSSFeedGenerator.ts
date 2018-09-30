@@ -1,6 +1,6 @@
 import * as URL from 'url';
 import * as querystring from 'querystring';
-import * as RSS from 'rss';
+import RSS from 'rss';
 
 export default class RSSFeedGenerator {
   searchEngine: any;
