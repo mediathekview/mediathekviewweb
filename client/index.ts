@@ -1035,7 +1035,7 @@ $(() => {
       }
     }],
     language: {
-      url: '/static/dataTables.german.lang'
+      emptyTable: 'Keine Einträge vorhanden'
     },
     searching: false,
     ordering: false,
