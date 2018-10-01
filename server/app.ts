@@ -39,6 +39,8 @@ import * as utils from './utils';
   const httpServer = new http.Server(app);
   const io = SocketIO(httpServer);
 
+  app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
+
   process.on('SIGTERM', () => httpServer.close(() => process.exit(0)));
 
   const searchEngine = new SearchEngine(config.elasticsearch);
