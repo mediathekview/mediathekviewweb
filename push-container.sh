@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker push patrickhein/mediathekviewweb
+docker push patrickhein/$1
