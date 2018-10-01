@@ -10,6 +10,10 @@ declare const Cookies;
 declare const moment;
 declare const videojs;
 
+interface XMLHttpRequest {
+  baseOpen: (method: string, url: string, async?: boolean, user?: string, password?: string) => void;
+}
+
 const debugResponse = false;
 const socket = io();
 const pv_id = randomString(6);
@@ -66,14 +70,14 @@ socket.on('connect_error', (error) => {
   console.error('connect_error', error);
 });
 
-const baseOpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.baseOpen = XMLHttpRequest.prototype.open;
 
-XMLHttpRequest.prototype.open = (method: string, url: string, async?: boolean, user?: string, password?: string) => {
+XMLHttpRequest.prototype.open = function (this: XMLHttpRequest, method: string, url: string, async?: boolean, user?: string, password?: string) {
   if (url.startsWith('http://srfvodhd-vh.akamaihd.net') || url.startsWith('http://hdvodsrforigin-f.akamaihd.net')) {
     url = 'https' + url.slice(4);
   }
 
-  baseOpen(method, url, async, user, password);
+  this.baseOpen(method, url, async, user, password);
 }
 
 function isWDRm3u8(url) {
