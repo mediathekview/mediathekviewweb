@@ -11,7 +11,7 @@ declare const moment;
 declare const videojs;
 
 const debugResponse = false;
-const socket = io({ transports: ['websocket'] });
+const socket = io({ rejectUnauthorized: false });
 const pv_id = randomString(6);
 const itemsPerPage = 15;
 let currentPage = 0;
