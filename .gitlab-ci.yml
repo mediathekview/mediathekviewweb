@@ -7,7 +7,8 @@ build:
     - docker:dind
   stage: build
   script:
-    - docker build -t $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest .
+    - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest .
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
   tags:
     - docker
