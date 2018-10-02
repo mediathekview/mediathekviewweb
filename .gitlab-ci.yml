@@ -1,0 +1,11 @@
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build:
+  image: docker:stable
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:CI_COMMIT_REF_NAME .
+    - docker push $CI_REGISTRY_IMAGE:CI_COMMIT_REF_NAME
+  tags:
+    - docker
