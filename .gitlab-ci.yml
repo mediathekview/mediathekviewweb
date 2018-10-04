@@ -11,10 +11,10 @@ build:
   stage: build
   script:
     - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest || true
-    - docker build \
-      --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest \
-      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest \
-      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA \
+    - docker build
+      --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
+      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
+      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
       .
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
   tags:
