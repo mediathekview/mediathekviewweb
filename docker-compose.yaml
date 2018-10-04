@@ -3,7 +3,7 @@ services:
   
   application:
     container_name: mediathekviewweb
-    image: patrickhein/mediathekviewweb
+    image: mediathekview/mediathekviewweb
     restart: always
     depends_on:
       - elasticsearch
