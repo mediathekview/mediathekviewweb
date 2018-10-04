@@ -1,9 +1,10 @@
-import * as URL from 'url';
 import * as querystring from 'querystring';
 import RSS from 'rss';
+import * as URL from 'url';
+import SearchEngine from './SearchEngine';
 
 export default class RSSFeedGenerator {
-  searchEngine: any;
+  searchEngine: SearchEngine;
 
   constructor(searchEngine) {
     this.searchEngine = searchEngine;
@@ -57,7 +58,7 @@ export default class RSSFeedGenerator {
       sortOrder: 'desc',
       future: urlQuery.future || false,
       offset: 0,
-      size: 10
+      size: 50
     };
 
     this.searchEngine.search(queryObj, (result, err) => {
