@@ -17,5 +17,6 @@ build:
       --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
       .
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
   tags:
     - docker
