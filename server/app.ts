@@ -105,12 +105,7 @@ import * as utils from './utils';
         return res.send(`ERROR: ${error.message}`);
       }
 
-      let content = contentTemplate;
-
-      for (const field in config.contact) {
-        const regex = new RegExp(`{{\\s+${field}\\s+}}`);
-        content = content.replace(regex, config.contact[field]);
-      }
+      const content = contentTemplate.replace(/{{\s*(\w*?)\s*}}/g, (substring, [field]) => config.contact[field]);
 
       res.send(content);
     });
