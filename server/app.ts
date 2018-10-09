@@ -99,7 +99,21 @@ import * as utils from './utils';
     res.sendFile(path.join(__dirname, '/client/donate.html'));
   });
   app.get('/impressum', function (req, res) {
-    res.sendFile(path.join(__dirname, '/client/impressum.html'));
+    const filePath = path.join(__dirname, '/client/impressum.html');
+    fs.readFile(filePath, { encoding: 'utf8' }, (error, contentTemplate) => {
+      if (error) {
+        return res.send(`ERROR: ${error.message}`);
+      }
+
+      let content = contentTemplate;
+
+      for (const field in config.contact) {
+        const regex = new RegExp(`{{\\s+${field}\\s+}}`);
+        content = content.replace(regex, config.contact[field]);
+      }
+
+      res.send(content);
+    });
   });
   app.get('/datenschutz', function (req, res) {
     res.sendFile(path.join(__dirname, '/client/datenschutz.html'));

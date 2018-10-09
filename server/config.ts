@@ -16,6 +16,13 @@ interface Config {
     matomoUrl: string,
     token_auth: string,
     siteId: number
+  },
+  contact: {
+    name: string,
+    street: string,
+    postcode: string,
+    city: string,
+    mail: string
   }
 }
 
@@ -77,17 +84,23 @@ const config: Config = {
     password: getEnvOrDefault('REDIS_PASSWORD', ''),
     db: getIntegerEnvOrDefault('REDIS_DB', 2)
   },
-
   elasticsearch: {
     host: getEnvOrDefault('ELASTICSEARCH_HOST', 'localhost') + ':' + getEnvOrDefault('ELASTICSEARCH_PORT', '9200')
   },
-
   matomo: {
     enabled: getBooleanEnvOrDefault('MATOMO_ENABLED', false),
     matomoUrl: getEnvOrDefault('MATOMO_URL', 'https://matomo.example.de/piwik.php'),
     siteUrl: getEnvOrDefault('MATOMO_SITE_URL', 'http://domain.tld'),
     token_auth: getEnvOrDefault('MATOMO_AUTH_TOKEN', 'abc123'),
     siteId: getIntegerEnvOrDefault('MATOMO_SITE_ID', 1)
+  },
+
+  contact: {
+    name: getEnvOrDefault('CONTACT_NAME', 'Max Mustermann'),
+    street: getEnvOrDefault('CONTACT_STREET', 'Musterstraße 111'),
+    postcode: getEnvOrDefault('CONTACT_POSTCODE', '12345'),
+    city: getEnvOrDefault('CONTACT_CITY', 'Musterstadt'),
+    mail: getEnvOrDefault('CONTACT_MAIL', 'max@mustermann.tld')
   }
 }
 

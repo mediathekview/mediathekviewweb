@@ -25,6 +25,11 @@ services:
       - MATOMO_SITE_URL=
       - MATOMO_AUTH_TOKEN=
       - MATOMO_SITE_ID=
+      - CONTACT_NAME=
+      - CONTACT_STREET=
+      - CONTACT_POSTCODE=
+      - CONTACT_CITY=
+      - CONTACT_MAIL=
     volumes:
       - 'mediathekviewweb:/data'
     ports:
