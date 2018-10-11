@@ -1,11 +1,12 @@
 import { AnyIterable } from '../../any-iterable';
 import { AwaitableSet } from '../../collections/awaitable';
 import { ParallelizableIteratorFunction } from '../types';
+import { MultiError } from '../../multi-error';
 
 export async function parallelForEach<T>(iterable: AnyIterable<T>, concurrency: number, func: ParallelizableIteratorFunction<T, any>): Promise<void> {
   const runningPromises = new AwaitableSet<Promise<void>>();
   let thrown = false;
-  let error: any;
+  const errors: any[] = [];
 
   function run(item: T, index: number) {
     const promise = func(item, index);
@@ -14,7 +15,7 @@ export async function parallelForEach<T>(iterable: AnyIterable<T>, concurrency: 
     promise
       .then(() => runningPromises.delete(promise))
       .catch((err) => {
-        error = err;
+        errors.push(err);
         thrown = true;
         runningPromises.delete(promise);
       });
@@ -23,9 +24,9 @@ export async function parallelForEach<T>(iterable: AnyIterable<T>, concurrency: 
   let index = 0;
   for await (const item of iterable) {
     if (thrown) {
-      throw error;
+      break;
     }
-    
+
     run(item, index++);
 
     if (runningPromises.size >= concurrency) {
@@ -35,5 +36,13 @@ export async function parallelForEach<T>(iterable: AnyIterable<T>, concurrency: 
 
   while (runningPromises.size > 0) {
     await runningPromises.deleted;
+  }
+
+  if (thrown) {
+    if (errors.length > 1) {
+      throw new MultiError(errors);
+    } else {
+      throw errors[0];
+    }
   }
 }

@@ -1,11 +1,11 @@
 import * as Mongo from 'mongodb';
-
 import { AsyncEnumerable } from '../../common/enumerable';
 import { Entity } from '../../common/model';
 import { AnyIterable } from '../../common/utils';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter } from './mongo-query';
 import { objectIdOrStringToString, UpsertedIds } from './utils';
+
 
 const BATCH_SIZE = 100;
 
@@ -18,9 +18,9 @@ export class MongoBaseRepository<T extends Entity> {
     this.collection = collection;
   }
 
-  save(entity: TWithPartialId<T>): Promise<T> {
+  async save(entity: TWithPartialId<T>): Promise<T> {
     const result = this.saveMany([entity]);
-    return AsyncEnumerable.from(result).single();
+    return await AsyncEnumerable.from(result).single();
   }
 
   saveMany(entities: AnyIterable<TWithPartialId<T>>): AsyncIterable<T> {
@@ -30,7 +30,7 @@ export class MongoBaseRepository<T extends Entity> {
         const operations = entitiesBatch.map((entity) => this.toReplaceOneOperation(entity));
         return ({ entitiesBatch, operations });
       })
-      .parallelMap(3, false, async ({ entitiesBatch, operations }) => {
+      .map(async ({ entitiesBatch, operations }) => {
         const bulkWriteResult = await this.collection.bulkWrite(operations);
         return { entitiesBatch, upsertedIds: bulkWriteResult.upsertedIds as UpsertedIds };
       })
@@ -73,18 +73,36 @@ export class MongoBaseRepository<T extends Entity> {
   async *loadManyByFilter(filter: MongoFilter) {
     const cursor = this.collection.find<MongoDocument<T>>(filter);
 
-    let document: MongoDocument<T>;
+    let document: MongoDocument<T> | null;
     while ((document = await cursor.next()) != null) {
       const entity = toEntity(document);
       yield entity;
     }
   }
 
+  async has(id: string) {
+    const cursor = this.collection.find({ _id: id });
+    const count = await cursor.count();
+
+    return count > 0;
+  }
+
+  async hasMany(ids: AnyIterable<string>) {
+    const array = await AsyncEnumerable.from(ids).toArray();
+
+    const filter: MongoFilter = {
+      _id: { $in: array }
+    };
+
+    const result = await this.collection.distinct('_id', filter) as string[];
+    return result;
+  }
+
   async drop(): Promise<void> {
     await this.collection.drop();
   }
 
-  private toReplaceOneOperation(entity: TWithPartialId<T>): Object {
+  private toReplaceOneOperation(entity: TWithPartialId<T>) {
     const filter: MongoFilter = {};
 
     if (entity.id != undefined) {

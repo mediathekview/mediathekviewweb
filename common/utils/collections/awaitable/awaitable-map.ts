@@ -18,12 +18,30 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     return this._deleted;
   }
 
-  constructor() {
-    this.backingMap = new Map();
+  constructor()
+  constructor(referenceMap: Map<K, V>)
+  constructor(map = new Map<K, V>()) {
+    this.backingMap = map;
 
     this._setted = new ResetPromise();
     this._cleared = new ResetPromise();
     this._deleted = new ResetPromise();
+  }
+
+  static from<K, V>(map: Map<K, V>): AwaitableMap<K, V>
+  static from<K, V>(map: Map<K, V>, clone: boolean): AwaitableMap<K, V>
+  static from<K, V>(map: Map<K, V>, clone = true): AwaitableMap<K, V> {
+    if (!clone) {
+      return new AwaitableMap(map);
+    }
+
+    const awaitableMap = new AwaitableMap<K, V>();
+
+    for (const [key, value] of map) {
+      awaitableMap.set(key, value);
+    }
+
+    return awaitableMap;
   }
 
   get size(): number {
@@ -79,6 +97,21 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     this._setted.resolve([key, value]).reset();
 
     return this;
+  }
+
+  intersect(...maps: Map<K, V>[]): Map<K, V> {
+    const intersection = this.backingMap.intersect(...maps);
+    return AwaitableMap.from(intersection, false);
+  }
+
+  difference(...maps: Map<K, V>[]): Map<K, V> {
+    const difference = this.backingMap.difference(...maps);
+    return AwaitableMap.from(difference, false);
+  }
+
+  union(...maps: Map<K, V>[]): Map<K, V> {
+    const union = this.backingMap.union(...maps);
+    return AwaitableMap.from(union, false);
   }
 
   [Symbol.toStringTag]: 'Map' = 'Map';

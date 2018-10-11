@@ -2,7 +2,7 @@ import { AnyIterable } from '../any-iterable';
 import { isAsyncIterable } from './is-async-iterable';
 import { AsyncIteratorFunction } from './types';
 
-export function forEachAsync<T>(iterable: AnyIterable<T>, func: AsyncIteratorFunction<T, void>): Promise<void> {
+export function forEachAsync<T>(iterable: AnyIterable<T>, func: AsyncIteratorFunction<T, any>): Promise<void> {
   if (isAsyncIterable(iterable)) {
     return async(iterable, func);
   } else {
@@ -10,7 +10,7 @@ export function forEachAsync<T>(iterable: AnyIterable<T>, func: AsyncIteratorFun
   }
 }
 
-async function sync<T>(iterable: Iterable<T>, func: AsyncIteratorFunction<T, void>): Promise<void> {
+async function sync<T>(iterable: Iterable<T>, func: AsyncIteratorFunction<T, any>): Promise<void> {
   let index = 0;
 
   for (const item of iterable) {
@@ -22,7 +22,7 @@ async function sync<T>(iterable: Iterable<T>, func: AsyncIteratorFunction<T, voi
   }
 }
 
-async function async<T>(iterable: AsyncIterable<T>, func: AsyncIteratorFunction<T, void>): Promise<void> {
+async function async<T>(iterable: AsyncIterable<T>, func: AsyncIteratorFunction<T, any>): Promise<void> {
   let index = 0;
 
   for await (const item of iterable) {

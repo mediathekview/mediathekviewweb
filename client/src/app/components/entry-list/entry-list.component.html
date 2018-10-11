@@ -1,4 +1,4 @@
-<mat-table matSort [dataSource]="dataSource">
+<mat-table matSort>
   <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
 
   <ng-container matColumnDef="channel">
@@ -42,5 +42,3 @@
 
   <mat-row *matRowDef="let entry; columns: columnsToDisplay"></mat-row>
 </mat-table>
-
-<mat-paginator></mat-paginator>

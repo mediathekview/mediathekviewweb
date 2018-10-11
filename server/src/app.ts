@@ -10,6 +10,8 @@ import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
 import { AggregationMode, EventLoopWatcher } from './utils';
 
+process.on('uncaughtException', (error) => console.error('unhandled', error));
+
 async function init() {
   const server = new Http.Server();
   const exposer = new MediathekViewWebExposer(server);

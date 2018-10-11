@@ -103,7 +103,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return array;
   }
 
-  async forEach(func: AsyncIteratorFunction<T, void>): Promise<void> {
+  async forEach(func: AsyncIteratorFunction<T, any>): Promise<void> {
     await forEachAsync(this.source, func);
   }
 

@@ -1,9 +1,9 @@
 import * as Redis from 'ioredis';
-
 import { Observable, Subject } from 'rxjs';
 import { Lock, LockedFunction } from '../../common/lock';
-import { Timer, immediate, timeout } from '../../common/utils';
+import { immediate, timeout, Timer } from '../../common/utils';
 import { AcquireResult } from './acquire-result';
+
 
 const EXPIRE_MS = 10000;
 const RETRY_DELAY = 50;
@@ -12,19 +12,20 @@ export class RedisLock implements Lock {
   private readonly redis: Redis.Redis;
   private readonly key: string;
   private readonly id: string;
-  private readonly onLockLostSubject: Subject<void>;
+  private readonly lockLostSubject: Subject<void>;
 
+  private isOwned: boolean = false;
   private stopLockLoop: Function = () => { };
 
-  get onLockLost(): Observable<void> {
-    return this.onLockLostSubject;
+  get lockLost(): Observable<void> {
+    return this.lockLostSubject.asObservable();
   }
 
   constructor(redis: Redis.Redis, key: string, id: string) {
     this.redis = redis;
     this.key = key;
     this.id = id;
-    this.onLockLostSubject = new Subject();
+    this.lockLostSubject = new Subject();
   }
 
   /**
@@ -77,16 +78,32 @@ export class RedisLock implements Lock {
     return success;
   }
 
-  async release(): Promise<boolean> {
+  async release(): Promise<boolean>
+  async release(forceReleaseGlobally: boolean): Promise<boolean>
+  async release(forceReleaseGlobally = false): Promise<boolean> {
+    if (!this.isOwned && !forceReleaseGlobally) {
+      return true;
+    }
+
     this.stopLockLoop();
 
     const result = await (this.redis as any)['lock:release'](this.key, this.id);
-    return result == 1;
+    const success = (result == 1);
+
+    if (success) {
+      this.isOwned = false;
+    }
+
+    return success;
   }
 
   async owned(): Promise<boolean> {
     const result = await (this.redis as any)['lock:owned'](this.key, this.id);
-    return result == 1;
+    const success = (result == 1);
+
+    this.isOwned = success;
+
+    return success;
   }
 
   private refreshLoop(): () => void {
@@ -100,7 +117,7 @@ export class RedisLock implements Lock {
           const success = await this.tryRefresh();
 
           if (!success) {
-            this.onLockLostSubject.next();
+            this.lockLostSubject.next();
             return;
           }
         }
@@ -111,12 +128,17 @@ export class RedisLock implements Lock {
   }
 
   private async tryAcquire(): Promise<AcquireResult> {
-    const result = await (this.redis as any)['lock:acquire'](this.key, this.id, EXPIRE_MS);
-    return result as AcquireResult;
+    const result = await (this.redis as any)['lock:acquire'](this.key, this.id, EXPIRE_MS) as AcquireResult;
+    this.isOwned = (result == AcquireResult.Acquired) || (result == AcquireResult.Owned);
+
+    return result;
   }
 
   private async tryRefresh(): Promise<boolean> {
     const result = await (this.redis as any)['lock:refresh'](this.key, this.id, EXPIRE_MS);
-    return result == 1;
+    const success = (result == 1);
+    this.isOwned = success;
+
+    return success;
   }
 }

@@ -73,7 +73,7 @@ export class InstanceProvider {
   }
 
   static mongo(): Promise<Mongo.MongoClient> {
-    return this.singleton(Mongo.MongoClient, () => Mongo.MongoClient.connect(MONGO_CONNECTION_STRING));
+    return this.singleton(Mongo.MongoClient, () => Mongo.MongoClient.connect(MONGO_CONNECTION_STRING, { useNewUrlParser: true }));
   }
 
   static database(): Promise<Mongo.Db> {
@@ -127,10 +127,11 @@ export class InstanceProvider {
   static entriesImporter(): Promise<EntriesImporter> {
     return this.singleton(EntriesImporter, async () => {
       const datastoreFactory = await this.datastoreFactory();
+      const lockProvider = await this.lockProvider();
       const entryRepository = await this.entryRepository();
       const logger = LoggerFactoryProvider.factory.create(ENTRIES_IMPORTER_LOG);
 
-      return new EntriesImporter(entryRepository, datastoreFactory, logger);
+      return new EntriesImporter(entryRepository, lockProvider, datastoreFactory, logger);
     });
   }
 

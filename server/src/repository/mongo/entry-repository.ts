@@ -28,7 +28,7 @@ export class MongoEntryRepository implements EntryRepository {
     await AsyncEnumerable.from(entries)
       .map(this.toReplaceOneOperation)
       .batch(BATCH_SIZE)
-      .parallelForEach(3, async (operations) => await this.collection.bulkWrite(operations))
+      .forEach(async (operations) => await this.collection.bulkWrite(operations))
   }
 
   load(id: string): Promise<Entry | null> {
@@ -55,7 +55,7 @@ export class MongoEntryRepository implements EntryRepository {
       replaceOne: {
         filter,
         replacement,
-        upsert: true
+        upsert: false
       }
     };
 

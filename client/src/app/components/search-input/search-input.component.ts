@@ -9,7 +9,7 @@ import { distinctUntilChanged, map } from 'rxjs/operators';
   styleUrls: ['./search-input.component.scss']
 })
 export class SearchInputComponent implements OnInit {
-  private readonly searchInput: FormControl;
+  readonly searchInput: FormControl;
 
   private inputChangeSubscription: Subscription;
   @ViewChild('searchInputElement') private searchInputRef: ElementRef<HTMLInputElement>;
@@ -18,9 +18,9 @@ export class SearchInputComponent implements OnInit {
   @Output() searchStringChanged: EventEmitter<string>;
 
   constructor() {
-    this.searchString = '';
     this.searchStringChanged = new EventEmitter();
     this.searchInput = new FormControl();
+    this.searchString = '';
   }
 
   ngOnInit() {
