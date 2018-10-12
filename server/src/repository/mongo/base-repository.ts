@@ -3,7 +3,7 @@ import { AsyncEnumerable } from '../../common/enumerable';
 import { Entity } from '../../common/model';
 import { AnyIterable } from '../../common/utils';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
-import { MongoFilter } from './mongo-query';
+import { MongoFilter, TypedMongoFilter } from './mongo-query';
 import { objectIdOrStringToString, UpsertedIds } from './utils';
 
 
@@ -103,7 +103,7 @@ export class MongoBaseRepository<T extends Entity> {
   }
 
   private toReplaceOneOperation(entity: TWithPartialId<T>) {
-    const filter: MongoFilter = {};
+    const filter: TypedMongoFilter<T> = {};
 
     if (entity.id != undefined) {
       filter['_id'] = entity.id;

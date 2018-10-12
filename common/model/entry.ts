@@ -9,6 +9,7 @@ export type Entry = Entity & {
   duration: number;
   description: string;
   website: string;
+  firstSeen: number;
   lastSeen: number;
   media: Media[];
 
@@ -35,6 +36,7 @@ export enum Field {
   Duration = 'duration',
   Description = 'description',
   Website = 'website',
+  FirstSeen = 'firstSeen',
   LastSeen = 'lastSeen',
   MediaType = 'media.type',
   MediaUrl = 'media.url',

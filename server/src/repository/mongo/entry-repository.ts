@@ -20,13 +20,13 @@ export class MongoEntryRepository implements EntryRepository {
   }
 
   async save(entry: Entry): Promise<void> {
-    const operation = this.toReplaceOneOperation(entry);
-    await this.collection.replaceOne(operation.replaceOne.filter, operation.replaceOne.replacement, { upsert: operation.replaceOne.upsert });
+    const operation = this.toUpdateOneOperation(entry);
+    await this.collection.updateOne(operation.updateOne.filter, operation.updateOne.update, { upsert: operation.updateOne.upsert });
   }
 
   async saveMany(entries: AnyIterable<Entry>): Promise<void> {
     await AsyncEnumerable.from(entries)
-      .map(this.toReplaceOneOperation)
+      .map((entry) => this.toUpdateOneOperation(entry))
       .batch(BATCH_SIZE)
       .forEach(async (operations) => await this.collection.bulkWrite(operations))
   }
@@ -43,19 +43,24 @@ export class MongoEntryRepository implements EntryRepository {
     return this.baseRepository.drop();
   }
 
-  private toReplaceOneOperation(entry: Entry) {
+  private toUpdateOneOperation(entry: Entry) {
     const filter: TypedMongoFilter<Entry> = {
-      _id: entry.id,
-      lastSeen: { $lte: entry.lastSeen },
+      _id: entry.id
     };
 
-    const replacement = toMongoDocument(entry);
+    const { lastSeen, firstSeen, ...documentWithoutLastSeen } = toMongoDocument(entry);
+
+    const update: Mongo.UpdateQuery<MongoDocument<Entry>> = {
+      $max: { lastSeen },
+      $min: { firstSeen },
+      $set: { ...documentWithoutLastSeen }
+    };
 
     const operation = {
-      replaceOne: {
+      updateOne: {
         filter,
-        replacement,
-        upsert: false
+        update,
+        upsert: true
       }
     };
 

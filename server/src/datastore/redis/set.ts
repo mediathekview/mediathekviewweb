@@ -69,7 +69,7 @@ export class RedisSet<T> implements Set<T> {
   pop(count?: number): Promise<Undefinable<T>> | AsyncIterable<T> {
     let result: Promise<T> | AsyncIterable<T>;
 
-    if (count == undefined) {
+    if (count == null) {
       result = this.popOne();
     } else {
       result = this.popMany(count);

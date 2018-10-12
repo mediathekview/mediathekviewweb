@@ -60,14 +60,12 @@ const config: Config = {
   },
 
   importer: {
-    latestCheckInterval: 60 * 60,
+    latestCheckInterval: 60 * 1,
     archiveCheckInterval: 60 * 45,
     archiveRange: 1,
     cache: true
   }
 }
-
-
 
 if (configFileExists) {
   const configFileString = FS.readFileSync(configPath, { encoding: 'utf-8' });

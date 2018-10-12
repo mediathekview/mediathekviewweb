@@ -11,7 +11,6 @@ export interface Lock {
   acquire(timeout: number, func: LockedFunction): Promise<boolean>;
 
   release(): Promise<boolean>;
-  release(forceReleaseGlobally: boolean): Promise<boolean>;
 
   owned(): Promise<boolean>;
 }

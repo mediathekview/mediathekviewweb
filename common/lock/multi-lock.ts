@@ -59,12 +59,10 @@ export class MultiLock implements Lock {
     return true;
   }
 
-  async release(): Promise<boolean>
-  async release(forceReleaseGlobally: boolean): Promise<boolean>
-  async release(forceReleaseGlobally = false): Promise<boolean> {
+  async release(): Promise<boolean> {
     const failed = await AsyncEnumerable.from(this.locks)
       .parallelMap(5, false, async (lock) => {
-        return await lock.release(forceReleaseGlobally);
+        return await lock.release();
       })
       .any((result) => !result);
 

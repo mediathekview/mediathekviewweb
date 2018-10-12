@@ -70,6 +70,11 @@ export const ElasticsearchMapping = {
       type: 'keyword',
       index: false,
     },
+    firstSeen: {
+      type: 'date',
+      index: true,
+      format: 'epoch_second',
+    },
     lastSeen: {
       type: 'date',
       index: true,

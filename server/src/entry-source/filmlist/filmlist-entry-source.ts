@@ -10,21 +10,20 @@ import { Filmlist } from './filmlist';
 export class FilmlistEntrySource implements EntrySource {
   private readonly out: FeedableAsyncIterable<Entry[]>;
   private readonly importQueue: Queue<Filmlist>;
+  private readonly concurrency: number;
   private readonly importedFilmlistDates: Set<Date>;
   private readonly logger: Logger;
 
-  constructor(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider, logger: Logger) {
+  private running: boolean;
+
+  constructor(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider, logger: Logger, concurrency: number) {
     this.logger = logger;
+    this.concurrency = concurrency;
 
     this.out = new FeedableAsyncIterable();
     this.importQueue = queueProvider.get(Keys.FilmlistImportQueue);
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
-  }
-
-  run(): void;
-  run(concurrency: number): void;
-  run(concurrency: number = 1) {
-    this.importQueue.process(concurrency, (job) => this.process(job));
+    this.running = false;
   }
 
   private async process(job: Job<Filmlist>) {
@@ -44,6 +43,11 @@ export class FilmlistEntrySource implements EntrySource {
   }
 
   [Symbol.asyncIterator](): AsyncIterableIterator<Entry[]> {
+    if (!this.running) {
+      this.importQueue.process(this.concurrency, (job) => this.process(job));
+      this.running = true;
+    }
+
     return this.out[Symbol.asyncIterator]();
   }
 }

@@ -5,13 +5,11 @@ import { InstanceProvider } from './instance-provider';
 export class MediathekViewWebImporter {
   private importer: EntriesImporter | null;
   private sources: EntrySource[];
-  private prepares: (() => void | Promise<void>)[];
   private started: boolean;
 
   constructor() {
     this.importer = null;
     this.sources = [];
-    this.prepares = [];
     this.started = false;
   }
 
@@ -19,9 +17,6 @@ export class MediathekViewWebImporter {
     if (this.importer == null) {
       this.importer = await InstanceProvider.entriesImporter();
       const filmlistEntrySource = await InstanceProvider.filmlistEntrySource();
-
-      this.prepares.push(() => filmlistEntrySource.run());
-
       this.sources.push(filmlistEntrySource);
     }
   }
@@ -41,14 +36,7 @@ export class MediathekViewWebImporter {
 
     this.started = true;
 
-    await this.callPrepares();
     await this.importSources();
-  }
-
-  private async callPrepares(): Promise<void> {
-    for (const prepare of this.prepares) {
-      await prepare();
-    }
   }
 
   private async importSources(): Promise<void> {

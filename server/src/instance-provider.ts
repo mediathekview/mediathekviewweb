@@ -41,11 +41,11 @@ const ELASTICSEARCH_INDEX_SETTINGS = ElasticsearchSettings;
 const ELASTICSEARCH_INDEX_MAPPING = ElasticsearchMapping;
 
 const CORE_LOG = '[CORE]';
-const FILMLIST_MANAGER_LOG = '[FILMLIST_MANAGER]';
+const FILMLIST_MANAGER_LOG = '[FILMLIST MANAGER]';
 const QUEUE_LOG = '[QUEUE]';
 const ENTRIES_IMPORTER_LOG = '[IMPORTER]';
-const FILMLIST_ENTRY_SOURCE = '[FILMLIST_SOURCE]';
-const SEARCH_ENGINE_LOG = '[SEARCH_ENGINE]';
+const FILMLIST_ENTRY_SOURCE = '[FILMLIST SOURCE]';
+const SEARCH_ENGINE_LOG = '[SEARCH ENGINE]';
 
 export class InstanceProvider {
   private static instances: StringMap = {};
@@ -188,7 +188,7 @@ export class InstanceProvider {
       const queueProvider = await this.queueProvider();
       const logger = this.loggerFactory.create(FILMLIST_ENTRY_SOURCE);
 
-      return new FilmlistEntrySource(datastoreFactory, queueProvider, logger);
+      return new FilmlistEntrySource(datastoreFactory, queueProvider, logger, 1);
     });
   }
 

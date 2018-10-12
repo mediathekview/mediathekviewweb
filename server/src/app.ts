@@ -33,10 +33,8 @@ async function init() {
   filmlistManager!.run();
   server.listen(8080);
 
-  await Promise.all([
-    indexer.run(),
-    importer.run(),
-  ]);
+  indexer.run();
+  importer.run();
 }
 
 async function initEventLoopWatcher(logger: Logger) {
@@ -45,7 +43,7 @@ async function initEventLoopWatcher(logger: Logger) {
   watcher
     .watch(0, 250, AggregationMode.Maximum)
     .pipe(map((measure) => Math.round(measure * 10000) / 10000))
-    .subscribe((delay) => logger.debug(`eventloop-${process.pid}: ${delay} ms`));
+    .subscribe((delay) => logger.debug(`eventloop: ${delay} ms`));
 }
 
 (async () => {
@@ -55,16 +53,17 @@ async function initEventLoopWatcher(logger: Logger) {
 
   try {
     if (Cluster.isMaster) {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 1; i++) {
         const worker = Cluster.fork();
+        logger.info(`worker forked`);
       }
     }
     else {
-      logger.info(`worker ${process.pid} started`);
+      logger.info(`worker started`);
 
       await init();
 
-      logger.info(`worker ${process.pid} initialized`);
+      logger.info(`worker initialized`);
     }
   }
   catch (error) {

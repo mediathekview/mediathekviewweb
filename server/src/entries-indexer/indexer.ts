@@ -52,7 +52,6 @@ export class EntriesIndexer {
       }
       catch (error) {
         logger.error(error);
-
         await timeout(2500);
       }
     }

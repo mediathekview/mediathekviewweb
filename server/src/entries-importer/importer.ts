@@ -9,9 +9,12 @@ import { DatastoreFactory, DataType, Set } from '../datastore';
 import { EntrySource } from '../entry-source';
 import { Keys } from '../keys';
 import { EntryRepository } from '../repository/entry-repository';
+import { timeout } from '../common/utils';
 
 const BUFFER_SIZE = 10;
 const CONCURRENCY = 3;
+
+let counter = 0;
 
 export class EntriesImporter {
   private readonly entryRepository: EntryRepository;
@@ -27,50 +30,23 @@ export class EntriesImporter {
   }
 
   import(source: EntrySource): Promise<void> {
-    return AsyncEnumerable.from(source)
-      .buffer(BUFFER_SIZE)
+    return AsyncEnumerable.from(source).buffer(BUFFER_SIZE)
       .parallelForEach(CONCURRENCY, async (batch) => {
         const ids = batch.map((entry) => entry.id);
-        const multiLock = new MultiLock(this.lockProvider, ...ids);
-
-        let acquireSuccess: boolean;
-       // do {
-        //  acquireSuccess = await multiLock.acquire();
-      //  } while (!acquireSuccess);
-
-        const existingEntries = this.entryRepository.loadMany(ids);
-        const existingEntriesMap = new Map<string, Entry>();
-
-        for await (const entry of existingEntries) {
-          existingEntriesMap.set(entry.id, entry);
-        }
-
-        const toBeImported = SyncEnumerable.from(batch)
-          .filter((entry) => {
-            const existingEntry = existingEntriesMap.get(entry.id);
-            return (existingEntry == null) || (entry.lastSeen > existingEntry.lastSeen);
-          })
-          .toArray();
-        const toBeImportedIds = toBeImported.map((entry) => entry.id);
 
         try {
-          await this.entryRepository.saveMany(toBeImported);
+          await this.entryRepository.saveMany(batch);
         } catch (error) {
           this.logger.error(error);
         }
 
         try {
-          await this.entriesToBeIndexed.addMany(toBeImportedIds);
+          await this.entriesToBeIndexed.addMany(ids);
         } catch (error) {
           this.logger.error(error);
         }
 
-        let releaseSuccess = false;
-        do {
-          releaseSuccess = await multiLock.release();
-        } while (!releaseSuccess);
-
-        this.logger.verbose(`imported ${toBeImportedIds.length} entries`);
+        this.logger.verbose(`imported ${batch.length} entries`);
       });
   }
 }

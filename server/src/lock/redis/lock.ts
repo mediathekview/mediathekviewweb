@@ -78,10 +78,8 @@ export class RedisLock implements Lock {
     return success;
   }
 
-  async release(): Promise<boolean>
-  async release(forceReleaseGlobally: boolean): Promise<boolean>
-  async release(forceReleaseGlobally = false): Promise<boolean> {
-    if (!this.isOwned && !forceReleaseGlobally) {
+  async release(): Promise<boolean> {
+    if (!this.isOwned) {
       return true;
     }
 
