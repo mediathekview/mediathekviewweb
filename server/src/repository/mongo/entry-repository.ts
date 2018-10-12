@@ -1,5 +1,4 @@
 import * as Mongo from 'mongodb';
-
 import { EntryRepository } from '../';
 import { AsyncEnumerable } from '../../common/enumerable';
 import { Entry } from '../../common/model';
@@ -8,7 +7,8 @@ import { MongoBaseRepository } from './base-repository';
 import { MongoDocument, toMongoDocument } from './mongo-document';
 import { TypedMongoFilter } from './mongo-query';
 
-const BATCH_SIZE = 100;
+
+const BATCH_SIZE = 250;
 
 export class MongoEntryRepository implements EntryRepository {
   private readonly collection: Mongo.Collection<MongoDocument<Entry>>;
@@ -28,7 +28,7 @@ export class MongoEntryRepository implements EntryRepository {
     await AsyncEnumerable.from(entries)
       .map((entry) => this.toUpdateOneOperation(entry))
       .batch(BATCH_SIZE)
-      .forEach(async (operations) => await this.collection.bulkWrite(operations))
+      .forEach(async (operations) => await this.collection.bulkWrite(operations, { ordered: false }))
   }
 
   load(id: string): Promise<Entry | null> {

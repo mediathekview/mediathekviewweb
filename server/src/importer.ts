@@ -16,6 +16,7 @@ export class MediathekViewWebImporter {
   async initialize() {
     if (this.importer == null) {
       this.importer = await InstanceProvider.entriesImporter();
+      
       const filmlistEntrySource = await InstanceProvider.filmlistEntrySource();
       this.sources.push(filmlistEntrySource);
     }

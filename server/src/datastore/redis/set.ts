@@ -64,18 +64,34 @@ export class RedisSet<T> implements Set<T> {
       });
   }
 
-  pop(): Promise<Undefinable<T>>;
-  pop(count: number): AsyncIterable<T>;
-  pop(count?: number): Promise<Undefinable<T>> | AsyncIterable<T> {
-    let result: Promise<T> | AsyncIterable<T>;
+  async pop(): Promise<Undefinable<T>>;
+  async pop(count: number): Promise<T[]>;
+  async pop(count?: number): Promise<Undefinable<T> | T[]> {
+    let result: T | T[];
 
     if (count == null) {
-      result = this.popOne();
+      result = await this.popOne();
     } else {
-      result = this.popMany(count);
+      result = await this.popMany(count);
     }
 
     return result;
+  }
+
+  async *popAll(batchSize: number): AsyncIterable<T> {
+    if (batchSize < 1) {
+      throw new Error('minimum batchSize is 1');
+    }
+
+    while (true) {
+      const items = await this.popMany(batchSize);
+
+      if (items.length == 0) {
+        return;
+      }
+
+      yield* items;
+    }
   }
 
   async *values(): AsyncIterable<T> {
@@ -121,10 +137,10 @@ export class RedisSet<T> implements Set<T> {
     return result;
   }
 
-  private async *popMany(count: number): AsyncIterableIterator<T> {
+  private async popMany(count: number): Promise<T[]> {
     const serialized = await this.redis.spop(this.key, count) as string[];
     const values = serialized.map(this.deserialize);
 
-    yield* values;
+    return values;
   }
 }

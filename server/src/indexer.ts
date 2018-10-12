@@ -12,16 +12,12 @@ export class MediathekViewWebIndexer {
 
   async initialize() {
     if (this.indexer == null) {
-      const datastoreFactory = await InstanceProvider.datastoreFactory();
-      const lockProvider = await InstanceProvider.lockProvider();
-      const aggregatedEntryRepository = await InstanceProvider.aggregatedEntryRepository();
-      const entrySearchEngine = await InstanceProvider.entrySearchEngine();
-
-      this.indexer = new EntriesIndexer(aggregatedEntryRepository, entrySearchEngine, lockProvider, datastoreFactory);
+      this.indexer = await InstanceProvider.entriesIndexer();
     }
   }
 
   async run() {
+    console.log('in 1. run')
     if (this.indexer == null) {
       throw new Error('not initialized');
     }
@@ -31,6 +27,7 @@ export class MediathekViewWebIndexer {
     }
 
     this.running = true;
+    console.log('before 2. run')
     await this.indexer.run();
     this.running = false;
   }

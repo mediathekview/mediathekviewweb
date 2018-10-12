@@ -1,46 +1,50 @@
 import { AsyncEnumerable } from '../common/enumerable';
-import { LockProvider } from '../common/lock';
+import { Logger } from '../common/logger';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
-import { ProviderFunctionIterable, timeout } from '../common/utils';
+import { ProviderFunctionIterable, ProviderFunctionResult, timeout } from '../common/utils';
 import { DatastoreFactory, DataType, Set } from '../datastore';
 import { Keys } from '../keys';
-import { LoggerFactoryProvider } from '../logger-factory-provider';
 import { AggregatedEntryRepository } from '../repository';
 
 const BATCH_SIZE = 250;
-const BATCH_BUFFER_SIZE = 10;
-const CONCURRENCY = 3;
-
-const logger = LoggerFactoryProvider.factory.create('[INDEXER]');
+const BATCH_BUFFER_SIZE = 5;
+const NO_ITEMS_DELAY = 2500;
 
 export class EntriesIndexer {
   private readonly aggregatedEntryRepository: AggregatedEntryRepository;
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
-  private readonly lockProvider: LockProvider;
   private readonly entriesToBeIndexed: Set<string>;
+  private readonly logger: Logger;
 
-  constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, lockProvider: LockProvider, datastoreFactory: DatastoreFactory) {
+  constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, datastoreFactory: DatastoreFactory, logger: Logger) {
     this.aggregatedEntryRepository = indexedEntryRepository;
     this.searchEngine = searchEngine;
-    this.lockProvider = lockProvider;
+    this.logger = logger;
+
     this.entriesToBeIndexed = datastoreFactory.set(Keys.EntriesToBeIndexed, DataType.String);
   }
 
   async run() {
-    const entriesToBeIndexedIterable = new ProviderFunctionIterable(BATCH_BUFFER_SIZE, () => this.providerFunction());
+    process.exit(1337);
+    console.log('in 2. run')
 
-    for await (const batch of entriesToBeIndexedIterable) {
-      try {
-        await this.indexEntries(batch);
-      }
-      catch (error) {
-        logger.error(error);
+    const entriesToBeIndexedIterable = new ProviderFunctionIterable(() => this.providerFunction(), NO_ITEMS_DELAY);
 
-        await this.pushBack(batch);
-        await timeout(2500);
-      }
-    }
+    await AsyncEnumerable.from(entriesToBeIndexedIterable)
+      .buffer(BATCH_BUFFER_SIZE)
+      .forEach(async (batch) => {
+        try {
+          console.log('got batch', batch.length)
+          await this.indexEntries(batch);
+        }
+        catch (error) {
+          this.logger.error(error);
+
+          await this.pushBack(batch);
+          await timeout(2500);
+        }
+      });
   }
 
   private async pushBack(batch: string[]): Promise<void> {
@@ -51,31 +55,22 @@ export class EntriesIndexer {
         success = true;
       }
       catch (error) {
-        logger.error(error);
+        this.logger.error(error);
         await timeout(2500);
       }
     }
   }
 
-  private async providerFunction(): Promise<string[]> {
-    let ids: string[] = [];
-
-    do {
-      try {
-        const popped = this.entriesToBeIndexed.pop(BATCH_SIZE);
-        ids = await AsyncEnumerable.from(popped).toArray();
-      }
-      catch (error) {
-        logger.error(error);
-      }
-
-      if (ids.length == 0) {
-        await timeout(1000);
-      }
+  private async providerFunction(): Promise<ProviderFunctionResult<string[]>> {
+    try {
+      const ids = await this.entriesToBeIndexed.pop(BATCH_SIZE);
+      console.log('provided batch', ids.length)
+      return { hasItem: ids.length > 0, item: ids };
     }
-    while (ids.length == 0);
-
-    return ids;
+    catch (error) {
+      this.logger.error(error);
+      return { hasItem: false };
+    }
   }
 
   private async indexEntries(ids: string[]) {
@@ -85,6 +80,6 @@ export class EntriesIndexer {
 
     await this.searchEngine.index(searchEngineItems);
 
-    logger.verbose(`indexed ${searchEngineItems.length} entries`);
+    this.logger.verbose(`indexed ${searchEngineItems.length} entries`);
   }
 }

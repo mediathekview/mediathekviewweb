@@ -1,7 +1,6 @@
 import { Client as ElasticsearchClient } from 'elasticsearch';
 import * as Redis from 'ioredis';
 import * as Mongo from 'mongodb';
-
 import { LockProvider } from './common/lock';
 import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
@@ -12,6 +11,8 @@ import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
 import { ElasticsearchMapping, ElasticsearchSettings, TextTypeFields } from './elasticsearch-definitions';
 import { EntriesImporter } from './entries-importer/importer';
+import { EntriesIndexer } from './entries-indexer/indexer';
+import { EntriesSaver } from './entries-saver/saver';
 import { Filmlist } from './entry-source/filmlist/filmlist';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
@@ -27,7 +28,6 @@ import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { Serializer } from './serializer';
-
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -46,10 +46,33 @@ const QUEUE_LOG = '[QUEUE]';
 const ENTRIES_IMPORTER_LOG = '[IMPORTER]';
 const FILMLIST_ENTRY_SOURCE = '[FILMLIST SOURCE]';
 const SEARCH_ENGINE_LOG = '[SEARCH ENGINE]';
+const ENTRIES_INDEXER_LOG = '[INDEXER]';
+const ENTRIES_SAVER_LOG = '[SAVER]';
 
 export class InstanceProvider {
   private static instances: StringMap = {};
   private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
+
+  static entriesSaver(): Promise<EntriesSaver> {
+    return this.singleton(EntriesIndexer, async () => {
+      const entryRepository = await InstanceProvider.entryRepository();
+      const datastoreFactory = await InstanceProvider.datastoreFactory();
+      const logger = LoggerFactoryProvider.factory.create(ENTRIES_SAVER_LOG);
+
+      return new EntriesSaver(entryRepository, datastoreFactory, logger);
+    });
+  }
+
+  static entriesIndexer(): Promise<EntriesIndexer> {
+    return this.singleton(EntriesIndexer, async () => {
+      const aggregatedEntryRepository = await InstanceProvider.aggregatedEntryRepository();
+      const searchEngine = await InstanceProvider.entrySearchEngine();
+      const datastoreFactory = await InstanceProvider.datastoreFactory();
+      const logger = LoggerFactoryProvider.factory.create(ENTRIES_INDEXER_LOG);
+
+      return new EntriesIndexer(aggregatedEntryRepository, searchEngine, datastoreFactory, logger);
+    });
+  }
 
   static appLogger(): Promise<Logger> {
     return this.singleton('appLogger', () => this.loggerFactory.create(CORE_LOG));
@@ -127,11 +150,9 @@ export class InstanceProvider {
   static entriesImporter(): Promise<EntriesImporter> {
     return this.singleton(EntriesImporter, async () => {
       const datastoreFactory = await this.datastoreFactory();
-      const lockProvider = await this.lockProvider();
-      const entryRepository = await this.entryRepository();
       const logger = LoggerFactoryProvider.factory.create(ENTRIES_IMPORTER_LOG);
 
-      return new EntriesImporter(entryRepository, lockProvider, datastoreFactory, logger);
+      return new EntriesImporter(datastoreFactory, logger);
     });
   }
 

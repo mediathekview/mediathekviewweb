@@ -1,50 +1,44 @@
-import { SyncEnumerable } from '../common/enumerable';
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import '../common/extensions/map';
-import { LockProvider } from '../common/lock';
-import { MultiLock } from '../common/lock/multi-lock';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
+import { timeout } from '../common/utils';
 import { DatastoreFactory, DataType, Set } from '../datastore';
 import { EntrySource } from '../entry-source';
 import { Keys } from '../keys';
-import { EntryRepository } from '../repository/entry-repository';
-import { timeout } from '../common/utils';
 
-const BUFFER_SIZE = 10;
+const BUFFER_SIZE = 5;
 const CONCURRENCY = 3;
-
-let counter = 0;
+const SET_SIZE_LIMIT = 250000;
 
 export class EntriesImporter {
-  private readonly entryRepository: EntryRepository;
-  private readonly lockProvider: LockProvider;
-  private readonly entriesToBeIndexed: Set<string>;
+  private readonly entriesToBeSaved: Set<Entry>;
   private readonly logger: Logger;
 
-  constructor(entryRepository: EntryRepository, lockProvider: LockProvider, datastoreFactory: DatastoreFactory, logger: Logger) {
-    this.entryRepository = entryRepository;
-    this.lockProvider = lockProvider;
+  constructor(datastoreFactory: DatastoreFactory, logger: Logger) {
     this.logger = logger;
-    this.entriesToBeIndexed = datastoreFactory.set(Keys.EntriesToBeIndexed, DataType.String);
+    this.entriesToBeSaved = datastoreFactory.set(Keys.EntriesToBeSaved, DataType.Object);
   }
 
   import(source: EntrySource): Promise<void> {
-    return AsyncEnumerable.from(source).buffer(BUFFER_SIZE)
+    return AsyncEnumerable.from(source)
+      .buffer(BUFFER_SIZE)
+      .intercept(async () => {
+        while ((await this.entriesToBeSaved.count()) > SET_SIZE_LIMIT) {
+          await timeout(1000);
+        }
+      })
       .parallelForEach(CONCURRENCY, async (batch) => {
-        const ids = batch.map((entry) => entry.id);
-
-        try {
-          await this.entryRepository.saveMany(batch);
-        } catch (error) {
-          this.logger.error(error);
-        }
-
-        try {
-          await this.entriesToBeIndexed.addMany(ids);
-        } catch (error) {
-          this.logger.error(error);
-        }
+        let success = false;
+        do {
+          try {
+            await this.entriesToBeSaved.addMany(batch);
+            success = true;
+          } catch (error) {
+            this.logger.error(error);
+            await timeout(2500);
+          }
+        } while (!success);
 
         this.logger.verbose(`imported ${batch.length} entries`);
       });

@@ -9,14 +9,16 @@ import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
 import { AggregationMode, EventLoopWatcher } from './utils';
+import { MediathekViewWebSaver } from './saver';
 
 process.on('uncaughtException', (error) => console.error('unhandled', error));
 
 async function init() {
   const server = new Http.Server();
   const exposer = new MediathekViewWebExposer(server);
-  const indexer = new MediathekViewWebIndexer();
   const importer = new MediathekViewWebImporter();
+  const saver = new MediathekViewWebSaver();
+  const indexer = new MediathekViewWebIndexer();
 
   const filmlistManager = await InstanceProvider.filmlistManager();
 
@@ -25,16 +27,18 @@ async function init() {
 
   await lock.acquire(Number.POSITIVE_INFINITY, async () => {
     await exposer.initialize();
-    await indexer.initialize();
     await importer.initialize();
+    await saver.initialize();
+    await indexer.initialize();
   });
 
   exposer.expose();
   filmlistManager!.run();
   server.listen(8080);
 
-  indexer.run();
   importer.run();
+  saver.run();
+  indexer.run();
 }
 
 async function initEventLoopWatcher(logger: Logger) {

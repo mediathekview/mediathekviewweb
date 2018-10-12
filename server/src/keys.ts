@@ -4,5 +4,6 @@ export const Keys = {
   ImportedFilmlistDates: 'imported-filmlist-timestamps',
   FilmlistImportQueue: 'fimlist-import',
   FilmlistManagerLoop: 'filmlist-manager',
+  EntriesToBeSaved: 'entries-to-be-saved',
   EntriesToBeIndexed: 'entries-to-be-indexed'
 }

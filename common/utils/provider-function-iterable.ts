@@ -1,43 +1,38 @@
-import { FeedableAsyncIterable } from './feedable-async-iterable';
+import { timeout } from './timing';
 
-export type ProviderFunction<T> = () => T | Promise<T>;
+export type ProviderFunction<T> = () => ProviderFunctionResult<T> | Promise<ProviderFunctionResult<T>>;
+
+export type ProviderFunctionResult<T> = { hasItem: boolean; item: T; } | { hasItem: false; item?: null };
 
 export class ProviderFunctionIterable<T> implements AsyncIterable<T> {
-  private readonly bufferSize: number;
   private readonly providerFunction: ProviderFunction<T>;
+  private readonly delay: number;
 
-  private readonly out: FeedableAsyncIterable<T>;
-  private startedReading: boolean = false;
+  private stopped: boolean;
 
-  constructor(bufferSize: number, providerFunction: ProviderFunction<T>) {
-    this.bufferSize = bufferSize;
+  constructor(providerFunction: ProviderFunction<T>, delay: number) {
     this.providerFunction = providerFunction;
+    this.delay = delay;
 
-    this.out = new FeedableAsyncIterable();
+    this.stopped = false;
   }
 
-  [Symbol.asyncIterator](): AsyncIterator<T> {
-    if (!this.startedReading) {
-      this.read();
-      this.startedReading = true;
-    }
-
-    return this.out[Symbol.asyncIterator]();
+  stop() {
+    this.stopped = true;
   }
 
-  private async read() {
-    while (true) {
-      while (this.out.bufferSize >= this.bufferSize) {
-        await this.out.read;
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<T> {
+    while (!this.stopped) {
+      let result = this.providerFunction();
+
+      if (result instanceof Promise) {
+        result = await result;
       }
 
-      try {
-        const item = await this.providerFunction();
-        this.out.feed(item);
-      }
-      catch (error) {
-        this.out.throw(error);
-        return;
+      if (result.hasItem) {
+        yield result.item;
+      } else {
+        await timeout(this.delay);
       }
     }
   }

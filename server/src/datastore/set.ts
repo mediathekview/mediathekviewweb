@@ -11,7 +11,9 @@ export interface Set<T> {
     deleteMany(iterable: AnyIterable<T>): Promise<void>;
 
     pop(): Promise<Undefinable<T>>;
-    pop(count: number): AsyncIterable<T>;
+    pop(count: number): Promise<T[]>;
+
+    popAll(batchCount: number): AsyncIterable<T>;
 
     values(): AsyncIterable<T>;
     count(): Promise<number>;
