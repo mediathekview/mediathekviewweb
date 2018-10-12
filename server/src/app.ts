@@ -53,7 +53,7 @@ async function initEventLoopWatcher(logger: Logger) {
 
   try {
     if (Cluster.isMaster) {
-      for (let i = 0; i < 1; i++) {
+      for (let i = 0; i < 4; i++) {
         const worker = Cluster.fork();
         logger.info(`worker forked`);
       }

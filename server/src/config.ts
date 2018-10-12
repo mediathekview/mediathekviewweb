@@ -18,7 +18,6 @@ type EnvironmentConfig = {
   importer_latestCheckInterval?: string;
   importer_archiveCheckInterval?: string;
   importer_archiveRange?: string;
-  importer_cache?: string;
 }
 
 interface Config {
@@ -40,7 +39,6 @@ interface Config {
     latestCheckInterval: number;
     archiveCheckInterval: number;
     archiveRange: number;
-    cache: boolean;
   }
 }
 
@@ -61,9 +59,8 @@ const config: Config = {
 
   importer: {
     latestCheckInterval: 60 * 1,
-    archiveCheckInterval: 60 * 45,
-    archiveRange: 1,
-    cache: true
+    archiveCheckInterval: 60 * 1,
+    archiveRange: 100
   }
 }
 
@@ -101,10 +98,6 @@ if (configFileExists) {
 
   if (typeof config.importer.archiveRange == 'string') {
     config.importer.archiveRange = Number.parseInt(config.importer.archiveRange);
-  }
-
-  if (typeof config.importer.cache == 'string') {
-    config.importer.cache = ((config.importer.cache as string).toLowerCase().trim() == 'true');
   }
 }
 
