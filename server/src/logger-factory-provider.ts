@@ -9,7 +9,7 @@ export class LoggerFactoryProvider {
       const paddedPid = process.pid.toString().padStart(5, '0');
       const globalPrefix = `[${paddedPid}]`;
       
-      this.loggerFactory = new ConsoleLoggerFactory(LogLevel.Silly, globalPrefix);
+      this.loggerFactory = new ConsoleLoggerFactory(LogLevel.Trace, globalPrefix);
     }
 
     return this.loggerFactory;

@@ -1,4 +1,5 @@
 import { Logger, LogLevel, LogEntry } from '../';
+import { formatError } from '../../utils';
 
 export class ConsoleLogger implements Logger {
   private readonly prefix: string;
@@ -9,7 +10,18 @@ export class ConsoleLogger implements Logger {
     this.level = level;
   }
 
-  error(entry: LogEntry): void {
+  error(error: Error): void;
+  error(error: Error, includeStack: boolean): void;
+  error(entry: LogEntry): void;
+  error(errorOrEntry: Error | LogEntry, includeStack: boolean = true): void {
+    let entry: LogEntry;
+
+    if (errorOrEntry instanceof Error) {
+      entry = formatError(errorOrEntry, includeStack);
+    } else {
+      entry = errorOrEntry;
+    }
+
     this.log(console.error, entry, LogLevel.Error);
   }
 
@@ -29,8 +41,8 @@ export class ConsoleLogger implements Logger {
     this.log(console.debug, entry, LogLevel.Debug);
   }
 
-  silly(entry: LogEntry): void {
-    this.log(console.debug, entry, LogLevel.Silly);
+  trace(entry: LogEntry): void {
+    this.log(console.debug, entry, LogLevel.Trace);
   }
 
   private log(func: (...parameters: any[]) => void, entry: LogEntry, level: LogLevel) {

@@ -28,6 +28,8 @@ import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { Serializer } from './serializer';
+import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
+import { ElasticsearchLogAdapterFactory } from './utils/elasticsearch-log-adapter-factory';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -48,6 +50,9 @@ const FILMLIST_ENTRY_SOURCE = '[FILMLIST SOURCE]';
 const SEARCH_ENGINE_LOG = '[SEARCH ENGINE]';
 const ENTRIES_INDEXER_LOG = '[INDEXER]';
 const ENTRIES_SAVER_LOG = '[SAVER]';
+const ELASTICSEARCH_LOG = '[ELASTICSEARCH]';
+const REDIS_LOG = '[REDIS]';
+const MONGO_LOG = '[MONGO]';
 
 export class InstanceProvider {
   private static instances: StringMap = {};
@@ -74,7 +79,7 @@ export class InstanceProvider {
     });
   }
 
-  static appLogger(): Promise<Logger> {
+  static coreLogger(): Promise<Logger> {
     return this.singleton('appLogger', () => this.loggerFactory.create(CORE_LOG));
   }
 
@@ -88,15 +93,49 @@ export class InstanceProvider {
   }
 
   static redis(): Promise<Redis.Redis> {
-    return this.singleton(Redis, () => new Redis(config.redis));
+    return this.singleton(Redis, () => {
+      const logger = LoggerFactoryProvider.factory.create(REDIS_LOG);
+      const redis = new Redis({
+        enableReadyCheck: true,
+        maxRetriesPerRequest: null,
+        ...config.redis
+      });
+
+      redis
+        .on('connect', () => logger.info('connected'))
+        .on('ready', () => logger.info('ready'))
+        .on('close', () => logger.warn('connection closed'))
+        .on('reconnecting', (milliseconds) => logger.info(`reconnecting in ${milliseconds} ms`))
+        .on('end', () => logger.warn(`connection end`))
+        .on('error', (error: Error) => logger.error(error, false));
+
+      return redis;
+    });
   }
 
   static elasticsearch(): Promise<ElasticsearchClient> {
-    return this.singleton(ElasticsearchClient, () => new ElasticsearchClient({}));
+    return this.singleton(ElasticsearchClient, () => {
+      const logger = LoggerFactoryProvider.factory.create(ELASTICSEARCH_LOG);
+      const logAdapter = ElasticsearchLogAdapterFactory.getLogAdapter(logger);
+
+      const elasticsearchClient = new ElasticsearchClient({
+        log: logAdapter
+      });
+
+      return elasticsearchClient;
+    });
   }
 
   static mongo(): Promise<Mongo.MongoClient> {
-    return this.singleton(Mongo.MongoClient, () => Mongo.MongoClient.connect(MONGO_CONNECTION_STRING, { useNewUrlParser: true }));
+    return this.singleton(Mongo.MongoClient, () => {
+      const logger = LoggerFactoryProvider.factory.create(MONGO_LOG);
+      const logFunction = MongoLogAdapterFactory.getLogFunction(logger);
+
+      const mongoClient = Mongo.MongoClient.connect(MONGO_CONNECTION_STRING, { useNewUrlParser: true });
+      Mongo.Logger.setCurrentLogger(logFunction);
+
+      return mongoClient;
+    });
   }
 
   static database(): Promise<Mongo.Db> {

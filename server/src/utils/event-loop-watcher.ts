@@ -7,7 +7,10 @@ import { Timer, timeout } from '../common/utils';
 export enum AggregationMode {
   Minimum,
   Maximum,
-  Average
+  Mean,
+  Median,
+  FirstQuartile,
+  ThirdQuartile
 }
 
 export class EventLoopWatcher {
@@ -19,7 +22,7 @@ export class EventLoopWatcher {
 
   constructor();
   constructor(measureInterval: number);
-  constructor(measureInterval: number = 1000) {
+  constructor(measureInterval: number = 100) {
     this.measureInterval = measureInterval;
 
     this.run = false;
@@ -62,7 +65,6 @@ export class EventLoopWatcher {
 
       setImmediate(() => {
         stopwatch.start();
-
         // inner setImmediate, to measure an full event-loop-cycle
         setImmediate(() => resolve(stopwatch.milliseconds));
       });
@@ -86,11 +88,26 @@ export class EventLoopWatcher {
       case AggregationMode.Maximum:
         return Math.max(...values);
 
-      case AggregationMode.Average:
+      case AggregationMode.Mean:
         return Math.average(...values);
 
+      case AggregationMode.Median:
+        values = values.sort();
+        const median = Math.round(values.length / 2);
+        return values[median];
+
+      case AggregationMode.FirstQuartile:
+        values = values.sort();
+        const firstQuartile = Math.round(values.length / 4 * 1);
+        return values[firstQuartile];
+
+      case AggregationMode.ThirdQuartile:
+        values = values.sort();
+        const thirdQuartile = Math.round(values.length / 4 * 3);
+        return values[thirdQuartile];
+
       default:
-        throw new Error(`aggregation mode ${AggregationMode[aggregation]} not implemented`);
+        throw new Error(`aggregation mode ${aggregation} (${AggregationMode[aggregation]}) not implemented`);
     }
   }
 }

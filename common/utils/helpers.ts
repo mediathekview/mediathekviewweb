@@ -79,3 +79,32 @@ export function throttleFunction(func: (...args: any[]) => void, interval: numbe
 export function objectToDotNotation(_obj: object): StringMap {
   throw new Error('not implemented');
 }
+
+export function formatDuration(milliseconds: number, precision: number): string {
+  let value: number;
+  let suffix: string;
+
+  if (milliseconds >= (10 ** 3)) {
+    value = milliseconds / (10 ** 3);
+    suffix = 's';
+  } else if (milliseconds >= 1) {
+    value = milliseconds;
+    suffix = 'ms';
+  } else if (milliseconds >= 1 / (10 ** 3)) {
+    value = milliseconds * (10 ** 3);
+    suffix = 'us';
+  } else {
+    value = milliseconds * (10 ** 6);
+    suffix = 'ns';
+  }
+
+  const trimmed = value.toPrecision(precision).toString();
+  const result = `${trimmed} ${suffix}`;
+
+  return result;
+}
+
+export function formatError(error: Error, includeStack: boolean): string {
+  const stackMessage = (includeStack && (error.stack != null)) ? `\n${error.stack}` : '';
+  return `${error.name}: ${error.message}${stackMessage}`;
+}

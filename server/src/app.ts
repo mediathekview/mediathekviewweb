@@ -10,8 +10,40 @@ import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
 import { AggregationMode, EventLoopWatcher } from './utils';
 import { MediathekViewWebSaver } from './saver';
+import { formatDuration, formatError } from './common/utils';
 
-process.on('uncaughtException', (error) => console.error('unhandled', error));
+(async () => {
+  const logger = await InstanceProvider.coreLogger();
+
+  handleUncaughtExceptions(logger);
+  initEventLoopWatcher(logger);
+
+  try {
+    if (Cluster.isMaster) {
+      for (let i = 0; i < 1; i++) {
+        const worker = Cluster.fork();
+        logger.info(`worker ${worker.id} forked`);
+      }
+    }
+    else {
+      logger.info(`worker started`);
+
+      await init();
+
+      logger.info(`worker initialized`);
+    }
+  }
+  catch (error) {
+    logger.error(error);
+  }
+})();
+
+function handleUncaughtExceptions(logger: Logger) {
+  process.on('uncaughtException', (error) => {
+    const message = formatError(error, true);
+    logger.error(`uncaught: ${message}`);
+  });
+}
 
 async function init() {
   const server = new Http.Server();
@@ -42,35 +74,11 @@ async function init() {
 }
 
 async function initEventLoopWatcher(logger: Logger) {
-  const watcher = new EventLoopWatcher(10);
+  const watcher = new EventLoopWatcher(1);
 
   watcher
-    .watch(0, 250, AggregationMode.Maximum)
-    .pipe(map((measure) => Math.round(measure * 10000) / 10000))
-    .subscribe((delay) => logger.debug(`eventloop: ${delay} ms`));
+    .watch(0, 1000, AggregationMode.ThirdQuartile)
+    .subscribe((delay) => logger.info(`eventloop: ${formatDuration(delay, 4)}`));
+
+  watcher.start();
 }
-
-(async () => {
-  const logger = await InstanceProvider.appLogger();
-
-  initEventLoopWatcher(logger);
-
-  try {
-    if (Cluster.isMaster) {
-      for (let i = 0; i < 4; i++) {
-        const worker = Cluster.fork();
-        logger.info(`worker forked`);
-      }
-    }
-    else {
-      logger.info(`worker started`);
-
-      await init();
-
-      logger.info(`worker initialized`);
-    }
-  }
-  catch (error) {
-    logger.error(error);
-  }
-})();
