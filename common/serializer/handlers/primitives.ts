@@ -5,7 +5,7 @@ const TYPE = 'primitive';
 export class PrimitivesSerializeHandler implements SerializeHandler {
   canSerialize(obj: any): boolean {
     const type = typeof obj;
-    return obj == null || type == 'string' || type == 'number' || type == 'boolean' || type == 'undefined';
+    return obj == null || type == 'string' || type == 'number' || type == 'boolean';
   }
 
   serialize(obj: any): SerializedElement {

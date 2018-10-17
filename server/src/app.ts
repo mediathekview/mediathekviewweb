@@ -78,7 +78,7 @@ async function initEventLoopWatcher(logger: Logger) {
 
   watcher
     .watch(0, 1000, AggregationMode.ThirdQuartile)
-    .subscribe((delay) => logger.info(`eventloop: ${formatDuration(delay, 4)}`));
+    .subscribe((delay) => logger.info(`eventloop: ${formatDuration(delay, 2)}`));
 
   watcher.start();
 }

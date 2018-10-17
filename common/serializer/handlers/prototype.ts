@@ -10,6 +10,10 @@ type SerializedInstance = SerializedElement<SerializedInstanceData>;
 
 const TYPE = 'prototype';
 
+function isSerializedInstance(serializedElement: SerializedElement): serializedElement is SerializedInstance {
+  return serializedElement.type == TYPE;
+}
+
 export class PrototypeSerializeHandler implements SerializeHandler {
   private readonly serializer: Serializer;
   private readonly prototypes: Map<string, SerializableStatic>;
@@ -44,8 +48,12 @@ export class PrototypeSerializeHandler implements SerializeHandler {
     };
   }
 
-  canDeserialize(serialized: SerializedElement): boolean {
-    return serialized.type == TYPE;
+  canDeserialize(serializedElement: SerializedElement): boolean {
+    if (isSerializedInstance(serializedElement)) {
+      return this.prototypes.has(serializedElement.data.prototype);
+    }
+
+    return false;
   }
 
   deserialize(serializedInstance: SerializedInstance): any {

@@ -21,13 +21,13 @@ export class RedisSet<T> implements Set<T> {
     this.deserialize = getDeserializer(dataType);
   }
 
-  add(value: T): Promise<void> {
+  async add(value: T): Promise<void> {
     const serialized = this.serialize(value);
-    return this.redis.sadd(this.key, serialized);
+    await this.redis.sadd(this.key, serialized);
   }
 
-  addMany(iterable: AnyIterable<T>): Promise<void> {
-    return AsyncEnumerable.from(iterable)
+  async addMany(iterable: AnyIterable<T>): Promise<void> {
+    await AsyncEnumerable.from(iterable)
       .map(this.serialize)
       .batch(BATCH_SIZE)
       .parallelForEach(3, async (batch) => {

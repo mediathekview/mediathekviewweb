@@ -1,10 +1,9 @@
 import * as Bull from 'bull';
-
 import { RedisOptions } from 'ioredis';
 import { Queue, QueueProvider } from '../';
 import { LoggerFactory } from '../../common/logger';
+import { Serializer } from '../../common/serializer';
 import { BullQueue } from './queue';
-import { Serializer } from '../../serializer';
 
 const REDIS_PREFIX = 'bull';
 

@@ -1,7 +1,7 @@
 import * as Bull from 'bull';
-
 import { Job } from '../';
-import { Serializer } from '../../serializer/serializer';
+import { Serializer } from '../../common/serializer';
+
 
 export class BullJob<T> implements Job<T> {
   private readonly job: Bull.Job;

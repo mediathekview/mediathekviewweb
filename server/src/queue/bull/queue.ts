@@ -1,8 +1,7 @@
 import * as Bull from 'bull';
-
 import { EnqueueOptions, Job, ProcessFunction, Queue } from '../';
 import { Logger } from '../../common/logger';
-import { Serializer } from '../../serializer/serializer';
+import { Serializer } from '../../common/serializer';
 import { BullJob } from './job';
 
 export class BullQueue<T> implements Queue<T> {

@@ -27,13 +27,14 @@ import { NonWorkingAggregatedEntryRepository } from './repository/non-working-ag
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
-import { Serializer } from './serializer';
-import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
 import { ElasticsearchLogAdapterFactory } from './utils/elasticsearch-log-adapter-factory';
+import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
+import { Serializer } from './common/serializer';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
 const MONGO_CONNECTION_STRING = 'mongodb://localhost:27017';
+const MONGO_CLIENT_OPTIONS: Mongo.MongoClientOptions = { appname: 'MediathekViewWeb', useNewUrlParser: true, autoReconnect: true, reconnectTries: Number.POSITIVE_INFINITY };
 const MONGO_DATABASE_NAME = 'mediathekviewweb';
 const MONGO_ENTRIES_COLLECTION_NAME = 'entries';
 
@@ -59,7 +60,7 @@ export class InstanceProvider {
   private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
 
   static entriesSaver(): Promise<EntriesSaver> {
-    return this.singleton(EntriesIndexer, async () => {
+    return this.singleton(EntriesSaver, async () => {
       const entryRepository = await InstanceProvider.entryRepository();
       const datastoreFactory = await InstanceProvider.datastoreFactory();
       const logger = LoggerFactoryProvider.factory.create(ENTRIES_SAVER_LOG);
@@ -127,11 +128,24 @@ export class InstanceProvider {
   }
 
   static mongo(): Promise<Mongo.MongoClient> {
-    return this.singleton(Mongo.MongoClient, () => {
+    return this.singleton(Mongo.MongoClient, async () => {
       const logger = LoggerFactoryProvider.factory.create(MONGO_LOG);
       const logFunction = MongoLogAdapterFactory.getLogFunction(logger);
 
-      const mongoClient = Mongo.MongoClient.connect(MONGO_CONNECTION_STRING, { useNewUrlParser: true });
+      let mongoClient: Mongo.MongoClient | null = null;
+
+      do {
+        mongoClient = await Mongo.MongoClient.connect(MONGO_CONNECTION_STRING, MONGO_CLIENT_OPTIONS);
+        logger.info('connected');
+
+        mongoClient
+          .on('fullsetup', () => logger.info('connection setup'))
+          .on('reconnect', () => logger.warn('reconnected'))
+          .on('timeout', () => logger.warn('connection timed out'))
+          .on('close', () => logger.warn('connection closed'));
+
+      } while (mongoClient == null);
+
       Mongo.Logger.setCurrentLogger(logFunction);
 
       return mongoClient;

@@ -2,7 +2,8 @@ import { AsyncEnumerable } from '../common/enumerable';
 import { Logger } from '../common/logger';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
-import { ProviderFunctionIterable, ProviderFunctionResult, timeout } from '../common/utils';
+import { formatDuration, ProviderFunctionIterable, ProviderFunctionResult, timeout } from '../common/utils';
+import { PeriodicReporter } from '../common/utils/periodic-reporter';
 import { DatastoreFactory, DataType, Set } from '../datastore';
 import { Keys } from '../keys';
 import { AggregatedEntryRepository } from '../repository';
@@ -11,31 +12,38 @@ const BATCH_SIZE = 250;
 const BATCH_BUFFER_SIZE = 5;
 const NO_ITEMS_DELAY = 2500;
 
+const REPORT_INTERVAL = 10000;
+
 export class EntriesIndexer {
   private readonly aggregatedEntryRepository: AggregatedEntryRepository;
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
   private readonly entriesToBeIndexed: Set<string>;
   private readonly logger: Logger;
+  private readonly reporter: PeriodicReporter;
 
   constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, datastoreFactory: DatastoreFactory, logger: Logger) {
     this.aggregatedEntryRepository = indexedEntryRepository;
     this.searchEngine = searchEngine;
     this.logger = logger;
 
+    this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
     this.entriesToBeIndexed = datastoreFactory.set(Keys.EntriesToBeIndexed, DataType.String);
+
+    this.initialize();
+  }
+
+  initialize() {
+    this.reporter.report.subscribe((count) => this.logger.info(`indexed ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
+    this.reporter.run();
   }
 
   async run() {
-    process.exit(1337);
-    console.log('in 2. run')
-
     const entriesToBeIndexedIterable = new ProviderFunctionIterable(() => this.providerFunction(), NO_ITEMS_DELAY);
 
     await AsyncEnumerable.from(entriesToBeIndexedIterable)
       .buffer(BATCH_BUFFER_SIZE)
       .forEach(async (batch) => {
         try {
-          console.log('got batch', batch.length)
           await this.indexEntries(batch);
         }
         catch (error) {
@@ -64,7 +72,6 @@ export class EntriesIndexer {
   private async providerFunction(): Promise<ProviderFunctionResult<string[]>> {
     try {
       const ids = await this.entriesToBeIndexed.pop(BATCH_SIZE);
-      console.log('provided batch', ids.length)
       return { hasItem: ids.length > 0, item: ids };
     }
     catch (error) {
@@ -79,7 +86,6 @@ export class EntriesIndexer {
     const searchEngineItems = entriesArray.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);
-
-    this.logger.verbose(`indexed ${searchEngineItems.length} entries`);
+    this.reporter.increase(ids.length);
   }
 }

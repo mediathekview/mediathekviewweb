@@ -98,7 +98,7 @@ export function formatDuration(milliseconds: number, precision: number): string 
     suffix = 'ns';
   }
 
-  const trimmed = value.toPrecision(precision).toString();
+  const trimmed = parseFloat(value.toFixed(precision));
   const result = `${trimmed} ${suffix}`;
 
   return result;

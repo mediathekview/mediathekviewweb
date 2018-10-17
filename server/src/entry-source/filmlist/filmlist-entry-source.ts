@@ -29,7 +29,7 @@ export class FilmlistEntrySource implements EntrySource {
   private async process(job: Job<Filmlist>) {
     let filmlist = job.data;
 
-    this.logger.info(`${process.pid} processing filmlist ${filmlist.date}`);
+    this.logger.info(`processing filmlist ${filmlist.date}`);
 
     for await (const entry of filmlist) {
       if (this.out.bufferSize > 10) {

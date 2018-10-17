@@ -1,14 +1,7 @@
 import { SerializableStatic } from './serializable';
 import { SerializeHandler } from './serialize-handler';
 import { SerializedElement } from './serialized-element';
-import {
-  ArraySerializeHandler,
-  DateSerializeHandler,
-  ObjectSerializeHandler,
-  PrimitivesSerializeHandler,
-  PrototypeSerializeHandler,
-  RegexSerializeHandler
-} from './serializers';
+import { ArraySerializeHandler, DateSerializeHandler, ObjectSerializeHandler, PrimitivesSerializeHandler, PrototypeSerializeHandler, RegexSerializeHandler } from './handlers';
 
 export class Serializer {
   private readonly prototypeSerializeHandler: PrototypeSerializeHandler;
@@ -37,17 +30,18 @@ export class Serializer {
     this.prototypeSerializeHandler.register(prototype);
   }
 
-  serialize(obj: any): string;
-  serialize(obj: any, stringify: false): SerializedElement;
-  serialize(obj: any, stringify: boolean = true): string | SerializedElement {
+  serialize(obj: any): string {
+    const serializedElement = this.rawSerialize(obj);
+    const serializedString = JSON.stringify(serializedElement);
+
+    return serializedString;
+  }
+
+  rawSerialize(obj: any): SerializedElement {
     const handler = this.getSerializationHandler(obj);
-    let result: string | SerializedElement = handler.serialize(obj);
+    const serializedElement = handler.serialize(obj);
 
-    if (stringify) {
-      result = JSON.stringify(result);
-    }
-
-    return result;
+    return serializedElement;
   }
 
   deserialize(serializedString: string): any;

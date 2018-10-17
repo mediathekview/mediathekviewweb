@@ -2,8 +2,8 @@ import { Entry } from '../../common/model';
 import { FilmlistParser } from './parser';
 import { FileProvider, FileMetadata } from '../../listing/';
 import { decompress } from '../../utils';
-import { Serializable } from '../../serializer';
 import { destroyPrototype } from '../../common/utils/index';
+import { Serializable } from '../../common/serializer';
 
 export class Filmlist implements AsyncIterable<Entry[]>, Serializable {
   fileMetadata: FileMetadata;

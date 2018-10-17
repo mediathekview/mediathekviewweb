@@ -17,7 +17,6 @@ export class MediathekViewWebIndexer {
   }
 
   async run() {
-    console.log('in 1. run')
     if (this.indexer == null) {
       throw new Error('not initialized');
     }
@@ -27,7 +26,6 @@ export class MediathekViewWebIndexer {
     }
 
     this.running = true;
-    console.log('before 2. run')
     await this.indexer.run();
     this.running = false;
   }
