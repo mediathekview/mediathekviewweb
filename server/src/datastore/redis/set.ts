@@ -5,6 +5,7 @@ import { AsyncEnumerable } from '../../common/enumerable';
 import { AnyIterable, Nullable } from '../../common/utils';
 import { BATCH_SIZE, CONCURRENCY } from './constants';
 import { SerializeFunction, getSerializer, getDeserializer, DeserializeFunction } from './serializer';
+import { Serializer } from '../../common/serializer';
 
 export class RedisSet<T> implements Set<T> {
   private readonly redis: Redis.Redis;
@@ -13,12 +14,12 @@ export class RedisSet<T> implements Set<T> {
   private serialize: SerializeFunction<T>;
   private deserialize: DeserializeFunction<T>;
 
-  constructor(redis: Redis.Redis, key: string, dataType: DataType) {
+  constructor(redis: Redis.Redis, key: string, dataType: DataType, serializer: Serializer) {
     this.key = key;
     this.redis = redis;
 
-    this.serialize = getSerializer(dataType);
-    this.deserialize = getDeserializer(dataType);
+    this.serialize = getSerializer(dataType, serializer);
+    this.deserialize = getDeserializer(dataType, serializer);
   }
 
   async add(value: T): Promise<void> {

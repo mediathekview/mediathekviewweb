@@ -80,19 +80,30 @@ export class RedisSortedSet<T> implements SortedSet<T> {
       });
   }
 
-  getScore(value: T): Promise<SortedSetItem<T>> {
+  async getScore(value: T): Promise<Undefinable<number>> {
+    const serializedValue = this.serialize(value);
+    const scoreString = await this.redis.zscore(this.key, serializedValue);
+    console.log('sorted-set type scoreString', typeof scoreString);
+
+    const score = parseFloat(scoreString);
+    return score;
+  }
+
+  getScoreMany(values: AnyIterable<T>): AsyncIterable<Nullable<SortedSetItem<T>>> {
+    return AsyncEnumerable.from(values)
+      .batch(BATCH_SIZE)
+      .parallelMap(3, true, (batch) => this.getScorePipeline(batch))
+      .mapMany((results) => results);
+  }
+
+  getRank(value: T): Promise<Undefinable<number>> {
     throw new Error("Method not implemented.");
   }
 
-  getScoreMany(values: AnyIterable<T>): AsyncIterable<SortedSetItem<T>> {
+  getRankReversed(value: T): Promise<Undefinable<number>> {
     throw new Error("Method not implemented.");
   }
-  getRank(value: T): Promise<SortedSetRankedItem<T>> {
-    throw new Error("Method not implemented.");
-  }
-  getRankReversed(value: T): Promise<SortedSetRankedItem<T>> {
-    throw new Error("Method not implemented.");
-  }
+
   getRankMany(values: AnyIterable<T>): AsyncIterable<SortedSetRankedItem<T>> {
     throw new Error("Method not implemented.");
   }
@@ -158,5 +169,31 @@ export class RedisSortedSet<T> implements SortedSet<T> {
   }
   clear(): Promise<void> {
     throw new Error("Method not implemented.");
+  }
+
+  private async getScorePipeline(values: AnyIterable<T>): Promise<(SortedSetItem<T> | null)[]> {
+    const pipeline = this.redis.pipeline();
+
+    const valuesArray = await AsyncEnumerable.from(values).toArray();
+
+    valuesArray
+      .map(this.serialize)
+      .forEach((member) => pipeline.zscore(this.key, member));
+
+    const response = await pipeline.exec() as [Nullable<Error>, Nullable<string>][];
+
+    const result = response.map(([error, result], index) => {
+      if (error) {
+        throw error;
+      }
+
+      if (result == null) {
+        return null;
+      }
+
+      return { score: parseFloat(result), value: valuesArray[index] };
+    });
+
+    return result;
   }
 }

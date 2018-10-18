@@ -1,4 +1,4 @@
-import { AnyIterable } from '../common/utils';
+import { AnyIterable, Nullable } from '../common/utils';
 
 export type SortedSetItem<T> = {
   value: T;
@@ -14,10 +14,10 @@ export interface SortedSet<T> {
   add(item: SortedSetItem<T>): Promise<void>;
   addMany(items: AnyIterable<SortedSetItem<T>>): Promise<void>;
 
-  getScore(value: T): Promise<SortedSetItem<T>>;
-  getScoreMany(values: AnyIterable<T>): AsyncIterable<SortedSetItem<T>>;
-  getRank(value: T): Promise<SortedSetRankedItem<T>>;
-  getRankReversed(value: T): Promise<SortedSetRankedItem<T>>;
+  getScore(value: T): Promise<Undefinable<number>>;
+  getScoreMany(values: AnyIterable<T>): AsyncIterable<Nullable<SortedSetItem<T>>>;
+  getRank(value: T): Promise<Undefinable<number>>;
+  getRankReversed(value: T): Promise<Undefinable<number>>;
   getRankMany(values: AnyIterable<T>): AsyncIterable<SortedSetRankedItem<T>>;
   getRankManyReversed(values: AnyIterable<T>): AsyncIterable<SortedSetRankedItem<T>>;
 
