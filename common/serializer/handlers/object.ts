@@ -1,4 +1,4 @@
-import { Serializer, SerializedElement, SerializeHandler } from '../';
+import { SerializedElement, SerializeHandler, Serializer } from '../';
 
 type SerializedObject = SerializedElement<StringMap<SerializedElement>>;
 
@@ -24,7 +24,7 @@ export class ObjectSerializeHandler implements SerializeHandler {
 
     for (const property of properties) {
       const value = obj[property];
-      const serialized = this.serializer.serialize(value, false);
+      const serialized = this.serializer.rawSerialize(value);
 
       data[property] = serialized;
     }

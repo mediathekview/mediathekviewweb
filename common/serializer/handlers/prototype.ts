@@ -1,4 +1,4 @@
-import { SerializableStatic, Serializable, SerializeHandler, SerializedElement } from '../';
+import { Serializable, SerializableStatic, SerializedElement, SerializeHandler } from '../';
 import { Serializer } from '../serializer';
 
 type SerializedInstanceData = {
@@ -35,7 +35,7 @@ export class PrototypeSerializeHandler implements SerializeHandler {
     const instance = obj as Serializable;
 
     const data = instance.serialize();
-    const serializedData = this.serializer.serialize(data, false);
+    const serializedData = this.serializer.rawSerialize(data);
 
     const serializedInstanceData: SerializedInstanceData = {
       prototype: instance.constructor.name,

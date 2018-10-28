@@ -1,7 +1,6 @@
 import { Subject } from 'rxjs';
-
 import { LockProvider } from '../common/lock';
-import { ResetPromise, Timer, timeout } from '../common/utils';
+import { ResetPromise, timeout, Timer } from '../common/utils';
 import { LoopController } from './controller';
 
 export type LoopFunction = (controller: LoopController) => Promise<void>;
@@ -21,13 +20,10 @@ export class DistributedLoop {
 
   run(func: LoopFunction, interval: number, accuracy: number): LoopController {
     let stop = false;
-    let pause = new ResetPromise<void>().resolve();
     let errorSubject = new Subject<void>();
 
     const controller: LoopController = {
       stop: () => { stop = true; return this.stoppedPromise; },
-      pause: () => pause.reset(),
-      resume: () => pause.resolve(),
       setTiming: (timing) => {
         if (timing.interval != undefined) {
           interval = timing.interval;
@@ -45,14 +41,12 @@ export class DistributedLoop {
       const timer = new Timer(true);
 
       while (!stop) {
-        await pause;
-
         timer.restart();
 
-        const success = await lock.acquire(0);
+        const acquired = await lock.acquire(0);
         const acquireDuration = timer.milliseconds;
 
-        if (success) {
+        if (acquired) {
           try {
             await func(controller);
           }

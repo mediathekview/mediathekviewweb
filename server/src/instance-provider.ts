@@ -169,7 +169,8 @@ export class InstanceProvider {
   static datastoreFactory(): Promise<DatastoreFactory> {
     return this.singleton(RedisDatastoreFactory, async () => {
       const redis = await this.redis();
-      return new RedisDatastoreFactory(redis);
+      const serializer = await this.serializer();
+      return new RedisDatastoreFactory(redis, serializer);
     });
   }
 

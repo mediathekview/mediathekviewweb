@@ -1,4 +1,4 @@
-import { Serializer, SerializedElement, SerializeHandler } from '../';
+import { SerializedElement, SerializeHandler, Serializer } from '../';
 
 const TYPE = 'array';
 
@@ -16,7 +16,7 @@ export class ArraySerializeHandler implements SerializeHandler {
   }
 
   serialize(array: any[]): SerializedArray {
-    const serializedElements = array.map((item) => this.serializer.serialize(item, false));
+    const serializedElements = array.map((item) => this.serializer.rawSerialize(item));
 
     return {
       type: TYPE,
