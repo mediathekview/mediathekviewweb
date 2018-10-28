@@ -1,15 +1,12 @@
 {
 	"folders": [
 		{
-			"name": "client",
 			"path": "client"
 		},
 		{
-			"name": "server",
 			"path": "server"
 		},
 		{
-			"name": "docker",
 			"path": "docker"
 		},
 		{

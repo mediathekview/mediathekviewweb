@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
 @Component({
-  selector: 'mvw-search-input',
+  selector: 'app-search-input',
   templateUrl: './search-input.component.html',
   styleUrls: ['./search-input.component.scss']
 })

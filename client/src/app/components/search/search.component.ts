@@ -11,7 +11,7 @@ import { EntryListComponent } from '../entry-list/entry-list.component';
 import { SearchInputComponent } from '../search-input/search-input.component';
 
 @Component({
-  selector: 'mvw-search',
+  selector: 'app-search',
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss']
 })

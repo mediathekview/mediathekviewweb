@@ -8,13 +8,13 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { EntryListComponent } from './components/entry-list/entry-list.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { SearchInputComponent } from './components/search-input/search-input.component';
+import { SearchComponent } from './components/search/search.component';
 import { AngularMaterialModule } from './modules/angular-material.module';
 import { DevComponent } from './sites/dev/dev.component';
 import { HomeComponent } from './sites/home/home.component';
-import { EntryListComponent } from './components/entry-list/entry-list.component';
-import { SearchComponent } from './components/search/search.component';
 
 registerLocaleData(german, 'de');
 

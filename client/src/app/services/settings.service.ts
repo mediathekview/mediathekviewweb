@@ -5,7 +5,9 @@ const DEFAULTS = {
   pageSize: 15
 };
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class SettingsService {
   private readonly _pageSize: ReplaySubject<number>;
 

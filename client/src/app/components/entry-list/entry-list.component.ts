@@ -7,7 +7,7 @@ const DEFAULT_SORT_FIELD = Field.Timestamp;
 const DEFAULT_SORT_ORDER = Order.Descending;
 
 @Component({
-  selector: 'mvw-entry-list',
+  selector: 'app-entry-list',
   templateUrl: './entry-list.component.html',
   styleUrls: ['./entry-list.component.scss']
 })

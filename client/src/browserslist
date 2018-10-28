@@ -4,13 +4,16 @@
 #
 # For IE 9-11 support, please remove 'not' from the last line of the file and adjust as needed
 
-last 2 Chrome versions
-last 2 ChromeAndroid versions
-last 2 Firefox versions
-last 2 FirefoxAndroid versions
+last 3 Chrome versions
+last 3 ChromeAndroid versions
+last 3 Firefox versions
+last 3 FirefoxAndroid versions
 last 2 Safari versions
+last 2 ios_saf versions
 last 2 Edge versions
+last 2 Opera versions
+last 1 Samsung versions
 Firefox ESR
-last 1 year
+Firefox 52
 
 not dead

@@ -1,6 +1,7 @@
 declare const process: any;
 declare function requestAnimationFrame(callback: FrameRequestCallback): number;
 declare function requestIdleCallback(callback: IdleRequestCallback, options?: { timeout?: number }): void;
+declare function setImmediate(callback: (...args: any[]) => void, ...args: any[]): any;
 
 export type DOMHighResTimeStamp = number;
 export type FrameRequestCallback = (time: number) => void;

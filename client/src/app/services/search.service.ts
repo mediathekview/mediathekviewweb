@@ -6,7 +6,9 @@ import { AggregatedEntry } from '../common/model';
 import { QueryBody, SearchQuery, SearchResult, Sort } from '../common/search-engine';
 import { SearchStringParser } from '../common/search-string-parser/parser';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class SearchService {
   private readonly httpClient: HttpClient;
   private readonly searchStringParser: SearchStringParser;

@@ -1,12 +1,11 @@
 html,
 body {
   height: 100%;
-  overflow: auto;
 }
 
 body {
   margin: 0;
-  font-family: 'Roboto', sans-serif;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 @for $i from 1 through 10 {
