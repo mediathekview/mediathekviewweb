@@ -694,10 +694,10 @@ function createDescriptionButton(entry) {
   button.popover({
     trigger: 'manual',
     //toggle: 'popover',
-    placement: 'auto right',
+    placement: 'auto right' as any,
     container: '#blur',
     template: '<div class="popover" role="tooltip"><h3 class="popover-title"></h3><div class="popover-content"></div></div>',
-    content: popoverContent,
+    content: popoverContent as any,
     html: true,
     animation: true
   });
@@ -781,9 +781,9 @@ function createVideoActionButton(entry) {
   button.popover({
     trigger: 'manual',
     // toggle: 'popover',
-    placement: 'auto right',
+    placement: 'auto right' as any,
     container: '#blur',
-    content: table,
+    content: table as any,
     html: true,
     animation: true
   });

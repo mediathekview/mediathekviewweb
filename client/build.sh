@@ -14,5 +14,5 @@ cp node_modules/lodash/lodash.min.js dist/static/lodash.min.js && \
 cp node_modules/moment/min/moment.min.js dist/static/moment.min.js && \
 cp node_modules/moment/min/moment-with-locales.min.js dist/static/moment-with-locales.min.js && \
 cp node_modules/video.js/dist/video.min.js dist/static/video.min.js && \
-cp node_modules/video.js/dist/video-js.min.css dist/static/video-js.min.css
+cp node_modules/video.js/dist/video-js.min.css dist/static/video-js.min.css && \
 cp node_modules/socket.io-client/dist/socket.io.slim.js dist/static/socket.io.slim.js
