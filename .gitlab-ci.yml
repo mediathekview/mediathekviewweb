@@ -58,7 +58,7 @@ build:client:
   script:
     - bash ci/build-image.sh -f ci/client.dockerfile -c $BUILD_CLIENT_IMAGE_BEFORE_SHA -c $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_LATEST .
 
-.pack:dist:
+pack:dist:
   stage: pack
   image: $DOCKER_BASH_IMAGE_SHA
   tags:
