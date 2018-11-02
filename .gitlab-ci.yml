@@ -25,5 +25,5 @@ build:
     - docker
   artifacts:
     paths:
-    - ./build-output
+    - /build-output
     expire_in: 3 months
