@@ -5,8 +5,8 @@ before_script:
 variables:
   DOCKER_DRIVER: overlay2
 
-  DOCKER_BASH_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/docker-bash:$CI_COMMIT_SHA"
-  DOCKER_BASH_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/docker-bash:$CI_COMMIT_BEFORE_SHA"
+  DOCKER_BASH_IMAGE_SHA: "$CI_REGISTRY_IMAGE/common/docker-bash:$CI_COMMIT_SHA"
+  DOCKER_BASH_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/common/docker-bash:$CI_COMMIT_BEFORE_SHA"
 
   SERVER_DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/server-dist:latest"
   SERVER_DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/server-dist:$CI_COMMIT_SHA"
@@ -30,6 +30,9 @@ build:docker-bash:
   image: docker:stable
   tags:
     - docker
+  only:
+    variables:
+      - $BUILD_DOCKER_BASH == "true"
   services:
     - docker:dind
   script:
@@ -43,6 +46,8 @@ build:server:
   image: $DOCKER_BASH_IMAGE_SHA
   tags:
     - docker
+  except:
+    - schedules
   services:
     - docker:dind
   script:
@@ -53,6 +58,8 @@ build:client:
   image: $DOCKER_BASH_IMAGE_SHA
   tags:
     - docker
+  except:
+    - schedules
   services:
     - docker:dind
   script:
@@ -63,6 +70,8 @@ pack:dist:
   image: $DOCKER_BASH_IMAGE_SHA
   tags:
     - docker
+  except:
+    - schedules
   services:
     - docker:dind
   script:
