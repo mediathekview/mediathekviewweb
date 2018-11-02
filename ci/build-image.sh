@@ -16,15 +16,15 @@ shift $((OPTIND -1))
 workdir=$1
 build_arguments="--pull -f $dockerfile"
 
-if [ ${#args[@]} -eq 0 ]; then
+if [ ${#args[@]} -ne 0 ]; then
   build_arguments+="$( printf " --build-arg %s" "${args[@]}" )"
 fi
 
-if [ ${#caches[@]} -eq 0 ]; then
+if [ ${#caches[@]} -ne 0 ]; then
   build_arguments+="$( printf " --cache-from %s" "${caches[@]}" )"
 fi
 
-if [ ${#names[@]} -eq 0 ]; then
+if [ ${#names[@]} -ne 0 ]; then
   build_arguments+="$( printf " --tag %s" "${names[@]}" )"
 fi
 
