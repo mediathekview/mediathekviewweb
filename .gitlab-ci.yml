@@ -1,22 +1,83 @@
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - mkdir empty_dir
 
 variables:
   DOCKER_DRIVER: overlay2
 
-build:
+  DOCKER_BASH_IMAGE_SHA: "$CI_REGISTRY_IMAGE/common/docker-bash:$CI_COMMIT_SHA"
+  DOCKER_BASH_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/common/docker-bash:$CI_COMMIT_BEFORE_SHA"
+
+  SERVER_DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/server-dist:latest"
+  SERVER_DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/server-dist:$CI_COMMIT_SHA"
+  SERVER_DIST_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/server-dist:$CI_COMMIT_BEFORE_SHA"
+
+  CLIENT_DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/client-dist:latest"
+  CLIENT_DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/client-dist:$CI_COMMIT_SHA"
+  CLIENT_DIST_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/client-dist:$CI_COMMIT_BEFORE_SHA"
+
+  DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest"
+  DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA"
+  DIST_IMAGE_SHA_BEFORE: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_BEFORE_SHA"
+
+stages:
+  - build:dependencies
+  - build:application
+  - pack
+
+build:docker-bash:
+  stage: build:dependencies
   image: docker:stable
-  services:
-    - docker:dind
-  stage: build
-  script:
-    - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest || true
-    - docker build
-      --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-      .
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
   tags:
     - docker
+  only:
+    variables:
+      - $BUILD_DOCKER_BASH == "true"
+  services:
+    - docker:dind
+  script:
+    - docker pull $DOCKER_BASH_IMAGE_SHA || true
+    - docker pull $DOCKER_BASH_IMAGE_BEFORE_SHA || true
+    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA empty_dir
+    - docker push $DOCKER_BASH_IMAGE_SHA
+
+build:server:
+  stage: build:application
+  image: $DOCKER_BASH_IMAGE_SHA
+  tags:
+    - docker
+  except:
+    - schedules
+  services:
+    - docker:dind
+  script:
+    - bash ci/build-image.sh -f ci/server.dockerfile -c $SERVER_DIST_IMAGE_BEFORE_SHA -c $SERVER_DIST_IMAGE_SHA -n $SERVER_DIST_IMAGE_SHA -n $SERVER_DIST_IMAGE_LATEST .
+
+build:client:
+  stage: build:application
+  image: $DOCKER_BASH_IMAGE_SHA
+  tags:
+    - docker
+  except:
+    - schedules
+  services:
+    - docker:dind
+  script:
+    - bash ci/build-image.sh -f ci/client.dockerfile -c $CLIENT_DIST_IMAGE_BEFORE_SHA -c $CLIENT_DIST_IMAGE_SHA -n $CLIENT_DIST_IMAGE_SHA -n $CLIENT_DIST_IMAGE_LATEST .
+
+pack:dist:
+  stage: pack
+  image: $DOCKER_BASH_IMAGE_SHA
+  tags:
+    - docker
+  except:
+    - schedules
+  services:
+    - docker:dind
+  script:
+    - bash ci/build-image.sh -f ci/dist.dockerfile -a CLIENT_DIST_IMAGE=$CLIENT_DIST_IMAGE_SHA -a SERVER_DIST_IMAGE=$SERVER_DIST_IMAGE_SHA -c $DIST_IMAGE_SHA_BEFORE -c $DIST_IMAGE_SHA -n $DIST_IMAGE_SHA -n $DIST_IMAGE_LATEST empty_dir
+    - bash ci/extract-from-image.sh $DIST_IMAGE_SHA /mediathekviewweb dist
+  artifacts:
+    paths:
+      - dist
+    expire_in: 3 months
