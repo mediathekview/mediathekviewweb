@@ -1,7 +1,9 @@
 ARG CLIENT_DIST_IMAGE
+ARG SERVER_DIST_IMAGE
+
 FROM ${CLIENT_DIST_IMAGE} as client
 
-ARG SERVER_DIST_IMAGE
+
 FROM ${SERVER_DIST_IMAGE} as server
 
 COPY --from=client /dist /dist/client
