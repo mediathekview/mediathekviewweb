@@ -66,7 +66,7 @@ pack:dist:
   services:
     - docker:dind
   script:
-    - bash ci/build-image.sh -f ci/dist.dockerfile -c $DIST_IMAGE_SHA_BEFORE -c $DIST_IMAGE_SHA -n $DIST_IMAGE_SHA -n $DIST_IMAGE_LATEST empty_dir
+    - bash ci/build-image.sh -f ci/dist.dockerfile -a CLIENT_BUILD_IMAGE=$BUILD_CLIENT_IMAGE_SHA -a SERVER_BUILD_IMAGE=$BUILD_SERVER_IMAGE_SHA -c $DIST_IMAGE_SHA_BEFORE -c $DIST_IMAGE_SHA -n $DIST_IMAGE_SHA -n $DIST_IMAGE_LATEST empty_dir
     - bash ci/extract-from-image.sh $DIST_IMAGE_SHA /mediathekviewweb dist
   artifacts:
     paths:
