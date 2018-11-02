@@ -2,13 +2,28 @@ before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
 variables:
-  DOCKER_DRIVER: overlay2  
+  DOCKER_DRIVER: overlay2
+  
+  BUILD_SERVER_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-server:latest"
+  BUILD_SERVER_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-server:$CI_COMMIT_SHA"
+  BUILD_SERVER_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-server:$CI_COMMIT_BEFORE_SHA"
+
+  BUILD_CLIENT_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-client:latest"
+  BUILD_CLIENT_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-client:$CI_COMMIT_SHA"
+  BUILD_CLIENT_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-client:$CI_COMMIT_BEFORE_SHA"
+
+  DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest"
+  DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA"
+
+stages:
+  - build
+  - pack
 
 build:
+  stage: build
   image: docker:stable
   services:
     - docker:dind
-  stage: build
   script:
     - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest || true
     - docker build
@@ -25,5 +40,32 @@ build:
     - docker
   artifacts:
     paths:
-    - build-output
+      - build-output
     expire_in: 3 months
+
+build:server:
+  stage: build
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - bash ci/build-image.sh -f ci/build-server.dockerfile -c $BUILD_SERVER_IMAGE_BEFORE_SHA -c $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_LATEST
+
+build:client:
+  stage: build
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - bash ci/build-image.sh -f ci/build-client.dockerfile -c $BUILD_CLIENT_IMAGE_BEFORE_SHA -c $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_LATEST
+
+.pack:dist:
+  stage: pack
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - bash ci/pull-build-push.sh $BUILD_CLIENT_IMAGE
+  dependencies:
+    - build:server
+    - build:client
