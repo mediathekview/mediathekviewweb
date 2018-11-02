@@ -1,3 +1,5 @@
 FROM docker:stable
 
-RUN apk --no-cache add bash
+RUN apk add --no-cache bash
+
+CMD ["bash"]
