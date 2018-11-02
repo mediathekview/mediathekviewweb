@@ -5,8 +5,8 @@ before_script:
 variables:
   DOCKER_DRIVER: overlay2
 
+  DOCKER_BASH_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/common/docker-bash:latest"
   DOCKER_BASH_IMAGE_SHA: "$CI_REGISTRY_IMAGE/common/docker-bash:$CI_COMMIT_SHA"
-  DOCKER_BASH_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/common/docker-bash:$CI_COMMIT_BEFORE_SHA"
 
   SERVER_DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/server-dist:latest"
   SERVER_DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/server-dist:$CI_COMMIT_SHA"
@@ -36,14 +36,14 @@ build:docker-bash:
   services:
     - docker:dind
   script:
-    - docker pull $DOCKER_BASH_IMAGE_SHA || true
-    - docker pull $DOCKER_BASH_IMAGE_BEFORE_SHA || true
-    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA empty_dir
+    - docker pull $DOCKER_BASH_IMAGE_LATEST || true
+    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_LATEST --tag $DOCKER_BASH_IMAGE_SHA --tag $DOCKER_BASH_IMAGE_LATEST empty_dir
+    - docker push $DOCKER_BASH_IMAGE_LATEST
     - docker push $DOCKER_BASH_IMAGE_SHA
 
 build:server:
   stage: build:application
-  image: $DOCKER_BASH_IMAGE_SHA
+  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   except:
@@ -55,7 +55,7 @@ build:server:
 
 build:client:
   stage: build:application
-  image: $DOCKER_BASH_IMAGE_SHA
+  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   except:
@@ -67,7 +67,7 @@ build:client:
 
 pack:dist:
   stage: pack
-  image: $DOCKER_BASH_IMAGE_SHA
+  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   except:
