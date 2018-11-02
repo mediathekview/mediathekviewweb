@@ -4,8 +4,8 @@ before_script:
 variables:
   DOCKER_DRIVER: overlay2
 
-  DOCKER_BASH_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-docker:$CI_COMMIT_SHA"
-  DOCKER_BASH_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-docker:$CI_COMMIT_BEFORE_SHA"
+  DOCKER_BASH_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/docker-bash:$CI_COMMIT_SHA"
+  DOCKER_BASH_IMAGE_BEFORE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/docker-bash:$CI_COMMIT_BEFORE_SHA"
 
   BUILD_SERVER_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-server:latest"
   BUILD_SERVER_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG/build-server:$CI_COMMIT_SHA"
@@ -34,7 +34,7 @@ build:docker-bash:
   script:
     - docker pull $DOCKER_BASH_IMAGE_SHA || true
     - docker pull $DOCKER_BASH_IMAGE_BEFORE_SHA || true
-    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA
+    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA ci
     - docker push $DOCKER_BASH_IMAGE_SHA
 
 build:server:
