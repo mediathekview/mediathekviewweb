@@ -1,5 +1,5 @@
 rm -rf dist && \
-tsc && \
+node_modules/.bin/tsc && \
 cp -r static dist/ && \
 cp *.html dist/ && \
 
