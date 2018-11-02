@@ -1,5 +1,6 @@
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - mkdir empty_dir
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -34,7 +35,7 @@ build:docker-bash:
   script:
     - docker pull $DOCKER_BASH_IMAGE_SHA || true
     - docker pull $DOCKER_BASH_IMAGE_BEFORE_SHA || true
-    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA ci
+    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA empty_dir
     - docker push $DOCKER_BASH_IMAGE_SHA
 
 build:server:
@@ -45,7 +46,7 @@ build:server:
   services:
     - docker:dind
   script:
-    - bash ci/build-image.sh -f ci/server.dockerfile -c $BUILD_SERVER_IMAGE_BEFORE_SHA -c $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_LATEST
+    - bash ci/build-image.sh -f ci/server.dockerfile -c $BUILD_SERVER_IMAGE_BEFORE_SHA -c $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_LATEST .
 
 build:client:
   stage: build:application
@@ -55,7 +56,7 @@ build:client:
   services:
     - docker:dind
   script:
-    - bash ci/build-image.sh -f ci/client.dockerfile -c $BUILD_CLIENT_IMAGE_BEFORE_SHA -c $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_LATEST
+    - bash ci/build-image.sh -f ci/client.dockerfile -c $BUILD_CLIENT_IMAGE_BEFORE_SHA -c $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_LATEST .
 
 .pack:dist:
   stage: pack
@@ -65,7 +66,7 @@ build:client:
   services:
     - docker:dind
   script:
-    - bash ci/pull-build-push.sh -f ci/dist.dockerfile -c $DIST_IMAGE_SHA_BEFORE -c $DIST_IMAGE_SHA -n -c $DIST_IMAGE_SHA -n -c $DIST_IMAGE_LATEST
+    - bash ci/pull-build-push.sh -f ci/dist.dockerfile -c $DIST_IMAGE_SHA_BEFORE -c $DIST_IMAGE_SHA -n -c $DIST_IMAGE_SHA -n -c $DIST_IMAGE_LATEST empty_dir
     - bash ci/extract-from-image.sh $DIST_IMAGE_SHA /mediathekviewweb dist
   artifacts:
     paths:
