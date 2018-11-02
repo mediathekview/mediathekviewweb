@@ -19,11 +19,11 @@ build:
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
     - docker create --name mediathekviewweb-$CI_JOB_ID $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-    - docker cp mediathekviewweb-$CI_JOB_ID:/mediathekviewweb /build-output
+    - docker cp mediathekviewweb-$CI_JOB_ID:/mediathekviewweb build-output
     - docker rm mediathekviewweb-$CI_JOB_ID
   tags:
     - docker
   artifacts:
     paths:
-    - /build-output
+    - build-output
     expire_in: 3 months
