@@ -19,7 +19,7 @@ stages:
   - build
   - pack
 
-build:
+.build:
   stage: build
   image: docker:stable
   services:
@@ -49,7 +49,7 @@ build:server:
   services:
     - docker:dind
   script:
-    - bash ci/build-image.sh -f ci/build-server.dockerfile -c $BUILD_SERVER_IMAGE_BEFORE_SHA -c $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_LATEST
+    - sh ci/build-image.sh -f ci/build-server.dockerfile -c $BUILD_SERVER_IMAGE_BEFORE_SHA -c $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_SHA -n $BUILD_SERVER_IMAGE_LATEST
 
 build:client:
   stage: build
@@ -57,7 +57,7 @@ build:client:
   services:
     - docker:dind
   script:
-    - bash ci/build-image.sh -f ci/build-client.dockerfile -c $BUILD_CLIENT_IMAGE_BEFORE_SHA -c $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_LATEST
+    - sh ci/build-image.sh -f ci/build-client.dockerfile -c $BUILD_CLIENT_IMAGE_BEFORE_SHA -c $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_SHA -n $BUILD_CLIENT_IMAGE_LATEST
 
 .pack:dist:
   stage: pack
@@ -65,7 +65,7 @@ build:client:
   services:
     - docker:dind
   script:
-    - bash ci/pull-build-push.sh $BUILD_CLIENT_IMAGE
+    - sh ci/pull-build-push.sh $BUILD_CLIENT_IMAGE
   dependencies:
     - build:server
     - build:client
