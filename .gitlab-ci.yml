@@ -32,8 +32,8 @@ build:docker-bash:
   services:
     - docker:dind
   script:
-    - docker pull $DOCKER_BASH_IMAGE_SHA
-    - docker pull $DOCKER_BASH_IMAGE_BEFORE_SHA
+    - docker pull $DOCKER_BASH_IMAGE_SHA || true
+    - docker pull $DOCKER_BASH_IMAGE_BEFORE_SHA || true
     - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA
     - docker push $DOCKER_BASH_IMAGE_SHA
 
