@@ -13,7 +13,7 @@ done
 
 shift $((OPTIND -1))
 workdir=$1
-build_arguments="-f $dockerfile $( printf " --cache-from %s" "${caches[@]}" )$( printf " --tag %s" "${names[@]}" ) $workdir"
+build_arguments="--pull -f $dockerfile $( printf " --cache-from %s" "${caches[@]}" )$( printf " --tag %s" "${names[@]}" ) $workdir"
 
 echo $build_arguments
 
