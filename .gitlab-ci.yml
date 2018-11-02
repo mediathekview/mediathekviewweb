@@ -24,30 +24,6 @@ stages:
   - build:application
   - pack
 
-.build:
-  stage: build
-  image: docker:stable
-  services:
-    - docker:dind
-  script:
-    - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest || true
-    - docker build
-      --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-      --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-      .
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-    - docker create --name mediathekviewweb-$CI_JOB_ID $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-    - docker cp mediathekviewweb-$CI_JOB_ID:/mediathekviewweb build-output
-    - docker rm mediathekviewweb-$CI_JOB_ID
-  tags:
-    - docker
-  artifacts:
-    paths:
-      - build-output
-    expire_in: 3 months
-
 build:docker-bash:
   stage: build:dependencies
   image: docker:stable
@@ -56,7 +32,10 @@ build:docker-bash:
   services:
     - docker:dind
   script:
-    - sh ci/build-image.sh -f ci/docker-bash.dockerfile -c $DOCKER_BASH_IMAGE_SHA -c $DOCKER_BASH_IMAGE_BEFORE_SHA -n $DOCKER_BASH_IMAGE_SHA
+    - docker pull $DOCKER_BASH_IMAGE_SHA
+    - docker pull $DOCKER_BASH_IMAGE_BEFORE_SHA
+    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_SHA --cache-from $DOCKER_BASH_IMAGE_BEFORE_SHA --tag $DOCKER_BASH_IMAGE_SHA
+    - docker push $DOCKER_BASH_IMAGE_SHA
 
 build:server:
   stage: build:application
