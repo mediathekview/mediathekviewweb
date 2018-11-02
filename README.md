@@ -56,7 +56,7 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 
 
 
-# Verwendete Programme, Bibliotheken etc. (zumindest die wichtigsten, siehe [package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/package.json) für mehr)
+# Verwendete Programme, Bibliotheken etc. (zumindest die wichtigsten, siehe [package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/client/package.json) für mehr)
 ### Server
 - Node
 - Redis
