@@ -77,9 +77,10 @@ import * as utils from './utils';
 
   app.use((request, response, next) => {
     const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.get('host');
+    const orfCdn = 'https://apasfiis.sf.apa.at';
 
     response.set({
-      'Content-Security-Policy': `default-src 'none'; script-src 'self'; worker-src 'self' 'blob'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' data:; connect-src 'self' ${webSocketSource}; media-src *; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
+      'Content-Security-Policy': `default-src 'none'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' data:; connect-src 'self' ${webSocketSource} ${orfCdn}; media-src * blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
       'X-Content-Type-Options': 'nosniff',
