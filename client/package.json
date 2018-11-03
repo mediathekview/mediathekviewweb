@@ -20,15 +20,15 @@
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "socket.io-client": "^2.1.1",
-    "video.js": "^7.2.3"
+    "video.js": "^7.2.4"
   },
   "devDependencies": {
     "@types/datatables.net": "^1.10.13",
-    "@types/bootstrap": "^3.3.39",
-    "@types/jquery": "^3.3.10",
-    "@types/lodash": "^4.14.116",
+    "@types/bootstrap": "^3.3.40",
+    "@types/jquery": "^3.3.22",
+    "@types/lodash": "^4.14.117",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.2.5",
-    "typescript": "^3.1.1"
+    "typescript": "^3.1.6"
   }
 }
