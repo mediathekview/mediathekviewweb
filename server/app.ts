@@ -77,7 +77,7 @@ import * as utils from './utils';
 
   app.use((request, response, next) => {
     const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.get('host');
-    const orfCdn = 'https://apasfiis.sf.apa.at';
+    const orfCdn = 'https://apasfiis.sf.apa.at https://varorfvod.sf.apa.at';
 
     response.set({
       'Content-Security-Policy': `default-src 'none'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' data:; connect-src 'self' ${webSocketSource} ${orfCdn}; media-src * blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
