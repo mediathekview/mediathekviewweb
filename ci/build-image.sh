@@ -31,11 +31,14 @@ fi
 build_arguments+=" $workdir"
 
 for image in "${caches[@]}"; do
+  echo "pulling $image as build cache"
   docker pull $image || true
 done
 
-docker build $build_arguments && \
+echo "building with $build_arguments"
+docker build $build_arguments || { echo 'docker build failed' ; exit 1; }
 
 for image in "${names[@]}"; do
-  docker push $image || true
+  echo "pushing $image"
+  docker push $image || { echo 'docker push failed' ; exit 1; }
 done
