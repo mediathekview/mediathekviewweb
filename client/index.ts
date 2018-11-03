@@ -54,14 +54,6 @@ socket.on('reconnect_failed', () => {
   console.log('reconnect failed');
 });
 
-socket.on('ping', () => {
-  console.log('ping');
-});
-
-socket.on('pong', (latency) => {
-  console.log('pong', latency);
-});
-
 socket.on('reconnect_error', (error) => {
   console.error('reconnect_error', error);
 });
