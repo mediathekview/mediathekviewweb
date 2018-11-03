@@ -19,11 +19,13 @@ variables:
   DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest"
   DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA"
   DIST_IMAGE_SHA_BEFORE: "$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_BEFORE_SHA"
+  DIST_IMAGE_DOCKER_HUB: "mediathekview/mediathekviewweb:latest"
 
 stages:
   - build:dependencies
   - build:application
   - pack
+  - publish
 
 build:docker-bash:
   stage: build:dependencies
@@ -81,3 +83,19 @@ pack:dist:
     paths:
       - dist
     expire_in: 3 months
+
+publish:image:
+  stage: publish
+  when: manual
+  image: $DOCKER_BASH_IMAGE_LATEST
+  tags:
+    - docker
+  except:
+    - schedules
+  services:
+    - docker:dind
+  script:
+    - docker pull $DIST_IMAGE_SHA
+    - docker tag $DIST_IMAGE_SHA $DIST_IMAGE_DOCKER_HUB
+    - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+    - docker push $DIST_IMAGE_DOCKER_HUB
