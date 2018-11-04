@@ -11,6 +11,9 @@
       "schematics": {
         "@schematics/angular:component": {
           "styleext": "scss"
+        },
+        "@ngrx/schematics:component": {
+          "styleext": "scss"
         }
       },
       "architect": {
@@ -39,10 +42,10 @@
             "analyze": {
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ],
+                "replace": "src/environments/environment.ts",
+                "with": "src/environments/environment.prod.ts"
+              }
+            ],
               "optimization": true,
               "outputHashing": "none",
               "statsJson": true,
@@ -59,10 +62,10 @@
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ],
+                "replace": "src/environments/environment.ts",
+                "with": "src/environments/environment.prod.ts"
+              }
+            ],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
@@ -74,11 +77,11 @@
               "buildOptimizer": true,
               "budgets": [
                 {
-                  "type": "initial",
-                  "maximumWarning": "1mb",
-                  "maximumError": "5mb"
-                }
-              ],
+                "type": "initial",
+                "maximumWarning": "1mb",
+                "maximumError": "5mb"
+              }
+            ],
               "serviceWorker": true
             }
           }
@@ -162,5 +165,8 @@
       }
     }
   },
-  "defaultProject": "mediathekviewweb"
+  "defaultProject": "mediathekviewweb",
+  "cli": {
+    "defaultCollection": "@ngrx/schematics"
+  }
 }
