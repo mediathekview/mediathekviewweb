@@ -104,6 +104,23 @@ export function formatDuration(milliseconds: number, precision: number): string 
   return result;
 }
 
+export function toError(obj: any): Error {
+  if (obj instanceof Error) {
+    return obj;
+  }
+
+  let message = 'take a look at data property of error';
+
+  try {
+    message = JSON.stringify(obj);
+  } catch { }
+
+  const error = new Error(message);
+  error['data'] = obj;
+
+  return error;
+}
+
 export function formatError(error: Error, includeStack: boolean): string {
   const stackMessage = (includeStack && (error.stack != null)) ? `\n${error.stack}` : '';
   return `${error.name}: ${error.message}${stackMessage}`;

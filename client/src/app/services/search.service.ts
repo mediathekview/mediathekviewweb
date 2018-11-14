@@ -1,10 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-
-import { Result as RestApiResult } from '../common/api/rest';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { isResponse, Response } from '../common/api/rest';
 import { AggregatedEntry } from '../common/model';
 import { QueryBody, SearchQuery, SearchResult, Sort } from '../common/search-engine';
 import { SearchStringParser } from '../common/search-string-parser/parser';
+import { toError } from '../common/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +20,7 @@ export class SearchService {
     this.searchStringParser = searchStringParser;
   }
 
-  async searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Promise<SearchResult<AggregatedEntry>> {
+  searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Observable<SearchResult<AggregatedEntry>> {
     const body: QueryBody = this.searchStringParser.parse(searchString);
 
     const query: SearchQuery = {
@@ -28,21 +30,30 @@ export class SearchService {
       limit
     };
 
-    return await this.search(query);
+    return this.search(query);
   }
 
-  async search(query: SearchQuery): Promise<SearchResult<AggregatedEntry>> {
+  search(query: SearchQuery): Observable<SearchResult<AggregatedEntry>> {
     const url = '/api/v2/search';
     // const url = 'http://localhost:8080/api/v2/search';
     // const url = 'https://testing.mediathekviewweb.de/api/v2/search';
 
-    const response = await this.httpClient.post<RestApiResult<SearchResult<AggregatedEntry>>>(url, query, { responseType: 'json' }).toPromise();
-
-    if (response.errors != undefined) {
-      const errorMessage = JSON.stringify(response.errors, null, 2);
-      throw new Error(errorMessage);
-    }
-
-    return response.result!;
+    return this.httpClient.post<Response<SearchResult<AggregatedEntry>>>(url, query, { responseType: 'json' })
+      .pipe(
+        map(toResult)
+      );
   }
+}
+
+function toResult<T>(response: Response<T>): T {
+  if (!isResponse(response)) {
+    throw toError(response);
+  }
+
+  if (response.errors != null) {
+    const errorMessage = JSON.stringify(response.errors, null, 2);
+    throw new Error(errorMessage);
+  }
+
+  return response.result;
 }
