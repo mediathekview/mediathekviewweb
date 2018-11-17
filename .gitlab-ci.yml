@@ -1,7 +1,3 @@
-before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  - mkdir empty_dir
-
 variables:
   DOCKER_DRIVER: overlay2
 
@@ -22,6 +18,15 @@ variables:
   DIST_IMAGE_DOCKER_HUB: "mediathekview/mediathekviewweb:latest"
   DIST_IMAGE_DOCKER_HUB_DEVELOPMENT: "mediathekview/mediathekviewweb:development"
 
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - mkdir empty_dir
+
+image: $DOCKER_BASH_IMAGE_LATEST
+
+services:
+  - docker:dind
+
 stages:
   - build:dependencies
   - build:application
@@ -36,8 +41,6 @@ build:docker-bash:
   only:
     variables:
       - $BUILD_DOCKER_BASH == "true"
-  services:
-    - docker:dind
   script:
     - docker pull $DOCKER_BASH_IMAGE_LATEST || true
     - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_LATEST --tag $DOCKER_BASH_IMAGE_SHA --tag $DOCKER_BASH_IMAGE_LATEST empty_dir
@@ -46,37 +49,28 @@ build:docker-bash:
 
 build:server:
   stage: build:application
-  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   except:
     - schedules
-  services:
-    - docker:dind
   script:
     - bash ci/build-image.sh -f ci/server.dockerfile -c $SERVER_DIST_IMAGE_BEFORE_SHA -c $SERVER_DIST_IMAGE_SHA -n $SERVER_DIST_IMAGE_SHA -n $SERVER_DIST_IMAGE_LATEST .
 
 build:client:
   stage: build:application
-  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   except:
     - schedules
-  services:
-    - docker:dind
   script:
     - bash ci/build-image.sh -f ci/client.dockerfile -c $CLIENT_DIST_IMAGE_BEFORE_SHA -c $CLIENT_DIST_IMAGE_SHA -n $CLIENT_DIST_IMAGE_SHA -n $CLIENT_DIST_IMAGE_LATEST .
 
 pack:dist:
   stage: pack
-  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   except:
     - schedules
-  services:
-    - docker:dind
   script:
     - bash ci/build-image.sh -f ci/dist.dockerfile -a CLIENT_DIST_IMAGE=$CLIENT_DIST_IMAGE_SHA -a SERVER_DIST_IMAGE=$SERVER_DIST_IMAGE_SHA -c $DIST_IMAGE_SHA_BEFORE -c $DIST_IMAGE_SHA -n $DIST_IMAGE_SHA -n $DIST_IMAGE_LATEST empty_dir
     - bash ci/extract-from-image.sh $DIST_IMAGE_SHA /mediathekviewweb dist
@@ -88,15 +82,12 @@ pack:dist:
 publish:image:
   stage: publish
   when: manual
-  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   only:
     - master
   except:
     - schedules
-  services:
-    - docker:dind
   script:
     - docker pull $DIST_IMAGE_SHA
     - docker tag $DIST_IMAGE_SHA $DIST_IMAGE_DOCKER_HUB
@@ -106,15 +97,12 @@ publish:image:
 publish:image-development:
   stage: publish
   when: manual
-  image: $DOCKER_BASH_IMAGE_LATEST
   tags:
     - docker
   only:
     - development
   except:
     - schedules
-  services:
-    - docker:dind
   script:
     - docker pull $DIST_IMAGE_SHA
     - docker tag $DIST_IMAGE_SHA $DIST_IMAGE_DOCKER_HUB_DEVELOPMENT
