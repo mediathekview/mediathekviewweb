@@ -22,36 +22,39 @@ export default class MediathekIndexer extends EventEmitter {
     this.stateEmitter = new StateEmitter(this);
   }
 
-  indexFilmliste(file, callback) {
+  async indexFilmliste(file): Promise<void> {
     this.stateEmitter.setState('step', 'indexFilmliste');
-    this.hasCurrentState((err, hasCurrentState) => {
-      if (err) {
-        return callback(err);
-      }
 
-      if (hasCurrentState) {
-        return this.deltaIndexFilmliste(file, (err) => {
+    return new Promise<void>((resolve, reject) => {
+      this.hasCurrentState((err, hasCurrentState) => {
+        if (err) {
+          return reject(err);
+        }
+
+        if (hasCurrentState) {
+          return this.deltaIndexFilmliste(file, (err) => {
+            if (err) {
+              return reject(err);
+            }
+            this.finalize((err) => {
+              if (err) {
+                return reject(err);
+              }
+              resolve(null);
+            });
+          });
+        }
+
+        this.fullIndexFilmliste(file, (err) => {
           if (err) {
-            return callback(err);
+            return reject(err);
           }
           this.finalize((err) => {
             if (err) {
-              return callback(err);
+              return reject(err);
             }
-            callback(null);
+            resolve(null);
           });
-        });
-
-      }
-      this.fullIndexFilmliste(file, (err) => {
-        if (err) {
-          return callback(err);
-        }
-        this.finalize((err) => {
-          if (err) {
-            return callback(err);
-          }
-          callback(null);
         });
       });
     });

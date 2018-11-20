@@ -9,6 +9,11 @@ import REDIS from 'redis';
 import StateEmitter from './StateEmitter.js';
 import requestProgress from 'request-progress';
 import * as utils from './utils';
+import { promisify } from 'util';
+
+const open = promisify(fs.open);
+const close = promisify(fs.close);
+const unlink = promisify(fs.unlink);
 
 export default class MediathekManager extends EventEmitter {
   stateEmitter: StateEmitter;
@@ -117,46 +122,43 @@ export default class MediathekManager extends EventEmitter {
       if (err) {
         callback(err, false);
       } else if (mirror != null) {
-        this.updateFilmliste(mirror, (err) => {
-          if (err) {
-            callback(err, false);
-          } else {
-            callback(null, true);
-          }
-        });
+        this.updateFilmliste(mirror)
+          .then(() => callback(null, true))
+          .catch((error) => callback(error, false));
       } else {
         callback(null, false);
       }
     });
   }
 
-  updateFilmliste(mirror, callback) {
+  async updateFilmliste(mirror): Promise<void> {
     this.stateEmitter.setState('step', 'updateFilmliste');
 
-    const file = path.join(config.dataDirectory, 'newFilmliste');
+    var filemlisteFilename = Date.now().toString() + Math.round(Math.random() * 100000).toString();
 
-    this.downloadFilmliste(mirror, file, (error) => {
-      if (error) {
-        callback(error);
-      } else {
-        this.mediathekIndexer.indexFilmliste(file, (error) => {
-          if (error) {
-            callback(error);
-          } else {
-            callback(null);
-          }
+    const file = path.join(config.dataDirectory, filemlisteFilename);
 
-          fs.unlink(file, (error) => {
-            console.error(error);
-          })
-        });
+    await this.downloadFilmliste(mirror, file);
+
+    try {
+      await this.mediathekIndexer.indexFilmliste(file);
+    }
+    finally {
+      try {
+        await unlink(file);
       }
-    });
+      catch (error) {
+        console.error(error)
+      }
+    }
   }
 
-  downloadFilmliste(mirror, file, callback) {
+  async downloadFilmliste(mirror, file): Promise<void> {
     this.stateEmitter.setState('step', 'downloadFilmliste');
-    fs.open(file, 'w', (err, fd) => {
+
+    const fd = await open(file, 'w');
+
+    return new Promise<void>((resolve, reject) => {
       const fileStream = fs.createWriteStream(null, {
         fd: fd,
         autoClose: true
@@ -169,12 +171,12 @@ export default class MediathekManager extends EventEmitter {
       fileStream.on('error', (err) => {
         req.abort();
         fs.close(fd, () => { });
-        callback(err);
+        reject(err);
       });
 
       req.on('error', (err) => {
         fs.close(fd, () => {
-          callback(err);
+          reject(err);
         });
       });
 
@@ -189,10 +191,15 @@ export default class MediathekManager extends EventEmitter {
       });
 
       const decompressor = lzma.createDecompressor();
-      req.pipe(decompressor).pipe(fileStream).on('finish', () => {
-        fs.close(fd, () => {
-          callback(null);
-        });
+      req.pipe(decompressor).pipe(fileStream).on('finish', async () => {
+        try {
+          await close(fd);
+        }
+        catch (error) {
+          console.error(error);
+        }
+
+        resolve(null);
       });
     });
   }
