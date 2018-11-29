@@ -342,13 +342,7 @@ const impressum = renderImpressum(config.contact);
     });
 
     socket.on('getImpressum', (callback) => {
-      fs.readFile(path.join(__dirname, '/client/impressum.html'), 'utf-8', (err, data) => {
-        if (err) {
-          callback(err.message);
-        } else {
-          callback(data);
-        }
-      });
+      callback(impressum);
     });
 
     socket.on('getDatenschutz', (callback) => {
