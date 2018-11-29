@@ -15,6 +15,9 @@ import MediathekManager from './MediathekManager';
 import RSSFeedGenerator from './RSSFeedGenerator';
 import SearchEngine from './SearchEngine';
 import * as utils from './utils';
+import renderImpressum from './pages/impressum';
+
+const impressum = renderImpressum(config.contact);
 
 (async () => {
   const redis = REDIS.createClient(config.redis);
@@ -96,21 +99,15 @@ import * as utils from './utils';
   app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, '/client/index.html'));
   });
+
   app.get('/donate', function (req, res) {
     res.sendFile(path.join(__dirname, '/client/donate.html'));
   });
+
   app.get('/impressum', function (req, res) {
-    const filePath = path.join(__dirname, '/client/impressum.html');
-    fs.readFile(filePath, { encoding: 'utf8' }, (error, contentTemplate) => {
-      if (error) {
-        return res.send(`ERROR: ${error.message}`);
-      }
-
-      const content = contentTemplate.replace(/{{\s*(\w*?)\s*}}/g, (substring, field) => config.contact[field]);
-
-      res.send(content);
-    });
+    res.send(impressum);
   });
+
   app.get('/datenschutz', function (req, res) {
     res.sendFile(path.join(__dirname, '/client/datenschutz.html'));
   });
