@@ -9,7 +9,7 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "analyze": "ng build --configuration analyze && webpack-bundle-analyzer dist/stats.json dist/ --mode static && source-map-explorer dist/main.js  && source-map-explorer dist/vendor.js"
+    "analyze": "ng build --configuration analyze && webpack-bundle-analyzer dist/stats.json dist/ --mode static --report dist/report.html && source-map-explorer dist/main.js && source-map-explorer dist/vendor.js && source-map-explorer dist/styles.css"
   },
   "private": true,
   "dependencies": {
