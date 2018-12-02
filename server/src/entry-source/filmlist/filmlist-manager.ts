@@ -91,7 +91,7 @@ export class FilmlistManager {
 
   private async enqueueFilmlistImport(filmlist: Filmlist): Promise<void> {
     const timestamp = filmlist.date.valueOf();
-    const id = filmlist.fileMetadata.ressource.uri + timestamp;
+    const id = filmlist.fileMetadata.resource.uri + timestamp;
     const priority = Number.MAX_SAFE_INTEGER - filmlist.date.valueOf();
 
     await this.importQueue.enqueue(filmlist, { jobID: id, priority: priority });

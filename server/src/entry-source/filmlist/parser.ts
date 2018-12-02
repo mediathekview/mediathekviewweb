@@ -12,7 +12,6 @@ const READ_SIZE = 100 * 1024; // 100 KB
 
 export class FilmlistParser implements AsyncIterable<Entry[]> {
   private readonly stream: Readable;
-  private readonly metadataCallback: (metadata: FilmlistMetadata) => void;
 
   private inputBuffer: string;
   private outputBuffer: Entry[];
@@ -21,11 +20,8 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
 
   metadata: FilmlistMetadata | null;
 
-  constructor(stream: Readable)
-  constructor(stream: Readable, metadataCallback: (metadata: FilmlistMetadata) => void)
-  constructor(stream: Readable, metadataCallback: (metadata: FilmlistMetadata) => void = () => { }) {
+  constructor(stream: Readable) {
     this.stream = stream;
-    this.metadataCallback = metadataCallback;
 
     this.inputBuffer = '';
     this.outputBuffer = [];
@@ -53,8 +49,6 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
   }
 
   private parseBuffer(buffer: string, parseMetadata: boolean): string {
-    let match: RegExpMatchArray | null;
-
     if (parseMetadata) {
       const result = this.parseMetadata(buffer);
 

@@ -2,8 +2,8 @@ import { IncomingMessage, Server, ServerResponse } from 'http';
 import { MiddlewareExposer, ParameterVerifierExposerMiddleware } from './api/exposer/middleware';
 import { RestExposer } from './api/exposer/rest';
 import { ErrorType, Response, ResultError } from './common/api/rest';
-import { AggregatedEntry } from './common/model';
-import { SearchEngine, SearchResult } from './common/search-engine';
+import { AggregatedEntry, EntrySearchResult } from './common/model';
+import { SearchEngine } from './common/search-engine';
 import { SearchQuery } from './common/search-engine/query';
 import { InstanceProvider } from './instance-provider';
 
@@ -57,7 +57,7 @@ export class MediathekViewWebExposer {
       .addOptional(SEARCH_PATH, 'sort', 'skip', 'limit');
 
     this.exposer!.expose(SEARCH_PATH, async (parameters) => {
-      let response: Response<SearchResult<AggregatedEntry>> = {};
+      let response: Response<EntrySearchResult> = {};
 
       try {
         const result = await this.searchEngine!.search(parameters as SearchQuery);

@@ -1,5 +1,7 @@
 import { PropertyValidationError, PropertyValidationFunction, PropertyValidationResult } from './validator';
 
+export type ValidationTypes = 'string' | 'number' | 'boolean' | 'null' | 'undefined' | 'date' | 'array';
+
 export const NULL_OR_UNDEFINED_ERROR: PropertyValidationError = Object.freeze({
   message: 'value is null or undefined'
 });
@@ -22,7 +24,7 @@ export function validateValue<T>(value: T, allowedValues: T[]): PropertyValidati
 }
 
 export function validateArray<T>(value: T[], validator: PropertyValidationFunction<T>): PropertyValidationResult {
-  const arrayValidation = validateType(value, ['array']);
+  const arrayValidation = validateType(value, 'array');
 
   if (arrayValidation != null) {
     return arrayValidation;
@@ -43,10 +45,10 @@ export function validateArray<T>(value: T[], validator: PropertyValidationFuncti
 }
 
 export function validateString(value: string): PropertyValidationResult {
-  return validateType(value, ['string']);
+  return validateType(value, 'string');
 }
 
-export function validateType(value: unknown, types: string[]): PropertyValidationResult {
+export function validateType(value: unknown, ...types: ValidationTypes[]): PropertyValidationResult {
   const typeValidators: StringMap<(value: unknown) => boolean> = {
     'string': (value: unknown) => (typeof value == 'string'),
     'number': (value: unknown) => (typeof value == 'number'),

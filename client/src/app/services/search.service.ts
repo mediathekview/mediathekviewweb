@@ -3,8 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { isErrorResponse, isResultResponse, Response } from '../common/api/rest';
-import { AggregatedEntry } from '../common/model';
-import { SearchResult } from '../common/search-engine';
+import { EntrySearchResult } from '../common/model';
 import { QueryBody, SearchQuery, Sort } from '../common/search-engine/query';
 import { SearchStringParser } from '../common/search-string-parser/parser';
 import { toError } from '../common/utils';
@@ -21,7 +20,7 @@ export class SearchService {
     this.searchStringParser = searchStringParser;
   }
 
-  searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Observable<SearchResult<AggregatedEntry>> {
+  searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Observable<EntrySearchResult> {
     const body: QueryBody = this.searchStringParser.parse(searchString);
 
     const query: SearchQuery = {
@@ -34,12 +33,12 @@ export class SearchService {
     return this.search(query);
   }
 
-  search(query: SearchQuery): Observable<SearchResult<AggregatedEntry>> {
+  search(query: SearchQuery): Observable<EntrySearchResult> {
     const url = '/api/v2/search';
     // const url = 'http://localhost:8080/api/v2/search';
     // const url = 'https://testing.mediathekviewweb.de/api/v2/search';
 
-    return this.httpClient.post<Response<SearchResult<AggregatedEntry>>>(url, query, { responseType: 'json' })
+    return this.httpClient.post<Response<EntrySearchResult>>(url, query, { responseType: 'json' })
       .pipe(
         map(toResult)
       );

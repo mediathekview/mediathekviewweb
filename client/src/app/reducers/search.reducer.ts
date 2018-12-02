@@ -1,9 +1,8 @@
 import { SearchActions, SearchActionTypes } from '../actions/search.actions';
-import { AggregatedEntry } from '../common/model';
-import { SearchResult } from '../common/search-engine';
+import { EntrySearchResult } from '../common/model';
 
 export type SearchState = {
-  result: SearchResult<AggregatedEntry> | null,
+  result: EntrySearchResult | null,
   error: Error | null
 };
 

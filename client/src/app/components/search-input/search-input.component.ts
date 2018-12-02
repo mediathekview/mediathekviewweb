@@ -1,7 +1,8 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, Observable } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
+import { Segment, Segmentizer } from 'src/app/common/search-string-parser';
 
 @Component({
   selector: 'app-search-input',
@@ -9,6 +10,7 @@ import { distinctUntilChanged, map } from 'rxjs/operators';
   styleUrls: ['./search-input.component.scss']
 })
 export class SearchInputComponent implements OnInit {
+  private readonly segmentizer: Segmentizer;
   private inputChangeSubscription: Subscription;
   readonly searchInput: FormControl;
 
@@ -20,15 +22,23 @@ export class SearchInputComponent implements OnInit {
   @Input() searchString: string;
   @Output() searchStringChange: EventEmitter<string>;
 
+  segments$: Observable<Segment[]>;
+
   constructor() {
     this.searchStringChange = new EventEmitter();
     this.searchInput = new FormControl();
     this.searchString = '';
+
+    this.segmentizer = new Segmentizer();
   }
 
   ngOnInit() {
     this.subscribeInputChange();
     this.searchInput.setValue(this.searchString);
+
+    this.segments$ = this.searchStringChange.pipe(
+      map((searchString) => this.segmentizer.segmentize(searchString))
+    );
   }
 
   clear() {

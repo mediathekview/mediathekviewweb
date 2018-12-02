@@ -15,7 +15,7 @@
 
 
 <mat-expansion-panel [expanded]="settingsOpened">
-  <ng-template matExpansionPanelContent>
-    Content
-  </ng-template>
+    <div *ngFor="let segment of (segments$ | async)">
+      {{ segment | json }}
+    </div>
 </mat-expansion-panel>

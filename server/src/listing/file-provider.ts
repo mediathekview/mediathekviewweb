@@ -1,7 +1,6 @@
-import { Ressource } from './ressource';
 import { File } from './file';
 import { HttpFile } from './generic/index';
-import { RessourceType } from './index';
+import { ResourceType } from './index';
 import { FileMetadata } from './metadata';
 
 export class FileProvider {
@@ -10,12 +9,12 @@ export class FileProvider {
       return metadata;
     }
 
-    switch (metadata.ressource.type) {
-      case RessourceType.Http:
+    switch (metadata.resource.type) {
+      case ResourceType.Http:
         return new HttpFile(metadata);
 
       default:
-        throw new Error('ressource type not supported');
+        throw new Error('resource type not supported');
     }
   }
 }

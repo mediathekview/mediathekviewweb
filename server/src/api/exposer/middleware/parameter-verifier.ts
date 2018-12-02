@@ -2,7 +2,7 @@ import '../../../common/extensions/set';
 import { Response, ResultError } from '../../../common/api/rest';
 import { SyncEnumerable } from '../../../common/enumerable';
 import { InvalidRequestError } from '../errors/invalid-request';
-import { Parameters } from '../exposer';
+import { ExposedFunctionParameters } from '../exposer';
 import { ExposerMiddleware, ExposerMiddlewareNextFunction } from './exposer';
 
 type Verification = {
@@ -37,7 +37,7 @@ export class ParameterVerifierExposerMiddleware<T> implements ExposerMiddleware<
     return this;
   }
 
-  async handle(path: string[], parameters: Parameters, next: ExposerMiddlewareNextFunction<T>): Promise<Response<T>> {
+  async handle(path: string[], parameters: ExposedFunctionParameters, next: ExposerMiddlewareNextFunction<T>): Promise<Response<T>> {
     const verification = this.getVerification(path);
 
     const propertyNames = Object.getOwnPropertyNames(parameters);

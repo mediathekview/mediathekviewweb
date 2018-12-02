@@ -8,7 +8,7 @@ export class TermQueryValidator extends ObjectValidator<TermQueryBody> {
 
   protected propertyValidators = {
     field: (value: string) => validateString(value),
-    value: (value: TermQueryValue) => validateType(value, ['string', 'number', 'boolean', 'date'])
+    value: (value: TermQueryValue) => validateType(value, 'string', 'number', 'boolean', 'date')
   };
 
   constructor() {

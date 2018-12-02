@@ -1,23 +1,23 @@
 import { Readable } from 'stream';
-
-import { File, FileMetadata } from '../';
 import { HttpClient } from '../../http';
-import { Ressource } from '../ressource';
+import { File } from '../file';
+import { FileMetadata } from '../metadata';
+import { Resource } from '../resource';
 
 export class HttpFile implements File {
-    ressource: Ressource;
-    name: string;
-    size: number;
-    date: Date;
+  resource: Resource;
+  name: string;
+  size: number;
+  date: Date;
 
-    constructor(metadata: FileMetadata) {
-        this.ressource = metadata.ressource;
-        this.name = metadata.name;
-        this.size = metadata.size;
-        this.date = metadata.date;
-    }
+  constructor(metadata: FileMetadata) {
+    this.resource = metadata.resource;
+    this.name = metadata.name;
+    this.size = metadata.size;
+    this.date = metadata.date;
+  }
 
-    getStream(): Readable {
-        return HttpClient.getStream(this.ressource.uri);
-    }
+  getStream(): Readable {
+    return HttpClient.getStream(this.resource.uri);
+  }
 }

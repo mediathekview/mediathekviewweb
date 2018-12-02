@@ -1,7 +1,7 @@
-import { Ressource } from './ressource';
+import { Resource } from './resource';
 
 export type FileMetadata = {
-  ressource: Ressource;
+  resource: Resource;
   name: string;
   size: number;
   date: Date;

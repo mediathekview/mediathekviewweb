@@ -1,5 +1,4 @@
-import { AggregatedEntry } from '../common/model';
-import { SearchResult } from '../common/search-engine';
+import { EntrySearchResult } from '../common/model';
 import { Sort } from '../common/search-engine/query';
 import { PayloadAction } from './payload.action';
 
@@ -20,7 +19,7 @@ export class StringSearch extends PayloadAction<StringSearchPayload> {
   readonly type = SearchActionTypes.StringSearch;
 }
 
-export class SearchSuccess extends PayloadAction<SearchResult<AggregatedEntry>> {
+export class SearchSuccess extends PayloadAction<EntrySearchResult> {
   readonly type = SearchActionTypes.SearchSuccess;
 }
 
