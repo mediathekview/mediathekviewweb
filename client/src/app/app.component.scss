@@ -1,0 +1,22 @@
+:host {
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+
+  grid-template-rows: auto 1fr;
+
+  grid-template-areas:
+    "navbar"
+    "content";
+
+  grid-row-gap: 1rem;
+}
+
+app-navbar {
+  grid-area: navbar;
+}
+
+.container {
+  grid-area: content;
+  padding-bottom: 1rem;
+}

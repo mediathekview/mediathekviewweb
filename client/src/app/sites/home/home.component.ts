@@ -20,9 +20,7 @@ export class HomeComponent implements OnInit {
   constructor(store: Store<AppState>) {
     this.store = store;
     this.error$ = store.pipe(select(selectSearchError));
-    this.result$ = store.pipe(select(selectSearchResult))
-
-    this.result$.subscribe(console.log)
+    this.result$ = store.pipe(select(selectSearchResult));
   }
 
   ngOnInit() {

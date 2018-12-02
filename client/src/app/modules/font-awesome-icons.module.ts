@@ -1,10 +1,11 @@
 import { NgModule } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faEraser } from '@fortawesome/free-solid-svg-icons';
+import { faEraser, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
 const icons = [
-  faEraser
+  faEraser,
+  faChevronDown
 ];
 
 @NgModule({

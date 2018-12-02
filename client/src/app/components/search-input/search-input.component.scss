@@ -1,7 +1,9 @@
-input {
+.no-bottom-border-radius {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+}
 
+input {
   &:placeholder-shown {
     +.icon>fa-icon {
       opacity: 0;
@@ -19,4 +21,8 @@ input {
 .mat-expansion-panel {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+
+.field {
+  margin-bottom: 0;
 }

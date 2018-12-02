@@ -2,7 +2,6 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild }
 import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
-import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-search-input',
@@ -13,7 +12,7 @@ export class SearchInputComponent implements OnInit {
   private inputChangeSubscription: Subscription;
   readonly searchInput: FormControl;
 
-  faEraser = faEraser;
+  settingsOpened: boolean = false;
 
   @ViewChild('searchInputElement')
   private readonly searchInputRef: ElementRef<HTMLInputElement>;

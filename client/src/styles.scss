@@ -32,17 +32,23 @@ body {
   transform: scale(1.15);
 }
 
-*:hover > .is-parent-hover-scale {
+*:hover>.is-parent-hover-scale {
   transform: scale(1.15);
 }
 
 .is-animated {
-  transition: all 0.3s;
 
+  @at-root fa-icon#{&} svg,
+  & {
+    transition: all 0.3s;
+  }
+
+  @at-root fa-icon#{&}.fast svg,
   &.fast {
     transition: all 0.15s;
   }
 
+  @at-root fa-icon#{&}.slow svg,
   &.slow {
     transition: all 0.5s;
   }
