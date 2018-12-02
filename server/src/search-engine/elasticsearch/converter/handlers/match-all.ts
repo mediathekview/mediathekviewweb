@@ -1,4 +1,4 @@
-import { MatchAllQuery } from '../../../../common/search-engine';
+import { MatchAllQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler } from '../convert-handler';
 
 type ElasticsearchMatchAllQuery = { match_all: {} }

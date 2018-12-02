@@ -1,6 +1,5 @@
-import { IDsQuery, QueryBody, RegexQuery } from '../../../../common/search-engine';
+import { RegexQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler } from '../convert-handler';
-import { Converter } from '../converter';
 
 type ElasticsearchRegexQuery = { regexp: StringMap<string> }
 

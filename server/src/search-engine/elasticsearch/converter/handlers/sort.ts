@@ -1,4 +1,4 @@
-import { Aggregation, Sort } from '../../../../common/search-engine';
+import { Aggregation, Sort } from '../../../../common/search-engine/query';
 
 type ElasticsearchSortOrder = 'asc' | 'desc'
 type ElasticsearchSortMode = 'min' | 'max' | 'sum' | 'avg' | 'median'

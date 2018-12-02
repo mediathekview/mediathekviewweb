@@ -1,4 +1,4 @@
-import { BoolQuery, QueryBody } from '../../../../common/search-engine';
+import { BoolQuery, QueryBody } from '../../../../common/search-engine/query';
 import { ConvertHandler } from '../convert-handler';
 import { Converter } from '../converter';
 

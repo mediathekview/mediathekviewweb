@@ -1,5 +1,6 @@
 import { AggregatedEntry } from '../common/model';
-import { SearchResult, Sort } from '../common/search-engine';
+import { SearchResult } from '../common/search-engine';
+import { Sort } from '../common/search-engine/query';
 import { PayloadAction } from './payload.action';
 
 export type StringSearchPayload = {

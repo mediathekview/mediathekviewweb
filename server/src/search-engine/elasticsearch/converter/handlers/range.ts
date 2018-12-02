@@ -1,4 +1,4 @@
-import { RangeQuery } from '../../../../common/search-engine';
+import { RangeQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler } from '../convert-handler';
 
 type ElasticsearchRangeQueryValue = number | string;

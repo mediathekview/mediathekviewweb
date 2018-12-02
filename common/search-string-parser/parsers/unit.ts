@@ -32,7 +32,7 @@ export class UnitParser {
     while ((match = regex.exec(text)) != null) {
       const [, valueString, unit] = match;
       const normalizedValueString = valueString.replace(',', '.');
-      
+
       const value = Number.parseFloat(normalizedValueString);
       const result: SplitResult = { value: value, unitString: unit };
 

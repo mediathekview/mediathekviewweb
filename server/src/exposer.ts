@@ -1,9 +1,10 @@
 import { IncomingMessage, Server, ServerResponse } from 'http';
 import { MiddlewareExposer, ParameterVerifierExposerMiddleware } from './api/exposer/middleware';
 import { RestExposer } from './api/exposer/rest';
-import { ErrorType, Response, ResultError, ErrorResponse, ResultResponse } from './common/api/rest';
+import { ErrorType, Response, ResultError } from './common/api/rest';
 import { AggregatedEntry } from './common/model';
-import { SearchEngine, SearchQuery, SearchResult } from './common/search-engine';
+import { SearchEngine, SearchResult } from './common/search-engine';
+import { SearchQuery } from './common/search-engine/query';
 import { InstanceProvider } from './instance-provider';
 
 const REST_PREFIX = '/api/v2';

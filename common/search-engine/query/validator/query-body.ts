@@ -1,14 +1,13 @@
-import { QueryBody } from '..';
+import { nullOrUndefined } from '../../../validator/common';
 import { ObjectValidator } from '../../../validator/validator';
-import { BoolQueryBody, IDsQueryBody, MatchAllQueryBody, RangeQueryBody, RegexQueryBody, TermQueryBody, TextQueryBody } from '../definition';
+import { BoolQueryBody, IDsQueryBody, MatchAllQueryBody, QueryBody, RangeQueryBody, RegexQueryBody, TermQueryBody, TextQueryBody } from '../definition';
 import { BoolQueryBodyValidator } from './bool';
 import { IdsQueryValidator } from './ids';
-import { MatchAllQueryValidator } from './matchAll';
+import { MatchAllQueryValidator } from './match-all';
 import { RangeQueryValidator } from './range';
 import { RegexQueryValidator } from './regex';
 import { TermQueryValidator } from './term';
 import { TextQueryValidator } from './text';
-import { nullOrUndefined, NULL_OR_UNDEFINED_ERROR } from '../../../validator/common';
 
 export class QueryBodyValidator extends ObjectValidator<QueryBody> {
   private readonly termQueryValidator: TermQueryValidator;

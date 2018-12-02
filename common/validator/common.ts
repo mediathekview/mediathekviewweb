@@ -1,5 +1,4 @@
-import { PropertyValidationError, PropertyValidationFunction, PropertyValidationResult, ObjectValidationResult } from './validator';
-import { AnyIterable } from '../utils';
+import { PropertyValidationError, PropertyValidationFunction, PropertyValidationResult } from './validator';
 
 export const NULL_OR_UNDEFINED_ERROR: PropertyValidationError = Object.freeze({
   message: 'value is null or undefined'
@@ -47,15 +46,15 @@ export function validateString(value: string): PropertyValidationResult {
   return validateType(value, ['string']);
 }
 
-export function validateType(value: any, types: string[]): PropertyValidationResult {
-  const typeValidators: StringMap<(value: any) => boolean> = {
-    'string': (value: any) => (typeof value == 'string'),
-    'number': (value: any) => (typeof value == 'number'),
-    'boolean': (value: any) => (typeof value == 'boolean'),
-    'null': (value: any) => (value == null),
-    'undefined': (value: any) => (value == undefined),
-    'date': (value: any) => (value instanceof Date),
-    'array': (value: any) => Array.isArray(value)
+export function validateType(value: unknown, types: string[]): PropertyValidationResult {
+  const typeValidators: StringMap<(value: unknown) => boolean> = {
+    'string': (value: unknown) => (typeof value == 'string'),
+    'number': (value: unknown) => (typeof value == 'number'),
+    'boolean': (value: unknown) => (typeof value == 'boolean'),
+    'null': (value: unknown) => (value == null),
+    'undefined': (value: unknown) => (value == undefined),
+    'date': (value: unknown) => (value instanceof Date),
+    'array': (value: unknown) => Array.isArray(value)
   };
 
   const invalidTypes = types.filter((type) => !(type in typeValidators));

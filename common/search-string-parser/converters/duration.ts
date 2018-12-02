@@ -1,6 +1,6 @@
 import { SegmentConverter } from '../';
 import { Field } from '../../model';
-import { QueryBody } from '../../search-engine';
+import { QueryBody } from '../../search-engine/query';
 import { RangeQueryBuilder, TermQueryBuilder } from '../../search-engine/query/builder';
 import { Range, RangeParser, RangeType } from '../parsers/range';
 import { TimeParser } from '../parsers/time';
@@ -37,8 +37,6 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
   }
 
   private convertSingle(range: Range): QueryBody | null {
-    const time = this.timeParser.parse(range.text);
-
     let queryBuilder: TermQueryBuilder | RangeQueryBuilder;
 
     switch (range.type) {
@@ -58,9 +56,10 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
         break;
     }
 
-    queryBuilder.field(FIELD);
+    const query = queryBuilder
+      .field(FIELD)
+      .build();
 
-    const query = queryBuilder.build();
     return query;
   }
 

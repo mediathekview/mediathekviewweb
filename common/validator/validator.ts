@@ -30,7 +30,7 @@ export abstract class ObjectValidator<T extends object> {
 
     const missingProperties = required.difference(properties);
     const unknownProperties = properties.difference(required, optional);
-    const knownProperties = required.union(optional).intersect(properties);
+    // const knownProperties = required.union(optional).intersect(properties);
 
     let result: ObjectValidationResult | null = null;
 

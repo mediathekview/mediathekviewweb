@@ -33,6 +33,7 @@ export class SearchStringParser {
     const segments = this.segmentizer.segmentize(text);
 
     const groupedResults = SyncEnumerable.from(segments)
+      .filter((segment) => segment.text.length > 0)
       .map((result) => this.convertSegment(result))
       .filter((result) => result != null)
       .cast<SegmentConverterResultArray>()

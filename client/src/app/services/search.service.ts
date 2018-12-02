@@ -1,10 +1,11 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-import { isResponse, Response, isErrorResponse, isResultResponse } from '../common/api/rest';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { isErrorResponse, isResultResponse, Response } from '../common/api/rest';
 import { AggregatedEntry } from '../common/model';
-import { QueryBody, SearchQuery, SearchResult, Sort } from '../common/search-engine';
+import { SearchResult } from '../common/search-engine';
+import { QueryBody, SearchQuery, Sort } from '../common/search-engine/query';
 import { SearchStringParser } from '../common/search-string-parser/parser';
 import { toError } from '../common/utils';
 

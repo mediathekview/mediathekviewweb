@@ -1,9 +1,10 @@
 import * as Elasticsearch from 'elasticsearch';
-
 import { Logger } from '../../common/logger';
-import { SearchEngine, SearchEngineItem, SearchQuery, SearchResult } from '../../common/search-engine';
+import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/search-engine';
+import { SearchQuery } from '../../common/search-engine/query';
 import { timeout } from '../../common/utils';
 import { Converter } from './converter';
+
 
 
 type ElasticsearchBulkResponse = { took: number, errors: boolean, items: StringMap<ElasticsearchBulkResponseItem>[] };

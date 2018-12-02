@@ -1,4 +1,4 @@
-import { TextQuery } from '../../../../common/search-engine';
+import { TextQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler } from '../convert-handler';
 
 type ElasticsearchMatchOperator = 'and' | 'or';
@@ -39,7 +39,6 @@ export class TextQueryConvertHandler implements ConvertHandler {
 
     return queryObject;
   }
-
 
   convertToMatch(field: string, text: string, operator: ElasticsearchMatchOperator): ElasticsearchMatchQuery {
     const queryObj: ElasticsearchMatchQuery = {

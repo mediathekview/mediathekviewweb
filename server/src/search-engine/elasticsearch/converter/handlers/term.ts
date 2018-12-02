@@ -1,4 +1,4 @@
-import { MatchAllQuery, TermQuery } from '../../../../common/search-engine';
+import { TermQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler } from '../convert-handler';
 
 type ElasticsearchTermQuery = { term: StringMap<string | number | boolean | Date> }

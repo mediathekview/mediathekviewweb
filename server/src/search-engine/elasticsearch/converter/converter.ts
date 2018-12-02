@@ -1,17 +1,7 @@
 import { SearchParams } from 'elasticsearch';
-
-import { QueryBody, SearchQuery } from '../../../common/search-engine';
+import { QueryBody, SearchQuery } from '../../../common/search-engine/query';
 import { ConvertHandler } from './convert-handler';
-import {
-  BoolQueryConvertHandler,
-  IDsQueryConvertHandler,
-  MatchAllQueryConvertHandler,
-  RangeQueryConvertHandler,
-  RegexQueryConvertHandler,
-  SortConverter,
-  TermQueryConvertHandler,
-  TextQueryConvertHandler,
-} from './handlers';
+import { SortConverter } from './handlers';
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 250;

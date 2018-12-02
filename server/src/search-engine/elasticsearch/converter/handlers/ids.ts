@@ -1,6 +1,5 @@
-import { IDsQuery, QueryBody } from '../../../../common/search-engine';
+import { IDsQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler } from '../convert-handler';
-import { Converter } from '../converter';
 
 type ElasticsearchIDsQuery = {
   ids: {
