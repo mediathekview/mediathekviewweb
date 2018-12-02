@@ -1,6 +1,6 @@
-import { AsyncEnumerable } from '../../common/enumerable/index';
+import { AsyncEnumerable } from '../../common/enumerable';
 import { Logger } from '../../common/logger';
-import { now } from '../../common/utils/index';
+import { now } from '../../common/utils';
 import config from '../../config';
 import { DatastoreFactory, DataType, Key, Set } from '../../datastore';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';

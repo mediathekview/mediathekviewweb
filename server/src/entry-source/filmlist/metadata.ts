@@ -1,4 +1,4 @@
-import { FileMetadata } from '../../listing/index';
+import { FileMetadata } from '../../listing';
 
 type FilmlistMetadata = {
   fileMetadata: FileMetadata,

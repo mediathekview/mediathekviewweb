@@ -2,7 +2,7 @@ import { AggregatedEntryRepository } from './aggregated-entry-repository';
 import { EntryRepository } from './entry-repository';
 import { AggregatedEntry, Entry } from '../common/model';
 import { AnyIterable } from '../common/utils';
-import { AsyncEnumerable } from '../common/enumerable/index';
+import { AsyncEnumerable } from '../common/enumerable';
 
 export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepository {
   private readonly entryRepository: EntryRepository;

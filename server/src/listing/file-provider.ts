@@ -1,6 +1,6 @@
 import { File } from './file';
-import { HttpFile } from './generic/index';
-import { ResourceType } from './index';
+import { HttpFile } from './generic';
+import { ResourceType } from './resource';
 import { FileMetadata } from './metadata';
 
 export class FileProvider {
