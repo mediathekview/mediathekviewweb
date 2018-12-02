@@ -11,6 +11,7 @@ import {
   MatSortModule,
   MatTableModule,
   MatToolbarModule,
+  MatExpansionModule,
 } from '@angular/material';
 
 const modules = [
@@ -25,6 +26,7 @@ const modules = [
   MatSortModule,
   MatTableModule,
   MatToolbarModule,
+  MatExpansionModule,
 ];
 
 @NgModule({

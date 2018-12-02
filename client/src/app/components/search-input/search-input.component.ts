@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild }
 import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
+import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-search-input',
@@ -9,16 +10,19 @@ import { distinctUntilChanged, map } from 'rxjs/operators';
   styleUrls: ['./search-input.component.scss']
 })
 export class SearchInputComponent implements OnInit {
+  private inputChangeSubscription: Subscription;
   readonly searchInput: FormControl;
 
-  private inputChangeSubscription: Subscription;
-  @ViewChild('searchInputElement') private searchInputRef: ElementRef<HTMLInputElement>;
+  faEraser = faEraser;
+
+  @ViewChild('searchInputElement')
+  private readonly searchInputRef: ElementRef<HTMLInputElement>;
 
   @Input() searchString: string;
-  @Output() searchStringChanged: EventEmitter<string>;
+  @Output() searchStringChange: EventEmitter<string>;
 
   constructor() {
-    this.searchStringChanged = new EventEmitter();
+    this.searchStringChange = new EventEmitter();
     this.searchInput = new FormControl();
     this.searchString = '';
   }
@@ -39,7 +43,7 @@ export class SearchInputComponent implements OnInit {
 
   onSearchStringInputChanged(searchString: string) {
     this.searchString = searchString;
-    this.searchStringChanged.emit(searchString);
+    this.searchStringChange.emit(searchString);
   }
 
   private subscribeInputChange() {

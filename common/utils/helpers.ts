@@ -109,14 +109,14 @@ export function toError(obj: any): Error {
     return obj;
   }
 
-  let message = 'take a look at data property of error';
+  let message = 'take a look at the data property of error';
 
   try {
     message = JSON.stringify(obj);
   } catch { }
 
   const error = new Error(message);
-  error['data'] = obj;
+  (error as any)['data'] = obj;
 
   return error;
 }

@@ -1,0 +1,42 @@
+.viewport {
+  height: 80vh;
+  width: 100%;
+}
+
+.mat-accordion .mat-expansion-panel {
+  border-radius: 0;
+}
+
+.entry {
+}
+
+.entry-grid {
+  display: grid;
+  padding: 0.3rem 0;
+
+  grid-column-gap: 0.5rem;
+  grid-template-columns: 15rem 2fr;
+  grid-template-areas:
+    "channel title"
+    "topic title";
+
+  span {
+    margin: -0.2rem 0;
+  }
+}
+
+.entry-channel {
+  grid-area: channel;
+}
+
+.entry-topic {
+  grid-area: topic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entry-title {
+  grid-area: title;
+  align-self: center;
+}

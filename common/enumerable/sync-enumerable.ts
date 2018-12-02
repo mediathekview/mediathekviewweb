@@ -1,9 +1,4 @@
-import {
-  any, batch, filter, forEach, group, intercept,
-  IteratorFunction, map, mapMany, Predicate, single, Comparator
-} from '../utils';
-import { sort } from '../utils/iterable-helpers/sort';
-import { first } from '../utils/iterable-helpers/first';
+import { any, batch, Comparator, filter, first, forEach, group, intercept, IteratorFunction, map, mapMany, Predicate, range, reduce, Reducer, single, sort } from '../utils';
 
 export class SyncEnumerable<T> implements IterableIterator<T> {
   private readonly source: Iterable<T>;
@@ -16,6 +11,11 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
 
   static from<T>(iterable: Iterable<T>): SyncEnumerable<T> {
     return new SyncEnumerable(iterable);
+  }
+
+  static fromRange(fromInclusive: number, toInclusive: number): SyncEnumerable<number> {
+    const rangeIterable = range(fromInclusive, toInclusive);
+    return new SyncEnumerable(rangeIterable);
   }
 
   cast<TNew extends T>(): SyncEnumerable<TNew> {
@@ -36,6 +36,12 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return new SyncEnumerable(mapped);
   }
 
+  reduce(reducer: Reducer<T, T>): T;
+  reduce<U>(reducer: Reducer<T, U>, initialValue: U): U;
+  reduce<U>(reducer: Reducer<T, U>, initialValue?: U): U {
+    const result = reduce(this.source, reducer, initialValue);
+    return result;
+  }
 
   first(): T;
   first(predicate: Predicate<T>): T;

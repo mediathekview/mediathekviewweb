@@ -1,14 +1,22 @@
 input {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+
   &:placeholder-shown {
-    + .icon > i {
+    +.icon>fa-icon {
       opacity: 0;
       cursor: initial;
     }
   }
 
   &:not(:placeholder-shown) {
-    + .icon > i {
+    +.icon>fa-icon {
       cursor: pointer;
     }
   }
+}
+
+.mat-expansion-panel {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }

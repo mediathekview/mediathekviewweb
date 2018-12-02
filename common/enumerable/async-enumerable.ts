@@ -2,7 +2,7 @@ import {
   anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable,
   drain, filterAsync, forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync,
   isAsyncIterableIterator, isIterable, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction,
-  ParallelizablePredicate, reduce, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator,
+  ParallelizablePredicate, reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator,
   toAsyncIterator, toSync
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable';
@@ -44,7 +44,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   reduce(reducer: AsyncReducer<T, T>): Promise<T>;
   reduce<U>(reducer: AsyncReducer<T, U>, initialValue: U): Promise<U>;
   async reduce<U>(reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
-    const result = await reduce(this.source, reducer, initialValue);
+    const result = await reduceAsync(this.source, reducer, initialValue);
     return result;
   }
 

@@ -1,1 +1,7 @@
-<app-search-input></app-search-input>
+<app-search-input (searchStringChange)="searchStringChanged($event)"></app-search-input>
+
+<div class="is-height-3"></div>
+
+<div *ngIf="(error$ | async) as error">{{ error.message }}</div>
+
+<app-entry-list *ngIf="(result$ | async) as result" [entries]="result.items"></app-entry-list>

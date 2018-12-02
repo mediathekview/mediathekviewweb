@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { isResponse, Response } from '../common/api/rest';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { isResponse, Response, isErrorResponse, isResultResponse } from '../common/api/rest';
 import { AggregatedEntry } from '../common/model';
 import { QueryBody, SearchQuery, SearchResult, Sort } from '../common/search-engine';
 import { SearchStringParser } from '../common/search-string-parser/parser';
@@ -46,14 +46,14 @@ export class SearchService {
 }
 
 function toResult<T>(response: Response<T>): T {
-  if (!isResponse(response)) {
-    throw toError(response);
-  }
-
-  if (response.errors != null) {
+  if (isErrorResponse(response)) {
     const errorMessage = JSON.stringify(response.errors, null, 2);
     throw new Error(errorMessage);
   }
 
-  return response.result;
+  if (isResultResponse(response)) {
+    return response.result;
+  }
+
+  throw toError(response);
 }

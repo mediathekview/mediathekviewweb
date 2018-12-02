@@ -14,7 +14,7 @@ import {
 } from './handlers';
 
 const DEFAULT_LIMIT = 25;
-const MAX_LIMIT = 100;
+const MAX_LIMIT = 250;
 
 export class Converter {
   private readonly handlers: ConvertHandler[];

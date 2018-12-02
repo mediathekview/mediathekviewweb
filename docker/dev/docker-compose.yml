@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   redis:
-    image: redis:4-alpine
+    image: redis:5-alpine
     container_name: redis
     tmpfs:
       - /data
@@ -18,7 +18,7 @@ services:
       - "27017:27017"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
     container_name: elasticsearch
     tmpfs:
       - /usr/share/elasticsearch/data/

@@ -1,10 +1,13 @@
-<div class="columns is-mobile is-centered">
-  <div class="column is-four-fifths">
-    <p class="control has-icons-right">
-      <input #searchInputElement class="input is-animated fast" type="text" placeholder="Suche" [formControl]="searchInput">
-      <span class="icon is-right is-animated is-interactive" [ngClass]="{ 'is-transparent': searchInput.value == null || searchInput.value.length == 0 }">
-        <i class="fa fa-eraser is-animated fast" (click)="clear()"></i>
-      </span>
-    </p>
-  </div>
-</div>
+<p class="control has-icons-right">
+  <input #searchInputElement class="input is-animated fast" type="text" placeholder="Suche" [formControl]="searchInput">
+
+  <span class="icon is-right is-animated is-interactive" [ngClass]="{ 'is-transparent': searchInput.value == null || searchInput.value.length == 0 }">
+    <fa-icon [icon]="faEraser" (click)="clear()"></fa-icon>
+  </span>
+</p>
+
+<mat-expansion-panel [expanded]="true">
+  <ng-template matExpansionPanelContent>
+    Content
+  </ng-template>
+</mat-expansion-panel>

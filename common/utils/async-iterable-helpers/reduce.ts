@@ -2,18 +2,18 @@ import { AnyIterable } from '../any-iterable';
 import { isAsyncIterable } from './is-async-iterable';
 import { AsyncReducer } from './types';
 
-export function reduce<T>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, T>): Promise<T>;
-export function reduce<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue: U): Promise<U>;
-export function reduce<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U>;
-export function reduce<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
+export function reduceAsync<T>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, T>): Promise<T>;
+export function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue: U): Promise<U>;
+export function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U>;
+export function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
   if (isAsyncIterable(iterable)) {
-    return reduceAsync(iterable, reducer, initialValue);
+    return async(iterable, reducer, initialValue);
   } else {
-    return reduceSync(iterable, reducer, initialValue);
+    return sync(iterable, reducer, initialValue);
   }
 }
 
-export async function reduceSync<T, U>(iterable: Iterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
+async function sync<T, U>(iterable: Iterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
   let accumulator: T | U | undefined = initialValue;
   let index = 0;
 
@@ -35,10 +35,10 @@ export async function reduceSync<T, U>(iterable: Iterable<T>, reducer: AsyncRedu
   return accumulator as U;
 }
 
-async function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
+async function async<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
   let accumulator: T | U | undefined = initialValue;
   let index = 0;
-  
+
   for await (const currentValue of iterable) {
     if (accumulator == undefined) {
       accumulator = currentValue;

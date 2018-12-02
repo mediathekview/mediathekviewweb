@@ -1,7 +1,12 @@
-export type Response<T> = {
-  result?: T,
-  errors?: ResultError[]
-}
+export type ResultResponse<T> = {
+  result: T
+};
+
+export type ErrorResponse = {
+  errors: ResultError[]
+};
+
+export type Response<T> = Partial<ResultResponse<T> | ErrorResponse>;
 
 export type ResultError = {
   type: ErrorType,
@@ -17,18 +22,16 @@ export enum ErrorType {
   ServerError = 'ServerError'
 }
 
+export function isResultResponse<T>(response: Response<T>): response is ResultResponse<T> {
+  const hasResult = (response as ResultResponse<T>).result !== undefined;
+  return hasResult;
+}
+
+export function isErrorResponse<T = any>(response: Response<T>): response is ErrorResponse {
+  const hasError = (response as ErrorResponse).errors !== undefined;
+  return hasError;
+}
+
 export function isResponse<T = any>(obj: any): obj is Response<T> {
-  const hasResult = (obj as Response<T>).result !== undefined;
-
-  if (hasResult) {
-    return true;
-  }
-
-  const hasErrors = Array.isArray((obj as Response<T>).errors);
-
-  if (hasErrors) {
-    return true;
-  }
-
-  return false;
+  return (isResultResponse(obj) || isErrorResponse(obj));
 }

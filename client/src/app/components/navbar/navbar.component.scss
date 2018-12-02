@@ -16,7 +16,7 @@
         color: #cfcfcf;
         border-bottom-width: 0;
         border-bottom-style: solid;
-        border-bottom-color: #efefef;
+        border-bottom-color: #efefef00;
 
         &:hover {
           color: #efefef;
@@ -27,6 +27,7 @@
         a {
           cursor: default;
           border-bottom-width: 0.15rem;
+          border-bottom-color: #efefef;
           color: #efefef;
         }
       }

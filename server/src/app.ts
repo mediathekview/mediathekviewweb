@@ -16,7 +16,6 @@ import { formatDuration, formatError } from './common/utils';
   const logger = await InstanceProvider.coreLogger();
 
   handleUncaughtExceptions(logger);
-  initEventLoopWatcher(logger);
 
   try {
     if (Cluster.isMaster) {
@@ -28,6 +27,7 @@ import { formatDuration, formatError } from './common/utils';
     else {
       logger.info(`worker started`);
 
+      initEventLoopWatcher(logger);
       await init();
 
       logger.info(`worker initialized`);
@@ -77,7 +77,7 @@ async function initEventLoopWatcher(logger: Logger) {
   const watcher = new EventLoopWatcher(1);
 
   watcher
-    .watch(0, 1000, AggregationMode.ThirdQuartile)
+    .watch(0, 5000, AggregationMode.ThirdQuartile)
     .subscribe((delay) => logger.info(`eventloop: ${formatDuration(delay, 2)}`));
 
   watcher.start();

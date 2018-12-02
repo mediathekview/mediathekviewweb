@@ -3,7 +3,7 @@ import * as HJSON from 'hjson';
 import * as Path from 'path';
 
 const configPath = Path.join(__dirname, 'config.hjson');
-const configFileExists = FS.existsSync(configPath);
+const configFileExists = false; // FS.existsSync(configPath);
 
 type EnvironmentConfig = {
   dataDirectory?: string,
@@ -60,7 +60,7 @@ const config: Config = {
   importer: {
     latestCheckInterval: 60 * 1,
     archiveCheckInterval: 60 * 1,
-    archiveRange: 100
+    archiveRange: 0
   }
 }
 

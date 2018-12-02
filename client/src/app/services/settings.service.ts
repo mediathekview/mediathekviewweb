@@ -1,50 +1,38 @@
 import { Injectable } from '@angular/core';
-import { Observable, ReplaySubject } from 'rxjs';
+import { SyncEnumerable } from '../common/enumerable';
+import { LocalStorageService } from './local-storage.service';
 
-const DEFAULTS = {
-  pageSize: 15
-};
+const LOCAL_STORAGE_NAMESPACE = 'settings';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SettingsService {
-  private readonly _pageSize: ReplaySubject<number>;
+  private readonly localStorageService: LocalStorageService;
 
-  readonly defaults = DEFAULTS as Readonly<typeof DEFAULTS>;
-
-  get pageSize(): Observable<number> {
-    return this._pageSize.asObservable();
+  constructor(localStorageService: LocalStorageService) {
+    this.localStorageService = localStorageService;
   }
 
-  constructor() {
-    this._pageSize = new ReplaySubject(1);
-    this.loadOptions();
+  loadSettings(): StringMap {
+    const localStorageEntries = this.localStorageService.entries(LOCAL_STORAGE_NAMESPACE);
+
+    const settings = SyncEnumerable.from(localStorageEntries)
+      .reduce((settings, [key, value]) => {
+        return { ...settings, [key]: value };
+      }, {} as StringMap);
+
+    return settings;
   }
 
-  async getPageSize(): Promise<number> {
-    return this.getLocalStorage('pageSize', DEFAULTS.pageSize);
+  saveSetting(key: string, value: any): void {
+    this.localStorageService.set(LOCAL_STORAGE_NAMESPACE, key, value);
   }
 
-  async setPageSize(size: number): Promise<void> {
-    this.setLocalStorage('pageSize', size);
-    this._pageSize.next(size);
-  }
-
-  private async loadOptions() {
-    const pageSize = await this.getPageSize();
-    this._pageSize.next(pageSize);
-  }
-
-  private getLocalStorage<T>(key: string, defaultValue: T): T {
-    const storedValue = localStorage.getItem(key);
-    const value = (storedValue != null) ? JSON.parse(storedValue) : defaultValue;
-
-    return value;
-  }
-
-  private setLocalStorage<T>(key: string, value: T) {
-    const serializedValue = JSON.stringify(value);
-    localStorage.setItem(key, serializedValue);
+  saveSettings(settings: StringMap): void {
+    for (const key in settings) {
+      const value = settings[key];
+      this.localStorageService.set(LOCAL_STORAGE_NAMESPACE, key, value);
+    }
   }
 }

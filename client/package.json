@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
     "build-prod": "ng build --prod",
     "test": "ng test",
@@ -15,6 +15,7 @@
   "dependencies": {
     "@angular/animations": "~7.1.1",
     "@angular/cdk": "~7.1.0",
+    "@angular/cdk-experimental": "^7.1.0",
     "@angular/common": "~7.1.1",
     "@angular/compiler": "~7.1.1",
     "@angular/core": "~7.1.1",
