@@ -1,15 +1,17 @@
-const SEGMENT_PARSE_REGEX = /^(\^)?(?:([a-zA-Z]+):|([!#*+]))?(?:[\""](.+?)[\""]|([^ ]+))$/;
+const SEGMENT_PARSE_REGEX = /^(\^|-)?(?:([a-zA-Z]+):|([!#*+]))?(?:[\"](.+?)[\"]?|([^ \"]+)\"?|\"{1,2})?$/;
 
 export class Segment {
   readonly inverted: boolean;
   readonly selector: string | null;
   readonly text: string;
+  readonly isQuote: boolean;
 
-  constructor(inverted: boolean, text: string);
-  constructor(inverted: boolean, text: string, selector: string);
-  constructor(inverted: boolean, text: string, selector?: string) {
+  constructor(inverted: boolean, text: string, isQuote: boolean);
+  constructor(inverted: boolean, text: string, isQuote: boolean, selector: string);
+  constructor(inverted: boolean, text: string, isQuote: boolean, selector?: string) {
     this.inverted = inverted;
     this.text = text;
+    this.isQuote = isQuote;
     this.selector = (selector == undefined) ? null : selector;
   }
 
@@ -17,7 +19,7 @@ export class Segment {
     const match = segmentString.match(SEGMENT_PARSE_REGEX);
 
     if (match == null) {
-      throw new Error('should not happen');
+      throw new Error(segmentString + ' - no match, should not happen');
     }
 
     const [, invertedString, selectorA, selectorB, quotedText, nonQuotedText] = match;
@@ -25,16 +27,16 @@ export class Segment {
     const selector = (selectorA != undefined) ? selectorA : selectorB;
 
     const inverted = (invertedString != undefined);
-    let text: string;
+    let text: string = '';
+    let isQuote: boolean = false;
 
     if (quotedText != undefined) {
       text = quotedText;
+      isQuote = true;
     } else if (nonQuotedText != undefined) {
       text = nonQuotedText;
-    } else {
-      throw new Error('should not happen');
     }
 
-    return new Segment(inverted, text, selector);
+    return new Segment(inverted, text, isQuote, selector);
   }
 }

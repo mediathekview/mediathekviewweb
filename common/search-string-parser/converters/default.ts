@@ -16,7 +16,7 @@ export class DefaultSegmentConverter implements SegmentConverter {
     const result: SegmentConverterResultArray = [{
       fields: FIELDS,
       type: type,
-      joinSameFieldsResults: true,
+      joinSameFieldsResults: !segment.isQuote,
       query: query
     }];
 
