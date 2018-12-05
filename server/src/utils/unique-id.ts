@@ -1,7 +1,5 @@
-import * as OS from 'os';
 import * as Crypto from 'crypto';
-
-import { base62Encode, base62Decode } from '../utils';
+import { zBase32Encode } from '../common/utils';
 
 const instance = Crypto.randomBytes(4);
 const pidBuffer = numberToBuffer(process.pid);
@@ -21,7 +19,7 @@ export function uniqueID(): string {
   const counterBuffer = numberToBuffer(++counter);
 
   const buffer = Buffer.concat([counterBuffer, timestampBuffer, instance, pidBuffer]);
-  const id = base62Encode(buffer);
+  const id = zBase32Encode(buffer.buffer);
 
   return id;
 }

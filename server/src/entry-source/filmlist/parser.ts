@@ -1,9 +1,8 @@
 import * as Crypto from 'crypto';
 import { Readable } from 'stream';
-
 import { Entry, FilmlistMetadata, MediaFactory, Quality } from '../../common/model';
-import { base62Encode } from '../../utils';
 import { StreamIterable } from '../../utils/stream-iterable';
+import { zBase32Encode } from '../../common/utils';
 
 const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
@@ -174,7 +173,7 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
     const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.website, urlsString].join(' _ ');
 
     const idBuffer = Crypto.createHash('sha1').update(hashString).digest();
-    entry.id = base62Encode(idBuffer);
+    entry.id = zBase32Encode(idBuffer.buffer);
 
     return entry;
   }
