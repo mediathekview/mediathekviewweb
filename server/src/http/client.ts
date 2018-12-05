@@ -3,27 +3,36 @@ import { HttpResponse } from './response';
 import { Readable } from 'stream';
 
 export class HttpClient {
-    static get(url: string): Promise<HttpResponse> {
-        return new Promise<HttpResponse>((resolve, reject) => {
-            Needle.get(url, (error, response) => {
-                if (error) {
-                    return reject(error);
-                }
+  static get(url: string): Promise<HttpResponse<Buffer>> {
+    return new Promise<HttpResponse<Buffer>>((resolve, reject) => {
+      Needle.get(url, (error, response) => {
+        if (error) {
+          return reject(error);
+        }
 
-                const body = response.raw.toString();
-                const result: HttpResponse = {
-                    statusCode: response.statusCode as number,
-                    statusMessage: response.statusMessage as string,
-                    body: body
-                };
+        const result: HttpResponse<Buffer> = {
+          statusCode: response.statusCode as number,
+          statusMessage: response.statusMessage as string,
+          body: response.raw
+        };
 
-                resolve(result);
-            });
-        });
+        resolve(result);
+      });
+    });
+  }
+
+  static async getString(url: string): Promise<HttpResponse<string>> {
+    const rawResponse = await this.get(url);
+    const stringResponse: HttpResponse<string> = {
+      ...rawResponse,
+      body: rawResponse.body.toString()
     }
 
-    static getStream(url: string): Readable {
-        const stream = Needle.get(url);
-        return stream as Readable;
-    }
+    return stringResponse;
+  }
+
+  static getStream(url: string): Readable {
+    const stream = Needle.get(url);
+    return stream as Readable;
+  }
 }

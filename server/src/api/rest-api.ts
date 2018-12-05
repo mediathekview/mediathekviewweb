@@ -1,13 +1,11 @@
 import * as Koa from 'koa';
-import * as KoaBodyParser from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 import '../common/extensions/math';
-import { Timer } from '../common/utils';
-import { MediathekViewWebApi } from './api';
-import { IncomingMessage } from 'http';
-import { StreamIterable } from '../utils';
-import { SearchQueryValidator } from './validator/search-query';
 import { SearchQuery } from '../common/search-engine/query';
+import { Timer } from '../common/utils';
+import { StreamIterable } from '../utils';
+import { MediathekViewWebApi } from './api';
+import { SearchQueryValidator } from './validator/search-query';
 
 const PREFIX = '/api/v2/'
 
@@ -16,7 +14,6 @@ export class MediathekViewWebRestApi {
   private readonly port: number;
   private readonly koa: Koa;
   private readonly router: KoaRouter;
-  private readonly bodyParser: Koa.Middleware;
   private readonly searchQueryValidator: SearchQueryValidator;
 
   constructor(api: MediathekViewWebApi, port: number) {
@@ -25,7 +22,6 @@ export class MediathekViewWebRestApi {
 
     this.koa = new Koa();
     this.router = new KoaRouter();
-    this.bodyParser = KoaBodyParser({ enableTypes: ['json'] });
     this.searchQueryValidator = new SearchQueryValidator();
   }
 
@@ -34,7 +30,6 @@ export class MediathekViewWebRestApi {
     this.router.prefix(PREFIX);
 
     this.koa.use(responseTimeMiddleware);
-    this.koa.use(this.bodyParser);
     this.koa.use(this.router.routes());
     this.koa.use(this.router.allowedMethods());
 
@@ -92,6 +87,18 @@ async function readBody(request: Koa.Request, maxLength: number): Promise<string
   const body = rawBody.toString(encoding);
 
   return body;
+}
+
+
+
+function corsMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<any> {
+  context.response.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': '*',
+    'Access-Control-Allow-Headers': context.request.get('Access-Control-Request-Headers')
+  });
+
+  return next();
 }
 
 async function responseTimeMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<void> {

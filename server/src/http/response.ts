@@ -1,5 +1,5 @@
-export type HttpResponse = {
-    statusCode: number;
-    statusMessage: string;
-    body: string;
+export type HttpResponse<T extends string | Buffer> = {
+  statusCode: number;
+  statusMessage: string;
+  body: T;
 }

@@ -65,7 +65,7 @@ export class NginxDirectory implements Directory {
   private fetch(): Promise<ParseResult> {
     if (this.fetchPromise == null) {
       this.fetchPromise = new Promise<ParseResult>(async (resolve, reject) => {
-        const response = await HttpClient.get(this.resource);
+        const response = await HttpClient.getString(this.resource);
 
         if (response.statusCode != 200) {
           return reject(new Error(`StatusCode ${response.statusCode}: ${response.statusMessage}`));
