@@ -1,4 +1,4 @@
-import '../../../extensions/set';
+import '../extensions/set';
 
 export type PropertyValidationError = {
   message: string,
@@ -24,6 +24,10 @@ export abstract class ObjectValidator<T extends object = any> {
 
   validate(object: unknown): ObjectValidationResult {
     const resultBuilder = new ObjectValidationResultBuilder();
+
+    if (object == null) {
+      object = {};
+    }
 
     const propertyNames = Object.getOwnPropertyNames(object);
     const properties = new Set(propertyNames);
