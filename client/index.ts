@@ -85,11 +85,9 @@ function WDRm3u8ToMP4s(url) {
     return url;
   }
 
-  const region = match[1];
-  const fsk = match[2];
-  const unknownNumber = match[3];
-  const id = match[4];
-  const qualities = match[5].split(',');
+  const [, region, fsk, unknownNumber, id, qualitiesString] = match;
+  
+  const qualities = qualitiesString.split(',');
 
   const mp4s = [];
 
