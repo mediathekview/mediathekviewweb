@@ -72,17 +72,17 @@ XMLHttpRequest.prototype.open = function (this: XMLHttpRequest, method: string, 
   this.baseOpen(method, url, async, user, password);
 }
 
+const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/;
+
 function isWDRm3u8(url) {
-  const regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
-  return regex.test(url);
+  return wdrRegex.test(url);
 }
 
 function WDRm3u8ToMP4s(url) {
-  const regex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/
-  const match = regex.exec(url);
+  const match = wdrRegex.exec(url);
 
   if (match == null) {
-    return url;
+    throw new Error('invalid url');
   }
 
   const [, region, fsk, unknownNumber, id, qualitiesString] = match;    
