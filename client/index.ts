@@ -85,7 +85,7 @@ function WDRm3u8ToMP4s(url) {
     return url;
   }
 
-  const region = (match[1] == 'weltweit') ? 'ww' : match[1];
+  const region = match[1];
   const fsk = match[2];
   const unknownNumber = match[3];
   const id = match[4];
@@ -94,7 +94,7 @@ function WDRm3u8ToMP4s(url) {
   const mp4s = [];
 
   for (let i = 0; i < qualities.length; i++) {
-    const mp4 = `http://ondemand-${region}.wdr.de/medp/${fsk}/${unknownNumber}/${id}/${qualities[i]}.mp4`;
+    const mp4 = `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${qualities[i]}.mp4`;
     mp4s.push(mp4);
   }
 
