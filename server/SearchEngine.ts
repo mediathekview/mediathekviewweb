@@ -70,11 +70,11 @@ export default class SearchEngine {
       type: 'entries',
       id: id
     }, (err, response) => {
-      if (!response.found) {
-        callback('document not found');
-      } else if (err) {
+      if (err) {
         callback('error: ' + response);
         console.error(response);
+      } else if (!response.found) {
+        callback('document not found');
       } else {
         callback((response._source as any).description);
       }
