@@ -1,22 +1,18 @@
-import { SerializedElement, SerializeHandler, Serializer } from '../';
+import { SerializeHandler } from '../serialize-handler';
+import { SerializedElement } from '../serialized-element';
+import { Serializer } from '../serializer';
 
 const TYPE = 'array';
 
 type SerializedArray = SerializedElement<SerializedElement[]>;
 
 export class ArraySerializeHandler implements SerializeHandler {
-  private readonly serializer: Serializer;
-
-  constructor(serializer: Serializer) {
-    this.serializer = serializer;
-  }
-
   canSerialize(obj: any): boolean {
     return Array.isArray(obj);
   }
 
   serialize(array: any[]): SerializedArray {
-    const serializedElements = array.map((item) => this.serializer.rawSerialize(item));
+    const serializedElements = array.map((item) => Serializer.rawSerialize(item));
 
     return {
       type: TYPE,
@@ -30,7 +26,7 @@ export class ArraySerializeHandler implements SerializeHandler {
 
   deserialize(serialized: SerializedArray): any {
     const serializedElements = serialized.data;
-    const deserializedElements = serializedElements.map((element) => this.serializer.deserialize(element));
+    const deserializedElements = serializedElements.map((element) => Serializer.deserialize(element));
 
     return deserializedElements;
   }

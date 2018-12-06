@@ -1,5 +1,5 @@
 import { Queue } from './queue';
 
-export interface QueueProvider {
-  get<T>(key: string): Queue<T>;
+export interface QueueProvider<IdType> {
+  get<T>(key: string): Queue<T, IdType>;
 }

@@ -1,4 +1,6 @@
-import { Serializable, SerializableStatic, SerializedElement, SerializeHandler } from '../';
+import { Serializable, SerializableStatic } from '../serializable';
+import { SerializeHandler } from '../serialize-handler';
+import { SerializedElement } from '../serialized-element';
 import { Serializer } from '../serializer';
 
 type SerializedInstanceData = {
@@ -15,11 +17,9 @@ function isSerializedInstance(serializedElement: SerializedElement): serializedE
 }
 
 export class PrototypeSerializeHandler implements SerializeHandler {
-  private readonly serializer: Serializer;
   private readonly prototypes: Map<string, SerializableStatic>;
 
-  constructor(serializer: Serializer) {
-    this.serializer = serializer;
+  constructor() {
     this.prototypes = new Map();
   }
 
@@ -35,7 +35,7 @@ export class PrototypeSerializeHandler implements SerializeHandler {
     const instance = obj as Serializable;
 
     const data = instance.serialize();
-    const serializedData = this.serializer.rawSerialize(data);
+    const serializedData = Serializer.rawSerialize(data);
 
     const serializedInstanceData: SerializedInstanceData = {
       prototype: instance.constructor.name,
@@ -64,7 +64,7 @@ export class PrototypeSerializeHandler implements SerializeHandler {
       throw new Error(`no prototype named ${serializedInstanceData.prototype} registered`);
     }
 
-    const deserializedData = this.serializer.deserialize(serializedInstanceData.data);
+    const deserializedData = Serializer.deserialize(serializedInstanceData.data);
     const instance = prototype.deserialize(deserializedData);
 
     return instance;

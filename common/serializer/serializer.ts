@@ -1,52 +1,49 @@
+import { ArraySerializeHandler, DateSerializeHandler, ObjectSerializeHandler, PrimitivesSerializeHandler, PrototypeSerializeHandler, RegexSerializeHandler } from './handlers';
 import { SerializableStatic } from './serializable';
 import { SerializeHandler } from './serialize-handler';
 import { SerializedElement } from './serialized-element';
-import { ArraySerializeHandler, DateSerializeHandler, ObjectSerializeHandler, PrimitivesSerializeHandler, PrototypeSerializeHandler, RegexSerializeHandler } from './handlers';
 
-export class Serializer {
-  private readonly prototypeSerializeHandler: PrototypeSerializeHandler;
-  private readonly handlers: SerializeHandler[] = [];
+interface SerializerStatic {
+  registerHandler(...handlers: SerializeHandler[]): void;
+  registerPrototype(prototype: SerializableStatic): void;
 
-  constructor() {
-    this.prototypeSerializeHandler = new PrototypeSerializeHandler(this);
+  serialize(obj: any): string;
+  rawSerialize(obj: any): SerializedElement;
 
-    const handlers: SerializeHandler[] = [
-      new PrimitivesSerializeHandler(),
-      new ObjectSerializeHandler(this),
-      new ArraySerializeHandler(this),
-      new DateSerializeHandler(),
-      new RegexSerializeHandler(),
-      this.prototypeSerializeHandler
-    ];
+  deserialize(serializedString: string): any;
+  deserialize(serializedElement: SerializedElement): any;
+  deserialize(serializedStringOrElement: string | SerializedElement): any
+}
 
-    this.registerHandler(...handlers);
-  }
+class _Serializer {
+  private static readonly prototypeSerializeHandler: PrototypeSerializeHandler;
+  private static readonly handlers: SerializeHandler[] = [];
 
-  registerHandler(...handlers: SerializeHandler[]) {
+  static registerHandler(...handlers: SerializeHandler[]) {
     this.handlers.push(...handlers);
   }
 
-  registerPrototype(prototype: SerializableStatic) {
+  static registerPrototype(prototype: SerializableStatic) {
     this.prototypeSerializeHandler.register(prototype);
   }
 
-  serialize(obj: any): string {
+  static serialize(obj: any): string {
     const serializedElement = this.rawSerialize(obj);
     const serializedString = JSON.stringify(serializedElement);
 
     return serializedString;
   }
 
-  rawSerialize(obj: any): SerializedElement {
+  static rawSerialize(obj: any): SerializedElement {
     const handler = this.getSerializationHandler(obj);
     const serializedElement = handler.serialize(obj);
 
     return serializedElement;
   }
 
-  deserialize(serializedString: string): any;
-  deserialize(serializedElement: SerializedElement): any;
-  deserialize(serializedStringOrElement: string | SerializedElement): any {
+  static deserialize(serializedString: string): any;
+  static deserialize(serializedElement: SerializedElement): any;
+  static deserialize(serializedStringOrElement: string | SerializedElement): any {
     let serializedElement: SerializedElement;
 
     if (typeof serializedStringOrElement == 'string') {
@@ -56,12 +53,12 @@ export class Serializer {
     }
 
     const handler = this.getDeserializationHandler(serializedElement);
-
     const result = handler.deserialize(serializedElement);
+
     return result;
   }
 
-  private getSerializationHandler(obj: any): SerializeHandler {
+  private static getSerializationHandler(obj: any): SerializeHandler {
     const handler = this.handlers.find((handler) => handler.canSerialize(obj));
 
     if (handler == undefined) {
@@ -72,7 +69,7 @@ export class Serializer {
     return handler;
   }
 
-  private getDeserializationHandler(serializedElement: SerializedElement): SerializeHandler {
+  private static getDeserializationHandler(serializedElement: SerializedElement): SerializeHandler {
     const handler = this.handlers.find((handler) => handler.canDeserialize(serializedElement));
 
     if (handler == undefined) {
@@ -82,3 +79,16 @@ export class Serializer {
     return handler;
   }
 }
+
+const handlers: SerializeHandler[] = [
+  new PrimitivesSerializeHandler(),
+  new ObjectSerializeHandler(),
+  new ArraySerializeHandler(),
+  new DateSerializeHandler(),
+  new RegexSerializeHandler(),
+  new PrototypeSerializeHandler()
+];
+
+_Serializer.registerHandler(...handlers);
+
+export const Serializer = _Serializer as SerializerStatic;

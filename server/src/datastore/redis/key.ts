@@ -1,6 +1,5 @@
 import * as Redis from 'ioredis';
 import { DataType, Key } from '../';
-import { Serializer } from '../../common/serializer';
 import { Nullable } from '../../common/utils';
 import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction } from './serializer';
 
@@ -11,12 +10,12 @@ export class RedisKey<T> implements Key<T> {
   private readonly serialize: SerializeFunction<T>;
   private readonly deserialize: DeserializeFunction<T>;
 
-  constructor(redis: Redis.Redis, key: string, dataType: DataType, serializer: Serializer) {
+  constructor(redis: Redis.Redis, key: string, dataType: DataType) {
     this.redis = redis;
     this.key = key;
 
-    this.serialize = getSerializer(dataType, serializer);
-    this.deserialize = getDeserializer(dataType, serializer);
+    this.serialize = getSerializer(dataType);
+    this.deserialize = getDeserializer(dataType);
   }
 
   async set(value: T): Promise<void> {

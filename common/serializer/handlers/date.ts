@@ -1,4 +1,5 @@
-import { SerializedElement, SerializeHandler } from '../';
+import { SerializeHandler } from '../serialize-handler';
+import { SerializedElement } from '../serialized-element';
 
 type SerializedDate = SerializedElement<number>;
 

@@ -1,16 +1,12 @@
-import { SerializedElement, SerializeHandler, Serializer } from '../';
+import { SerializeHandler } from '../serialize-handler';
+import { SerializedElement } from '../serialized-element';
+import { Serializer } from '../serializer';
 
 type SerializedObject = SerializedElement<StringMap<SerializedElement>>;
 
 const TYPE = 'object';
 
 export class ObjectSerializeHandler implements SerializeHandler {
-  private readonly serializer: Serializer;
-
-  constructor(serializer: Serializer) {
-    this.serializer = serializer;
-  }
-
   canSerialize(obj: any): boolean {
     const prototype = Object.getPrototypeOf(obj);
     const result = prototype.constructor.name === 'Object';
@@ -24,7 +20,7 @@ export class ObjectSerializeHandler implements SerializeHandler {
 
     for (const property of properties) {
       const value = obj[property];
-      const serialized = this.serializer.rawSerialize(value);
+      const serialized = Serializer.rawSerialize(value);
 
       data[property] = serialized;
     }
@@ -45,7 +41,7 @@ export class ObjectSerializeHandler implements SerializeHandler {
 
     for (const property of properties) {
       const value = serialized.data[property];
-      const deserialized = this.serializer.deserialize(value);
+      const deserialized = Serializer.deserialize(value);
 
       result[property] = deserialized;
     }

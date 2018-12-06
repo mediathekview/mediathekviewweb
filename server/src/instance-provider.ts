@@ -15,14 +15,13 @@ import { ElasticsearchMapping, ElasticsearchSettings, TextTypeFields } from './e
 import { EntriesImporter } from './entries-importer/importer';
 import { EntriesIndexer } from './entries-indexer/indexer';
 import { EntriesSaver } from './entries-saver/saver';
-import { Filmlist } from './entry-source/filmlist/filmlist';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
 import { RedisLockProvider } from './lock/redis';
 import { LoggerFactoryProvider } from './logger-factory-provider';
 import { QueueProvider } from './queue';
-import { BullQueueProvider } from './queue/bull/provider';
+import { RedisJobId, RedisQueueProvider } from './queue/redis';
 import { AggregatedEntryRepository, EntryRepository } from './repository';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
@@ -31,7 +30,6 @@ import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { ElasticsearchLogAdapterFactory } from './utils/elasticsearch-log-adapter-factory';
 import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
-import { Serializer } from './common/serializer';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -101,15 +99,6 @@ export class InstanceProvider {
 
   static coreLogger(): Promise<Logger> {
     return this.singleton('appLogger', () => this.loggerFactory.create(CORE_LOG));
-  }
-
-  static serializer(): Promise<Serializer> {
-    return this.singleton(Serializer, () => {
-      const serializer = new Serializer();
-      serializer.registerPrototype(Filmlist);
-
-      return serializer;
-    });
   }
 
   static redis(): Promise<Redis.Redis> {
@@ -188,8 +177,7 @@ export class InstanceProvider {
   static datastoreFactory(): Promise<DatastoreFactory> {
     return this.singleton(RedisDatastoreFactory, async () => {
       const redis = await this.redis();
-      const serializer = await this.serializer();
-      return new RedisDatastoreFactory(redis, serializer);
+      return new RedisDatastoreFactory(redis);
     });
   }
 
@@ -211,11 +199,9 @@ export class InstanceProvider {
     });
   }
 
-  static queueProvider(): Promise<QueueProvider> {
-    return this.singleton(BullQueueProvider, async () => {
-      const serializer = await this.serializer();
-      const queue = new BullQueueProvider(serializer, this.loggerFactory, QUEUE_LOG);
-
+  static redisQueueProvider(): Promise<QueueProvider<RedisJobId>> {
+    return this.singleton(RedisQueueProvider, async () => {
+      const queue = new RedisQueueProvider(this.loggerFactory, QUEUE_LOG);
       return queue;
     });
   }
@@ -279,7 +265,7 @@ export class InstanceProvider {
   static filmlistEntrySource(): Promise<FilmlistEntrySource> {
     return this.singleton(FilmlistEntrySource, async () => {
       const datastoreFactory = await this.datastoreFactory();
-      const queueProvider = await this.queueProvider();
+      const queueProvider = await this.redisQueueProvider();
       const logger = this.loggerFactory.create(FILMLIST_ENTRY_SOURCE);
 
       return new FilmlistEntrySource(datastoreFactory, queueProvider, logger, 1);
@@ -291,7 +277,7 @@ export class InstanceProvider {
       const datastoreFactory = await this.datastoreFactory();
       const filmlistRepository = await this.filmlistRepository();
       const distributedLoopProvider = await this.distributedLoopProvider();
-      const queueProvider = await this.queueProvider();
+      const queueProvider = await this.redisQueueProvider();
       const logger = this.loggerFactory.create(FILMLIST_MANAGER_LOG);
 
       return new FilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider, logger);
