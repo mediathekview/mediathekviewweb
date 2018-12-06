@@ -85,16 +85,9 @@ function WDRm3u8ToMP4s(url) {
     return url;
   }
 
-  const [, region, fsk, unknownNumber, id, qualitiesString] = match;
-  
+  const [, region, fsk, unknownNumber, id, qualitiesString] = match;    
   const qualities = qualitiesString.split(',');
-
-  const mp4s = [];
-
-  for (let i = 0; i < qualities.length; i++) {
-    const mp4 = `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${qualities[i]}.mp4`;
-    mp4s.push(mp4);
-  }
+  const mp4s = qualities.map((quality) => `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${quality}.mp4`);
 
   return mp4s;
 }
