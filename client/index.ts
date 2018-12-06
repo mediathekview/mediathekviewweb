@@ -74,45 +74,40 @@ XMLHttpRequest.prototype.open = function (this: XMLHttpRequest, method: string, 
 
 const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/;
 
-function isWDRm3u8(url) {
+function isWDRm3u8(url: string): boolean {
   return wdrRegex.test(url);
 }
 
-function WDRm3u8ToMP4s(url) {
+function WDRm3u8ToMP4s(url: string): string[] {
   const match = wdrRegex.exec(url);
 
   if (match == null) {
     throw new Error('invalid url');
   }
 
-  const [, region, fsk, unknownNumber, id, qualitiesString] = match;    
+  const [, region, fsk, unknownNumber, id, qualitiesString] = match;
   const qualities = qualitiesString.split(',');
   const mp4s = qualities.map((quality) => `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${quality}.mp4`);
 
   return mp4s;
 }
 
-function isBRm3u8(url) {
-  const regex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
+const brRegex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
 
-  return regex.test(url);
+function isBRm3u8(url: string): boolean {
+  return brRegex.test(url);
 }
 
-function BRm3u8ToMP4s(url) {
-  const regex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
-  const match = regex.exec(url);
+function BRm3u8ToMP4s(url: string): string[] {
+  const match = brRegex.exec(url);
 
   if (match == null) {
-    return url;
+    throw new Error('invalid url');
   }
 
-
-  const qualities = match[2].split(',');
-  const mp4s = [];
-
-  for (let i = 0; i < qualities.length; i++) {
-    mp4s.push(`http://cdn-storage.br.de/${match[1]}${qualities[i]}.mp4`);
-  }
+  const [, , qualitiesString] = match;
+  const qualities = qualitiesString.split(',');
+  const mp4s = qualities.map((quality) => `http://cdn-storage.br.de/${match[1]}${quality}.mp4`);
 
   return mp4s;
 }
@@ -475,7 +470,8 @@ function handleQueryResult(result, err) {
       data.url_video_low = mp4s[0];
       data.url_video = mp4s[2];
       data.url_video_hd = mp4s[4];
-    } else if (isBRm3u8(data.url_video)) {
+    }
+    else if (isBRm3u8(data.url_video)) {
       const mp4s = BRm3u8ToMP4s(data.url_video);
 
       data.url_video_low = mp4s[2];
@@ -485,7 +481,8 @@ function handleQueryResult(result, err) {
 
     if (data.timestamp == 0) {
       data.dateString = data.timeString = '?';
-    } else {
+    }
+    else {
       data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
       data.timeString = moment.unix(data.timestamp).format('HH:mm');
     }
