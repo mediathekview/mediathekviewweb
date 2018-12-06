@@ -1,5 +1,5 @@
 import { ObjectValidator } from '../../../validator/validator';
-import { MatchAllQueryBody } from '../definition';
+import { MatchAllQueryBody } from '../query-bodies';
 
 export class MatchAllQueryValidator extends ObjectValidator<MatchAllQueryBody> {
   protected required = [];

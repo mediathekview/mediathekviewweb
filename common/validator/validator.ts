@@ -8,13 +8,13 @@ export type PropertyValidationError = {
 export type PropertyValidationResult = null | PropertyValidationError | PropertyValidationError[] | ObjectValidationResult | { [key: string]: PropertyValidationResult } | { [key: number]: PropertyValidationResult };
 
 export type ObjectValidationResult = {
-  valid: boolean,
+  valid?: true,
   missing?: string[],
   unknown?: string[],
   errors?: StringMap<PropertyValidationResult>
 };
 
-export type PropertyValidationFunction<T> = (value: T) => PropertyValidationResult;
+export type PropertyValidationFunction<T = unknown> = (value: T) => PropertyValidationResult;
 
 export abstract class ObjectValidator<T extends object = any> {
   protected abstract readonly required: ReadonlyArray<string>;
@@ -92,7 +92,11 @@ class ObjectValidationResultBuilder {
       && this.unknown.length == 0
       && errorsCount == 0;
 
-    const result: ObjectValidationResult = { valid };
+    if (valid) {
+      return { valid: true };
+    }
+
+    const result: ObjectValidationResult = {};
 
     if (this.missing.length > 0) {
       result.missing = this.missing;

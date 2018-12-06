@@ -1,5 +1,8 @@
+import { IncomingMessage, ServerResponse } from 'http';
+import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
+import { createErrorResponse } from '../common/api/rest';
 import '../common/extensions/math';
 import { SearchQuery } from '../common/search-engine/query';
 import { Timer } from '../common/utils';
@@ -7,25 +10,34 @@ import { StreamIterable } from '../utils';
 import { MediathekViewWebApi } from './api';
 import { SearchQueryValidator } from './validator/search-query';
 
+type RequestHandler = (request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse) => void;
+
 const PREFIX = '/api/v2/'
 
 export class MediathekViewWebRestApi {
   private readonly api: MediathekViewWebApi;
-  private readonly port: number;
   private readonly koa: Koa;
   private readonly router: KoaRouter;
   private readonly searchQueryValidator: SearchQueryValidator;
+  private readonly requestHandler: RequestHandler;
 
-  constructor(api: MediathekViewWebApi, port: number) {
+  constructor(api: MediathekViewWebApi) {
     this.api = api;
-    this.port = port;
 
     this.koa = new Koa();
     this.router = new KoaRouter();
     this.searchQueryValidator = new SearchQueryValidator();
+
+    this.requestHandler = this.koa.callback();
+
+    this.initialize();
   }
 
-  initialize(): void {
+  handleRequest(request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse): void {
+    this.requestHandler(request, response);
+  }
+
+  private initialize(): void {
     this.koa.proxy = true;
     this.router.prefix(PREFIX);
 
@@ -33,29 +45,41 @@ export class MediathekViewWebRestApi {
     this.koa.use(this.router.routes());
     this.koa.use(this.router.allowedMethods());
 
-    this.koa.listen(this.port);
+    this.initializeRoutes();
   }
 
-  initializeRoutes() {
-    this.register('search', (request, response) => this.search(request, response));
+  private initializeRoutes() {
+    this.register('/search', (context) => this.handleSearch(context));
   }
 
-  register(path: string, handler: (request: Koa.Request, response: Koa.Response) => void) {
-    this.router.get(path, async ({ request, response }, next) => {
-      await handler(request, response);
+  private register(path: string, handler: (context: Koa.Context) => void) {
+    this.router.post(path, async (context, next) => {
+      await handler(context);
       return next();
     });
   }
 
-  async search(request: Koa.Request, response: Koa.Response) {
-    const body = await readJsonBody(request);
+  private async handleSearch(context: Koa.Context): Promise<void> {
+    const { request, response } = context;
+
+    let body: unknown;
+    try {
+      body = await readJsonBody(request);
+    }
+    catch (error) {
+      console.error(error)
+      response.status = 400;
+      response.body = createErrorResponse((error as Error).message);
+      return;
+    }
+
     const validation = this.searchQueryValidator.validate(body);
 
     if (validation.valid) {
       response.body = await this.api.search(body as SearchQuery);
     } else {
       response.status = 400;
-      response.body = validation;
+      response.body = createErrorResponse('invalid query', validation);
     }
   }
 }
@@ -63,12 +87,13 @@ export class MediathekViewWebRestApi {
 async function readJsonBody(request: Koa.Request, maxLength: number = 10e6): Promise<unknown> {
   const body = await readBody(request, maxLength);
   const json = JSON.parse(body);
-
   return json;
 }
 
 async function readBody(request: Koa.Request, maxLength: number): Promise<string> {
-  const requestStream = new StreamIterable<Buffer>(request.req);
+  const { req, charset } = request;
+
+  const requestStream = new StreamIterable<Buffer>(req);
 
   let totalLength: number = 0;
   const chunks: Buffer[] = [];
@@ -82,14 +107,12 @@ async function readBody(request: Koa.Request, maxLength: number): Promise<string
     }
   }
 
-  const encoding = request.charset;
+  const encoding = (charset != undefined && charset.length > 0) ? charset : 'utf-8';
   const rawBody = Buffer.concat(chunks, totalLength);
   const body = rawBody.toString(encoding);
 
   return body;
 }
-
-
 
 function corsMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<any> {
   context.response.set({

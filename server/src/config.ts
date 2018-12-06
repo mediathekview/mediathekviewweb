@@ -23,6 +23,10 @@ type EnvironmentConfig = {
 interface Config {
   dataDirectory: string;
 
+  api: {
+    port: number;
+  }
+
   elasticsearch: {
     host: string;
     port: number;
@@ -44,6 +48,10 @@ interface Config {
 
 const config: Config = {
   dataDirectory: './data',
+
+  api: {
+    port: 8080
+  },
 
   elasticsearch: {
     host: 'localhost',

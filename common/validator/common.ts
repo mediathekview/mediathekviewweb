@@ -9,7 +9,7 @@ export const NULL_OR_UNDEFINED_ERROR: PropertyValidationError = Object.freeze({
 export function validateValue<T>(value: T, allowedValues: T[]): PropertyValidationResult {
   let result: PropertyValidationResult = null;
 
-  const isValid = allowedValues.some((allowedValue) => (value == allowedValue));
+  const isValid = allowedValues.some((allowedValue) => (value === allowedValue));
 
   if (!isValid) {
     const allowedValuesString = stringListing('and', allowedValues);
@@ -23,14 +23,14 @@ export function validateValue<T>(value: T, allowedValues: T[]): PropertyValidati
   return result;
 }
 
-export function validateArray<T>(value: T[], validator: PropertyValidationFunction<T>): PropertyValidationResult {
+export function validateArray(value: unknown, validator: PropertyValidationFunction): PropertyValidationResult {
   const arrayValidation = validateType(value, 'array');
 
   if (arrayValidation != null) {
     return arrayValidation;
   }
 
-  const validationErrors = value
+  const validationErrors = (value as unknown[])
     .map((value, index) => ({ result: validator(value), index }))
     .filter(({ result }) => result != null);
 
@@ -44,7 +44,7 @@ export function validateArray<T>(value: T[], validator: PropertyValidationFuncti
   return null;
 }
 
-export function validateString(value: string): PropertyValidationResult {
+export function validateString(value: unknown): PropertyValidationResult {
   return validateType(value, 'string');
 }
 
@@ -80,6 +80,10 @@ export function validateType(value: unknown, ...types: ValidationTypes[]): Prope
   }
 
   return null;
+}
+
+export function optionalNullOrUndefined<T>(value: unknown): value is T {
+
 }
 
 export function nullOrUndefined<T>(value: T | null | undefined): PropertyValidationResult;

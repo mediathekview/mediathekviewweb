@@ -1,6 +1,8 @@
 import { Client as ElasticsearchClient } from 'elasticsearch';
 import * as Redis from 'ioredis';
 import * as Mongo from 'mongodb';
+import { MediathekViewWebApi } from './api/api';
+import { MediathekViewWebRestApi } from './api/rest-api';
 import { LockProvider } from './common/lock';
 import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
@@ -58,6 +60,23 @@ const MONGO_LOG = '[MONGO]';
 export class InstanceProvider {
   private static instances: StringMap = {};
   private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
+
+  static mediathekViewWebApi(): Promise<MediathekViewWebApi> {
+    return this.singleton(MediathekViewWebApi, async () => {
+      const searchEngine = await InstanceProvider.entrySearchEngine();
+
+      return new MediathekViewWebApi(searchEngine);
+    });
+  }
+
+
+  static mediathekViewWebRestApi(): Promise<MediathekViewWebRestApi> {
+    return this.singleton(MediathekViewWebRestApi, async () => {
+      const api = await InstanceProvider.mediathekViewWebApi();
+
+      return new MediathekViewWebRestApi(api);
+    });
+  }
 
   static entriesSaver(): Promise<EntriesSaver> {
     return this.singleton(EntriesSaver, async () => {

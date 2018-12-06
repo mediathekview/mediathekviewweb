@@ -1,16 +1,14 @@
 import * as Cluster from 'cluster';
 import * as Http from 'http';
-import { map } from 'rxjs/operators';
-
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
-import { MediathekViewWebExposer } from './exposer';
+import { formatDuration, formatError } from './common/utils';
+import config from './config';
 import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
-import { AggregationMode, EventLoopWatcher } from './utils';
 import { MediathekViewWebSaver } from './saver';
-import { formatDuration, formatError } from './common/utils';
+import { AggregationMode, EventLoopWatcher } from './utils';
 
 (async () => {
   const logger = await InstanceProvider.coreLogger();
@@ -47,26 +45,30 @@ function handleUncaughtExceptions(logger: Logger) {
 
 async function init() {
   const server = new Http.Server();
-  const exposer = new MediathekViewWebExposer(server);
   const importer = new MediathekViewWebImporter();
   const saver = new MediathekViewWebSaver();
   const indexer = new MediathekViewWebIndexer();
 
-  const filmlistManager = await InstanceProvider.filmlistManager();
+  const restApi = await InstanceProvider.mediathekViewWebRestApi();
 
+  server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
+    restApi.handleRequest(request, response);
+  });
+
+  server.listen(config.api.port);
+
+  const filmlistManager = await InstanceProvider.filmlistManager();
   const lockProvider = await InstanceProvider.lockProvider();
+
   const lock = lockProvider.get('init');
 
   await lock.acquire(Number.POSITIVE_INFINITY, async () => {
-    await exposer.initialize();
     await importer.initialize();
     await saver.initialize();
     await indexer.initialize();
   });
 
-  exposer.expose();
   filmlistManager!.run();
-  server.listen(8080);
 
   importer.run();
   saver.run();

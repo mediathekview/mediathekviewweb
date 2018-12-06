@@ -3,23 +3,25 @@ export type ResultResponse<T> = {
 };
 
 export type ErrorResponse = {
-  errors: ResultError[]
+  error: ResultError
 };
 
 export type Response<T> = Partial<ResultResponse<T> | ErrorResponse>;
 
 export type ResultError = {
-  type: ErrorType,
-  message?: string,
+  message: string,
   details?: any
 }
 
-export enum ErrorType {
-  UnknownRequest = 'UnknownRequest',
-  InvalidRequest = 'InvalidRequest',
-  Unauthorized = 'Unauthorized',
-  NotFound = 'NotFound',
-  ServerError = 'ServerError'
+export function createErrorResponse(message: string, details?: any): ErrorResponse {
+  const response: ErrorResponse = {
+    error: {
+      message: message,
+      details: details
+    }
+  }
+
+  return response;
 }
 
 export function isResultResponse<T>(response: Response<T>): response is ResultResponse<T> {
@@ -28,7 +30,7 @@ export function isResultResponse<T>(response: Response<T>): response is ResultRe
 }
 
 export function isErrorResponse<T = any>(response: Response<T>): response is ErrorResponse {
-  const hasError = (response as ErrorResponse).errors !== undefined;
+  const hasError = (response as ErrorResponse).error !== undefined;
   return hasError;
 }
 
