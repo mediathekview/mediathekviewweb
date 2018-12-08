@@ -1,6 +1,6 @@
 import * as Redis from 'ioredis';
 import { DatastoreFactory, DataType, Set } from '../';
-import { uniqueID } from '../../utils/unique-id';
+import { uniqueId } from '../../utils/unique-id';
 import { RedisKey } from './key';
 import { RedisMap } from './map';
 import { RedisSet } from './set';
@@ -48,6 +48,6 @@ export class RedisDatastoreFactory implements DatastoreFactory {
   }
 
   private getUniqueKey(): string {
-    return 'unnamed:' + uniqueID();
+    return 'unnamed:' + uniqueId();
   }
 }

@@ -7,7 +7,7 @@ const pidBuffer = numberToBuffer(process.pid);
 let counter = 0;
 let lastTimestamp: number;
 
-export function uniqueID(): string {
+export function uniqueId(): string {
   const timestamp = Math.floor(Date.now() / 1000);
   const timestampBuffer = numberToBuffer(timestamp);
 
@@ -18,7 +18,7 @@ export function uniqueID(): string {
 
   const counterBuffer = numberToBuffer(++counter);
 
-  const buffer = Buffer.concat([counterBuffer, timestampBuffer, instance, pidBuffer]);
+  const buffer = Buffer.concat([timestampBuffer, counterBuffer, instance, pidBuffer]);
   const id = zBase32Encode(buffer.buffer);
 
   return id;

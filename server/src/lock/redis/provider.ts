@@ -1,8 +1,7 @@
 import { Redis } from 'ioredis';
-
 import { LockProvider } from '../../common/lock';
-import { uniqueID } from '../../utils/unique-id';
-import { RedisLock } from './';
+import { uniqueId } from '../../utils/unique-id';
+import { RedisLock } from './lock';
 
 export class RedisLockProvider implements LockProvider {
   private readonly redis: Redis;
@@ -14,7 +13,7 @@ export class RedisLockProvider implements LockProvider {
 
   get(key: string): RedisLock {
     key = `lock:${key}`;
-    const id = uniqueID();
+    const id = uniqueId();
 
     const lock = new RedisLock(this.redis, key, id);
     return lock;
@@ -56,7 +55,7 @@ export class RedisLockProvider implements LockProvider {
 
               if (lockedID == id) then
                 local result = redis.call("set", key, id, "PX", expire)
-            
+
                 if (result ~= false) then
                   success = 1
                 end
@@ -78,7 +77,7 @@ export class RedisLockProvider implements LockProvider {
             if (lockedID == id) then
               success = redis.call("del", key)
             end
-            
+
             return success`
     });
 
@@ -87,14 +86,14 @@ export class RedisLockProvider implements LockProvider {
       lua: `
             local key = KEYS[1]
             local id = ARGV[1]
-            
+
             local lockedID = redis.call("get", key)
             local success = 0
 
             if (lockedID == id) then
               success = 1
             end
-            
+
             return success`
     });
   }

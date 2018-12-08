@@ -1,6 +1,5 @@
-import { ResetPromise } from './reset-promise';
-import { AwaitableList } from './collections/awaitable';
 import { AnyIterable } from './any-iterable';
+import { AwaitableList } from './collections/awaitable';
 
 export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
   private source: AnyIterable<T>;

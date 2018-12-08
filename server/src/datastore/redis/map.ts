@@ -140,13 +140,13 @@ export class RedisMap<T> implements Map<T> {
       .batch(BATCH_SIZE);
 
     for await (const batch of batches) {
-      const transaction = this.redis.multi();
+      const pipeline = this.redis.pipeline();
 
       for (const key of batch) {
-        transaction.hexists(this.key, key);
+        pipeline.hexists(this.key, key);
       }
 
-      const results = await transaction.exec() as [Nullable<Error>, 1 | 0][];
+      const results = await pipeline.exec() as [Nullable<Error>, 1 | 0][];
 
       for (const result of results) {
         const [error, exists] = result;

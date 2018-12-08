@@ -1,6 +1,5 @@
-import { ResetPromise } from './reset-promise';
-import { FeedableAsyncIterable } from './feedable-async-iterable';
 import { AwaitableMap } from './collections/awaitable';
+import { FeedableAsyncIterable } from './feedable-async-iterable';
 
 export class OrderedFeedableAsyncIterable<T> implements AsyncIterable<T> {
   private readonly inBuffer = new AwaitableMap<number, T>();
@@ -8,12 +7,12 @@ export class OrderedFeedableAsyncIterable<T> implements AsyncIterable<T> {
 
   private currentIndex: number = 0;
 
-  get read(): ResetPromise<void> {
-    return this.read;
+  get read(): Promise<void> {
+    return this.out.read;
   }
 
-  get empty(): ResetPromise<void> {
-    return this.empty;
+  get empty(): Promise<void> {
+    return this.out.empty;
   }
 
   get closed(): boolean {
@@ -40,10 +39,8 @@ export class OrderedFeedableAsyncIterable<T> implements AsyncIterable<T> {
 
   private dispatch() {
     while (this.inBuffer.has(this.currentIndex)) {
-      const item = this.inBuffer.get(this.currentIndex) as T;
-
+      const item = this.inBuffer.get(this.currentIndex++) as T;
       this.out.feed(item);
-      this.currentIndex++;
     }
   }
-} 
+}

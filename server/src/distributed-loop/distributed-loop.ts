@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs';
 import { LockProvider } from '../common/lock';
-import { ResetPromise, timeout, Timer } from '../common/utils';
+import { DeferredPromise, timeout, Timer } from '../common/utils';
 import { LoopController } from './controller';
 
 export type LoopFunction = (controller: LoopController) => Promise<void>;
@@ -9,13 +9,13 @@ export class DistributedLoop {
   private readonly key: string;
   private readonly lockProvider: LockProvider;
   private readonly throwError: boolean;
-  private readonly stoppedPromise: ResetPromise<void>;
+  private readonly stopped: DeferredPromise<void>;
 
   constructor(key: string, lockProvider: LockProvider, throwError: boolean = true) {
     this.key = `loop:${key}`;
     this.lockProvider = lockProvider;
     this.throwError = throwError;
-    this.stoppedPromise = new ResetPromise();
+    this.stopped = new DeferredPromise();
   }
 
   run(func: LoopFunction, interval: number, accuracy: number): LoopController {
@@ -23,7 +23,7 @@ export class DistributedLoop {
     let errorSubject = new Subject<void>();
 
     const controller: LoopController = {
-      stop: () => { stop = true; return this.stoppedPromise; },
+      stop: () => { stop = true; return this.stopped; },
       setTiming: (timing) => {
         if (timing.interval != undefined) {
           interval = timing.interval;
@@ -69,7 +69,7 @@ export class DistributedLoop {
         }
       }
 
-      this.stoppedPromise.resolve();
+      this.stopped.resolve();
     })();
 
     return controller;

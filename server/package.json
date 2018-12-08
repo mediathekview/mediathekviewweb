@@ -30,11 +30,11 @@
     "@types/ioredis": "^4.0.4",
     "@types/koa": "^2.0.47",
     "@types/koa-router": "^7.0.35",
-    "@types/mongodb": "^3.1.15",
+    "@types/mongodb": "^3.1.17",
     "@types/needle": "^2.0.2",
-    "@types/node": "^10.12.10",
+    "@types/node": "^10.12.12",
     "nodemon": "^1.18.7",
     "ts-node": "^7.0.1",
-    "typescript": "^3.2.1"
+    "typescript": "^3.2.2"
   }
 }

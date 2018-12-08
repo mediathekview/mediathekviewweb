@@ -68,7 +68,7 @@ function calculateResult(runs: number, time: number): BenchmarkResult {
 
 function measureTimerOverhead(runs: number) {
   const timer = new Timer(true);
-  const millisecondsGetter = getGetter<number>(timer, 'milliseconds', true);
+  const millisecondsGetter = getGetter(timer, 'milliseconds', true);
 
   const results: number[] = [];
 

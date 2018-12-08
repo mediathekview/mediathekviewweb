@@ -8,7 +8,7 @@ export * from './math';
 export * from './nullable';
 export * from './ordered-feedable-async-iterable';
 export * from './provider-function-iterable';
-export * from './reset-promise';
+export * from './deferred-promise';
 export * from './timer';
 export * from './timing';
 export * from './z-base32';

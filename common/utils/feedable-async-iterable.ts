@@ -1,9 +1,9 @@
 import { AwaitableList } from './collections/awaitable';
-import { ResetPromise } from './reset-promise';
+import { DeferredPromise } from './deferred-promise';
 
 export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
-  private readonly _read: ResetPromise<void>;
-  private readonly _empty: ResetPromise<void>;
+  private readonly _read: DeferredPromise<void>;
+  private readonly _empty: DeferredPromise<void>;
   private _closed: boolean;
   private buffer: AwaitableList<{ item?: T, error?: Error }>;
 
@@ -26,8 +26,8 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
   constructor() {
     this._closed = false;
     this.buffer = new AwaitableList();
-    this._read = new ResetPromise();
-    this._empty = new ResetPromise();
+    this._read = new DeferredPromise();
+    this._empty = new DeferredPromise();
   }
 
   feed(item: T): void {
@@ -74,4 +74,4 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
       }
     }
   }
-} 
+}

@@ -82,10 +82,6 @@ export function validateType(value: unknown, ...types: ValidationTypes[]): Prope
   return null;
 }
 
-export function optionalNullOrUndefined<T>(value: unknown): value is T {
-
-}
-
 export function nullOrUndefined<T>(value: T | null | undefined): PropertyValidationResult;
 export function nullOrUndefined<T>(value: T | null | undefined, ifNotThen: (value: T) => PropertyValidationResult): PropertyValidationResult;
 export function nullOrUndefined<T>(value: T | null | undefined, ifNotThen?: (value: T) => PropertyValidationResult): PropertyValidationResult {

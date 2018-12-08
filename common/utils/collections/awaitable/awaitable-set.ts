@@ -1,11 +1,11 @@
 import '../../../extensions/set';
-import { ResetPromise } from '../../reset-promise';
+import { DeferredPromise } from '../../deferred-promise';
 
 export class AwaitableSet<T> implements Set<T> {
   private readonly backingSet: Set<T>;
-  private readonly _added: ResetPromise<T>;
-  private readonly _deleted: ResetPromise<T>;
-  private readonly _cleared: ResetPromise<void>;
+  private readonly _added: DeferredPromise<T>;
+  private readonly _deleted: DeferredPromise<T>;
+  private readonly _cleared: DeferredPromise<void>;
 
   get added(): Promise<T | T[]> {
     return this._added;
@@ -22,9 +22,9 @@ export class AwaitableSet<T> implements Set<T> {
   constructor() {
     this.backingSet = new Set();
 
-    this._added = new ResetPromise();
-    this._cleared = new ResetPromise();
-    this._deleted = new ResetPromise();
+    this._added = new DeferredPromise();
+    this._cleared = new DeferredPromise();
+    this._deleted = new DeferredPromise();
   }
 
   get size(): number {

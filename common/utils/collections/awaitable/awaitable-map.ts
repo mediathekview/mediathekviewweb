@@ -1,10 +1,10 @@
-import { ResetPromise } from '../../reset-promise';
+import { DeferredPromise } from '../../deferred-promise';
 
 export class AwaitableMap<K, V> implements Map<K, V> {
   private readonly backingMap: Map<K, V>;
-  private readonly _setted: ResetPromise<[K, V]>;
-  private readonly _cleared: ResetPromise<void>;
-  private readonly _deleted: ResetPromise<K>;
+  private readonly _setted: DeferredPromise<[K, V]>;
+  private readonly _cleared: DeferredPromise<void>;
+  private readonly _deleted: DeferredPromise<K>;
 
   get setted(): Promise<[K, V]> {
     return this._setted;
@@ -23,9 +23,9 @@ export class AwaitableMap<K, V> implements Map<K, V> {
   constructor(map = new Map<K, V>()) {
     this.backingMap = map;
 
-    this._setted = new ResetPromise();
-    this._cleared = new ResetPromise();
-    this._deleted = new ResetPromise();
+    this._setted = new DeferredPromise();
+    this._cleared = new DeferredPromise();
+    this._deleted = new DeferredPromise();
   }
 
   static from<K, V>(map: Map<K, V>): AwaitableMap<K, V>

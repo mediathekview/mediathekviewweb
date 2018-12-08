@@ -1,9 +1,9 @@
-import { ResetPromise } from '../../reset-promise';
+import { DeferredPromise } from '../../deferred-promise';
 
 export class AwaitableList<T> implements Iterable<T> {
-  private readonly _added: ResetPromise<T | T[]>;
-  private readonly _removed: ResetPromise<T | T[]>;
-  private readonly _cleared: ResetPromise<void>;
+  private readonly _added: DeferredPromise<T | T[]>;
+  private readonly _removed: DeferredPromise<T | T[]>;
+  private readonly _cleared: DeferredPromise<void>;
 
   private backingArray: T[];
 
@@ -22,9 +22,9 @@ export class AwaitableList<T> implements Iterable<T> {
   constructor() {
     this.backingArray = [];
 
-    this._added = new ResetPromise();
-    this._removed = new ResetPromise();
-    this._cleared = new ResetPromise();
+    this._added = new DeferredPromise();
+    this._removed = new DeferredPromise();
+    this._cleared = new DeferredPromise();
   }
 
   get size(): number {

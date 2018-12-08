@@ -3,7 +3,7 @@ import * as Http from 'http';
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
 import { formatDuration, formatError } from './common/utils';
-import config from './config';
+import { config } from './config';
 import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';

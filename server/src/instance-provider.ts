@@ -7,7 +7,7 @@ import { LockProvider } from './common/lock';
 import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
-import config from './config';
+import { config } from './config';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
@@ -21,7 +21,7 @@ import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from 
 import { RedisLockProvider } from './lock/redis';
 import { LoggerFactoryProvider } from './logger-factory-provider';
 import { QueueProvider } from './queue';
-import { RedisJobId, RedisQueueProvider } from './queue/redis';
+import { RedisQueueProvider } from './queue/redis';
 import { AggregatedEntryRepository, EntryRepository } from './repository';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
@@ -199,9 +199,11 @@ export class InstanceProvider {
     });
   }
 
-  static redisQueueProvider(): Promise<QueueProvider<RedisJobId>> {
+  static queueProvider(): Promise<QueueProvider> {
     return this.singleton(RedisQueueProvider, async () => {
-      const queue = new RedisQueueProvider(this.loggerFactory, QUEUE_LOG);
+      const redis = await this.redis();
+      const queue = new RedisQueueProvider(redis, this.loggerFactory, QUEUE_LOG);
+
       return queue;
     });
   }
@@ -265,10 +267,10 @@ export class InstanceProvider {
   static filmlistEntrySource(): Promise<FilmlistEntrySource> {
     return this.singleton(FilmlistEntrySource, async () => {
       const datastoreFactory = await this.datastoreFactory();
-      const queueProvider = await this.redisQueueProvider();
+      const queueProvider = await this.queueProvider();
       const logger = this.loggerFactory.create(FILMLIST_ENTRY_SOURCE);
 
-      return new FilmlistEntrySource(datastoreFactory, queueProvider, logger, 1);
+      return new FilmlistEntrySource(datastoreFactory, queueProvider, logger);
     });
   }
 
@@ -277,7 +279,7 @@ export class InstanceProvider {
       const datastoreFactory = await this.datastoreFactory();
       const filmlistRepository = await this.filmlistRepository();
       const distributedLoopProvider = await this.distributedLoopProvider();
-      const queueProvider = await this.redisQueueProvider();
+      const queueProvider = await this.queueProvider();
       const logger = this.loggerFactory.create(FILMLIST_MANAGER_LOG);
 
       return new FilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider, logger);

@@ -1,7 +1,7 @@
 import { AsyncEnumerable } from '../../common/enumerable';
 import { Logger } from '../../common/logger';
 import { now } from '../../common/utils';
-import config from '../../config';
+import { config } from '../../config';
 import { DatastoreFactory, DataType, Key, Set } from '../../datastore';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { Keys } from '../../keys';
@@ -12,8 +12,6 @@ import { FilmlistRepository } from './repository';
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
-
-//const logger = LoggerFactoryProvider.factory.create('[FILMLIST_MANAGER]');
 
 export class FilmlistManager {
   private readonly filmlistRepository: FilmlistRepository;
@@ -94,6 +92,7 @@ export class FilmlistManager {
     const id = filmlist.fileMetadata.resource.uri + timestamp;
     const priority = Number.MAX_SAFE_INTEGER - filmlist.date.valueOf();
 
-    await this.importQueue.enqueue(filmlist, { jobID: id, priority: priority });
+    throw new Error('check if already enqueued');
+    //   await this.importQueue.enqueue(filmlist, { jobID: id, priority: priority });
   }
 }

@@ -46,7 +46,7 @@ interface Config {
   }
 }
 
-const config: Config = {
+export const config: Config = {
   dataDirectory: './data',
 
   api: {
@@ -108,5 +108,3 @@ if (configFileExists) {
     config.importer.archiveRange = Number.parseInt(config.importer.archiveRange);
   }
 }
-
-export default config as Config;

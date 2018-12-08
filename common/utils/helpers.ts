@@ -1,4 +1,4 @@
-export function getGetter<T>(obj: Object, property: string, bind: boolean): () => T {
+export function getGetter<T, U extends keyof T>(obj: T, property: keyof T, bind: boolean): () => T[U] {
   if (!(property in obj)) {
     throw new Error(`property ${property} does not exist`);
   }
@@ -28,7 +28,7 @@ export function now(): Date {
   return new Date();
 }
 
-export function destroyPrototype(obj: any): any {
+export function cloneOwnProperties(obj: any): any {
   const type = typeof obj;
 
   if (type == 'string' || type == 'number' || type == 'boolean' || type == 'undefined' || type == 'function'
@@ -40,7 +40,7 @@ export function destroyPrototype(obj: any): any {
 
   const properties = Object.getOwnPropertyNames(obj);
   for (const property of properties) {
-    result[property] = destroyPrototype(obj[property]);
+    result[property] = cloneOwnProperties(obj[property]);
   }
 
   return result;

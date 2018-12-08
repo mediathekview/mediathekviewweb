@@ -1,11 +1,14 @@
-export type Job<DataType, IdType> = { id: IdType, data: DataType; };
-export type ProcessFunction<DataType, IdType> = (job: Job<DataType, IdType>) => Promise<void>;
+import { AnyIterable } from '../common/utils';
 
-export interface Queue<DataType, IdType> {
-  enqueue(data: DataType): Promise<Job<DataType, IdType>>;
+export type Job<DataType> = { id: string, data: DataType; };
+export type ProcessFunction<DataType> = (job: Job<DataType>) => Promise<void>;
 
-  process(concurrency: number, processFunction: ProcessFunction<DataType, IdType>): void;
-  process(processFunction: ProcessFunction<DataType, IdType>): void;
+export interface Queue<DataType> {
+  enqueue(data: DataType): Promise<Job<DataType>>;
+  enqueueMany(data: AnyIterable<DataType>): Promise<Job<DataType>[]>;
+
+  getConsumer(): AsyncIterableIterator<Job<DataType>>;
+  getBatchConsumer(size: number): AsyncIterableIterator<Job<DataType>[]>;
 
   clean(): Promise<void>;
 }

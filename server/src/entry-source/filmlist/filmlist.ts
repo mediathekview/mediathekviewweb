@@ -2,7 +2,7 @@ import { Entry } from '../../common/model';
 import { FilmlistParser } from './parser';
 import { FileProvider, FileMetadata } from '../../listing/';
 import { decompress } from '../../utils';
-import { destroyPrototype } from '../../common/utils';
+import { cloneOwnProperties } from '../../common/utils';
 import { Serializable } from '../../common/serializer';
 
 export class Filmlist implements AsyncIterable<Entry[]>, Serializable {
@@ -11,7 +11,7 @@ export class Filmlist implements AsyncIterable<Entry[]>, Serializable {
   date: Date;
 
   constructor(fileMetadata: FileMetadata, compressed: boolean, date: Date) {
-    this.fileMetadata = destroyPrototype(fileMetadata);
+    this.fileMetadata = cloneOwnProperties(fileMetadata);
     this.compressed = compressed;
     this.date = date;
   }
