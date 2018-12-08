@@ -1,26 +1,39 @@
 import * as Redis from 'ioredis';
 import { Logger } from '../../common/logger';
 import { Serializer } from '../../common/serializer';
-import { DeferredPromise, AnyIterable, Nullable } from '../../common/utils';
+import { DeferredPromise, AnyIterable, Nullable, timeout } from '../../common/utils';
 import { uniqueId } from '../../utils';
 import { groupExists } from '../../utils/redis';
 import { Job, Queue } from '../queue';
 import { AsyncEnumerable } from '../../common/enumerable';
+import { LockProvider } from '../../common/lock';
+import { DistributedLoopProvider, DistributedLoop } from '../../distributed-loop';
 
 type RedisJob<DataType> = Job<DataType>;
 
 export class RedisQueue<DataType> implements Queue<DataType> {
   private readonly redis: Redis.Redis;
+  private readonly lockProvider: LockProvider;
+  private readonly distributedLoopProvider: DistributedLoopProvider;
+  private readonly key: string;
   private readonly stream: string;
   private readonly group: string;
+  private readonly retryAfter: number;
   private readonly logger: Logger;
+  private readonly distributedClaimLoop: DistributedLoop;
   private readonly initialized: DeferredPromise<void>;
 
-  constructor(redis: Redis.Redis, stream: string, group: string, logger: Logger) {
+  constructor(redis: Redis.Redis, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, logger: Logger) {
     this.redis = redis;
-    this.stream = stream;
-    this.group = group;
+    this.lockProvider = lockProvider;
+    this.distributedLoopProvider = distributedLoopProvider;
+    this.key = key;
+    this.stream = `stream:${key}`;
+    this.group = `group:${key}`;
+    this.retryAfter = retryAfter;
     this.logger = logger;
+
+    this.distributedClaimLoop = distributedLoopProvider.get(`queue:${key}`);
 
     this.initialized = new DeferredPromise();
     this.initialize().catch((error) => this.logger.error(error));
@@ -33,6 +46,8 @@ export class RedisQueue<DataType> implements Queue<DataType> {
       await this.redis.xgroup('CREATE', this.stream, this.group, 0, 'MKSTREAM');
       this.logger.info(`created consumer group ${this.group}`);
     }
+
+    this.distributedClaimLoop.run((_controller) => this.claim(), 10000, 3000);
 
     this.initialized.resolve();
   }
@@ -47,9 +62,8 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     return job;
   }
 
-
-  enqueueMany(data: AnyIterable<DataType>): Promise<Job<DataType>[]> {
-    return AsyncEnumerable.from(data)
+  async enqueueMany(data: AnyIterable<DataType>): Promise<Job<DataType>[]> {
+    return await AsyncEnumerable.from(data)
       .batch(50)
       .parallelMap(3, true, async (batch) => {
         const pipeline = this.redis.pipeline();
@@ -77,10 +91,18 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     await this.initialized;
 
     const consumer = this.getConsumerName();
+    const lock = this.lockProvider.get(consumer);
 
-    while (true) {
-      const data = await this.redis.xreadgroup('GROUP', this.group, consumer, 'BLOCK');
-      yield data;
+    await lock.acquire();
+
+    try {
+      while (true) {
+        const data = await this.redis.xreadgroup('GROUP', this.group, consumer, 'BLOCK');
+        yield data;
+      }
+    }
+    finally {
+      lock.release();
     }
   }
 
@@ -88,11 +110,32 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     await this.initialized;
 
     const consumer = this.getConsumerName();
+    const lock = this.lockProvider.get(consumer);
 
-    while (true) {
-      const data = await this.redis.xreadgroup('GROUP', this.group, consumer, 'COUNT', size, 'BLOCK');
-      yield* data;
+    await lock.acquire();
+
+    try {
+      while (true) {
+        const data = await this.redis.xreadgroup('GROUP', this.group, consumer, 'COUNT', size, 'BLOCK');
+        yield* data;
+      }
     }
+    finally {
+      lock.release();
+    }
+  }
+
+  async acknowledge(job: Job<DataType>): Promise<void> {
+    await this.redis.xack(this.stream, this.group, job.id);
+  }
+
+  async acknowledgeMany(jobs: AnyIterable<Job<DataType>>): Promise<void> {
+    await AsyncEnumerable.from(jobs)
+      .batch(50)
+      .parallelForEach(3, async (batch) => {
+        const ids = batch.map((job) => job.id);
+        await this.redis.xack(this.stream, this.group, ...ids);
+      });
   }
 
   async clean(): Promise<void> {
@@ -101,5 +144,12 @@ export class RedisQueue<DataType> implements Queue<DataType> {
 
   private getConsumerName(): string {
     return uniqueId();
+  }
+
+  async claim(): Promise<void> {
+
+
+
+    throw Error('not implemented');
   }
 }

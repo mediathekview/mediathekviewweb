@@ -3,7 +3,8 @@ import { Observable } from 'rxjs';
 export type LockedFunction = () => void | Promise<void>;
 
 export interface Lock {
-  lockLost: Observable<void>;
+  readonly owned: boolean;
+  readonly lockLost: Observable<void>;
 
   acquire(): Promise<boolean>;
   acquire(timeout: number): Promise<boolean>;
@@ -11,6 +12,7 @@ export interface Lock {
   acquire(timeout: number, func: LockedFunction): Promise<boolean>;
 
   release(): Promise<boolean>;
+  release(force: boolean): Promise<boolean>;
 
-  owned(): Promise<boolean>;
+  forceUpdateOwned(): Promise<void>;
 }

@@ -46,6 +46,7 @@ const ELASTICSEARCH_INDEX_MAPPING = ElasticsearchMapping;
 const CORE_LOG = '[CORE]';
 const FILMLIST_MANAGER_LOG = '[FILMLIST MANAGER]';
 const QUEUE_LOG = '[QUEUE]';
+const LOCK_LOG = '[LOCK]';
 const ENTRIES_IMPORTER_LOG = '[IMPORTER]';
 const FILMLIST_ENTRY_SOURCE = '[FILMLIST SOURCE]';
 const SEARCH_ENGINE_LOG = '[SEARCH ENGINE]';
@@ -184,7 +185,9 @@ export class InstanceProvider {
   static lockProvider(): Promise<LockProvider> {
     return this.singleton(RedisLockProvider, async () => {
       const redis = await this.redis();
-      return new RedisLockProvider(redis);
+      const logger = LoggerFactoryProvider.factory.create(LOCK_LOG);
+
+      return new RedisLockProvider(redis, logger);
     });
   }
 
@@ -202,7 +205,9 @@ export class InstanceProvider {
   static queueProvider(): Promise<QueueProvider> {
     return this.singleton(RedisQueueProvider, async () => {
       const redis = await this.redis();
-      const queue = new RedisQueueProvider(redis, this.loggerFactory, QUEUE_LOG);
+      const lockProvider = await this.lockProvider();
+      const distributedLoopProvider = await this.distributedLoopProvider();
+      const queue = new RedisQueueProvider(redis, lockProvider, distributedLoopProvider, this.loggerFactory, QUEUE_LOG);
 
       return queue;
     });

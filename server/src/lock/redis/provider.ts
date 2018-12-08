@@ -1,13 +1,17 @@
 import { Redis } from 'ioredis';
 import { LockProvider } from '../../common/lock';
+import { Logger } from '../../common/logger';
 import { uniqueId } from '../../utils/unique-id';
 import { RedisLock } from './lock';
 
 export class RedisLockProvider implements LockProvider {
   private readonly redis: Redis;
+  private readonly logger: Logger;
 
-  constructor(redis: Redis) {
+  constructor(redis: Redis, logger: Logger) {
     this.redis = redis;
+    this.logger = logger;
+
     this.defineCommands();
   }
 
@@ -15,7 +19,7 @@ export class RedisLockProvider implements LockProvider {
     key = `lock:${key}`;
     const id = uniqueId();
 
-    const lock = new RedisLock(this.redis, key, id);
+    const lock = new RedisLock(this.redis, key, id, this.logger);
     return lock;
   }
 
@@ -25,15 +29,23 @@ export class RedisLockProvider implements LockProvider {
       lua: `
             local key = KEYS[1]
             local id = ARGV[1]
-            local expire = ARGV[2]
+            local expireTimestamp = ARGV[2]
 
-            local lockedID = redis.call("get", key)
-            if (lockedID == id) then
+            local lockedId = redis.call("get", key)
+            if (lockedId == id) then
               return "owned"
             end
 
-            local result = redis.call("set", key, id, "NX", "PX", expire)
-            if (result ~= false) then
+            if (lockedId ~= nil) then
+              return "failed"
+            end
+
+            local result = (redis.call("set", key, id, "NX") ~= false)
+            if (result == true) then
+              result = (redis.call("pexpireat", key, expireTimestamp) == 1)
+            end
+
+            if (result == true)
               return "acquired"
             else
               return "failed"
@@ -45,21 +57,13 @@ export class RedisLockProvider implements LockProvider {
       lua: `
             local key = KEYS[1]
             local id = ARGV[1]
-            local expire = ARGV[2]
+            local expireTimestamp = ARGV[2]
 
-            local acquired = (redis.call("exists", key) == 1)
+            local lockedId = redis.call("get", key)
             local success = 0
 
-            if (acquired) then
-              local lockedID = redis.call("get", key)
-
-              if (lockedID == id) then
-                local result = redis.call("set", key, id, "PX", expire)
-
-                if (result ~= false) then
-                  success = 1
-                end
-              end
+            if (lockedId == id) then
+              success = redis.call("pexpireat", key, expireTimestamp)
             end
 
             return success`
@@ -70,11 +74,12 @@ export class RedisLockProvider implements LockProvider {
       lua: `
             local key = KEYS[1]
             local id = ARGV[1]
+            local force = ARGV[2]
 
-            local lockedID = redis.call("get", key)
+            local lockedId = redis.call("get", key)
             local success = 0
 
-            if (lockedID == id) then
+            if (lockedId == id) or (force == 1) then
               success = redis.call("del", key)
             end
 
@@ -87,14 +92,17 @@ export class RedisLockProvider implements LockProvider {
             local key = KEYS[1]
             local id = ARGV[1]
 
-            local lockedID = redis.call("get", key)
-            local success = 0
+            local lockedId = redis.call("get", key)
+            local result = 0
 
-            if (lockedID == id) then
-              success = 1
+            if (lockedId == id) then
+              local millisecondsLeft = redis.call("pttl", key)
+              local time = redis.call("time")
+              local timestamp = (millisecondsLeft + (time[1] * 1000) + math.floor(time[2] / 1000))
+              result = timestamp
             end
 
-            return success`
+            return result`
     });
   }
 }

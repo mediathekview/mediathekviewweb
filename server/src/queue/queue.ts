@@ -10,5 +10,8 @@ export interface Queue<DataType> {
   getConsumer(): AsyncIterableIterator<Job<DataType>>;
   getBatchConsumer(size: number): AsyncIterableIterator<Job<DataType>[]>;
 
+  acknowledge(job: Job<DataType>): Promise<void>;
+  acknowledgeMany(jobs: AnyIterable<Job<DataType>>): Promise<void>;
+
   clean(): Promise<void>;
 }
