@@ -397,7 +397,7 @@ const impressum = renderImpressum(config.contact);
         });
       }
 
-      setTimeout(() => updateLoop(), 10 * 60 * 1000);
+      setTimeout(() => updateLoop(), 5 * 60 * 1000);
     });
   }
 
