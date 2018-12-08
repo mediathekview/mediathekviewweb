@@ -34,11 +34,11 @@
     "@types/elasticsearch": "^5.0.29",
     "@types/express": "^4.16.0",
     "@types/line-reader": "0.0.28",
-    "@types/node": "^10.12.10",
+    "@types/node": "^10.12.12",
     "@types/redis": "^2.8.8",
     "@types/request": "^2.48.1",
     "@types/rss": "0.0.28",
-    "@types/socket.io": "^2.1.0",
-    "typescript": "^3.1.6"
+    "@types/socket.io": "^2.1.2",
+    "typescript": "^3.2.2"
   }
 }
