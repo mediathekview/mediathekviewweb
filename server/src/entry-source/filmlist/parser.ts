@@ -1,88 +1,81 @@
 import * as Crypto from 'crypto';
 import { Readable } from 'stream';
 import { Entry, FilmlistMetadata, MediaFactory, Quality } from '../../common/model';
-import { StreamIterable } from '../../utils/stream-iterable';
-import { zBase32Encode } from '../../common/utils';
+import { StreamIterableIterator } from '../../utils/stream-iterable-iterator';
+import { zBase32Encode, DeferredPromise } from '../../common/utils';
 
-const META_DATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
+const METADATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
 
 const READ_SIZE = 100 * 1024; // 100 KB
 
 export class FilmlistParser implements AsyncIterable<Entry[]> {
   private readonly stream: Readable;
+  private readonly streamIterableIterator: StreamIterableIterator<string>;
 
-  private inputBuffer: string;
-  private outputBuffer: Entry[];
+  private _metadata: FilmlistMetadata | null;
+  private _metadataPromise: DeferredPromise<FilmlistMetadata>;
   private currentChannel: string;
   private currentTopic: string;
-
-  metadata: FilmlistMetadata | null;
 
   constructor(stream: Readable) {
     this.stream = stream;
 
-    this.inputBuffer = '';
-    this.outputBuffer = [];
+    this.streamIterableIterator = new StreamIterableIterator<string>(this.stream, READ_SIZE);
     this.currentChannel = '';
     this.currentTopic = '';
-    this.metadata = null;
+    this._metadata = null;
+    this._metadataPromise = new DeferredPromise();
+  }
+
+  get metadata(): Promise<FilmlistMetadata> {
+    return this._metadataPromise;
   }
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Entry[]> {
-    const streamIterable = new StreamIterable<string>(this.stream, READ_SIZE);
+    let buffer = '';
+    for await (const chunk of this.streamIterableIterator) {
+      buffer += chunk;
 
-    for await (const chunk of streamIterable) {
-      this.handleChunk(chunk);
+      if (this._metadata == null) {
+        const metadataResult = this.parseMetadata(buffer);
 
-      yield this.outputBuffer;
-      this.outputBuffer = [];
-    }
-  }
+        if (metadataResult != null) {
+          this._metadata = metadataResult.metadata;
+          this._metadataPromise.resolve(this._metadata);
+          buffer = metadataResult.buffer;
+        }
+      }
 
-  private handleChunk(chunk: string) {
-    const parseMetadata = this.metadata == null;
+      if (this._metadata != null) {
+        const entriesResult = this.parseEntries(buffer, this._metadata);
 
-    this.inputBuffer += chunk;
-    this.inputBuffer = this.parseBuffer(this.inputBuffer, parseMetadata);
-  }
-
-  private parseBuffer(buffer: string, parseMetadata: boolean): string {
-    if (parseMetadata) {
-      const result = this.parseMetadata(buffer);
-
-      if (result != null) {
-        this.metadata = result.metadata;
-        buffer = result.buffer;
+        if (entriesResult != null) {
+          buffer = entriesResult.buffer;
+          yield entriesResult.entries;
+        }
       }
     }
-
-    const result = this.parseEntries(buffer);
-    this.outputBuffer = this.outputBuffer.concat(result.entries);
-    buffer = result.buffer;
-
-    return buffer;
   }
 
   private parseMetadata(buffer: string): { metadata: FilmlistMetadata, buffer: string } | null {
-    const match = buffer.match(META_DATA_REGEX);
+    const match = buffer.match(METADATA_REGEX);
 
-    if (match != null) {
-      buffer = buffer.slice((match.index as number) + match[0].length);
-
-      const [, day, month, year, hour, minute, hash] = match;
-      const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute)));
-
-      const timestamp = Math.floor(date.valueOf() / 1000);
-
-      const metadata: FilmlistMetadata = { timestamp: timestamp, hash: hash };
-      return { metadata: metadata, buffer: buffer };
+    if (match == null) {
+      return null;
     }
 
-    return null;
+    buffer = buffer.slice((match.index as number) + match[0].length);
+
+    const [, day, month, year, hour, minute, hash] = match;
+    const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute)));
+    const timestamp = Math.floor(date.valueOf() / 1000);
+    const metadata: FilmlistMetadata = { timestamp, hash };
+
+    return { metadata, buffer };
   }
 
-  private parseEntries(buffer: string): { entries: Entry[], buffer: string } {
+  private parseEntries(buffer: string, metadata: FilmlistMetadata): { entries: Entry[], buffer: string } | null {
     const entries: Entry[] = [];
 
     let match: RegExpMatchArray | null;
@@ -90,15 +83,19 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
       buffer = buffer.slice((match.index as number) + match[0].length);
 
       const filmlistEntry = match[1];
-      const entry = this.filmlistEntryToEntry(filmlistEntry);
+      const entry = this.filmlistEntryToEntry(filmlistEntry, metadata);
 
       entries.push(entry);
     }
 
-    return { entries: entries, buffer };
+    if (entries.length == 0) {
+      return null;
+    }
+
+    return { entries, buffer };
   }
 
-  private filmlistEntryToEntry(filmlistEntry: string): Entry {
+  private filmlistEntryToEntry(filmlistEntry: string, metadata: FilmlistMetadata): Entry {
     const parsedFilmlistEntry: string[] = JSON.parse(filmlistEntry);
 
     const [
@@ -146,13 +143,13 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
       duration,
       description,
       website: url_website,
-      firstSeen: this.metadata!.timestamp,
-      lastSeen: this.metadata!.timestamp,
+      firstSeen: metadata.timestamp,
+      lastSeen: metadata.timestamp,
       media: [],
 
       source: {
         identifier: 'filmlist',
-        data: this.metadata
+        data: metadata
       }
     }
 

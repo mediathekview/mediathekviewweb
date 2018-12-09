@@ -8,4 +8,7 @@ import { InstanceProvider } from './instance-provider';
   queue.enqueueMany([{}, {}, {}, {}, {}, {}, {}, {}, {}, {}]);
 
   queue.clean();
+});
+
+(async () => {
 })();

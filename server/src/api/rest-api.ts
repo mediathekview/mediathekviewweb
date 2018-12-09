@@ -6,7 +6,7 @@ import { createErrorResponse } from '../common/api/rest';
 import '../common/extensions/math';
 import { SearchQuery } from '../common/search-engine/query';
 import { Timer } from '../common/utils';
-import { StreamIterable } from '../utils';
+import { StreamIterableIterator } from '../utils';
 import { MediathekViewWebApi } from './api';
 import { SearchQueryValidator } from './validator/search-query';
 
@@ -93,7 +93,7 @@ async function readJsonBody(request: Koa.Request, maxLength: number = 10e6): Pro
 async function readBody(request: Koa.Request, maxLength: number): Promise<string> {
   const { req, charset } = request;
 
-  const requestStream = new StreamIterable<Buffer>(req);
+  const requestStream = new StreamIterableIterator<Buffer>(req);
 
   let totalLength: number = 0;
   const chunks: Buffer[] = [];

@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { DeferredPromise } from '../common/utils';
 
-export class StreamIterable<T> implements AsyncIterableIterator<T> {
+export class StreamIterableIterator<T> implements AsyncIterableIterator<T> {
   private readonly stream: Readable;
   private readonly readSize: number | undefined;
 
@@ -56,8 +56,9 @@ export class StreamIterable<T> implements AsyncIterableIterator<T> {
     return { value: error, done: true };
   }
 
-  async *[Symbol.asyncIterator](): AsyncIterableIterator<T> {
-    if (!this.initialized) {
+  [Symbol.asyncIterator](): AsyncIterableIterator<T> {
+    return this;
+    /*if (!this.initialized) {
       this.initialized = this.initialize();
     }
 
@@ -74,7 +75,7 @@ export class StreamIterable<T> implements AsyncIterableIterator<T> {
       }
 
       this.readable.reset();
-    }
+    }*/
   }
 
   destroy(error?: Error) {
