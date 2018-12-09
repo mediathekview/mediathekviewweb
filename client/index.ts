@@ -72,46 +72,6 @@ XMLHttpRequest.prototype.open = function (this: XMLHttpRequest, method: string, 
   this.baseOpen(method, url, async, user, password);
 }
 
-const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/;
-
-function isWDRm3u8(url: string): boolean {
-  return wdrRegex.test(url);
-}
-
-function WDRm3u8ToMP4s(url: string): string[] {
-  const match = wdrRegex.exec(url);
-
-  if (match == null) {
-    throw new Error('invalid url');
-  }
-
-  const [, region, fsk, unknownNumber, id, qualitiesString] = match;
-  const qualities = qualitiesString.split(',');
-  const mp4s = qualities.map((quality) => `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${quality}.mp4`);
-
-  return mp4s;
-}
-
-const brRegex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
-
-function isBRm3u8(url: string): boolean {
-  return brRegex.test(url);
-}
-
-function BRm3u8ToMP4s(url: string): string[] {
-  const match = brRegex.exec(url);
-
-  if (match == null) {
-    throw new Error('invalid url');
-  }
-
-  const [, , qualitiesString] = match;
-  const qualities = qualitiesString.split(',');
-  const mp4s = qualities.map((quality) => `http://cdn-storage.br.de/${match[1]}${quality}.mp4`);
-
-  return mp4s;
-}
-
 /*polyfills for stupid internet explorer*/
 if (!String.prototype.endsWith) {
   String.prototype.endsWith = function (searchString, position) {
@@ -463,21 +423,6 @@ function handleQueryResult(result, err) {
 
   for (let i = 0; i < result.results.length; i++) {
     const data = result.results[i];
-
-    if (isWDRm3u8(data.url_video)) {
-      const mp4s = WDRm3u8ToMP4s(data.url_video);
-
-      data.url_video_low = mp4s[0];
-      data.url_video = mp4s[2];
-      data.url_video_hd = mp4s[4];
-    }
-    else if (isBRm3u8(data.url_video)) {
-      const mp4s = BRm3u8ToMP4s(data.url_video);
-
-      data.url_video_low = mp4s[2];
-      data.url_video = mp4s[3];
-      data.url_video_hd = mp4s[4];
-    }
 
     if (data.timestamp == 0) {
       data.dateString = data.timeString = '?';

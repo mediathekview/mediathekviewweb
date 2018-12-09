@@ -82,8 +82,6 @@ export default class SearchEngine {
   }
 
   search(query, callback) {
-    let queryErrors = [];
-
     let elasticQuery = {
       index: 'filmliste',
       type: 'entries',
@@ -169,11 +167,13 @@ export default class SearchEngine {
       if (error) {
         callback(null, ['Elasticsearch: ' + error.message]);
       } else {
-        let result = [];
+        const result = [];
 
         for (let i = 0; i < response.hits.hits.length; i++) {
-          let entry = response.hits.hits[i]._source as any;
+          const entry = response.hits.hits[i]._source as any;
           entry.id = response.hits.hits[i]._id;
+
+          mapToMp4IfM3u8(entry);
 
           result.push(entry);
         }
@@ -196,4 +196,60 @@ export default class SearchEngine {
       }
     };
   }
+}
+
+function mapToMp4IfM3u8(entry) {
+  if (isWdrM3u8(entry.url_video)) {
+    const mp4s = WdrM3u8ToMp4(entry.url_video);
+
+    entry.url_video_low = mp4s[0];
+    entry.url_video = mp4s[2];
+    entry.url_video_hd = mp4s[4];
+  }
+  else if (isBrM3u8(entry.url_video)) {
+    const mp4s = BrM3u8ToMp4(entry.url_video);
+
+    entry.url_video_low = mp4s[2];
+    entry.url_video = mp4s[3];
+    entry.url_video_hd = mp4s[4];
+  }
+}
+
+const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/;
+const brRegex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
+
+function isWdrM3u8(url: string): boolean {
+  return wdrRegex.test(url);
+}
+
+function WdrM3u8ToMp4(url: string): string[] {
+  const match = wdrRegex.exec(url);
+
+  if (match == null) {
+    throw new Error('invalid url');
+  }
+
+  const [, region, fsk, unknownNumber, id, qualitiesString] = match;
+  const qualities = qualitiesString.split(',');
+  const mp4s = qualities.map((quality) => `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${quality}.mp4`);
+
+  return mp4s;
+}
+
+function isBrM3u8(url: string): boolean {
+  return brRegex.test(url);
+}
+
+function BrM3u8ToMp4(url: string): string[] {
+  const match = brRegex.exec(url);
+
+  if (match == null) {
+    throw new Error('invalid url');
+  }
+
+  const [, , qualitiesString] = match;
+  const qualities = qualitiesString.split(',');
+  const mp4s = qualities.map((quality) => `http://cdn-storage.br.de/${match[1]}${quality}.mp4`);
+
+  return mp4s;
 }
