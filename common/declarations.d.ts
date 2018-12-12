@@ -1,5 +1,6 @@
-declare type StringMap<TValue = any> = { [key: string]: TValue };
-declare type NumberMap<TValue = any> = { [key: number]: TValue };
+declare type StringMap<T = any> = { [key: string]: T };
+declare type NumberMap<T = any> = { [key: number]: T };
+declare type StringNumberMap<T = any> = { [key: string]: T, [key: number]: T };
 declare type Undefinable<T> = T | undefined;
 declare type Sub<O extends string | number | symbol, D extends string> = { [K in O]: (Record<D, never> & Record<string | number | symbol, K>)[K] }[O];
 declare type Omit<O, D extends string> = Pick<O, Sub<keyof O, D>>;
