@@ -4,6 +4,31 @@ import { ConsumerGroup } from './consumer-group';
 import { Entry, SourceEntry } from './entry';
 import { StreamInfo } from './stream-info';
 import { Nullable } from '../../common/utils';
+import { SyncEnumerable } from '../../common/enumerable';
+
+export type ReadParameters = {
+  id: string,
+  count?: number,
+  block?: number
+};
+
+export type ReadGroupParameters = {
+  id: string,
+  group: string,
+  consumer: string,
+  count?: number,
+  block?: number,
+  noAck?: boolean
+}
+
+type StreamReadData =
+  [
+    string,
+    [
+      string,
+      string[]
+    ][]
+  ][];
 
 export class RedisStream<T> {
   private readonly redis: Redis;
@@ -38,6 +63,28 @@ export class RedisStream<T> {
     return ids;
   }
 
+  async read(parameters: ReadParameters): Promise<Entry<T>[]> {
+    const { id, block, count } = parameters;
+
+    const parametersArray = [
+      ...(count != undefined ? ['COUNT', count] : []),
+      ...(block != undefined ? ['BLOCK', block] : []),
+      'STREAMS', this.stream,
+      'ID', id
+    ];
+
+    const data = await this.redis.xread(...parametersArray) as StreamReadData;
+
+    const entries = SyncEnumerable.from(data)
+      .mapMany(([stream, entries]) => entries)
+      .map((entry) => this.parseEntry(entry))
+      .toArray();
+
+    return entries;
+  }
+
+  async readGroup({ group: string, })
+
   async getInfo(): Promise<StreamInfo<T>> {
     const info = await this.redis.xinfo('STREAM', this.stream) as (string | number | [string, string[]])[];
     const streamInfo = this.parseStreamInfo(info);
@@ -66,7 +113,7 @@ export class RedisStream<T> {
 
   async createGroup(group: string): Promise<void>;
   async createGroup(group: string, startAtId: '0' | '$' | string): Promise<void>;
-  async createGroup(group: string, makeStream: boolean): Promise<void>
+  async createGroup(group: string, makeStream: boolean): Promise<void>;
   async createGroup(group: string, startAtId: '0' | '$' | string, makeStream: boolean): Promise<void>;
   async createGroup(group: string, startAtIdOrMakeStream?: '0' | '$' | string | boolean, makeStream: boolean = false): Promise<void> {
     const startAtId = (typeof startAtIdOrMakeStream == 'string') ? startAtIdOrMakeStream : '0';

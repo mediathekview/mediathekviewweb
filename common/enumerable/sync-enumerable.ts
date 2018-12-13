@@ -96,7 +96,7 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
   }
 
   toArray(): T[] {
-    const array = Array.from(this.source);
+    const array = [...this.source];
     return array;
   }
 
