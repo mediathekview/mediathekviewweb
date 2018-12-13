@@ -7,11 +7,8 @@ export interface Queue<DataType> {
   enqueue(data: DataType): Promise<Job<DataType>>;
   enqueueMany(data: AnyIterable<DataType>): Promise<Job<DataType>[]>;
 
-  getConsumer(): AsyncIterableIterator<Job<DataType>>;
-  getBatchConsumer(size: number): AsyncIterableIterator<Job<DataType>[]>;
+  getConsumer(throwOnError: boolean): AsyncIterableIterator<Job<DataType>>;
+  getBatchConsumer(size: number, throwOnError: boolean): AsyncIterableIterator<Job<DataType>[]>;
 
-  acknowledge(job: Job<DataType>): Promise<void>;
-  acknowledgeMany(jobs: AnyIterable<Job<DataType>>): Promise<void>;
-
-  clean(): Promise<void>;
+  clear(): Promise<void>;
 }

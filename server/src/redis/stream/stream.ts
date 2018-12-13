@@ -1,10 +1,13 @@
 import { Redis } from 'ioredis';
+import { SyncEnumerable } from '../../common/enumerable';
+import { Nullable } from '../../common/utils';
 import { Consumer } from './consumer';
 import { ConsumerGroup } from './consumer-group';
-import { Entry, SourceEntry } from './entry';
+import { Entry } from './entry';
+import { SourceEntry } from './source-entry';
 import { StreamInfo } from './stream-info';
-import { Nullable } from '../../common/utils';
-import { SyncEnumerable } from '../../common/enumerable';
+import { PendingEntry } from './pending-entry';
+import { PendingInfo, PendingInfoConsumer as PendingConsumerInfo } from './pending-info';
 
 export type ReadParameters = {
   id: string,
@@ -19,7 +22,25 @@ export type ReadGroupParameters = {
   count?: number,
   block?: number,
   noAck?: boolean
-}
+};
+
+export type GetPendingInfoParameters = {
+  group: string,
+  consumer?: string,
+};
+
+export type GetPendingEntriesParameters = GetPendingInfoParameters & {
+  start: string,
+  end: string,
+  count: number
+};
+
+export type ClaimParameters = {
+  group: string,
+  consumer: string,
+  minimumIdleTime: number,
+  ids: string[]
+};
 
 type StreamReadData =
   [
@@ -67,23 +88,49 @@ export class RedisStream<T> {
     const { id, block, count } = parameters;
 
     const parametersArray = [
-      ...(count != undefined ? ['COUNT', count] : []),
-      ...(block != undefined ? ['BLOCK', block] : []),
+      ...(count != null ? ['COUNT', count] : []),
+      ...(block != null ? ['BLOCK', block] : []),
       'STREAMS', this.stream,
       'ID', id
     ];
 
     const data = await this.redis.xread(...parametersArray) as StreamReadData;
-
-    const entries = SyncEnumerable.from(data)
-      .mapMany(([stream, entries]) => entries)
-      .map((entry) => this.parseEntry(entry))
-      .toArray();
+    const entries = this.parseStreamReadData(data);
 
     return entries;
   }
 
-  async readGroup({ group: string, })
+  async readGroup(parameters: ReadGroupParameters): Promise<Entry<T>[]> {
+    const { id, group, consumer, count, block, noAck } = parameters;
+
+    const parametersArray = [
+      'GROUP', group, consumer,
+      ...(count != null ? ['COUNT', count] : []),
+      ...(block != null ? ['BLOCK', block] : []),
+      ...(noAck != null ? ['NOACK'] : []),
+      'STREAMS', this.stream,
+      'ID', id
+    ] as ['GROUP', string, string, ...string[]];
+
+    const data = await this.redis.xreadgroup(...parametersArray) as StreamReadData;
+    const entries = this.parseStreamReadData(data);
+
+    return entries;
+  }
+
+  async acknowledge(group: string, ...ids: string[]): Promise<number> {
+    const acknowledgedCount = await this.redis.xack(this.stream, group, ...ids);
+    return acknowledgedCount;
+  }
+
+  async claim(): Promise<void> {
+
+  }
+
+  async trim(maxLength: number, approximate: boolean): Promise<number> {
+    const trimmedCount = await this.redis.xtrim(this.stream, 'MAXLEN', ...(approximate ? ['~'] : []), maxLength);
+    return trimmedCount;
+  }
 
   async getInfo(): Promise<StreamInfo<T>> {
     const info = await this.redis.xinfo('STREAM', this.stream) as (string | number | [string, string[]])[];
@@ -111,6 +158,30 @@ export class RedisStream<T> {
     return consumers;
   }
 
+  async getPendingInfo(parameters: GetPendingInfoParameters): Promise<PendingInfo> {
+    const { group, consumer } = parameters;
+
+    const [count, firstId, lastId, pendingConsumerInfo] = await this.redis.xpending(this.stream, group, ...(consumer != null ? [consumer] : [])) as [number, string, string, [string, string][]];
+    const consumers: PendingConsumerInfo[] = pendingConsumerInfo.map(([name, count]) => ({ name, count: parseInt(count) }));
+    const pendingInfo: PendingInfo = {
+      count,
+      firstId,
+      lastId,
+      consumers
+    };
+
+    return pendingInfo;
+  }
+
+  async getPendingEntries(parameters: GetPendingEntriesParameters): Promise<PendingEntry[]> {
+    const { group, consumer, start, end, count } = parameters;
+
+    const info = await this.redis.xpending(this.stream, group, start, end, count, ...(consumer != null ? [consumer] : [])) as [string, string, number, number][];
+    const pendingEntries: PendingEntry[] = info.map(([id, consumerName, elapsed, deliveryCount]) => ({ id, consumerName, elapsed, deliveryCount }));
+
+    return pendingEntries;
+  }
+
   async createGroup(group: string): Promise<void>;
   async createGroup(group: string, startAtId: '0' | '$' | string): Promise<void>;
   async createGroup(group: string, makeStream: boolean): Promise<void>;
@@ -134,6 +205,15 @@ export class RedisStream<T> {
     }
 
     return parameters;
+  }
+
+  private parseStreamReadData(data: StreamReadData): Entry<T>[] {
+    const entries = SyncEnumerable.from(data)
+      .mapMany(([stream, entries]) => entries)
+      .map((entry) => this.parseEntry(entry))
+      .toArray();
+
+    return entries;
   }
 
   private parseStreamInfo(info: (string | number | [string, string[]])[]): StreamInfo<T> {

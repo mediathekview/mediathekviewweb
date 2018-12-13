@@ -38,8 +38,6 @@ export class FilmlistManager {
   }
 
   private async loop(): Promise<void> {
-    await this.importQueue.clean();
-
     await this.compareTime(this.lastLatestCheck, LATEST_CHECK_INTERVAL, () => this.checkLatest());
     await this.compareTime(this.lastArchiveCheck, ARCHIVE_CHECK_INTERVAL, () => this.checkArchive());
   }

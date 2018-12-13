@@ -87,7 +87,7 @@ export class RedisQueue<DataType> implements Queue<DataType> {
       .toArray();
   }
 
-  async *getConsumer(): AsyncIterableIterator<Job<DataType>> {
+  async *getConsumer(throwOnError: boolean): AsyncIterableIterator<Job<DataType>> {
     await this.initialized;
 
     const consumer = this.getConsumerName();
@@ -97,8 +97,24 @@ export class RedisQueue<DataType> implements Queue<DataType> {
 
     try {
       while (true) {
-        const data = await this.redis.xreadgroup('GROUP', this.groupName, consumer, 'BLOCK');
-        yield data;
+        const entries = await this.stream.readGroup({ id: '>', group: this.groupName, consumer, block: 0, count: 1 });
+        const jobs: Job<DataType>[] = entries
+          .map(({ id, data: { data: serializedData } }) => ({ id, serializedData }))
+          .map(({ id, serializedData }) => ({ id, data: Serializer.deserialize(serializedData) }));
+
+        for (const job of jobs) {
+          try {
+            yield job;
+            await this.stream.acknowledge(this.groupName, job.id);
+          }
+          catch (error) {
+            if (throwOnError) {
+              throw error;
+            }
+
+            this.logger.error(error);
+          }
+        }
       }
     }
     finally {
@@ -106,7 +122,7 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     }
   }
 
-  async *getBatchConsumer(size: number): AsyncIterableIterator<Job<DataType>[]> {
+  async *getBatchConsumer(batchSize: number, throwOnError: boolean): AsyncIterableIterator<Job<DataType>[]> {
     await this.initialized;
 
     const consumer = this.getConsumerName();
@@ -116,8 +132,24 @@ export class RedisQueue<DataType> implements Queue<DataType> {
 
     try {
       while (true) {
-        const data = await this.redis.xreadgroup('GROUP', this.groupName, consumer, 'COUNT', size, 'BLOCK');
-        yield* data;
+        const entries = await this.stream.readGroup({ id: '>', group: this.groupName, consumer, block: 0, count: batchSize });
+        const jobs: Job<DataType>[] = entries
+          .map(({ id, data: { data: serializedData } }) => ({ id, serializedData }))
+          .map(({ id, serializedData }) => ({ id, data: Serializer.deserialize(serializedData) }));
+
+        try {
+          yield jobs;
+
+          const ids = jobs.map((job) => job.id);
+          await this.stream.acknowledge(this.groupName, ...ids);
+        }
+        catch (error) {
+          if (throwOnError) {
+            throw error;
+          }
+
+          this.logger.error(error);
+        }
       }
     }
     finally {
@@ -125,21 +157,8 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     }
   }
 
-  async acknowledge(job: Job<DataType>): Promise<void> {
-    await this.redis.xack(this.streamName, this.groupName, job.id);
-  }
-
-  async acknowledgeMany(jobs: AnyIterable<Job<DataType>>): Promise<void> {
-    await AsyncEnumerable.from(jobs)
-      .batch(50)
-      .parallelForEach(3, async (batch) => {
-        const ids = batch.map((job) => job.id);
-        await this.redis.xack(this.streamName, this.groupName, ...ids);
-      });
-  }
-
-  async clean(): Promise<void> {
-    const deletedEntriesCount = await this.redis.xtrim(this.streamName, 'MAXLEN', 0) as number;
+  async clear(): Promise<void> {
+    await this.stream.trim(0, false);
   }
 
   private getConsumerName(): string {
@@ -147,8 +166,11 @@ export class RedisQueue<DataType> implements Queue<DataType> {
   }
 
   async claim(): Promise<void> {
-    const consumers
+    const consumers = await this.stream.getConsumers(this.groupName);
 
+    for (const consumer of consumers) {
+      const tryTakeMeasure = consumer.idle
+    }
 
     throw Error('not implemented');
   }
