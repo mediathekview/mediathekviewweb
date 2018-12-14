@@ -75,24 +75,14 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     return job;
   }
 
-  async enqueueMany(data: AnyIterable<DataType>): Promise<Job<DataType>[]> {
-    return await AsyncEnumerable.from(data)
-      .map((data) => {
-        const serializedData = Serializer.serialize(data);
-        const entry: SourceEntry<StreamEntryType> = { data: { data: serializedData } };
+  async enqueueMany(data: DataType[]): Promise<Job<DataType>[]> {
+    const serializedData = data.map((item) => Serializer.serialize(item));
+    const entries: SourceEntry<StreamEntryType>[] = serializedData.map((serializedData) => ({ data: { data: serializedData } }));
 
-        return { data, entry };
-      })
-      .batch(50)
-      .parallelMap(3, true, async (batch) => {
-        const entries = batch.map((item) => item.entry);
-        const ids = await this.stream.addMany(entries);
+    const ids = await this.stream.addMany(entries);
 
-        const jobs: RedisJob<DataType>[] = ids.map((id, index) => ({ id, data: batch[index].data }));
-        return jobs;
-      })
-      .mapMany((results) => results)
-      .toArray();
+    const jobs: RedisJob<DataType>[] = ids.map((id, index) => ({ id, data: data[index] }));
+    return jobs;
   }
 
   async *getConsumer(throwOnError: boolean): AsyncIterableIterator<Job<DataType>> {

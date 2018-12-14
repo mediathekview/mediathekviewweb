@@ -105,6 +105,11 @@ export class RedisLock implements Lock {
     return success;
   }
 
+  async exists(): Promise<boolean> {
+    const result = await this.redis.exists(this.key);
+    return result == 1;
+  }
+
   async forceUpdateOwned(): Promise<void> {
     this.expireTimestamp = await (this.redis as any)['lock:owned'](this.key, this.id) as number;
   }

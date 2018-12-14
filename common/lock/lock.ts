@@ -14,5 +14,7 @@ export interface Lock {
   release(): Promise<boolean>;
   release(force: boolean): Promise<boolean>;
 
+  exists(): Promise<boolean>;
+
   forceUpdateOwned(): Promise<void>;
 }

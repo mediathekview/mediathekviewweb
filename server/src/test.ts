@@ -23,8 +23,7 @@ import { AsyncEnumerable } from './common/enumerable';
 
   const queue = queueProvider.get<number>('test', 5);
 
-
-  AsyncEnumerable.fromRange(0, 100000)
+  AsyncEnumerable.fromRange(0, 10000)
     .batch(50)
     .forEach(async (batch) => {
       await queue.enqueueMany(batch);
