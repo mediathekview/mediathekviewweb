@@ -31,7 +31,7 @@ export class FilmlistEntrySource implements EntrySource {
   }
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Entry[]> {
-    const consumer = this.importQueue.getConsumer();
+    const consumer = this.importQueue.getConsumer(false);
 
     for await (const job of consumer) {
       const entries = await this.processFilmlist(job);

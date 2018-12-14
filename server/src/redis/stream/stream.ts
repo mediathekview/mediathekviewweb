@@ -91,7 +91,7 @@ export class RedisStream<T> {
       ...(count != null ? ['COUNT', count] : []),
       ...(block != null ? ['BLOCK', block] : []),
       'STREAMS', this.stream,
-      'ID', id
+      id
     ];
 
     const data = await this.redis.xread(...parametersArray) as StreamReadData;
@@ -109,7 +109,7 @@ export class RedisStream<T> {
       ...(block != null ? ['BLOCK', block] : []),
       ...(noAck != null ? ['NOACK'] : []),
       'STREAMS', this.stream,
-      'ID', id
+      id
     ] as ['GROUP', string, string, ...string[]];
 
     const data = await this.redis.xreadgroup(...parametersArray) as StreamReadData;
@@ -139,7 +139,18 @@ export class RedisStream<T> {
     return streamInfo;
   }
 
+  async exists(): Promise<boolean> {
+    const type = await this.redis.type(this.stream);
+    return type == 'stream';
+  }
+
   async hasGroup(name: string): Promise<boolean> {
+    const exists = await this.exists();
+
+    if (!exists) {
+      return false;
+    }
+
     const groups = await this.getGroups();
     return groups.some((group) => group.name == name);
   }
@@ -209,7 +220,7 @@ export class RedisStream<T> {
 
   private parseStreamReadData(data: StreamReadData): Entry<T>[] {
     const entries = SyncEnumerable.from(data)
-      .mapMany(([stream, entries]) => entries)
+      .mapMany(([_stream, entries]) => entries)
       .map((entry) => this.parseEntry(entry))
       .toArray();
 

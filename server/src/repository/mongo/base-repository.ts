@@ -1,13 +1,10 @@
 import * as Mongo from 'mongodb';
-import { AsyncEnumerable } from '../../common/enumerable';
+import { AsyncEnumerable, SyncEnumerable } from '../../common/enumerable';
 import { Entity } from '../../common/model';
 import { AnyIterable } from '../../common/utils';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter, TypedMongoFilter } from './mongo-query';
 import { objectIdOrStringToString, UpsertedIds } from './utils';
-
-
-const BATCH_SIZE = 100;
 
 type TWithPartialId<T extends Entity> = PartialProperty<T, 'id'>;
 
@@ -19,34 +16,26 @@ export class MongoBaseRepository<T extends Entity> {
   }
 
   async save(entity: TWithPartialId<T>): Promise<T> {
-    const result = this.saveMany([entity]);
-    return await AsyncEnumerable.from(result).single();
+    const savedEntities = await this.saveMany([entity]);
+    return await SyncEnumerable.from(savedEntities).single();
   }
 
-  saveMany(entities: AnyIterable<TWithPartialId<T>>): AsyncIterable<T> {
-    const result = AsyncEnumerable.from(entities)
-      .batch(BATCH_SIZE)
-      .map((entitiesBatch) => {
-        const operations = entitiesBatch.map((entity) => this.toReplaceOneOperation(entity));
-        return ({ entitiesBatch, operations });
-      })
-      .map(async ({ entitiesBatch, operations }) => {
-        const bulkWriteResult = await this.collection.bulkWrite(operations);
-        return { entitiesBatch, upsertedIds: bulkWriteResult.upsertedIds as UpsertedIds };
-      })
-      .mapMany(({ entitiesBatch, upsertedIds }) => entitiesBatch.map((entity) => ({ entity, upsertedIds })))
-      .map(({ entity, upsertedIds }, index) => {
-        const entityCopy = { ...entity };
+  async saveMany(entities: TWithPartialId<T>[]): Promise<T[]> {
+    const operations = entities.map((entity) => toReplaceOneOperation(entity));
+    const bulkWriteResult = await this.collection.bulkWrite(operations);
+    const upsertedIds = bulkWriteResult.upsertedIds as UpsertedIds;
+    const savedEntities = entities.map((entity, index) => {
+      const entityCopy = { ...entity };
 
-        const hasUpsertedId = upsertedIds.hasOwnProperty(index);
-        if (hasUpsertedId) {
-          entityCopy.id = objectIdOrStringToString(upsertedIds[index]._id);
-        }
+      const hasUpsertedId = upsertedIds.hasOwnProperty(index);
+      if (hasUpsertedId) {
+        entityCopy.id = objectIdOrStringToString(upsertedIds[index]._id);
+      }
 
-        return entityCopy as any as T;
-      });
+      return entityCopy as T;
+    });
 
-    return result;
+    return savedEntities;
   }
 
   async load(id: string): Promise<T | null> {
@@ -60,14 +49,12 @@ export class MongoBaseRepository<T extends Entity> {
     return entity;
   }
 
-  async *loadManyById(ids: AnyIterable<string>): AsyncIterable<T> {
-    const idsArray = await AsyncEnumerable.from(ids).toArray();
-
+  loadManyById(ids: string[]): AsyncIterable<T> {
     const filter: MongoFilter = {
-      _id: { $in: idsArray }
+      _id: { $in: ids }
     };
 
-    yield* this.loadManyByFilter(filter);
+    return this.loadManyByFilter(filter);
   }
 
   async *loadManyByFilter(filter: MongoFilter) {
@@ -101,24 +88,24 @@ export class MongoBaseRepository<T extends Entity> {
   async drop(): Promise<void> {
     await this.collection.drop();
   }
+}
 
-  private toReplaceOneOperation(entity: TWithPartialId<T>) {
-    const filter: TypedMongoFilter<T> = {};
+function toReplaceOneOperation<T extends Entity>(entity: TWithPartialId<T>) {
+  const filter: TypedMongoFilter<T> = {};
 
-    if (entity.id != undefined) {
-      filter['_id'] = entity.id;
-    }
-
-    const replacement = toMongoDocumentWithPartialId(entity);
-
-    const operation = {
-      replaceOne: {
-        filter,
-        replacement,
-        upsert: true
-      }
-    };
-
-    return operation;
+  if (entity.id != undefined) {
+    filter['_id'] = entity.id;
   }
+
+  const replacement = toMongoDocumentWithPartialId(entity);
+
+  const operation = {
+    replaceOne: {
+      filter,
+      replacement,
+      upsert: true
+    }
+  };
+
+  return operation;
 }

@@ -64,6 +64,7 @@ export class RedisLock implements Lock {
       if (result == AcquireResult.Owned) {
         throw new Error('already owned');
       }
+
       success = (result == AcquireResult.Acquired);
 
       if (!success) {
@@ -114,10 +115,8 @@ export class RedisLock implements Lock {
 
     (async () => {
       do {
-        let success = false;
-
         try {
-          success = await this.tryRefresh();
+          await this.tryRefresh();
           error = null;
         }
         catch (refreshError) {

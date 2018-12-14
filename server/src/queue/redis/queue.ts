@@ -3,8 +3,9 @@ import { AsyncEnumerable } from '../../common/enumerable';
 import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { Serializer } from '../../common/serializer';
-import { AnyIterable, DeferredPromise, Nullable } from '../../common/utils';
+import { AnyIterable, DeferredPromise } from '../../common/utils';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
+import { RedisProvider } from '../../redis/provider';
 import { RedisStream, SourceEntry } from '../../redis/stream';
 import { uniqueId } from '../../utils';
 import { Job, Queue } from '../queue';
@@ -13,7 +14,8 @@ type StreamEntryType = { data: string };
 type RedisJob<DataType> = Job<DataType>;
 
 export class RedisQueue<DataType> implements Queue<DataType> {
-  //private readonly redis: Redis.Redis;
+  private readonly redis: Redis.Redis;
+  private readonly redisProvider: RedisProvider;
   private readonly stream: RedisStream<StreamEntryType>;
   private readonly lockProvider: LockProvider;
   private readonly distributedLoopProvider: DistributedLoopProvider;
@@ -25,13 +27,16 @@ export class RedisQueue<DataType> implements Queue<DataType> {
   private readonly distributedClaimLoop: DistributedLoop;
   private readonly initialized: DeferredPromise<void>;
 
-  constructor(redis: Redis.Redis, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, logger: Logger) {
+  private consumerStream: RedisStream<StreamEntryType>;
+
+  constructor(redis: Redis.Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, logger: Logger) {
     this.redis = redis;
+    this.redisProvider = redisProvider;
     this.lockProvider = lockProvider;
     this.distributedLoopProvider = distributedLoopProvider;
     this.key = key;
     this.streamName = `stream:${key}`;
-    this.groupName = `group:${key}`;
+    this.groupName = `queue`;
     this.retryAfter = retryAfter;
     this.logger = logger;
 
@@ -43,6 +48,9 @@ export class RedisQueue<DataType> implements Queue<DataType> {
   }
 
   private async initialize() {
+    const consumerRedis = await this.redisProvider.get('CONSUMER');
+    this.consumerStream = new RedisStream(consumerRedis, this.streamName);
+
     const hasGroup = await this.stream.hasGroup(this.groupName);
 
     if (!hasGroup) {
@@ -50,7 +58,7 @@ export class RedisQueue<DataType> implements Queue<DataType> {
       this.logger.info(`created consumer group ${this.groupName}`);
     }
 
-    this.distributedClaimLoop.run((_controller) => this.claim(), 10000, 3000);
+    //  this.distributedClaimLoop.run((_controller) => this.claim(), 10000, 3000);
 
     this.initialized.resolve();
   }
@@ -93,11 +101,15 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     const consumer = this.getConsumerName();
     const lock = this.lockProvider.get(consumer);
 
-    await lock.acquire();
+    const success = await lock.acquire();
+
+    if (!success) {
+      throw new Error('failed acquiring lock');
+    }
 
     try {
       while (true) {
-        const entries = await this.stream.readGroup({ id: '>', group: this.groupName, consumer, block: 0, count: 1 });
+        const entries = await this.consumerStream.readGroup({ id: '>', group: this.groupName, consumer, block: 0, count: 1 });
         const jobs: Job<DataType>[] = entries
           .map(({ id, data: { data: serializedData } }) => ({ id, serializedData }))
           .map(({ id, serializedData }) => ({ id, data: Serializer.deserialize(serializedData) }));
@@ -105,7 +117,7 @@ export class RedisQueue<DataType> implements Queue<DataType> {
         for (const job of jobs) {
           try {
             yield job;
-            await this.stream.acknowledge(this.groupName, job.id);
+            await this.consumerStream.acknowledge(this.groupName, job.id);
           }
           catch (error) {
             if (throwOnError) {
@@ -128,11 +140,15 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     const consumer = this.getConsumerName();
     const lock = this.lockProvider.get(consumer);
 
-    await lock.acquire();
+    const success = await lock.acquire();
+
+    if (!success) {
+      throw new Error('failed acquiring lock');
+    }
 
     try {
       while (true) {
-        const entries = await this.stream.readGroup({ id: '>', group: this.groupName, consumer, block: 0, count: batchSize });
+        const entries = await this.consumerStream.readGroup({ id: '>', group: this.groupName, consumer, block: 0, count: batchSize });
         const jobs: Job<DataType>[] = entries
           .map(({ id, data: { data: serializedData } }) => ({ id, serializedData }))
           .map(({ id, serializedData }) => ({ id, data: Serializer.deserialize(serializedData) }));
@@ -141,7 +157,7 @@ export class RedisQueue<DataType> implements Queue<DataType> {
           yield jobs;
 
           const ids = jobs.map((job) => job.id);
-          await this.stream.acknowledge(this.groupName, ...ids);
+          await this.consumerStream.acknowledge(this.groupName, ...ids);
         }
         catch (error) {
           if (throwOnError) {
@@ -161,10 +177,6 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     await this.stream.trim(0, false);
   }
 
-  private getConsumerName(): string {
-    return uniqueId();
-  }
-
   async claim(): Promise<void> {
     const consumers = await this.stream.getConsumers(this.groupName);
 
@@ -173,6 +185,10 @@ export class RedisQueue<DataType> implements Queue<DataType> {
     }
 
     throw Error('not implemented');
+  }
+
+  private getConsumerName(): string {
+    return uniqueId();
   }
 
   private async getPendingMessagesOfConsumer(consumer: string) {

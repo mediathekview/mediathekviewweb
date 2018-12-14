@@ -36,7 +36,7 @@ export class RedisLockProvider implements LockProvider {
               return "owned"
             end
 
-            if (lockedId ~= nil) then
+            if (lockedId ~= false) then
               return "failed"
             end
 
@@ -45,7 +45,7 @@ export class RedisLockProvider implements LockProvider {
               result = (redis.call("pexpireat", key, expireTimestamp) == 1)
             end
 
-            if (result == true)
+            if (result == true) then
               return "acquired"
             else
               return "failed"

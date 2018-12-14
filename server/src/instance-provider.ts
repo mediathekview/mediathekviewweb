@@ -30,6 +30,7 @@ import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { ElasticsearchLogAdapterFactory } from './utils/elasticsearch-log-adapter-factory';
 import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
+import { RedisProvider } from './redis/provider';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -56,6 +57,18 @@ const ELASTICSEARCH_LOG = '[ELASTICSEARCH]';
 const REDIS_LOG = '[REDIS]';
 const MONGO_LOG = '[MONGO]';
 
+class InstanceProviderRedisProvider implements RedisProvider {
+  private readonly providerFunction: (scope: string) => Promise<Redis.Redis>;
+
+  constructor(providerFunction: (scope: string) => Promise<Redis.Redis>) {
+    this.providerFunction = providerFunction;
+  }
+
+  async get(scope: string): Promise<Redis.Redis> {
+    return await this.providerFunction(scope);
+  }
+}
+
 export class InstanceProvider {
   private static instances: StringMap = {};
   private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
@@ -67,7 +80,6 @@ export class InstanceProvider {
       return new MediathekViewWebApi(searchEngine);
     });
   }
-
 
   static mediathekViewWebRestApi(): Promise<MediathekViewWebRestApi> {
     return this.singleton(MediathekViewWebRestApi, async () => {
@@ -102,25 +114,34 @@ export class InstanceProvider {
     return this.singleton('appLogger', () => this.loggerFactory.create(CORE_LOG));
   }
 
+  static redisProvider(): Promise<RedisProvider> {
+    return this.singleton(InstanceProviderRedisProvider, () => new InstanceProviderRedisProvider((scope) => this.newRedis(scope)));
+  }
+
   static redis(): Promise<Redis.Redis> {
-    return this.singleton(Redis, () => {
-      const logger = LoggerFactoryProvider.factory.create(REDIS_LOG);
-      const redis = new Redis({
-        enableReadyCheck: true,
-        maxRetriesPerRequest: null,
-        ...config.redis
-      });
+    return this.singleton(Redis, async () => this.newRedis('MAIN'));
+  }
 
-      redis
-        .on('connect', () => logger.info('connected'))
-        .on('ready', () => logger.info('ready'))
-        .on('close', () => logger.warn('connection closed'))
-        .on('reconnecting', (milliseconds) => logger.info(`reconnecting in ${milliseconds} ms`))
-        .on('end', () => logger.warn(`connection end`))
-        .on('error', (error: Error) => logger.error(error, false));
-
-      return redis;
+  private static async newRedis(scope: string): Promise<Redis.Redis> {
+    const logger = LoggerFactoryProvider.factory.create(`${REDIS_LOG} [${scope}]`);
+    const redis = new Redis({
+      lazyConnect: true,
+      enableReadyCheck: true,
+      maxRetriesPerRequest: null,
+      ...config.redis
     });
+
+    redis
+      .on('connect', () => logger.info('connected'))
+      .on('ready', () => logger.info('ready'))
+      .on('close', () => logger.warn('connection closed'))
+      .on('reconnecting', (milliseconds) => logger.info(`reconnecting in ${milliseconds} ms`))
+      .on('end', () => logger.warn(`connection end`))
+      .on('error', (error: Error) => logger.error(error, false));
+
+    await redis.connect();
+
+    return redis;
   }
 
   static elasticsearch(): Promise<ElasticsearchClient> {
@@ -205,9 +226,10 @@ export class InstanceProvider {
   static queueProvider(): Promise<QueueProvider> {
     return this.singleton(RedisQueueProvider, async () => {
       const redis = await this.redis();
+      const redisProvider = await this.redisProvider();
       const lockProvider = await this.lockProvider();
       const distributedLoopProvider = await this.distributedLoopProvider();
-      const queue = new RedisQueueProvider(redis, lockProvider, distributedLoopProvider, this.loggerFactory, QUEUE_LOG);
+      const queue = new RedisQueueProvider(redis, redisProvider, lockProvider, distributedLoopProvider, this.loggerFactory, QUEUE_LOG);
 
       return queue;
     });
@@ -293,8 +315,7 @@ export class InstanceProvider {
 
   private static async singleton<T>(type: any, builder: () => T | Promise<T>): Promise<T> {
     if (this.instances[type] == undefined) {
-      const instance = await builder();
-      this.instances[type] = instance;
+      this.instances[type] = builder();
     }
 
     return this.instances[type];

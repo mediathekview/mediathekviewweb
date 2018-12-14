@@ -1,7 +1,6 @@
 import * as Mongo from 'mongodb';
-
 import { UserAction, UserActionFilter, UserActionWithPartialId } from '../../common/model/user-actions';
-import { AnyIterable, objectToDotNotation } from '../../common/utils';
+import { objectToDotNotation } from '../../common/utils';
 import { UserActionRepository } from '../user-action-repository';
 import { MongoBaseRepository } from './base-repository';
 import { MongoDocument } from './mongo-document';
@@ -19,15 +18,15 @@ export class MongoUserActionRepository implements UserActionRepository {
     return this.baseRepository.save(action);
   }
 
-  saveMany(actions: AnyIterable<UserActionWithPartialId>): AsyncIterable<UserAction> {
-    return this.baseRepository.saveMany(actions);
+  async saveMany(actions: UserActionWithPartialId[]): Promise<UserAction[]> {
+    return await this.baseRepository.saveMany(actions);
   }
 
   load(id: string): Promise<UserAction | null> {
     return this.baseRepository.load(id);
   }
 
-  loadManyById(ids: AnyIterable<string>): AsyncIterable<UserAction> {
+  loadManyById(ids: string[]): AsyncIterable<UserAction> {
     return this.baseRepository.loadManyById(ids);
   }
 

@@ -1,9 +1,8 @@
 import {
-  anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable,
-  drain, filterAsync, forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync,
-  isAsyncIterableIterator, isIterable, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction,
-  ParallelizablePredicate, reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator,
-  toAsyncIterator, toSync
+  anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable, drain, filterAsync, forEachAsync,
+  interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable, mapAsync, mapManyAsync, multiplex,
+  ParallelizableIteratorFunction, ParallelizablePredicate, range, reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync,
+  toAsyncIterableIterator, toAsyncIterator, toSync
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
@@ -21,6 +20,11 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
 
   static from<T>(iterable: AnyIterable<T>): AsyncEnumerable<T> {
     return new AsyncEnumerable(iterable);
+  }
+
+  static fromRange(fromInclusive: number, toInclusive: number): AsyncEnumerable<number> {
+    const rangeIterable = range(fromInclusive, toInclusive);
+    return new AsyncEnumerable(rangeIterable);
   }
 
   cast<TNew extends T>(): AsyncEnumerable<TNew> {
