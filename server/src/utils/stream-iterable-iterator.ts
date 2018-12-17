@@ -8,7 +8,7 @@ export class StreamIterableIterator<T> implements AsyncIterableIterator<T> {
   private initialized: boolean;
   private end: boolean;
   private error: Error | null;
-  private readable: DeferredPromise<void>;
+  private readable: DeferredPromise;
 
   constructor(stream: Readable)
   constructor(stream: Readable, readSize: number)

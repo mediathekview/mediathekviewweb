@@ -1,3 +1,4 @@
+import { AsyncDisposable } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import '../common/extensions/map';
 import { Logger } from '../common/logger';
@@ -9,10 +10,9 @@ import { Keys } from '../keys';
 import { Queue, QueueProvider } from '../queue';
 
 const BUFFER_SIZE = 5;
-
 const REPORT_INTERVAL = 10000;
 
-export class EntriesImporter {
+export class EntriesImporter implements AsyncDisposable {
   private readonly entriesToBeSavedQueue: Queue<Entry>;
   private readonly logger: Logger;
   private readonly reporter: PeriodicReporter;

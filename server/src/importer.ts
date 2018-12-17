@@ -26,7 +26,7 @@ export class MediathekViewWebImporter extends ServiceBase implements Service {
     ];
 
     for (const source of this.sources) {
-      this.disposer.addSubDisposable(source);
+      this.disposer.addSubDisposables(source);
     }
   }
 

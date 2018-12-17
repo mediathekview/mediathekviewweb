@@ -35,6 +35,8 @@ export class EntriesSaver implements AsyncDisposable {
     this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30);
     this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 30);
 
+    this.disposer.addSubDisposables(this.entriesToBeSavedQueue, this.entriesToBeIndexedQueue);
+
     this.initialize();
   }
 
@@ -49,6 +51,8 @@ export class EntriesSaver implements AsyncDisposable {
 
   async run(): Promise<void> {
     this.stop = false;
+
+    const consumer = this.entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, false);
 
     await AsyncEnumerable.from(entriesToBeSavedIterable)
       .while(() => !this.stop)

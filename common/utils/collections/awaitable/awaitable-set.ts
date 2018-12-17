@@ -5,7 +5,7 @@ export class AwaitableSet<T> implements Set<T> {
   private readonly backingSet: Set<T>;
   private readonly _added: DeferredPromise<T>;
   private readonly _deleted: DeferredPromise<T>;
-  private readonly _cleared: DeferredPromise<void>;
+  private readonly _cleared: DeferredPromise;
 
   get added(): Promise<T | T[]> {
     return this._added;

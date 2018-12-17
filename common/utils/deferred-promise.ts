@@ -1,4 +1,4 @@
-export class DeferredPromise<T> implements Promise<T> {
+export class DeferredPromise<T = void> implements Promise<T> {
   private backingPromise: Promise<T>;
   private resolvePromise: (value?: T | PromiseLike<T>) => void;
   private rejectPromise: (reason?: any) => void;

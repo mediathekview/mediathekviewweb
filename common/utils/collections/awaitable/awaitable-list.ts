@@ -3,7 +3,7 @@ import { DeferredPromise } from '../../deferred-promise';
 export class AwaitableList<T> implements Iterable<T> {
   private readonly _added: DeferredPromise<T | T[]>;
   private readonly _removed: DeferredPromise<T | T[]>;
-  private readonly _cleared: DeferredPromise<void>;
+  private readonly _cleared: DeferredPromise;
 
   private backingArray: T[];
 

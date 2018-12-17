@@ -9,7 +9,7 @@ export class DistributedLoop {
   private readonly key: string;
   private readonly lockProvider: LockProvider;
   private readonly throwError: boolean;
-  private readonly stopped: DeferredPromise<void>;
+  private readonly stopped: DeferredPromise;
 
   constructor(key: string, lockProvider: LockProvider, throwError: boolean = true) {
     this.key = `loop:${key}`;

@@ -1,5 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 import { timeout } from './timing';
+import { DeferredPromise } from './deferred-promise';
 
 export class PeriodicReporter {
   private readonly reportSubject: Subject<number>;
@@ -9,6 +10,8 @@ export class PeriodicReporter {
   private resetAfterReport: boolean;
   private running: boolean;
   private counter: number;
+  private stopRequested: boolean;
+  private stopped: DeferredPromise;
 
   get report(): Observable<number> {
     return this.reportSubject.asObservable();
@@ -20,6 +23,7 @@ export class PeriodicReporter {
     this.resetAfterReport = resetAfterReport;
     this.running = false;
 
+    this.stopped = new DeferredPromise();
     this.reportSubject = new Subject();
   }
 
@@ -33,8 +37,11 @@ export class PeriodicReporter {
     }
 
     this.counter = 0;
+    this.running = true;
+    this.stopRequested = false;
+    this.stopped.reset();
 
-    while (this.interval > 0) {
+    while (!this.stopRequested) {
       await timeout(this.interval);
 
       if (!this.ignoreZero || (this.counter > 0)) {
@@ -42,7 +49,12 @@ export class PeriodicReporter {
       }
     }
 
-    this.running = true;
+    this.stopped.resolve();
+  }
+
+  async stop(): Promise<void> {
+    this.stopRequested = true;
+    await this.stopped;
   }
 
   private emitReport(resetAfterReport: boolean) {
@@ -51,10 +63,5 @@ export class PeriodicReporter {
     if (resetAfterReport) {
       this.counter = 0;
     }
-  }
-
-  stop() {
-    this.interval = -1;
-    this.running = false;
   }
 }

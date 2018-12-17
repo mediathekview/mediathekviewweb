@@ -3,7 +3,7 @@ import { DeferredPromise } from '../../deferred-promise';
 export class AwaitableMap<K, V> implements Map<K, V> {
   private readonly backingMap: Map<K, V>;
   private readonly _setted: DeferredPromise<[K, V]>;
-  private readonly _cleared: DeferredPromise<void>;
+  private readonly _cleared: DeferredPromise;
   private readonly _deleted: DeferredPromise<K>;
 
   get setted(): Promise<[K, V]> {

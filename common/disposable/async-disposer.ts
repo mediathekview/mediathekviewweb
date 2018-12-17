@@ -13,8 +13,8 @@ export class AsyncDisposer implements AsyncDisposable {
     return this._disposed;
   }
 
-  getDisposeDeferrer(): DeferredPromise<void> {
-    const deferredPromise = new DeferredPromise<void>();
+  getDisposeDeferrer(): DeferredPromise {
+    const deferredPromise = new DeferredPromise();
     this.disposeDeferrers.push(deferredPromise);
 
     return deferredPromise;
@@ -31,8 +31,8 @@ export class AsyncDisposer implements AsyncDisposable {
     }
   }
 
-  addSubDisposable(disposable: AsyncDisposable) {
-    this.subDisposables.push(disposable);
+  addSubDisposables(...disposable: AsyncDisposable[]) {
+    this.subDisposables.push(...disposable);
   }
 
   async dispose(): Promise<void> {
