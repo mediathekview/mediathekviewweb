@@ -7,6 +7,8 @@ export * from './helpers';
 export * from './iterable-helpers';
 export * from './math';
 export * from './ordered-feedable-async-iterable';
+export * from './periodic-reporter';
+export * from './periodic-sampler';
 export * from './provider-function-iterable';
 export * from './timer';
 export * from './timing';

@@ -1,32 +1,26 @@
 import { EntriesSaver } from './entries-saver/saver';
 import { InstanceProvider } from './instance-provider';
+import { ServiceBase } from './service-base';
+import { Service } from './service';
 
-export class MediathekViewWebSaver {
-  private saver: EntriesSaver | null;
-  private running: boolean;
+export class MediathekViewWebSaver extends ServiceBase implements Service {
+  private saver: EntriesSaver;
+
+  serviceName = 'EntriesSaver';
 
   constructor() {
-    this.saver = null;
-    this.running = false;
+    super();
   }
 
-  async initialize() {
-    if (this.saver == null) {
-      this.saver = await InstanceProvider.entriesSaver();
-    }
+  protected async _initialize(): Promise<void> {
+    this.saver = await InstanceProvider.entriesSaver();
   }
 
-  async run() {
-    if (this.saver == null) {
-      throw new Error('not initialized');
-    }
-
-    if (this.running) {
-      throw new Error('already running');
-    }
-
-    this.running = true;
+  protected async _run(): Promise<void> {
     await this.saver.run();
-    this.running = false;
+  }
+
+  protected async _stop(): Promise<void> {
+    await this.saver.dispose();
   }
 }

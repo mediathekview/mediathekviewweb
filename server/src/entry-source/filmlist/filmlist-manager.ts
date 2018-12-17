@@ -8,6 +8,7 @@ import { Keys } from '../../keys';
 import { Queue, QueueProvider } from '../../queue';
 import { Filmlist } from './filmlist';
 import { FilmlistRepository } from './repository';
+import { LoopController } from '../../distributed-loop/controller';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
@@ -22,6 +23,8 @@ export class FilmlistManager {
   private readonly distributedLoop: DistributedLoop;
   private readonly logger: Logger;
 
+  private loopController: LoopController;
+
   constructor(datastoreFactory: DatastoreFactory, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider, logger: Logger) {
     this.filmlistRepository = filmlistRepository;
     this.logger = logger;
@@ -34,7 +37,11 @@ export class FilmlistManager {
   }
 
   run() {
-    const loopController = this.distributedLoop.run(() => this.loop(), 60000, 10000);
+    this.loopController = this.distributedLoop.run(() => this.loop(), 60000, 10000);
+  }
+
+  async stop(): Promise<void> {
+    await this.loopController.stop();
   }
 
   private async loop(): Promise<void> {

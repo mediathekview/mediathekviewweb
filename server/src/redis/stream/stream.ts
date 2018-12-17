@@ -1,13 +1,14 @@
 import { Redis } from 'ioredis';
+import { AsyncDisposable } from '../../common/disposable';
 import { SyncEnumerable } from '../../common/enumerable';
 import { Nullable } from '../../common/utils';
 import { Consumer } from './consumer';
 import { ConsumerGroup } from './consumer-group';
 import { Entry } from './entry';
-import { SourceEntry } from './source-entry';
-import { StreamInfo } from './stream-info';
 import { PendingEntry } from './pending-entry';
 import { PendingInfo, PendingInfoConsumer as PendingConsumerInfo } from './pending-info';
+import { SourceEntry } from './source-entry';
+import { StreamInfo } from './stream-info';
 
 export type ReadParameters = {
   id: string,
@@ -51,13 +52,21 @@ type StreamReadData =
     ][]
   ][];
 
-export class RedisStream<T> {
+export class RedisStream<T extends StringMap> implements AsyncDisposable {
   private readonly redis: Redis;
   private readonly stream: string;
+  private readonly quitRedisOnDispose: boolean;
 
-  constructor(redis: Redis, stream: string) {
+  constructor(redis: Redis, stream: string, quitRedisOnDispose: boolean) {
     this.redis = redis;
     this.stream = stream;
+    this.quitRedisOnDispose = quitRedisOnDispose;
+  }
+
+  async dispose(): Promise<void> {
+    if (this.quitRedisOnDispose) {
+      await this.redis.quit();
+    }
   }
 
   async add(entry: SourceEntry<T>): Promise<string> {
@@ -124,7 +133,7 @@ export class RedisStream<T> {
   }
 
   async claim(): Promise<void> {
-
+    throw new Error('not implemented');
   }
 
   async trim(maxLength: number, approximate: boolean): Promise<number> {

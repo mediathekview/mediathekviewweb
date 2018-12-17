@@ -237,10 +237,10 @@ export class InstanceProvider {
 
   static entriesImporter(): Promise<EntriesImporter> {
     return this.singleton(EntriesImporter, async () => {
-      const datastoreFactory = await this.datastoreFactory();
+      const queueProvider = await this.queueProvider();
       const logger = LoggerFactoryProvider.factory.create(ENTRIES_IMPORTER_LOG);
 
-      return new EntriesImporter(datastoreFactory, logger);
+      return new EntriesImporter(queueProvider, logger);
     });
   }
 

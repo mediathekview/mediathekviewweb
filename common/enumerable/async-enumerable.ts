@@ -2,7 +2,7 @@ import {
   anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable, drain, filterAsync, forEachAsync,
   interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable, mapAsync, mapManyAsync, multiplex,
   ParallelizableIteratorFunction, ParallelizablePredicate, range, reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync,
-  toAsyncIterableIterator, toAsyncIterator, toSync
+  toAsyncIterableIterator, toAsyncIterator, toSync, whileAsync
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
@@ -33,6 +33,11 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
 
   forceCast<TNew>(): AsyncEnumerable<TNew> {
     return this as AsyncEnumerable<any> as AsyncEnumerable<TNew>;
+  }
+
+  while(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {
+    const whiled = whileAsync(this.source, predicate);
+    return new AsyncEnumerable(whiled);
   }
 
   filter(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {

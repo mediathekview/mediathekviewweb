@@ -18,3 +18,4 @@ export * from './to-async-iterable';
 export * from './to-iterator';
 export * from './to-sync-iterable';
 export * from './types';
+export * from './while';

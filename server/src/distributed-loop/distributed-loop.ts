@@ -23,7 +23,7 @@ export class DistributedLoop {
     let errorSubject = new Subject<void>();
 
     const controller: LoopController = {
-      stop: () => { stop = true; return this.stopped; },
+      stop: async () => { stop = true; await this.stopped; },
       setTiming: (timing) => {
         if (timing.interval != undefined) {
           interval = timing.interval;

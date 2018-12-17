@@ -1,50 +1,52 @@
+import { ServiceBase } from './service-base';
 import { EntriesImporter } from './entries-importer/importer';
 import { EntrySource } from './entry-source';
 import { InstanceProvider } from './instance-provider';
+import { Service } from './service';
+import { AsyncDisposer } from './common/disposable';
 
-export class MediathekViewWebImporter {
-  private importer: EntriesImporter | null;
+export class MediathekViewWebImporter extends ServiceBase implements Service {
+  private disposer: AsyncDisposer;
+  private importer: EntriesImporter;
   private sources: EntrySource[];
-  private started: boolean;
+
+  readonly serviceName = 'Importer';
 
   constructor() {
-    this.importer = null;
-    this.sources = [];
-    this.started = false;
+    super();
+
+    this.disposer = new AsyncDisposer();
   }
 
-  async initialize() {
-    if (this.importer == null) {
-      this.importer = await InstanceProvider.entriesImporter();
-      
-      const filmlistEntrySource = await InstanceProvider.filmlistEntrySource();
-      this.sources.push(filmlistEntrySource);
+  protected async _initialize() {
+    this.importer = await InstanceProvider.entriesImporter();
+
+    this.sources = [
+      await InstanceProvider.filmlistEntrySource()
+    ];
+
+    for (const source of this.sources) {
+      this.disposer.addSubDisposable(source);
     }
   }
 
-  async run() {
-    if (this.importer == null) {
-      throw new Error('not initialized');
-    }
-
-    if (this.started) {
-      throw new Error('already called run');
-    }
-
+  protected async _run(): Promise<void> {
     if (this.sources.length == 0) {
       throw new Error('no source available');
     }
 
-    this.started = true;
-
     await this.importSources();
+  }
+
+  protected async _stop(): Promise<void> {
+    await this.disposer.dispose();
   }
 
   private async importSources(): Promise<void> {
     const promises: Promise<void>[] = [];
 
     for (const source of this.sources) {
-      const promise = this.importer!.import(source);
+      const promise = this.importer.import(source);
       promises.push(promise);
     }
 

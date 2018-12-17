@@ -1,11 +1,13 @@
-import { AnyIterable } from '../common/utils';
+import { AsyncDisposable } from '../common/disposable/disposable';
 
 export type Job<DataType> = { id: string, data: DataType; };
 export type ProcessFunction<DataType> = (job: Job<DataType>) => Promise<void>;
 
-export interface Queue<DataType> {
+export interface Queue<DataType> extends AsyncDisposable {
   enqueue(data: DataType): Promise<Job<DataType>>;
-  enqueueMany(data: AnyIterable<DataType>): Promise<Job<DataType>[]>;
+  enqueueMany(data: DataType[]): Promise<Job<DataType>[]>;
+
+  acknowledge(...jobs: Job<DataType>[]): Promise<void>;
 
   getConsumer(throwOnError: boolean): AsyncIterableIterator<Job<DataType>>;
   getBatchConsumer(size: number, throwOnError: boolean): AsyncIterableIterator<Job<DataType>[]>;

@@ -1,14 +1,20 @@
 import * as Cluster from 'cluster';
 import * as Http from 'http';
+import { Subject } from 'rxjs';
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
-import { formatDuration, formatError } from './common/utils';
+import { formatDuration, formatError, Timer } from './common/utils';
 import { config } from './config';
 import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
 import { MediathekViewWebSaver } from './saver';
-import { AggregationMode, EventLoopWatcher } from './utils';
+import { AggregationMode, PeriodicSampler } from './utils';
+
+type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
+const QUIT_SIGNALS: Signal[] = ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGBREAK'];
+
+const quitSubject = new Subject<void>();
 
 (async () => {
   const logger = await InstanceProvider.coreLogger();
@@ -68,19 +74,70 @@ async function init() {
     await indexer.initialize();
   });
 
-  filmlistManager!.run();
-
+  filmlistManager.run();
   importer.run();
   saver.run();
   indexer.run();
 }
 
-async function initEventLoopWatcher(logger: Logger) {
-  const watcher = new EventLoopWatcher(1);
+async function measureEventLoopDelay(): Promise<number> {
+  return new Promise<number>((resolve) => {
+    const stopwatch = new Timer();
 
-  watcher
+    setImmediate(() => {
+      stopwatch.start();
+      // inner setImmediate, to measure an full event-loop-cycle
+      setImmediate(() => resolve(stopwatch.milliseconds));
+    });
+  });
+}
+
+async function initEventLoopWatcher(logger: Logger) {
+  const sampler = new PeriodicSampler(measureEventLoopDelay, 1);
+
+  sampler
     .watch(0, 5000, AggregationMode.ThirdQuartile)
     .subscribe((delay) => logger.info(`eventloop: ${formatDuration(delay, 2)}`));
 
-  watcher.start();
+  sampler.start();
+
+  quitSubject.subscribe(() => sampler.stop());
+}
+
+function quit() {
+  quitSubject.next();
+  quitSubject.complete();
+
+  const timeout = setTimeout(() => {
+    console.error('forcefully quitting after 10 seconds...');
+    process.exit(1);
+  }, 10000);
+
+  timeout.unref();
+}
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('uncaughtException', error);
+  quit();
+});
+
+process.on('multipleResolves', (type, promise, reason) => {
+  console.error('multipleResolves', type, promise, reason);
+  quit();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('unhandledRejection', promise, reason);
+  quit();
+});
+
+process.on('rejectionHandled', (promise) => {
+  console.error('rejectionHandled', promise);
+});
+
+for (const signal in QUIT_SIGNALS) {
+  process.on(signal as Signal, (signal) => {
+    console.info(`${signal} received, quitting.`);
+    quit();
+  });
 }

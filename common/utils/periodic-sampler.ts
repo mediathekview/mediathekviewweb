@@ -1,8 +1,7 @@
-import '../common/extensions/math';
-
 import { Observable, Subject } from 'rxjs';
 import { bufferCount, filter, map } from 'rxjs/operators';
-import { Timer, timeout } from '../common/utils';
+import '../extensions/math';
+import { timeout } from './timing';
 
 export enum AggregationMode {
   Minimum,
@@ -13,36 +12,40 @@ export enum AggregationMode {
   ThirdQuartile
 }
 
-export class EventLoopWatcher {
+export type SampleFunction = () => number | Promise<number>;
+
+export class PeriodicSampler {
+  private readonly sampleFunction: SampleFunction;
   private readonly subject: Subject<number>;
+
+
   private run: boolean;
-  private running: boolean;
+  private stopped: Promise<void>;
 
-  measureInterval: number;
+  sampleInterval: number;
 
-  constructor();
-  constructor(measureInterval: number);
-  constructor(measureInterval: number = 100) {
-    this.measureInterval = measureInterval;
+  constructor(sampleFunction: SampleFunction);
+  constructor(sampleFunction: SampleFunction, sampleInterval: number);
+  constructor(sampleFunction: SampleFunction, sampleInterval: number = 100) {
+    this.sampleFunction = sampleFunction;
+    this.sampleInterval = sampleInterval;
 
     this.run = false;
     this.subject = new Subject();
   }
 
   start() {
-    if (!this.run) {
-      this.run = true;
-
-      if (!this.running) {
-        this.running = true;
-        this.runMeasureLoop()
-          .then(() => this.running = false);
-      }
+    if (this.run) {
+      throw new Error('already started');
     }
+
+    this.run = true;
+    this.stopped = this.runSampleLoop();
   }
 
-  stop() {
+  async stop(): Promise<void> {
     this.run = false;
+    await this.stopped;
   }
 
   watch(): Observable<number>
@@ -59,24 +62,12 @@ export class EventLoopWatcher {
     return observable;
   }
 
-  async measureDelay(): Promise<number> {
-    return new Promise<number>((resolve) => {
-      const stopwatch = new Timer();
-
-      setImmediate(() => {
-        stopwatch.start();
-        // inner setImmediate, to measure an full event-loop-cycle
-        setImmediate(() => resolve(stopwatch.milliseconds));
-      });
-    });
-  }
-
-  private async runMeasureLoop() {
+  private async runSampleLoop() {
     while (this.run) {
-      const delay = await this.measureDelay();
+      const delay = await this.sampleFunction();
       this.subject.next(delay);
 
-      await timeout(this.measureInterval);
+      await timeout(this.sampleInterval);
     }
   }
 
