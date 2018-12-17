@@ -1,6 +1,7 @@
 import * as Redis from 'ioredis';
-import { DataType, Key } from '../';
 import { Nullable } from '../../common/utils';
+import { DataType } from '../data-type';
+import { Key } from '../key';
 import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction } from './serializer';
 
 export class RedisKey<T> implements Key<T> {

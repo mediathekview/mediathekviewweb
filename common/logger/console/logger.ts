@@ -1,5 +1,6 @@
-import { Logger, LogLevel, LogEntry } from '../';
 import { formatError } from '../../utils';
+import { LogLevel } from '../level';
+import { LogEntry, Logger } from '../logger';
 
 export class ConsoleLogger implements Logger {
   private readonly prefix: string;

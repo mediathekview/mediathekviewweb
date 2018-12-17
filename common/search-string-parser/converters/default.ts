@@ -1,7 +1,8 @@
-import { Segment, SegmentConverter, SegmentConverterResultArray, SegmentConverterResultType } from '../';
 import { Field } from '../../model';
 import { Operator } from '../../search-engine/query';
 import { TextQueryBuilder } from '../../search-engine/query/builder';
+import { Segment } from '../segment';
+import { SegmentConverter, SegmentConverterResultArray, SegmentConverterResultType } from '../segment-converter';
 
 const FIELDS = [Field.Topic, Field.Title];
 

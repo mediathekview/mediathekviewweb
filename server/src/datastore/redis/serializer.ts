@@ -1,5 +1,5 @@
-import { DataType } from '../';
 import { Serializer } from '../../common/serializer';
+import { DataType } from '../data-type';
 
 export type SerializeFunction<T> = (obj: T) => string;
 export type DeserializeFunction<T> = (serialized: string) => T;

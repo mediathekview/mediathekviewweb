@@ -1,5 +1,5 @@
+import { BoolQuery, QueryBody } from '../definition';
 import { QueryBuilder } from './builder';
-import { QueryBody, BoolQuery } from '../';
 
 export class BoolQueryBuilder extends QueryBuilder {
   private readonly _must: (QueryBuilder | QueryBody)[];

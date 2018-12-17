@@ -1,5 +1,5 @@
+import { TermQuery, TermQueryValue } from '../definition';
 import { QueryBuilder } from './builder';
-import { TermQuery, TermQueryValue } from '../';
 
 export class TermQueryBuilder extends QueryBuilder {
   private _field: string | null;

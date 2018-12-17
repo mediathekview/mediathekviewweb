@@ -1,4 +1,4 @@
-import { Sort, Order, Aggregation } from '../';
+import { Aggregation, Order, Sort } from '../definition';
 
 export class SortBuilder {
   private readonly _sort: Sort[];

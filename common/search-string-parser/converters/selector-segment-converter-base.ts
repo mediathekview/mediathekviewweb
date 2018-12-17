@@ -1,5 +1,6 @@
-import { Segment, SegmentConverter, SegmentConverterResultArray, SegmentConverterResultType } from '../';
 import { QueryBody } from '../../search-engine/query';
+import { Segment } from '../segment';
+import { SegmentConverter, SegmentConverterResultArray, SegmentConverterResultType } from '../segment-converter';
 
 export abstract class SelectorSegmentConverterBase implements SegmentConverter {
   private readonly fields: string[];

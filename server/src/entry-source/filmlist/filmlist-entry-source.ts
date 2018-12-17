@@ -1,10 +1,9 @@
-import { EntrySource } from '../';
-import { AsyncDisposable } from '../../common/disposable/disposable';
 import { Logger } from '../../common/logger';
 import { Entry } from '../../common/model';
 import { DatastoreFactory, DataType, Set } from '../../datastore';
 import { Keys } from '../../keys';
 import { Queue, QueueProvider } from '../../queue';
+import { EntrySource } from '../entry-source';
 import { Filmlist } from './filmlist';
 
 export class FilmlistEntrySource implements EntrySource {

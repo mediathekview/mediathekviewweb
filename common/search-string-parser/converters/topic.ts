@@ -1,7 +1,7 @@
-import { SegmentConverter } from '../';
 import { Field } from '../../model';
 import { Operator, QueryBody } from '../../search-engine/query';
 import { TextQueryBuilder } from '../../search-engine/query/builder';
+import { SegmentConverter } from '../segment-converter';
 import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
 
 const FIELD = Field.Topic;

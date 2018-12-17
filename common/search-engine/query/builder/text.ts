@@ -1,4 +1,4 @@
-import { Operator, TextQuery } from '../';
+import { Operator, TextQuery } from '../definition';
 import { QueryBuilder } from './builder';
 
 export class TextQueryBuilder extends QueryBuilder {

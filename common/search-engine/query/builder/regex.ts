@@ -1,4 +1,4 @@
-import { RegexQuery } from '../';
+import { RegexQuery } from '../definition';
 import { QueryBuilder } from './builder';
 
 export class RegexQueryBuilder extends QueryBuilder {

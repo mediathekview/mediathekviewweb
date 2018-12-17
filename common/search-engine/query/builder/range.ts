@@ -1,4 +1,4 @@
-import { RangeQuery } from '../';
+import { RangeQuery } from '../definition';
 import { QueryBuilder } from './builder';
 import { TimeQueryValueBuilder } from './time-value';
 

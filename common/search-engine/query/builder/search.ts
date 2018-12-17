@@ -1,7 +1,7 @@
-import { QueryBody, SearchQuery, Sort } from '../';
+import { SyncEnumerable } from '../../../enumerable';
+import { QueryBody, SearchQuery, Sort } from '../definition';
 import { QueryBuilder } from './builder';
 import { SortBuilder } from './sort';
-import { SyncEnumerable } from '../../../enumerable';
 
 export class SearchQueryBuilder {
   private _body: QueryBody | null;

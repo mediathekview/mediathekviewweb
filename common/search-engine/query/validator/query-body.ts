@@ -1,6 +1,6 @@
-import { QueryBody } from '..';
 import { nullOrUndefined } from '../../../validator/common';
 import { ObjectValidator } from '../../../validator/validator';
+import { QueryBody } from '../definition';
 import { BoolQueryBody, IDsQueryBody, MatchAllQueryBody, RangeQueryBody, RegexQueryBody, TermQueryBody, TextQueryBody } from '../query-bodies';
 import { BoolQueryBodyValidator } from './bool';
 import { IdsQueryValidator } from './ids';

@@ -1,6 +1,6 @@
 import * as Mongo from 'mongodb';
-import { EntryRepository } from '../';
 import { Entry } from '../../common/model';
+import { EntryRepository } from '../entry-repository';
 import { MongoBaseRepository } from './base-repository';
 import { MongoDocument, toMongoDocument } from './mongo-document';
 import { TypedMongoFilter } from './mongo-query';

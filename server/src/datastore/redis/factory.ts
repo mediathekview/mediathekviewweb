@@ -1,6 +1,8 @@
 import * as Redis from 'ioredis';
-import { DatastoreFactory, DataType, Set } from '../';
 import { uniqueId } from '../../utils/unique-id';
+import { DataType } from '../data-type';
+import { DatastoreFactory } from '../factory';
+import { Set } from '../set';
 import { RedisKey } from './key';
 import { RedisMap } from './map';
 import { RedisSet } from './set';

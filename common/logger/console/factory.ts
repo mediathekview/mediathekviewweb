@@ -1,4 +1,6 @@
-import { LoggerFactory, LogLevel, Logger } from '../';
+import { LoggerFactory } from '../factory';
+import { LogLevel } from '../level';
+import { Logger } from '../logger';
 import { ConsoleLogger } from './logger';
 
 export class ConsoleLoggerFactory implements LoggerFactory {

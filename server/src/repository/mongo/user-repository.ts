@@ -1,6 +1,6 @@
 import * as Mongo from 'mongodb';
-import { UserRepository } from '../';
 import { User, UserWithPartialId } from '../../common/model';
+import { UserRepository } from '../user-repository';
 import { MongoBaseRepository } from './base-repository';
 import { MongoDocument } from './mongo-document';
 

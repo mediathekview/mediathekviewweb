@@ -1,7 +1,8 @@
 import * as Redis from 'ioredis';
-import { DataType, Set } from '../';
 import { AsyncEnumerable } from '../../common/enumerable';
 import { AnyIterable, Nullable } from '../../common/utils';
+import { DataType } from '../data-type';
+import { Set } from '../set';
 import { BATCH_SIZE, CONCURRENCY } from './constants';
 import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction } from './serializer';
 

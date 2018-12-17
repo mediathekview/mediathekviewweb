@@ -1,5 +1,5 @@
+import { IDsQuery } from '../definition';
 import { QueryBuilder } from './builder';
-import { IDsQuery } from '../';
 
 export class IDsQueryBuilder extends QueryBuilder {
   private readonly _ids: string[];

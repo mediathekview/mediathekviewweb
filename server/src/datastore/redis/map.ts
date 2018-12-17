@@ -1,8 +1,9 @@
 import * as Redis from 'ioredis';
-import { DataType, Entry, Map } from '../';
 import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
 import { Nullable } from '../../common/utils';
 import { AnyIterable } from '../../common/utils/any-iterable';
+import { DataType } from '../data-type';
+import { Entry, Map } from '../map';
 import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction } from './serializer';
 
 const BATCH_SIZE = 100;

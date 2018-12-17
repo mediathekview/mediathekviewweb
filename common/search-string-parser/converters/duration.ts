@@ -1,9 +1,9 @@
-import { SegmentConverter } from '../';
 import { Field } from '../../model';
 import { QueryBody } from '../../search-engine/query';
 import { RangeQueryBuilder, TermQueryBuilder } from '../../search-engine/query/builder';
 import { Range, RangeParser, RangeType } from '../parsers/range';
 import { TimeParser } from '../parsers/time';
+import { SegmentConverter } from '../segment-converter';
 import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
 
 const FIELD = Field.Duration;
