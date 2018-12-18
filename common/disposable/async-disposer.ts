@@ -6,11 +6,16 @@ import { AsyncDisposable } from './disposable';
 export class AsyncDisposer implements AsyncDisposable {
   private readonly disposeDeferrers: Promise<void>[];
   private readonly subDisposables: AsyncDisposable[];
+  private readonly disposedPromise: DeferredPromise;
 
   private _disposed: boolean;
 
   get disposed(): boolean {
     return this._disposed;
+  }
+
+  constructor() {
+    this.disposedPromise = new DeferredPromise();
   }
 
   getDisposeDeferrer(): DeferredPromise {
@@ -36,6 +41,10 @@ export class AsyncDisposer implements AsyncDisposable {
   }
 
   async dispose(): Promise<void> {
+    if (this.disposed) {
+      return await this.disposedPromise;
+    }
+
     this._disposed = true;
 
     const errors: Error[] = [];
@@ -59,6 +68,8 @@ export class AsyncDisposer implements AsyncDisposable {
           errors.push(error);
         }
       });
+
+    this.disposedPromise.resolve();
 
     if (errors.length == 1) {
       throw errors[0];

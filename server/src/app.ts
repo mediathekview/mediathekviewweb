@@ -3,13 +3,12 @@ import * as Http from 'http';
 import { Subject } from 'rxjs';
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
-import { formatDuration, formatError, Timer } from './common/utils';
+import { AggregationMode, formatDuration, formatError, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
 import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
 import { MediathekViewWebSaver } from './saver';
-import { AggregationMode, PeriodicSampler } from './utils';
 
 type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
 const QUIT_SIGNALS: Signal[] = ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGBREAK'];

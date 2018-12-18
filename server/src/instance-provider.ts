@@ -22,6 +22,7 @@ import { RedisLockProvider } from './lock/redis';
 import { LoggerFactoryProvider } from './logger-factory-provider';
 import { QueueProvider } from './queue';
 import { RedisQueueProvider } from './queue/redis';
+import { RedisProvider } from './redis/provider';
 import { AggregatedEntryRepository, EntryRepository } from './repository';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
@@ -30,7 +31,6 @@ import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { ElasticsearchLogAdapterFactory } from './utils/elasticsearch-log-adapter-factory';
 import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
-import { RedisProvider } from './redis/provider';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -92,10 +92,10 @@ export class InstanceProvider {
   static entriesSaver(): Promise<EntriesSaver> {
     return this.singleton(EntriesSaver, async () => {
       const entryRepository = await InstanceProvider.entryRepository();
-      const datastoreFactory = await InstanceProvider.datastoreFactory();
+      const queueProvider = await InstanceProvider.queueProvider();
       const logger = LoggerFactoryProvider.factory.create(ENTRIES_SAVER_LOG);
 
-      return new EntriesSaver(entryRepository, datastoreFactory, logger);
+      return new EntriesSaver(entryRepository, queueProvider, logger);
     });
   }
 

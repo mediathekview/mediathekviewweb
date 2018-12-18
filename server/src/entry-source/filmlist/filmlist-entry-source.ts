@@ -36,14 +36,19 @@ export class FilmlistEntrySource implements EntrySource {
       const { data: filmlist } = job;
       this.logger.info(`processing filmlist from ${filmlist.date}`);
 
+      let hasError = false;
       try {
         yield* filmlist;
-
-        await this.importedFilmlistDates.add(filmlist.date);
-        await this.importQueue.acknowledge(job);
       }
       catch (error) {
+        hasError = true;
         this.logger.error(error);
+      }
+      finally {
+        if (!hasError) {
+          await this.importedFilmlistDates.add(filmlist.date);
+          await this.importQueue.acknowledge(job);
+        }
       }
 
       if (this.disposed) {

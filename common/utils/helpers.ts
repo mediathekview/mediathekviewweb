@@ -104,6 +104,10 @@ export function formatDuration(milliseconds: number, precision: number): string 
   return result;
 }
 
+export function flatten<T>(array: (T | T[])[]): T[] {
+  return (array as any[]).reduce((acc, item) => Array.isArray(item) ? [...acc, ...item] : [...acc, item], [] as T[]);
+}
+
 export function toError(obj: any): Error {
   if (obj instanceof Error) {
     return obj;

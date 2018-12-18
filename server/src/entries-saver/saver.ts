@@ -3,15 +3,14 @@ import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import '../common/extensions/map';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
-import { formatDuration, ProviderFunctionIterable, ProviderFunctionResult, timeout } from '../common/utils';
+import { formatDuration, timeout } from '../common/utils';
 import { PeriodicReporter } from '../common/utils/periodic-reporter';
 import { Keys } from '../keys';
 import { Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
 
 const BATCH_SIZE = 250;
-const BATCH_BUFFER_SIZE = 5;
-const NO_ITEMS_DELAY = 2500;
+const BUFFER_SIZE = 3;
 
 const REPORT_INTERVAL = 10000;
 
@@ -22,8 +21,6 @@ export class EntriesSaver implements AsyncDisposable {
   private readonly logger: Logger;
   private readonly reporter: PeriodicReporter;
   private readonly disposer: AsyncDisposer;
-
-  private stop: boolean;
 
   constructor(entryRepository: EntryRepository, queueProvider: QueueProvider, logger: Logger) {
     this.entryRepository = entryRepository;
@@ -50,16 +47,16 @@ export class EntriesSaver implements AsyncDisposable {
   }
 
   async run(): Promise<void> {
-    this.stop = false;
-
     const consumer = this.entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, false);
 
-    await AsyncEnumerable.from(entriesToBeSavedIterable)
-      .while(() => !this.stop)
-      .buffer(BATCH_BUFFER_SIZE)
+    await AsyncEnumerable.from(consumer)
+      .while(() => !this.disposer.disposed)
+      .buffer(BUFFER_SIZE)
       .forEach(async (batch) => {
         try {
-          await this.saveEntries(batch);
+          const entries = batch.map((job) => job.data);
+          await this.saveEntries(entries);
+          await this.entriesToBeSavedQueue.acknowledge(...batch);
         }
         catch (error) {
           this.logger.error(error);
@@ -78,7 +75,7 @@ export class EntriesSaver implements AsyncDisposable {
     }
 
     try {
-      await this.entriesToBeIndexedQueue.addMany(ids);
+      await this.entriesToBeIndexedQueue.enqueueMany(ids);
     } catch (error) {
       this.logger.error(error);
     }
