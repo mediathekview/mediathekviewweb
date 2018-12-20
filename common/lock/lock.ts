@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-export type LockedFunction = () => void | Promise<void>;
+export type LockedFunction = () => any | Promise<any>;
 
 export interface Lock {
   readonly owned: boolean;

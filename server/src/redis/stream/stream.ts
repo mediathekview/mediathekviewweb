@@ -43,14 +43,15 @@ export type ClaimParameters = {
   ids: string[]
 };
 
-type StreamReadData =
-  [
-    string,
-    [
-      string,
-      string[]
-    ][]
-  ][];
+type EntryReturnValue = [string, string[]];
+
+type EntriesReturnValue = EntryReturnValue[];
+
+type ReadReturnValue = [string, EntriesReturnValue][];
+
+type PendingReturnValue = [number, string, string, [string, string][]];
+
+type InfoReturnValue = (string | number | EntryReturnValue)[];
 
 export class RedisStream<T extends StringMap> implements AsyncDisposable {
   private readonly redis: Redis;
@@ -93,9 +94,7 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return ids;
   }
 
-  async read(parameters: ReadParameters): Promise<Entry<T>[]> {
-    const { id, block, count } = parameters;
-
+  async read({ id, block, count }: ReadParameters): Promise<Entry<T>[]> {
     const parametersArray = [
       ...(count != null ? ['COUNT', count] : []),
       ...(block != null ? ['BLOCK', block] : []),
@@ -103,15 +102,13 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
       id
     ];
 
-    const data = await this.redis.xread(...parametersArray) as StreamReadData;
-    const entries = this.parseStreamReadData(data);
+    const data = await this.redis.xread(...parametersArray) as ReadReturnValue;
+    const entries = this.parseReadReturnValue(data);
 
     return entries;
   }
 
-  async readGroup(parameters: ReadGroupParameters): Promise<Entry<T>[]> {
-    const { id, group, consumer, count, block, noAck } = parameters;
-
+  async readGroup({ id, group, consumer, count, block, noAck }: ReadGroupParameters): Promise<Entry<T>[]> {
     const parametersArray = [
       'GROUP', group, consumer,
       ...(count != null ? ['COUNT', count] : []),
@@ -121,8 +118,8 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
       id
     ] as ['GROUP', string, string, ...string[]];
 
-    const data = await this.redis.xreadgroup(...parametersArray) as StreamReadData;
-    const entries = this.parseStreamReadData(data);
+    const data = await this.redis.xreadgroup(...parametersArray) as ReadReturnValue;
+    const entries = this.parseReadReturnValue(data);
 
     return entries;
   }
@@ -132,8 +129,18 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return acknowledgedCount;
   }
 
-  async claim(): Promise<void> {
-    throw new Error('not implemented');
+  async claim({ group, consumer, minimumIdleTime, ids }: ClaimParameters, idsOnly: false): Promise<Entry<T>[]>
+  async claim({ group, consumer, minimumIdleTime, ids }: ClaimParameters, idsOnly: true): Promise<string[]>
+  async claim({ group, consumer, minimumIdleTime, ids }: ClaimParameters, idsOnly: boolean): Promise<string[] | Entry<T>[]> {
+    if (idsOnly) {
+      const claimedIds = await this.redis.xclaim(this.stream, group, consumer, minimumIdleTime, ...ids, 'JUSTID') as string[];
+      return claimedIds;
+    }
+
+    const claimedEntries = await this.redis.xclaim(this.stream, group, consumer, minimumIdleTime, ...ids) as EntriesReturnValue;
+    debugger; const entries = this.parseEntriesReturnValue(claimedEntries);
+
+    return entries;
   }
 
   async trim(maxLength: number, approximate: boolean): Promise<number> {
@@ -141,9 +148,9 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return trimmedCount;
   }
 
-  async getInfo(): Promise<StreamInfo<T>> {
-    const info = await this.redis.xinfo('STREAM', this.stream) as (string | number | [string, string[]])[];
-    const streamInfo = this.parseStreamInfo(info);
+  async info(): Promise<StreamInfo<T>> {
+    const info = await this.redis.xinfo('STREAM', this.stream) as InfoReturnValue;
+    const streamInfo = this.parseInfoReturnValue(info);
 
     return streamInfo;
   }
@@ -178,10 +185,15 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return consumers;
   }
 
-  async getPendingInfo(parameters: GetPendingInfoParameters): Promise<PendingInfo> {
-    const { group, consumer } = parameters;
+  async deleteConsumer(group: string, consumer: string): Promise<number> {
+    const pendingMessages = await this.redis.xgroup('DELCONSUMER', this.stream, group, consumer);
+    return pendingMessages;
+  }
 
-    const [count, firstId, lastId, pendingConsumerInfo] = await this.redis.xpending(this.stream, group, ...(consumer != null ? [consumer] : [])) as [number, string, string, [string, string][]];
+  async getPendingInfo(group: string): Promise<PendingInfo>;
+  async getPendingInfo(group: string, consumer: string): Promise<PendingInfo>;
+  async getPendingInfo(group: string, consumer?: string): Promise<PendingInfo> {
+    const [count, firstId, lastId, pendingConsumerInfo] = await this.redis.xpending(this.stream, group, ...(consumer != null ? [consumer] : [])) as PendingReturnValue;
     const consumers: PendingConsumerInfo[] = pendingConsumerInfo.map(([name, count]) => ({ name, count: parseInt(count) }));
     const pendingInfo: PendingInfo = {
       count,
@@ -193,11 +205,9 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return pendingInfo;
   }
 
-  async getPendingEntries(parameters: GetPendingEntriesParameters): Promise<PendingEntry[]> {
-    const { group, consumer, start, end, count } = parameters;
-
+  async getPendingEntries({ group, consumer, start, end, count }: GetPendingEntriesParameters): Promise<PendingEntry[]> {
     const info = await this.redis.xpending(this.stream, group, start, end, count, ...(consumer != null ? [consumer] : [])) as [string, string, number, number][];
-    const pendingEntries: PendingEntry[] = info.map(([id, consumerName, elapsed, deliveryCount]) => ({ id, consumerName, elapsed, deliveryCount }));
+    const pendingEntries: PendingEntry[] = info.map(([id, consumerName, elapsed, deliveryCount]) => ({ id, consumer: consumerName, elapsed, deliveryCount }));
 
     return pendingEntries;
   }
@@ -227,16 +237,16 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return parameters;
   }
 
-  private parseStreamReadData(data: StreamReadData): Entry<T>[] {
+  private parseReadReturnValue(data: ReadReturnValue): Entry<T>[] {
     const entries = SyncEnumerable.from(data)
       .mapMany(([_stream, entries]) => entries)
-      .map((entry) => this.parseEntry(entry))
+      .map((entry) => this.parseEntryReturnValue(entry))
       .toArray();
 
     return entries;
   }
 
-  private parseStreamInfo(info: (string | number | [string, string[]])[]): StreamInfo<T> {
+  private parseInfoReturnValue(info: InfoReturnValue): StreamInfo<T> {
     const consumerGroup: StreamInfo<T> = {} as any;
 
     for (let i = 0; i < info.length; i += 2) {
@@ -258,11 +268,11 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
           break;
 
         case 'first-entry':
-          consumerGroup.firstEntry = this.parseEntry(info[i + 1] as [string, string[]]);
+          consumerGroup.firstEntry = this.parseEntryReturnValue(info[i + 1] as EntryReturnValue);
           break;
 
         case 'last-entry':
-          consumerGroup.lastEntry = this.parseEntry(info[i + 1] as [string, string[]]);
+          consumerGroup.lastEntry = this.parseEntryReturnValue(info[i + 1] as EntryReturnValue);
           break;
       }
     }
@@ -270,7 +280,12 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return consumerGroup;
   }
 
-  private parseEntry([id, dataArray]: [string, string[]]): Entry<T> {
+  private parseEntriesReturnValue(items: EntriesReturnValue): Entry<T>[] {
+    const entries = items.map((item) => this.parseEntryReturnValue(item));
+    return entries;
+  }
+
+  private parseEntryReturnValue([id, dataArray]: EntryReturnValue): Entry<T> {
     const entry: Entry<T> = { id, data: {} } as any;
 
     for (let i = 0; i < dataArray.length; i += 2) {

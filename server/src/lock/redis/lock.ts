@@ -67,11 +67,10 @@ export class RedisLock implements Lock {
 
       success = (result == AcquireResult.Acquired);
 
-      if (!success) {
+      if (!success && (timer.milliseconds < acquireTimeout)) {
         await timeout(RETRY_DELAY);
       }
-    } while (!success && (acquireTimeout > 0) && (timer.milliseconds < acquireTimeout));
-
+    } while (!success && (timer.milliseconds < acquireTimeout));
 
     if (success) {
       this.stopLockLoop = this.refreshLoop();
