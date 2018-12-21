@@ -94,6 +94,61 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     return ids;
   }
 
+  async range(start: string, end: string): Promise<Entry<T>[]>;
+  async range(start: string, end: string, count: number): Promise<Entry<T>[]>;
+  async range(start: string, end: string, count?: number): Promise<Entry<T>[]> {
+    const parameters = [this.stream, start, end, ...(count != null ? [count] : [])] as [string, string, string, number?];
+
+    const range = this.redis.xrange(...parameters) as EntriesReturnValue;
+    debugger;
+    const entries = this.parseEntriesReturnValue(range);
+
+    return entries;
+  }
+
+  async getMany(ids: string[]): Promise<Entry<T>[]> {
+    const pipeline = this.redis.pipeline();
+
+    for (const id of ids) {
+      const parameters = [this.stream, id, id, 1] as [string, string, string, number];
+      pipeline.xrange(...parameters);
+    }
+
+    const result = await pipeline.exec() as [Nullable<Error>, EntriesReturnValue][];
+
+    let entries: Entry<T>[] = [];
+
+    for (const [error, value] of result) {
+      if (error != null) {
+        throw error;
+      }
+
+      const parsedEntries = this.parseEntriesReturnValue(value);
+      entries = [...entries, ...parsedEntries];
+    }
+
+    return entries;
+  }
+
+  async deleteAddTransaction(deleteIds: string[], entries: SourceEntry<T>[]): Promise<string[]> {
+    const transaction = this.redis.multi();
+
+    transaction.xdel(this.stream, ...deleteIds);
+
+    for (const entry of entries) {
+      const { id: sourceId, data } = entry;
+      const parameters = this.buildFieldValueArray(data);
+
+      transaction.xadd(this.stream, (sourceId != null) ? sourceId : '*', ...parameters);
+    }
+
+    const results = await transaction.exec() as [[Nullable<Error>, number], ...[Nullable<Error>, string][]];
+    const [deleteResult, ...addResults] = results;
+
+    const ids = addResults.map(([, id]) => id);
+    return ids;
+  }
+
   async read({ id, block, count }: ReadParameters): Promise<Entry<T>[]> {
     const parametersArray = [
       ...(count != null ? ['COUNT', count] : []),
@@ -138,7 +193,8 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     }
 
     const claimedEntries = await this.redis.xclaim(this.stream, group, consumer, minimumIdleTime, ...ids) as EntriesReturnValue;
-    debugger; const entries = this.parseEntriesReturnValue(claimedEntries);
+    debugger;
+    const entries = this.parseEntriesReturnValue(claimedEntries);
 
     return entries;
   }

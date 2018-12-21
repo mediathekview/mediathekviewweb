@@ -28,6 +28,10 @@ export function now(): Date {
   return new Date();
 }
 
+export function currentTimestamp(): number {
+  return Date.now();
+}
+
 export function cloneOwnProperties(obj: any): any {
   const type = typeof obj;
 

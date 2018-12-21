@@ -3,15 +3,14 @@ import { AsyncDisposable, AsyncDisposer } from '../../common/disposable';
 import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { Serializer } from '../../common/serializer';
-import { DeferredPromise } from '../../common/utils';
+import { currentTimestamp, DeferredPromise } from '../../common/utils';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { RedisProvider } from '../../redis/provider';
 import { RedisStream, SourceEntry } from '../../redis/stream';
 import { uniqueId } from '../../utils';
 import { Job, Queue } from '../queue';
-import { SyncEnumerable } from '../../common/enumerable';
 
-type StreamEntryType = { data: string };
+type StreamEntryType = { retries: number, enqueueTimestamp: number, data: string };
 type RedisJob<DataType> = Job<DataType>;
 
 const BLOCK_DURATION = 2500;
@@ -29,7 +28,8 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   private readonly retryAfter: number;
   private readonly maxTries: number;
   private readonly logger: Logger;
-  private readonly distributedClaimLoop: DistributedLoop;
+  private readonly distributedRetryLoop: DistributedLoop;
+  private readonly consumerDeleteLoop: DistributedLoop;
   private readonly initialized: DeferredPromise;
 
   constructor(redis: Redis.Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, maxTries: number, logger: Logger) {
@@ -46,7 +46,8 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     this.disposer = new AsyncDisposer();
     this.stream = new RedisStream(redis, this.streamName, false);
     this.initialized = new DeferredPromise();
-    this.distributedClaimLoop = distributedLoopProvider.get(`queue:${key}`);
+    this.distributedRetryLoop = distributedLoopProvider.get(`queue:${key}:retry`);
+    this.consumerDeleteLoop = distributedLoopProvider.get(`queue:${key}:consumer-delete`);
 
     this.disposer.deferDispose(async () => await this.initialized);
 
@@ -83,7 +84,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     await this.initialized;
 
     const serializedData = Serializer.serialize(data);
-    const entry: SourceEntry<StreamEntryType> = { data: { data: serializedData } };
+    const entry: SourceEntry<StreamEntryType> = { data: { retries: 0, enqueueTimestamp: currentTimestamp(), data: serializedData } };
 
     const id = await this.stream.add(entry);
     const job: RedisJob<DataType> = { id, data };
@@ -93,7 +94,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
   async enqueueMany(data: DataType[]): Promise<Job<DataType>[]> {
     const serializedData = data.map((item) => Serializer.serialize(item));
-    const entries: SourceEntry<StreamEntryType>[] = serializedData.map((serializedData) => ({ data: { data: serializedData } }));
+    const entries: SourceEntry<StreamEntryType>[] = serializedData.map((serializedData) => ({ data: { retries: 0, enqueueTimestamp: currentTimestamp(), data: serializedData } }));
 
     const ids = await this.stream.addMany(entries);
 
@@ -183,23 +184,31 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     });
   }
 
-  private async claim(): Promise<void> {
+  private async retryPendingEntries(): Promise<void> {
     this.disposer.deferDispose(async () => {
       const pendingEntries = await this.stream.getPendingEntries({ group: this.groupName, start: '-', end: '+', count: 50 });
 
       const ids = pendingEntries
         .filter((entry) => entry.elapsed < this.retryAfter)
-        .filter((entry) => entry.deliveryCount < this.maxTries)
         .map((entry) => entry.id);
 
-      const consumers = await this.stream.claim(this.groupName);
+      const entries = await this.stream.getMany(ids);
+      const entriesWithTriesLeft = entries.filter((entry) => entry.data.retries < this.maxTries);
 
-      for (const consumer of consumers) {
-        const tryTakeMeasure = consumer.idle
-      }
+      const retryEntries = entriesWithTriesLeft.map(({ data: { retries, data } }) => {
+        const retryEntry: SourceEntry<StreamEntryType> = {
+          data: {
+            retries: retries + 1,
+            enqueueTimestamp: currentTimestamp(),
+            data
+          }
+        };
+
+        return retryEntry;
+      });
+
+      const newIds = await this.stream.deleteAddTransaction(ids, retryEntries);
     });
-
-    throw Error('not implemented');
   }
 
   private getConsumerName(): string {
