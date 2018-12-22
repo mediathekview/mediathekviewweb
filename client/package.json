@@ -23,12 +23,12 @@
     "video.js": "^7.3.0"
   },
   "devDependencies": {
-    "@types/datatables.net": "^1.10.13",
     "@types/bootstrap": "^3.3.40",
+    "@types/datatables.net": "^1.10.13",
     "@types/jquery": "^3.3.28",
     "@types/lodash": "^4.14.119",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.2.5",
-    "typescript": "~3.2.2"
+    "typescript": "^3.1.6"
   }
 }
