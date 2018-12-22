@@ -22,7 +22,7 @@ export class EntriesImporter implements AsyncDisposable {
     this.logger = logger;
 
     this.disposer = new AsyncDisposer();
-    this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30);
+    this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30000, 3);
     this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
 
     this.initialize();

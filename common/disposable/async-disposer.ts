@@ -16,6 +16,8 @@ export class AsyncDisposer implements AsyncDisposable {
 
   constructor() {
     this.disposedPromise = new DeferredPromise();
+    this.disposeDeferrers = [];
+    this.subDisposables = [];
   }
 
   getDisposeDeferrer(): DeferredPromise {

@@ -53,7 +53,7 @@ type PendingReturnValue = [number, string, string, [string, string][]];
 
 type InfoReturnValue = (string | number | EntryReturnValue)[];
 
-export class RedisStream<T extends StringMap> implements AsyncDisposable {
+export class RedisStream<T extends StringMap<string>> implements AsyncDisposable {
   private readonly redis: Redis;
   private readonly stream: string;
   private readonly quitRedisOnDispose: boolean;
@@ -107,11 +107,14 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
   }
 
   async getMany(ids: string[]): Promise<Entry<T>[]> {
+    if (ids.length == 0) {
+      return [];
+    }
+
     const pipeline = this.redis.pipeline();
 
     for (const id of ids) {
-      const parameters = [this.stream, id, id, 1] as [string, string, string, number];
-      pipeline.xrange(...parameters);
+      pipeline.xrange(this.stream, id, id, 'COUNT', '1');
     }
 
     const result = await pipeline.exec() as [Nullable<Error>, EntriesReturnValue][];
@@ -131,6 +134,13 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
   }
 
   async deleteAddTransaction(deleteIds: string[], entries: SourceEntry<T>[]): Promise<string[]> {
+    if (deleteIds.length == 0) {
+      throw new Error('empty deleteIds array');
+    }
+    if (entries.length == 0) {
+      throw new Error('empty entries array');
+    }
+
     const transaction = this.redis.multi();
 
     transaction.xdel(this.stream, ...deleteIds);
@@ -177,6 +187,11 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     const entries = this.parseReadReturnValue(data);
 
     return entries;
+  }
+
+  async delete(...ids: string[]): Promise<number> {
+    const acknowledgedCount = await this.redis.xdel(this.stream, ...ids);
+    return acknowledgedCount;
   }
 
   async acknowledge(group: string, ...ids: string[]): Promise<number> {
@@ -282,12 +297,12 @@ export class RedisStream<T extends StringMap> implements AsyncDisposable {
     await this.redis.xgroup('CREATE', this.stream, group, startAtId, ...(makeStream ? ['MKSTREAM'] : []));
   }
 
-  private buildFieldValueArray(data: StringMap) {
+  private buildFieldValueArray(data: StringMap<string>) {
     const parameters: string[] = [];
     const fields = Object.keys(data);
 
     for (const field of fields) {
-      parameters.push(field, (data as StringMap)[field]);
+      parameters.push(field, (data as StringMap<string>)[field]);
     }
 
     return parameters;

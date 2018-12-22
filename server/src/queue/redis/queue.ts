@@ -10,7 +10,7 @@ import { RedisStream, SourceEntry } from '../../redis/stream';
 import { uniqueId } from '../../utils';
 import { Job, Queue } from '../queue';
 
-type StreamEntryType = { retries: number, enqueueTimestamp: number, data: string };
+type StreamEntryType = { retries: string, enqueueTimestamp: string, data: string };
 type RedisJob<DataType> = Job<DataType>;
 
 const BLOCK_DURATION = 2500;
@@ -26,13 +26,13 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   private readonly streamName: string;
   private readonly groupName: string;
   private readonly retryAfter: number;
-  private readonly maxTries: number;
+  private readonly maxRetries: number;
   private readonly logger: Logger;
   private readonly distributedRetryLoop: DistributedLoop;
   private readonly consumerDeleteLoop: DistributedLoop;
   private readonly initialized: DeferredPromise;
 
-  constructor(redis: Redis.Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, maxTries: number, logger: Logger) {
+  constructor(redis: Redis.Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, maxRetries: number, logger: Logger) {
     this.redisProvider = redisProvider;
     this.lockProvider = lockProvider;
     this.distributedLoopProvider = distributedLoopProvider;
@@ -40,7 +40,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     this.streamName = `stream:${key}`;
     this.groupName = `queue`;
     this.retryAfter = retryAfter;
-    this.maxTries = maxTries;
+    this.maxRetries = maxRetries;
     this.logger = logger;
 
     this.disposer = new AsyncDisposer();
@@ -85,7 +85,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     await this.initialized;
 
     const serializedData = Serializer.serialize(data);
-    const entry: SourceEntry<StreamEntryType> = { data: { retries: 0, enqueueTimestamp: currentTimestamp(), data: serializedData } };
+    const entry: SourceEntry<StreamEntryType> = { data: { retries: '0', enqueueTimestamp: currentTimestamp().toString(), data: serializedData } };
 
     const id = await this.stream.add(entry);
     const job: RedisJob<DataType> = { id, data };
@@ -95,7 +95,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
   async enqueueMany(data: DataType[]): Promise<Job<DataType>[]> {
     const serializedData = data.map((item) => Serializer.serialize(item));
-    const entries: SourceEntry<StreamEntryType>[] = serializedData.map((serializedData) => ({ data: { retries: 0, enqueueTimestamp: currentTimestamp(), data: serializedData } }));
+    const entries: SourceEntry<StreamEntryType>[] = serializedData.map((serializedData) => ({ data: { retries: '0', enqueueTimestamp: currentTimestamp().toString(), data: serializedData } }));
 
     const ids = await this.stream.addMany(entries);
 
@@ -105,7 +105,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
   async acknowledge(...jobs: Job<DataType>[]): Promise<void> {
     const ids = jobs.map((job) => job.id);
-    await this.stream.acknowledge(this.groupName, ...ids);
+    await this.stream.delete(this.groupName, ...ids);
   }
 
   async *getConsumer(): AsyncIterableIterator<Job<DataType>> {
@@ -188,19 +188,22 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   private async retryPendingEntries(): Promise<void> {
     this.disposer.deferDispose(async () => {
       const pendingEntries = await this.stream.getPendingEntries({ group: this.groupName, start: '-', end: '+', count: 50 });
-
       const ids = pendingEntries
-        .filter((entry) => entry.elapsed < this.retryAfter)
+        .filter((entry) => entry.elapsed > this.retryAfter)
         .map((entry) => entry.id);
 
+      if (ids.length == 0) {
+        return;
+      }
+
       const entries = await this.stream.getMany(ids);
-      const entriesWithTriesLeft = entries.filter((entry) => entry.data.retries < this.maxTries);
+      const entriesWithTriesLeft = entries.filter((entry) => parseInt(entry.data.retries) < this.maxRetries);
 
       const retryEntries = entriesWithTriesLeft.map(({ data: { retries, data } }) => {
         const retryEntry: SourceEntry<StreamEntryType> = {
           data: {
-            retries: retries + 1,
-            enqueueTimestamp: currentTimestamp(),
+            retries: (parseInt(retries) + 1).toString(),
+            enqueueTimestamp: currentTimestamp().toString(),
             data
           }
         };
@@ -208,7 +211,9 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
         return retryEntry;
       });
 
-      const newIds = await this.stream.deleteAddTransaction(ids, retryEntries);
+      if (retryEntries.length > 0) {
+        const newIds = await this.stream.deleteAddTransaction(ids, retryEntries);
+      }
     });
   }
 

@@ -48,6 +48,7 @@ const CORE_LOG = '[CORE]';
 const FILMLIST_MANAGER_LOG = '[FILMLIST MANAGER]';
 const QUEUE_LOG = '[QUEUE]';
 const LOCK_LOG = '[LOCK]';
+const DISTRIBUTED_LOOP_LOG = '[LOOP]';
 const ENTRIES_IMPORTER_LOG = '[IMPORTER]';
 const FILMLIST_ENTRY_SOURCE = '[FILMLIST SOURCE]';
 const SEARCH_ENGINE_LOG = '[SEARCH ENGINE]';
@@ -139,7 +140,17 @@ export class InstanceProvider {
       .on('end', () => logger.warn(`connection end`))
       .on('error', (error: Error) => logger.error(error, false));
 
-    await redis.connect();
+    let connected = false;
+    do {
+      try {
+        await redis.connect();
+        connected = true;
+      }
+      catch (error) {
+
+      }
+    }
+    while (!connected);
 
     return redis;
   }
@@ -219,7 +230,9 @@ export class InstanceProvider {
   static distributedLoopProvider(): Promise<DistributedLoopProvider> {
     return this.singleton(DistributedLoopProvider, async () => {
       const lockProvider = await this.lockProvider();
-      return new DistributedLoopProvider(lockProvider);
+      const logger = LoggerFactoryProvider.factory.create(DISTRIBUTED_LOOP_LOG);
+
+      return new DistributedLoopProvider(lockProvider, logger);
     });
   }
 

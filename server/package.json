@@ -5,9 +5,7 @@
   "scripts": {
     "start": "node ./dist/app.js",
     "build": "tsc",
-    "build-watch": "tsc --watch",
-    "debug": "npm run build-watch & nodemon --delay 1 --legacy-watch --watch ./dist --inspect=0.0.0.0:9222 --nolazy ./dist/app.js",
-    "docker-debug": "npm install && npm run debug"
+    "build-watch": "tsc --watch"
   },
   "author": "Patrick Hein",
   "license": "GPLv3",
@@ -28,9 +26,7 @@
     "@types/koa-router": "^7.0.35",
     "@types/mongodb": "^3.1.17",
     "@types/needle": "^2.0.2",
-    "@types/node": "^10.12.15",
-    "nodemon": "^1.18.9",
-    "ts-node": "^7.0.1",
+    "@types/node": "^10.12.18",
     "typescript": "^3.2.2"
   }
 }

@@ -16,7 +16,7 @@ export class FilmlistEntrySource implements EntrySource {
   constructor(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider, logger: Logger) {
     this.logger = logger;
 
-    this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000);
+    this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
   }
 

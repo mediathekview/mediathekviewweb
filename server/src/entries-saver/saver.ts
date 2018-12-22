@@ -29,8 +29,8 @@ export class EntriesSaver implements AsyncDisposable {
     this.disposer = new AsyncDisposer();
     this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
 
-    this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30);
-    this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 30);
+    this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30000, 3);
+    this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 30000, 3);
 
     this.disposer.addSubDisposables(this.entriesToBeSavedQueue, this.entriesToBeIndexedQueue);
 

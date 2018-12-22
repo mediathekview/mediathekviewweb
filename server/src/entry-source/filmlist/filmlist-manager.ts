@@ -32,7 +32,7 @@ export class FilmlistManager {
     this.lastLatestCheck = datastoreFactory.key(Keys.LastLatestCheck, DataType.Date);
     this.lastArchiveCheck = datastoreFactory.key(Keys.LastArchiveCheck, DataType.Date);
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
-    this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000);
+    this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
     this.distributedLoop = distributedLoopProvider.get(Keys.FilmlistManagerLoop, true);
   }
 
