@@ -62,7 +62,8 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       this.logger.info(`created consumer group ${this.groupName}`);
     }
 
-    //  this.distributedClaimLoop.run((_controller) => this.claim(), 10000, 3000);
+    this.distributedRetryLoop.run((_controller) => this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);
+    this.consumerDeleteLoop.run((_controller) => this.deleteInactiveConsumers(), 30000, 15000);
 
     this.initialized.resolve();
   }
@@ -161,7 +162,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     await this.stream.trim(0, false);
   }
 
-  private async clearConsumers(): Promise<void> {
+  private async deleteInactiveConsumers(): Promise<void> {
     this.disposer.deferDispose(async () => {
       const consumers = await this.stream.getConsumers(this.groupName);
 

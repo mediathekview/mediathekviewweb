@@ -60,12 +60,7 @@ export class RedisLock implements Lock {
 
     do {
       const result = await this.tryAcquire();
-
-      if (result == AcquireResult.Owned) {
-        throw new Error('already owned');
-      }
-
-      success = (result == AcquireResult.Acquired);
+      success = ((result == AcquireResult.Acquired) || (result == AcquireResult.Owned));
 
       if (!success && (timer.milliseconds < acquireTimeout)) {
         await timeout(RETRY_DELAY);

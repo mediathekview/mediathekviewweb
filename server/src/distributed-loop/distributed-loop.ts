@@ -1,6 +1,7 @@
 import { Subject } from 'rxjs';
 import { LockProvider } from '../common/lock';
-import { DeferredPromise, timeout, Timer } from '../common/utils';
+import { Logger } from '../common/logger';
+import { cancelableTimeout, DeferredPromise, Timer } from '../common/utils';
 import { LoopController } from './controller';
 
 export type LoopFunction = (controller: LoopController) => Promise<void>;
@@ -8,22 +9,27 @@ export type LoopFunction = (controller: LoopController) => Promise<void>;
 export class DistributedLoop {
   private readonly key: string;
   private readonly lockProvider: LockProvider;
+  private readonly logger: Logger;
   private readonly throwError: boolean;
-  private readonly stopped: DeferredPromise;
 
-  constructor(key: string, lockProvider: LockProvider, throwError: boolean = true) {
+  constructor(key: string, lockProvider: LockProvider, logger: Logger)
+  constructor(key: string, lockProvider: LockProvider, logger: Logger, throwError: boolean)
+  constructor(key: string, lockProvider: LockProvider, logger: Logger, throwError: boolean = true) {
     this.key = `loop:${key}`;
     this.lockProvider = lockProvider;
+    this.logger = logger;
     this.throwError = throwError;
-    this.stopped = new DeferredPromise();
   }
 
   run(func: LoopFunction, interval: number, accuracy: number): LoopController {
+    const stopped = new DeferredPromise();
+    const stopPromise = new DeferredPromise();
+    const errorSubject = new Subject<void>();
+
     let stop = false;
-    let errorSubject = new Subject<void>();
 
     const controller: LoopController = {
-      stop: async () => { stop = true; await this.stopped; },
+      stop: async () => { stop = true; stopPromise.resolve(); await stopped; },
       setTiming: (timing) => {
         if (timing.interval != undefined) {
           interval = timing.interval;
@@ -32,7 +38,6 @@ export class DistributedLoop {
           accuracy = timing.accuracy;
         }
       },
-
       error: errorSubject.asObservable()
     };
 
@@ -40,36 +45,46 @@ export class DistributedLoop {
       const lock = this.lockProvider.get(this.key);
       const timer = new Timer(true);
 
-      while (!stop) {
-        timer.restart();
+      try {
+        while (!stop) {
+          timer.restart();
 
-        const acquired = await lock.acquire(0);
-        const acquireDuration = timer.milliseconds;
+          const acquired = await lock.acquire(0);
+          const acquireDuration = timer.milliseconds;
 
-        if (acquired) {
-          try {
-            await func(controller);
-          }
-          catch (error) {
-            errorSubject.next(error);
-
-            if (this.throwError) {
-              throw error;
+          if (acquired) {
+            try {
+              await func(controller);
             }
+            catch (error) {
+              errorSubject.next(error);
+
+              if (this.throwError) {
+                throw error;
+              }
+            }
+
+            const timeLeft = interval - timer.milliseconds;
+            await cancelableTimeout(stopPromise, timeLeft);
+
+            try {
+              await lock.release();
+            }
+            catch (error) {
+              this.logger.error(error);
+            }
+
+            await cancelableTimeout(stopPromise, interval - acquireDuration);
           }
-
-          const timeLeft = interval - timer.milliseconds;
-          await timeout(timeLeft);
-          await lock.release();
-
-          await timeout(interval - acquireDuration);
-        }
-        else {
-          await timeout(accuracy - acquireDuration);
+          else {
+            await cancelableTimeout(stopPromise, accuracy - acquireDuration);
+          }
         }
       }
-
-      this.stopped.resolve();
+      finally {
+        stopped.resolve();
+        await lock.release();
+      }
     })();
 
     return controller;

@@ -18,6 +18,28 @@ export function timeout(milliseconds: number = 0): Promise<void> {
   return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 }
 
+
+export function cancelableTimeout(cancelPromise: Promise<void>): Promise<boolean>;
+export function cancelableTimeout(cancelPromise: Promise<void>, milliseconds: number): Promise<boolean>;
+export function cancelableTimeout(cancelPromise: Promise<void>, milliseconds: number = 0): Promise<boolean> {
+  let resolved = false;
+
+  return new Promise<boolean>(async (resolve) => {
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolve(false);
+        resolved = true;
+      }
+    }, milliseconds);
+
+    await cancelPromise;
+    if (!resolved) {
+      clearTimeout(timer);
+      resolved = true;
+    }
+  });
+}
+
 export function immediate(): Promise<void> {
   return new Promise<void>((resolve) => setImmediate(resolve));
 }
