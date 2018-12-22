@@ -215,7 +215,7 @@ function mapToMp4IfM3u8(entry) {
   }
 }
 
-const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/,?([,\d_]+?),?\.mp4.*m3u8/;
+const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/(?:AKA_INT_GOORIGIN\/)?,?([,\d_]+?),?\.mp4.*m3u8/;
 const brRegex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
 
 function isWdrM3u8(url: string): boolean {
