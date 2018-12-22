@@ -29,10 +29,11 @@ export class EntriesImporter implements AsyncDisposable {
   }
 
   private initialize() {
-    this.disposer.addSubDisposables(this.entriesToBeSavedQueue);
-
     this.reporter.report.subscribe((count) => this.logger.info(`imported ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
     this.reporter.run();
+
+    this.disposer.addSubDisposables(this.entriesToBeSavedQueue);
+    this.disposer.addDisposeTasks(async () => await this.reporter.stop());
   }
 
   async dispose(): Promise<void> {

@@ -24,11 +24,11 @@ function iteratorToAsyncIterator<T>(iterator: Iterator<T>): AsyncIterator<T> {
   };
 
   if (iterator.return != undefined) {
-    asyncIterator.return = (value?: any) => Promise.resolve((iterator.return as (value?: any) => IteratorResult<T>)(value));
+    asyncIterator.return = (value?: any) => Promise.resolve(iterator.return!(value));
   }
 
   if (iterator.throw != undefined) {
-    asyncIterator.throw = (e?: any) => Promise.resolve((iterator.throw as (e?: any) => IteratorResult<T>)(e));
+    asyncIterator.throw = (e?: any) => Promise.resolve(iterator.throw!(e));
   }
 
   return asyncIterator;

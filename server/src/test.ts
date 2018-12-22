@@ -12,8 +12,8 @@ import { AsyncEnumerable } from './common/enumerable';
 
   for await (const job of consumer) {
     console.log(job);
-    await timeout(100);
- //   queue.acknowledge(job);
+    await timeout(1000);
+    queue.acknowledge(job);
   }
 })();
 
@@ -24,7 +24,7 @@ import { AsyncEnumerable } from './common/enumerable';
 
   const queue = queueProvider.get<number>('test', 5000, 3);
 
-  AsyncEnumerable.fromRange(0, 10000)
+  AsyncEnumerable.fromRange(0, 5)
     .batch(50)
     .forEach(async (batch) => {
       await queue.enqueueMany(batch);

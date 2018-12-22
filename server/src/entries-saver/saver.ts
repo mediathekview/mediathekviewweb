@@ -32,14 +32,15 @@ export class EntriesSaver implements AsyncDisposable {
     this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30000, 3);
     this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 30000, 3);
 
-    this.disposer.addSubDisposables(this.entriesToBeSavedQueue, this.entriesToBeIndexedQueue);
-
     this.initialize();
   }
 
   initialize() {
     this.reporter.report.subscribe((count) => this.logger.info(`saved ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
     this.reporter.run();
+
+    this.disposer.addSubDisposables(this.entriesToBeSavedQueue, this.entriesToBeIndexedQueue);
+    this.disposer.addDisposeTasks(async () => await this.reporter.stop());
   }
 
   async dispose(): Promise<void> {

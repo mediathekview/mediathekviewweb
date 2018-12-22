@@ -1,8 +1,8 @@
 import * as Crypto from 'crypto';
 import { Readable } from 'stream';
 import { Entry, FilmlistMetadata, MediaFactory, Quality } from '../../common/model';
-import { StreamIterableIterator } from '../../utils/stream-iterable-iterator';
-import { zBase32Encode, DeferredPromise } from '../../common/utils';
+import { DeferredPromise, zBase32Encode } from '../../common/utils';
+import { StreamIterable } from '../../utils';
 
 const METADATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/;
@@ -11,7 +11,7 @@ const READ_SIZE = 100 * 1024; // 100 KB
 
 export class FilmlistParser implements AsyncIterable<Entry[]> {
   private readonly stream: Readable;
-  private readonly streamIterableIterator: StreamIterableIterator<string>;
+  private readonly streamIterable: StreamIterable<string>;
 
   private _metadata: FilmlistMetadata | null;
   private _metadataPromise: DeferredPromise<FilmlistMetadata>;
@@ -21,7 +21,7 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
   constructor(stream: Readable) {
     this.stream = stream;
 
-    this.streamIterableIterator = new StreamIterableIterator<string>(this.stream, READ_SIZE);
+    this.streamIterable = new StreamIterable<string>(this.stream, READ_SIZE);
     this.currentChannel = '';
     this.currentTopic = '';
     this._metadata = null;
@@ -34,7 +34,7 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Entry[]> {
     let buffer = '';
-    for await (const chunk of this.streamIterableIterator) {
+    for await (const chunk of this.streamIterable) {
       buffer += chunk;
 
       if (this._metadata == null) {

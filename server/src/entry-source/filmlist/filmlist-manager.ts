@@ -16,6 +16,7 @@ const MAX_AGE_DAYS = config.importer.archiveRange;
 
 export class FilmlistManager {
   private readonly filmlistRepository: FilmlistRepository;
+  private readonly enqueuedFilmlistDates: Set<Date>;
   private readonly importedFilmlistDates: Set<Date>;
   private readonly lastLatestCheck: Key<Date>;
   private readonly lastArchiveCheck: Key<Date>;
@@ -31,6 +32,7 @@ export class FilmlistManager {
 
     this.lastLatestCheck = datastoreFactory.key(Keys.LastLatestCheck, DataType.Date);
     this.lastArchiveCheck = datastoreFactory.key(Keys.LastArchiveCheck, DataType.Date);
+    this.enqueuedFilmlistDates = datastoreFactory.set(Keys.EnqueuedFilmlistDates, DataType.Date);
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
     this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
     this.distributedLoop = distributedLoopProvider.get(Keys.FilmlistManagerLoop, true);
@@ -93,11 +95,13 @@ export class FilmlistManager {
   }
 
   private async enqueueFilmlistImport(filmlist: Filmlist): Promise<void> {
-    const timestamp = filmlist.date.valueOf();
-    const id = filmlist.fileMetadata.resource.uri + timestamp;
-    const priority = Number.MAX_SAFE_INTEGER - filmlist.date.valueOf();
+    const isEnqueued = await this.enqueuedFilmlistDates.has(filmlist.date);
 
-    throw new Error('check if already enqueued');
-    //   await this.importQueue.enqueue(filmlist, { jobID: id, priority: priority });
+    if (isEnqueued) {
+      return;
+    }
+
+    await this.importQueue.enqueue(filmlist);
+    await this.enqueuedFilmlistDates.add(filmlist.date);
   }
 }

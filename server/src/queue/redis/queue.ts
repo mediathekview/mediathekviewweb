@@ -55,15 +55,19 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   }
 
   private async initialize() {
-    const hasGroup = await this.stream.hasGroup(this.groupName);
+    const lock = this.lockProvider.get(`stream:initialize:${this.groupName}`);
 
-    if (!hasGroup) {
-      await this.stream.createGroup(this.groupName, '0', true);
-      this.logger.info(`created consumer group ${this.groupName}`);
-    }
+    await lock.acquire(Number.MAX_SAFE_INTEGER, async () => {
+      const hasGroup = await this.stream.hasGroup(this.groupName);
+
+      if (!hasGroup) {
+        await this.stream.createGroup(this.groupName, '0', true);
+        this.logger.info(`created consumer group ${this.groupName}`);
+      }
+    });
 
     this.distributedRetryLoop.run((_controller) => this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);
-    this.consumerDeleteLoop.run((_controller) => this.deleteInactiveConsumers(), 30000, 15000);
+    this.consumerDeleteLoop.run((_controller) => this.deleteInactiveConsumers(), 3000, 1500);
 
     this.initialized.resolve();
   }
@@ -105,7 +109,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
   async acknowledge(...jobs: Job<DataType>[]): Promise<void> {
     const ids = jobs.map((job) => job.id);
-    await this.stream.delete(this.groupName, ...ids);
+    await this.stream.acknowledgeDeleteTransaction(this.groupName, ids);
   }
 
   async *getConsumer(): AsyncIterableIterator<Job<DataType>> {
@@ -166,20 +170,16 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     this.disposer.deferDispose(async () => {
       const consumers = await this.stream.getConsumers(this.groupName);
 
-      for (const consumer of consumers) {
-        if (consumer.idle < MINIMUM_CONSUMER_IDLE_TIME_BEFORE_DELETION || consumer.pending != 0) {
-          continue;
-        }
+      const consumersToDelete = consumers
+        .filter((consumer) => consumer.pending == 0)
+        .filter((consumer) => consumer.idle >= MINIMUM_CONSUMER_IDLE_TIME_BEFORE_DELETION)
 
+      for (const consumer of consumersToDelete) {
         const lock = this.lockProvider.get(consumer.name);
 
         await lock.acquire(0, async () => {
-          const pendingInfo = await this.stream.getPendingInfo(this.groupName, consumer.name);
-
-          if (pendingInfo.count == 0) {
-            await this.stream.deleteConsumer(this.groupName, consumer.name);
-            this.logger.info(`deleted consumer ${consumer.name} from ${this.streamName}`);
-          }
+          await this.stream.deleteConsumer(this.groupName, consumer.name);
+          this.logger.info(`deleted consumer ${consumer.name} from ${this.streamName}`);
         });
       }
     });
@@ -212,7 +212,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       });
 
       if (retryEntries.length > 0) {
-        const newIds = await this.stream.deleteAddTransaction(ids, retryEntries);
+        const newIds = await this.stream.acknowledgeDeleteAddTransaction(this.groupName, ids, retryEntries);
       }
     });
   }

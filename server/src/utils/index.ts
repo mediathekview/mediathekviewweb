@@ -1,3 +1,3 @@
 export * from './decompressor';
-export * from './stream-iterable-iterator';
+export * from './stream-iterable';
 export * from './unique-id';

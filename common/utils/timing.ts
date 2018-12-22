@@ -35,6 +35,7 @@ export function cancelableTimeout(cancelPromise: Promise<void>, milliseconds: nu
     await cancelPromise;
     if (!resolved) {
       clearTimeout(timer);
+      resolve(true);
       resolved = true;
     }
   });

@@ -4,9 +4,10 @@ import { MultiError } from '../utils/multi-error';
 import { AsyncDisposable } from './disposable';
 
 export class AsyncDisposer implements AsyncDisposable {
-  private readonly disposeDeferrers: Promise<void>[];
-  private readonly subDisposables: AsyncDisposable[];
   private readonly disposedPromise: DeferredPromise;
+  private readonly disposeDeferrers: Promise<void>[];
+  private readonly disposeTasks: (() => void | Promise<void>)[];
+  private readonly subDisposables: AsyncDisposable[];
 
   private _disposed: boolean;
 
@@ -17,7 +18,9 @@ export class AsyncDisposer implements AsyncDisposable {
   constructor() {
     this.disposedPromise = new DeferredPromise();
     this.disposeDeferrers = [];
+    this.disposeTasks = [];
     this.subDisposables = [];
+    this._disposed = false;
   }
 
   getDisposeDeferrer(): DeferredPromise {
@@ -38,8 +41,15 @@ export class AsyncDisposer implements AsyncDisposable {
     }
   }
 
-  addSubDisposables(...disposable: AsyncDisposable[]) {
-    this.subDisposables.push(...disposable);
+  addSubDisposables(...disposables: AsyncDisposable[]) {
+    const subDisposablesTasks = this.subDisposables.map((disposable) => () => disposable.dispose());
+
+    this.disposeTasks.push(...subDisposablesTasks);
+    this.subDisposables.push(...disposables);
+  }
+
+  addDisposeTasks(...task: (() => void | Promise<void>)[]) {
+    this.disposeTasks.push(...task);
   }
 
   async dispose(): Promise<void> {
@@ -61,10 +71,10 @@ export class AsyncDisposer implements AsyncDisposable {
         }
       });
 
-    await AsyncEnumerable.from(this.subDisposables)
-      .parallelForEach(10, async (subDisposable) => {
+    await AsyncEnumerable.from(this.disposeTasks)
+      .parallelForEach(10, async (disposeTask) => {
         try {
-          await subDisposable.dispose();
+          await disposeTask();
         }
         catch (error) {
           errors.push(error);

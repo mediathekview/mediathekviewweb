@@ -5,7 +5,7 @@ export type PendingInfoConsumer = {
 
 export type PendingInfo = {
   count: number,
-  firstId: string,
-  lastId: string,
+  firstId: string | null,
+  lastId: string | null,
   consumers: PendingInfoConsumer[]
 };

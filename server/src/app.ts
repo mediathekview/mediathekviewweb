@@ -3,8 +3,10 @@ import * as Http from 'http';
 import { Subject } from 'rxjs';
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
+import { Serializer } from './common/serializer';
 import { AggregationMode, formatDuration, formatError, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
+import { Filmlist } from './entry-source/filmlist/filmlist';
 import { MediathekViewWebImporter } from './importer';
 import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
@@ -14,6 +16,8 @@ type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
 const QUIT_SIGNALS: Signal[] = ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGBREAK'];
 
 const quitSubject = new Subject<void>();
+
+Serializer.registerPrototype(Filmlist);
 
 (async () => {
   const logger = await InstanceProvider.coreLogger();
@@ -73,10 +77,32 @@ async function init() {
     await indexer.initialize();
   });
 
-  filmlistManager.run();
-  importer.run();
-  saver.run();
-  indexer.run();
+
+  (async () => {
+    filmlistManager.run();
+
+    const runPromise = Promise.all([
+      importer.run(),
+      saver.run(),
+      indexer.run()
+    ]);
+
+    const quitPromise = quitSubject.toPromise();
+
+    await Promise.race([runPromise, quitPromise]);
+
+    console.log('shutdown');
+
+    server.close();
+
+    await Promise.all([
+      importer.stop(),
+      saver.stop(),
+      indexer.stop()
+    ]);
+
+    console.log('bye');
+  })();
 }
 
 async function measureEventLoopDelay(): Promise<number> {
@@ -134,7 +160,7 @@ process.on('rejectionHandled', (promise) => {
   console.error('rejectionHandled', promise);
 });
 
-for (const signal in QUIT_SIGNALS) {
+for (const signal of QUIT_SIGNALS) {
   process.on(signal as Signal, (signal) => {
     console.info(`${signal} received, quitting.`);
     quit();

@@ -22,15 +22,23 @@ export abstract class ServiceBase implements Service {
   protected abstract _run(): Promise<void>;
   protected abstract _stop(): Promise<void>;
 
+  private get stateString(): string {
+    return ServiceState[this.state].toLowerCase();
+  }
+
+  constructor() {
+    this.state = ServiceState.Uninitialized;
+  }
+
   async initialize(): Promise<void> {
     if (this.state != ServiceState.Uninitialized) {
-      throw new Error(`service is ${ServiceState[this.state].toLowerCase()}`);
+      throw new Error(`cannot initialize service ${this.serviceName}, it is ${this.stateString}`);
     }
 
     try {
       this.state = ServiceState.Initializing;
       await this._initialize();
-      this.state = ServiceState.Initializing;
+      this.state = ServiceState.Initialized;
     }
     catch (error) {
       this.state = ServiceState.Erroneous;
@@ -40,7 +48,7 @@ export abstract class ServiceBase implements Service {
 
   async run(): Promise<void> {
     if (this.state != ServiceState.Initialized) {
-      throw new Error(`service is ${ServiceState[this.state].toLowerCase()}`);
+      throw new Error(`cannot run service ${this.serviceName}, it is ${this.stateString}`);
     }
 
     try {
@@ -56,7 +64,7 @@ export abstract class ServiceBase implements Service {
 
   async stop(): Promise<void> {
     if (this.state != ServiceState.Running) {
-      throw new Error(`service is not running, but ${ServiceState[this.state].toLowerCase()}`);
+      throw new Error(`cannot stop service ${this.serviceName}, it is ${this.stateString}`);
     }
 
     try {

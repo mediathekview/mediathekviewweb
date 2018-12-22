@@ -3,7 +3,7 @@ import { isIterable } from '../iterable-helpers';
 
 export async function toArrayAsync<T>(iterable: AnyIterable<T>): Promise<T[]> {
   if (isIterable(iterable)) {
-    return Array.from(iterable);
+    return [...iterable];
   }
 
   const array: T[] = [];

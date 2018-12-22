@@ -104,10 +104,10 @@ export class InstanceProvider {
     return this.singleton(EntriesIndexer, async () => {
       const aggregatedEntryRepository = await InstanceProvider.aggregatedEntryRepository();
       const searchEngine = await InstanceProvider.entrySearchEngine();
-      const datastoreFactory = await InstanceProvider.datastoreFactory();
+      const queueProvider = await InstanceProvider.queueProvider();
       const logger = LoggerFactoryProvider.factory.create(ENTRIES_INDEXER_LOG);
 
-      return new EntriesIndexer(aggregatedEntryRepository, searchEngine, datastoreFactory, logger);
+      return new EntriesIndexer(aggregatedEntryRepository, searchEngine, queueProvider, logger);
     });
   }
 

@@ -1,83 +1,66 @@
+import { AsyncDisposable, AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable';
 import { Logger } from '../common/logger';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
-import { formatDuration, ProviderFunctionIterable, ProviderFunctionResult, timeout } from '../common/utils';
+import { formatDuration, timeout } from '../common/utils';
 import { PeriodicReporter } from '../common/utils/periodic-reporter';
-import { DatastoreFactory, DataType, Set } from '../datastore';
 import { Keys } from '../keys';
+import { Queue, QueueProvider } from '../queue';
 import { AggregatedEntryRepository } from '../repository';
 
-const BATCH_SIZE = 250;
-const BATCH_BUFFER_SIZE = 5;
-const NO_ITEMS_DELAY = 2500;
+const BATCH_SIZE = 100;
+const BUFFER_SIZE = 5;
 
 const REPORT_INTERVAL = 10000;
 
-export class EntriesIndexer {
+export class EntriesIndexer implements AsyncDisposable {
+  private readonly disposer: AsyncDisposer;
   private readonly aggregatedEntryRepository: AggregatedEntryRepository;
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
-  private readonly entriesToBeIndexed: Set<string>;
+  private readonly entriesToBeIndexedQueue: Queue<string>;
   private readonly logger: Logger;
   private readonly reporter: PeriodicReporter;
 
-  constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, datastoreFactory: DatastoreFactory, logger: Logger) {
+  constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, queueProvider: QueueProvider, logger: Logger) {
     this.aggregatedEntryRepository = indexedEntryRepository;
     this.searchEngine = searchEngine;
     this.logger = logger;
 
+    this.disposer = new AsyncDisposer();
     this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
-    this.entriesToBeIndexed = datastoreFactory.set(Keys.EntriesToBeIndexed, DataType.String);
+    this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 15000, 3);
 
     this.initialize();
   }
 
-  initialize() {
+  private initialize() {
     this.reporter.report.subscribe((count) => this.logger.info(`indexed ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
     this.reporter.run();
+
+    this.disposer.addDisposeTasks(async () => await this.reporter.stop());
+  }
+
+  async dispose(): Promise<void> {
+    await this.disposer.dispose();
   }
 
   async run() {
-    const entriesToBeIndexedIterable = new ProviderFunctionIterable(() => this.providerFunction(), NO_ITEMS_DELAY);
+    const consumer = this.entriesToBeIndexedQueue.getBatchConsumer(BATCH_SIZE, true);
 
-    await AsyncEnumerable.from(entriesToBeIndexedIterable)
-      .buffer(BATCH_BUFFER_SIZE)
+    await AsyncEnumerable.from(consumer)
+      .while(() => !this.disposer.disposed)
+      .buffer(BUFFER_SIZE)
       .forEach(async (batch) => {
         try {
-          await this.indexEntries(batch);
+          const ids = batch.map((job) => job.data);
+          await this.indexEntries(ids);
         }
         catch (error) {
           this.logger.error(error);
-
-          await this.pushBack(batch);
           await timeout(2500);
         }
       });
-  }
-
-  private async pushBack(batch: string[]): Promise<void> {
-    let success = false;
-    while (!success) {
-      try {
-        await this.entriesToBeIndexed.addMany(batch);
-        success = true;
-      }
-      catch (error) {
-        this.logger.error(error);
-        await timeout(2500);
-      }
-    }
-  }
-
-  private async providerFunction(): Promise<ProviderFunctionResult<string[]>> {
-    try {
-      const ids = await this.entriesToBeIndexed.pop(BATCH_SIZE);
-      return { hasItem: ids.length > 0, item: ids };
-    }
-    catch (error) {
-      this.logger.error(error);
-      return { hasItem: false };
-    }
   }
 
   private async indexEntries(ids: string[]) {

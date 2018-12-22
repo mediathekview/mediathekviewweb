@@ -16,8 +16,13 @@ interface SerializerStatic {
 }
 
 class _Serializer {
-  private static readonly prototypeSerializeHandler: PrototypeSerializeHandler;
   private static readonly handlers: SerializeHandler[] = [];
+
+  private static prototypeSerializeHandler: PrototypeSerializeHandler;
+
+  static setPrototypeSerializerHandler(prototypeSerializeHandler: PrototypeSerializeHandler) {
+    this.prototypeSerializeHandler = prototypeSerializeHandler;
+  }
 
   static registerHandler(...handlers: SerializeHandler[]) {
     this.handlers.push(...handlers);
@@ -73,12 +78,14 @@ class _Serializer {
     const handler = this.handlers.find((handler) => handler.canDeserialize(serializedElement));
 
     if (handler == undefined) {
-      throw new Error('no suitable handler available');
+      throw new Error(`no suitable handler available for ${serializedElement.type}`);
     }
 
     return handler;
   }
 }
+
+const prototypeSerializeHandler = new PrototypeSerializeHandler()
 
 const handlers: SerializeHandler[] = [
   new PrimitivesSerializeHandler(),
@@ -86,9 +93,10 @@ const handlers: SerializeHandler[] = [
   new ArraySerializeHandler(),
   new DateSerializeHandler(),
   new RegexSerializeHandler(),
-  new PrototypeSerializeHandler()
+  prototypeSerializeHandler
 ];
 
+_Serializer.setPrototypeSerializerHandler(prototypeSerializeHandler);
 _Serializer.registerHandler(...handlers);
 
 export const Serializer = _Serializer as SerializerStatic;

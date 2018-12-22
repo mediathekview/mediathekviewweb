@@ -1,32 +1,26 @@
 import { EntriesIndexer } from './entries-indexer/indexer';
 import { InstanceProvider } from './instance-provider';
+import { Service } from './service';
+import { ServiceBase } from './service-base';
 
-export class MediathekViewWebIndexer {
-  private indexer: EntriesIndexer | null;
-  private running: boolean;
+export class MediathekViewWebIndexer extends ServiceBase implements Service {
+  private indexer: EntriesIndexer;
+
+  serviceName: string = 'Indexer';
 
   constructor() {
-    this.indexer = null;
-    this.running = false;
+    super();
   }
 
-  async initialize() {
-    if (this.indexer == null) {
-      this.indexer = await InstanceProvider.entriesIndexer();
-    }
+  protected async _initialize(): Promise<void> {
+    this.indexer = await InstanceProvider.entriesIndexer();
   }
 
-  async run() {
-    if (this.indexer == null) {
-      throw new Error('not initialized');
-    }
-
-    if (this.running) {
-      throw new Error('already running');
-    }
-
-    this.running = true;
+  protected async _run(): Promise<void> {
     await this.indexer.run();
-    this.running = false;
+  }
+
+  protected async _stop(): Promise<void> {
+    await this.indexer.dispose();
   }
 }

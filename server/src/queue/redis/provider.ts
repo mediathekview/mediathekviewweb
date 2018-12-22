@@ -25,7 +25,7 @@ export class RedisQueueProvider implements QueueProvider {
   }
 
   get<DataType>(key: string, retryAfter: number, maxRetries: number): Queue<DataType> {
-    const logger = this.loggerFactory.create(this.loggerPrefix);
+    const logger = this.loggerFactory.create(`${this.loggerPrefix} [${key}]`);
     return new RedisQueue(this.redis, this.redisProvider, this.lockProvider, this.distributedLoopProvider, key, retryAfter, maxRetries, logger);
   }
 }

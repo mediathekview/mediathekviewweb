@@ -49,7 +49,9 @@ type EntriesReturnValue = EntryReturnValue[];
 
 type ReadReturnValue = [string, EntriesReturnValue][];
 
-type PendingReturnValue = [number, string, string, [string, string][]];
+type PendingConsumerValue = [string, string][];
+
+type PendingReturnValue = [0, null, null, null] | [number, string, string, PendingConsumerValue];
 
 type InfoReturnValue = (string | number | EntryReturnValue)[];
 
@@ -106,6 +108,13 @@ export class RedisStream<T extends StringMap<string>> implements AsyncDisposable
     return entries;
   }
 
+  async get(id: string): Promise<Entry<T> | null> {
+    const result = await this.redis.xrange(this.stream, id, id, 'COUNT', '1') as EntriesReturnValue;
+    const entries = this.parseEntriesReturnValue(result);
+
+    return entries[0] != undefined ? entries[0] : null;
+  }
+
   async getMany(ids: string[]): Promise<Entry<T>[]> {
     if (ids.length == 0) {
       return [];
@@ -133,9 +142,22 @@ export class RedisStream<T extends StringMap<string>> implements AsyncDisposable
     return entries;
   }
 
-  async deleteAddTransaction(deleteIds: string[], entries: SourceEntry<T>[]): Promise<string[]> {
-    if (deleteIds.length == 0) {
-      throw new Error('empty deleteIds array');
+  async acknowledgeDeleteTransaction(group: string, ids: string[]): Promise<void> {
+    if (ids.length == 0) {
+      throw new Error('empty ids array');
+    }
+
+    const transaction = this.redis.multi();
+
+    transaction.xack(this.stream, group, ...ids);
+    transaction.xdel(this.stream, ...ids);
+
+    await transaction.exec() as [[Nullable<Error>, number], [Nullable<Error>, number]];
+  }
+
+  async acknowledgeDeleteAddTransaction(group: string, acknowledgeDeleteIds: string[], entries: SourceEntry<T>[]): Promise<string[]> {
+    if (acknowledgeDeleteIds.length == 0) {
+      throw new Error('empty acknowledgeDeleteIds array');
     }
     if (entries.length == 0) {
       throw new Error('empty entries array');
@@ -143,20 +165,21 @@ export class RedisStream<T extends StringMap<string>> implements AsyncDisposable
 
     const transaction = this.redis.multi();
 
-    transaction.xdel(this.stream, ...deleteIds);
+    transaction.xack(this.stream, group, ...acknowledgeDeleteIds);
+    transaction.xdel(this.stream, ...acknowledgeDeleteIds);
 
     for (const entry of entries) {
-      const { id: sourceId, data } = entry;
+      const { id, data } = entry;
       const parameters = this.buildFieldValueArray(data);
 
-      transaction.xadd(this.stream, (sourceId != null) ? sourceId : '*', ...parameters);
+      transaction.xadd(this.stream, (id != null) ? id : '*', ...parameters);
     }
 
     const results = await transaction.exec() as [[Nullable<Error>, number], ...[Nullable<Error>, string][]];
-    const [deleteResult, ...addResults] = results;
+    const [acknowledgeResult, deleteResult, ...addResults] = results;
 
-    const ids = addResults.map(([, id]) => id);
-    return ids;
+    const newIds = addResults.map(([, id]) => id);
+    return newIds;
   }
 
   async read({ id, block, count }: ReadParameters): Promise<Entry<T>[]> {
@@ -184,6 +207,11 @@ export class RedisStream<T extends StringMap<string>> implements AsyncDisposable
     ] as ['GROUP', string, string, ...string[]];
 
     const data = await this.redis.xreadgroup(...parametersArray) as ReadReturnValue;
+
+    if (data == null) {
+      return [];
+    }
+
     const entries = this.parseReadReturnValue(data);
 
     return entries;
@@ -262,11 +290,17 @@ export class RedisStream<T extends StringMap<string>> implements AsyncDisposable
   }
 
   async getPendingInfo(group: string): Promise<PendingInfo>;
-  async getPendingInfo(group: string, consumer: string): Promise<PendingInfo>;
-  async getPendingInfo(group: string, consumer?: string): Promise<PendingInfo> {
-    const [count, firstId, lastId, pendingConsumerInfo] = await this.redis.xpending(this.stream, group, ...(consumer != null ? [consumer] : [])) as PendingReturnValue;
-    const consumers: PendingConsumerInfo[] = pendingConsumerInfo.map(([name, count]) => ({ name, count: parseInt(count) }));
-    const pendingInfo: PendingInfo = {
+  async getPendingInfo(group: string): Promise<PendingInfo>;
+  async getPendingInfo(group: string): Promise<PendingInfo> {
+    const [count, firstId, lastId, pendingConsumerInfo] = await this.redis.xpending(this.stream, group) as PendingReturnValue;
+
+    let consumers: PendingConsumerInfo[] = [];
+
+    if (pendingConsumerInfo != null) {
+      consumers = pendingConsumerInfo.map(([name, count]) => ({ name, count: parseInt(count) }));
+    }
+
+    let pendingInfo: PendingInfo = {
       count,
       firstId,
       lastId,
@@ -277,8 +311,8 @@ export class RedisStream<T extends StringMap<string>> implements AsyncDisposable
   }
 
   async getPendingEntries({ group, consumer, start, end, count }: GetPendingEntriesParameters): Promise<PendingEntry[]> {
-    const info = await this.redis.xpending(this.stream, group, start, end, count, ...(consumer != null ? [consumer] : [])) as [string, string, number, number][];
-    const pendingEntries: PendingEntry[] = info.map(([id, consumerName, elapsed, deliveryCount]) => ({ id, consumer: consumerName, elapsed, deliveryCount }));
+    const pending = await this.redis.xpending(this.stream, group, start, end, count, ...(consumer != null ? [consumer] : [])) as [string, string, number, number][];
+    const pendingEntries: PendingEntry[] = pending.map(([id, consumerName, elapsed, deliveryCount]) => ({ id, consumer: consumerName, elapsed, deliveryCount }));
 
     return pendingEntries;
   }
