@@ -18,17 +18,17 @@
     "jquery": "^3.3.1",
     "js-cookie": "^2.2.0",
     "lodash": "^4.17.11",
-    "moment": "^2.22.2",
+    "moment": "^2.23.0",
     "socket.io-client": "^2.2.0",
     "video.js": "^7.3.0"
   },
   "devDependencies": {
     "@types/datatables.net": "^1.10.13",
     "@types/bootstrap": "^3.3.40",
-    "@types/jquery": "^3.3.22",
-    "@types/lodash": "^4.14.118",
+    "@types/jquery": "^3.3.28",
+    "@types/lodash": "^4.14.119",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.2.5",
-    "typescript": "~3.1.6"
+    "typescript": "~3.2.2"
   }
 }
