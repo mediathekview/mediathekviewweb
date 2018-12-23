@@ -1,5 +1,5 @@
-import { EntriesIndexer } from './entries-indexer/indexer';
-import { InstanceProvider } from './instance-provider';
+import { EntriesIndexer } from '../entries-indexer/indexer';
+import { InstanceProvider } from '../instance-provider';
 import { Service } from './service';
 import { ServiceBase } from './service-base';
 

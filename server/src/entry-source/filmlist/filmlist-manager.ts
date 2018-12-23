@@ -38,8 +38,9 @@ export class FilmlistManager {
     this.distributedLoop = distributedLoopProvider.get(Keys.FilmlistManagerLoop, true);
   }
 
-  run() {
+  async  run(): Promise<void> {
     this.loopController = this.distributedLoop.run(() => this.loop(), 60000, 10000);
+    await this.loopController.stopped;
   }
 
   async stop(): Promise<void> {

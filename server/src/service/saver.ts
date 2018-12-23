@@ -1,9 +1,9 @@
-import { EntriesSaver } from './entries-saver/saver';
-import { InstanceProvider } from './instance-provider';
+import { EntriesSaver } from '../entries-saver/saver';
+import { InstanceProvider } from '../instance-provider';
 import { ServiceBase } from './service-base';
 import { Service } from './service';
 
-export class MediathekViewWebSaver extends ServiceBase implements Service {
+export class SaverService extends ServiceBase implements Service {
   private saver: EntriesSaver;
 
   serviceName = 'EntriesSaver';

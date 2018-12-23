@@ -30,6 +30,7 @@ export class DistributedLoop {
 
     const controller: LoopController = {
       stop: async () => { stop = true; stopPromise.resolve(); await stopped; },
+      stopped: stopped,
       setTiming: (timing) => {
         if (timing.interval != undefined) {
           interval = timing.interval;

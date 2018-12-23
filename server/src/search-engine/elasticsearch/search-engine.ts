@@ -31,8 +31,6 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   }
 
   async initialize() {
-    await this.waitForConnection();
-
     const created = await this.ensureIndex();
 
     if (created) {
@@ -123,21 +121,5 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     actualMapping[this.typeName] = mapping;
 
     return actualMapping;
-  }
-
-  private async waitForConnection(): Promise<void> {
-    let success = false;
-
-    do {
-      try {
-        await this.client.ping({ requestTimeout: 250 });
-        success = true;
-        this.logger.info('connected to elasticsearch');
-      } catch {
-        this.logger.warn(`couldn't connect to elasticsearch, trying again...`)
-      }
-
-      await timeout(1000);
-    } while (!success);
   }
 }

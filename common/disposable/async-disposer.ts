@@ -48,7 +48,7 @@ export class AsyncDisposer implements AsyncDisposable {
     this.subDisposables.push(...disposables);
   }
 
-  addDisposeTasks(...task: (() => void | Promise<void>)[]) {
+  addDisposeTasks(...task: (() => any | Promise<any>)[]) {
     this.disposeTasks.push(...task);
   }
 

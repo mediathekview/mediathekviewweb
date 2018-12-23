@@ -3,10 +3,12 @@ import * as Redis from 'ioredis';
 import * as Mongo from 'mongodb';
 import { MediathekViewWebApi } from './api/api';
 import { MediathekViewWebRestApi } from './api/rest-api';
+import { AsyncDisposer } from './common/disposable';
 import { LockProvider } from './common/lock';
 import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
+import { timeout } from './common/utils';
 import { config } from './config';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
@@ -73,6 +75,11 @@ class InstanceProviderRedisProvider implements RedisProvider {
 export class InstanceProvider {
   private static instances: StringMap = {};
   private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
+  private static disposer: AsyncDisposer = new AsyncDisposer();
+
+  static async disposeInstances() {
+    await this.disposer.dispose();
+  }
 
   static mediathekViewWebApi(): Promise<MediathekViewWebApi> {
     return this.singleton(MediathekViewWebApi, async () => {
@@ -141,28 +148,44 @@ export class InstanceProvider {
       .on('error', (error: Error) => logger.error(error, false));
 
     let connected = false;
-    do {
+    while (!connected && !this.disposer.disposed) {
       try {
         await redis.connect();
         connected = true;
       }
       catch (error) {
-
       }
     }
-    while (!connected);
+
+    this.disposer.addDisposeTasks(async () => await redis.quit());
 
     return redis;
   }
 
   static elasticsearch(): Promise<ElasticsearchClient> {
-    return this.singleton(ElasticsearchClient, () => {
+    return this.singleton(ElasticsearchClient, async () => {
       const logger = LoggerFactoryProvider.factory.create(ELASTICSEARCH_LOG);
       const logAdapter = ElasticsearchLogAdapterFactory.getLogAdapter(logger);
 
       const elasticsearchClient = new ElasticsearchClient({
+        host: 'localhost:9200',
         log: logAdapter
       });
+
+      let connected = false;
+
+      while (!connected && !this.disposer.disposed) {
+        try {
+          await elasticsearchClient.ping({ requestTimeout: 500 });
+          connected = true;
+          logger.info('connected to elasticsearch');
+        } catch {
+          logger.warn(`couldn't connect to elasticsearch, trying again...`);
+          await timeout(1000);
+        }
+      }
+
+      this.disposer.addDisposeTasks(async () => await elasticsearchClient.close());
 
       return elasticsearchClient;
     });
@@ -184,8 +207,10 @@ export class InstanceProvider {
           .on('reconnect', () => logger.warn('reconnected'))
           .on('timeout', () => logger.warn('connection timed out'))
           .on('close', () => logger.warn('connection closed'));
+      }
+      while (mongoClient == null && !this.disposer.disposed);
 
-      } while (mongoClient == null);
+      this.disposer.addDisposeTasks(async () => await mongoClient!.close());
 
       Mongo.Logger.setCurrentLogger(logFunction);
 

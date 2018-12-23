@@ -1,11 +1,11 @@
 import { ServiceBase } from './service-base';
-import { EntriesImporter } from './entries-importer/importer';
-import { EntrySource } from './entry-source';
-import { InstanceProvider } from './instance-provider';
+import { EntriesImporter } from '../entries-importer/importer';
+import { EntrySource } from '../entry-source';
+import { InstanceProvider } from '../instance-provider';
 import { Service } from './service';
-import { AsyncDisposer } from './common/disposable';
+import { AsyncDisposer } from '../common/disposable';
 
-export class MediathekViewWebImporter extends ServiceBase implements Service {
+export class ImporterService extends ServiceBase implements Service {
   private disposer: AsyncDisposer;
   private importer: EntriesImporter;
   private sources: EntrySource[];
@@ -20,6 +20,7 @@ export class MediathekViewWebImporter extends ServiceBase implements Service {
 
   protected async _initialize() {
     this.importer = await InstanceProvider.entriesImporter();
+    this.disposer.addSubDisposables(this.importer);
 
     this.sources = [
       await InstanceProvider.filmlistEntrySource()

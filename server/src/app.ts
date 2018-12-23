@@ -7,10 +7,11 @@ import { Serializer } from './common/serializer';
 import { AggregationMode, formatDuration, formatError, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
 import { Filmlist } from './entry-source/filmlist/filmlist';
-import { MediathekViewWebImporter } from './importer';
-import { MediathekViewWebIndexer } from './indexer';
 import { InstanceProvider } from './instance-provider';
-import { MediathekViewWebSaver } from './saver';
+import { FilmlistManagerService } from './service/filmlist-manager';
+import { ImporterService } from './service/importer';
+import { MediathekViewWebIndexer } from './service/indexer';
+import { SaverService } from './service/saver';
 
 type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
 const QUIT_SIGNALS: Signal[] = ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGBREAK'];
@@ -54,9 +55,10 @@ function handleUncaughtExceptions(logger: Logger) {
 
 async function init() {
   const server = new Http.Server();
-  const importer = new MediathekViewWebImporter();
-  const saver = new MediathekViewWebSaver();
-  const indexer = new MediathekViewWebIndexer();
+  const filmlistManagerService = new FilmlistManagerService();
+  const importerService = new ImporterService();
+  const saverService = new SaverService();
+  const indexerService = new MediathekViewWebIndexer();
 
   const restApi = await InstanceProvider.mediathekViewWebRestApi();
 
@@ -66,25 +68,25 @@ async function init() {
 
   server.listen(config.api.port);
 
-  const filmlistManager = await InstanceProvider.filmlistManager();
   const lockProvider = await InstanceProvider.lockProvider();
 
   const lock = lockProvider.get('init');
 
   await lock.acquire(Number.POSITIVE_INFINITY, async () => {
-    await importer.initialize();
-    await saver.initialize();
-    await indexer.initialize();
+    await Promise.all([
+      filmlistManagerService.initialize(),
+      importerService.initialize(),
+      saverService.initialize(),
+      indexerService.initialize()
+    ]);
   });
 
-
   (async () => {
-    filmlistManager.run();
-
     const runPromise = Promise.all([
-      importer.run(),
-      saver.run(),
-      indexer.run()
+      filmlistManagerService.run(),
+      importerService.run(),
+      saverService.run(),
+      indexerService.run()
     ]);
 
     const quitPromise = quitSubject.toPromise();
@@ -96,10 +98,13 @@ async function init() {
     server.close();
 
     await Promise.all([
-      importer.stop(),
-      saver.stop(),
-      indexer.stop()
+      filmlistManagerService.stop(),
+      importerService.stop(),
+      saverService.stop(),
+      indexerService.stop()
     ]);
+
+    await InstanceProvider.disposeInstances();
 
     console.log('bye');
   })();

@@ -11,8 +11,8 @@ export class ElasticsearchLogAdapterFactory {
         logger.warn(message);
       }
 
-      info(_message: string) {
-        //ignore
+      info(message: string) {
+        logger.info(message);
       }
 
       debug(_message: string) {
@@ -24,7 +24,7 @@ export class ElasticsearchLogAdapterFactory {
       }
 
       close() {
-        //ignore
+        logger.info('close');
       }
     }
   }
