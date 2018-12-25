@@ -1,20 +1,22 @@
-import { AsyncDisposable, AsyncDisposer } from '../common/disposable';
+import { AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import '../common/extensions/map';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
-import { formatDuration, timeout } from '../common/utils';
+import { DeferredPromise, formatDuration, timeout } from '../common/utils';
 import { PeriodicReporter } from '../common/utils/periodic-reporter';
 import { Keys } from '../keys';
+import { ServiceBase } from '../service-base';
 import { Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
+import { Service } from '../service';
 
 const BATCH_SIZE = 250;
 const BUFFER_SIZE = 3;
 
 const REPORT_INTERVAL = 10000;
 
-export class EntriesSaver implements AsyncDisposable {
+export class EntriesSaver extends ServiceBase implements Service {
   private readonly entryRepository: EntryRepository;
   private readonly entriesToBeSavedQueue: Queue<Entry>;
   private readonly entriesToBeIndexedQueue: Queue<string>;
@@ -22,7 +24,11 @@ export class EntriesSaver implements AsyncDisposable {
   private readonly reporter: PeriodicReporter;
   private readonly disposer: AsyncDisposer;
 
+  private stopped: DeferredPromise;
+
   constructor(entryRepository: EntryRepository, queueProvider: QueueProvider, logger: Logger) {
+    super();
+
     this.entryRepository = entryRepository;
     this.logger = logger;
 
@@ -32,28 +38,32 @@ export class EntriesSaver implements AsyncDisposable {
     this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30000, 3);
     this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 30000, 3);
 
-    this.initialize();
+    this.disposer.addSubDisposables(this.entriesToBeSavedQueue, this.entriesToBeIndexedQueue);
+
+    this.stopped = new DeferredPromise();
   }
 
-  initialize() {
+  protected async _initialize(): Promise<void> {
+    await this.entriesToBeSavedQueue.initialize();
+    await this.entriesToBeIndexedQueue.initialize();
+
     this.reporter.report.subscribe((count) => this.logger.info(`saved ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
     this.reporter.run();
 
-    this.disposer.addSubDisposables(this.entriesToBeSavedQueue, this.entriesToBeIndexedQueue);
     this.disposer.addDisposeTasks(async () => await this.reporter.stop());
   }
 
-  async dispose(): Promise<void> {
+  protected async _dispose(): Promise<void> {
     await this.disposer.dispose();
   }
 
-  async run(): Promise<void> {
+  protected async _start(): Promise<void> {
     const consumer = this.entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, false);
 
     await AsyncEnumerable.from(consumer)
-      .while(() => !this.disposer.disposed)
+      .while(() => !this.stopRequested)
       .buffer(BUFFER_SIZE)
-      .forEach(async (batch) => {
+      .parallelForEach(3, async (batch) => {
         try {
           const entries = batch.map((job) => job.data);
           await this.saveEntries(entries);
@@ -64,22 +74,18 @@ export class EntriesSaver implements AsyncDisposable {
           await timeout(2500);
         }
       });
+
+    this.stopped.resolve();
+  }
+
+  protected async _stop(): Promise<void> {
+    await this.stopped;
   }
 
   private async saveEntries(entries: Entry[]): Promise<void> {
     const ids = entries.map((entry) => entry.id);
-
-    try {
-      await this.entryRepository.saveMany(entries);
-    } catch (error) {
-      this.logger.error(error);
-    }
-
-    try {
-      await this.entriesToBeIndexedQueue.enqueueMany(ids);
-    } catch (error) {
-      this.logger.error(error);
-    }
+    await this.entryRepository.saveMany(entries);
+    await this.entriesToBeIndexedQueue.enqueueMany(ids);
 
     this.reporter.increase(entries.length);
   }

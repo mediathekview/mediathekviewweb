@@ -3,7 +3,7 @@ import { AsyncDisposable, AsyncDisposer } from '../../common/disposable';
 import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { Serializer } from '../../common/serializer';
-import { currentTimestamp, DeferredPromise } from '../../common/utils';
+import { currentTimestamp } from '../../common/utils';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { RedisProvider } from '../../redis/provider';
 import { RedisStream, SourceEntry } from '../../redis/stream';
@@ -30,7 +30,6 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   private readonly logger: Logger;
   private readonly distributedRetryLoop: DistributedLoop;
   private readonly consumerDeleteLoop: DistributedLoop;
-  private readonly initialized: DeferredPromise;
 
   constructor(redis: Redis.Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, maxRetries: number, logger: Logger) {
     this.redisProvider = redisProvider;
@@ -44,20 +43,15 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     this.logger = logger;
 
     this.disposer = new AsyncDisposer();
-    this.stream = new RedisStream(redis, this.streamName, false);
-    this.initialized = new DeferredPromise();
+    this.stream = new RedisStream(redis, this.streamName);
     this.distributedRetryLoop = distributedLoopProvider.get(`queue:${key}:retry`);
     this.consumerDeleteLoop = distributedLoopProvider.get(`queue:${key}:consumer-delete`);
-
-    this.disposer.deferDispose(async () => await this.initialized);
-
-    this.initialize().catch((error) => this.logger.error(error));
   }
 
-  private async initialize() {
-    const lock = this.lockProvider.get(`stream:initialize:${this.groupName}`);
+  async initialize(): Promise<void> {
+    const lock = this.lockProvider.get(`queue:${this.key}:initialize`);
 
-    await lock.acquire(Number.MAX_SAFE_INTEGER, async () => {
+    const acquired = await lock.acquire(2500, async () => {
       const hasGroup = await this.stream.hasGroup(this.groupName);
 
       if (!hasGroup) {
@@ -66,28 +60,26 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       }
     });
 
+    if (!acquired) {
+      throw new Error('could not acquire lock')
+    }
+
     this.distributedRetryLoop.run((_controller) => this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);
     this.consumerDeleteLoop.run((_controller) => this.deleteInactiveConsumers(), 3000, 1500);
-
-    this.initialized.resolve();
   }
 
   async dispose(): Promise<void> {
     await this.disposer.dispose();
   }
 
-  private async getConsumerStream(): Promise<RedisStream<StreamEntryType>> {
-    const consumerRedis = await this.redisProvider.get('CONSUMER');
-    const consumerStream = new RedisStream<StreamEntryType>(consumerRedis, this.streamName, true);
-
-    this.disposer.addSubDisposables(consumerStream);
+  private getConsumerStream(): RedisStream<StreamEntryType> {
+    const consumerRedis = this.redisProvider.get('CONSUMER');
+    const consumerStream = new RedisStream<StreamEntryType>(consumerRedis, this.streamName);
 
     return consumerStream;
   }
 
   async enqueue(data: DataType): Promise<RedisJob<DataType>> {
-    await this.initialized;
-
     const serializedData = Serializer.serialize(data);
     const entry: SourceEntry<StreamEntryType> = { data: { retries: '0', enqueueTimestamp: currentTimestamp().toString(), data: serializedData } };
 
@@ -121,12 +113,10 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   }
 
   async *getBatchConsumer(batchSize: number): AsyncIterableIterator<Job<DataType>[]> {
-    const disposeDeferrer = this.disposer.getDisposeDeferrer();
+    const disposeDeferrer = this.disposer.getDeferrer();
 
     try {
-      await this.initialized;
-
-      const consumerStream = await this.getConsumerStream();
+      const consumerStream = this.getConsumerStream();
       const consumer = this.getConsumerName();
       const lock = this.lockProvider.get(consumer);
 
@@ -137,7 +127,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       }
 
       try {
-        while (!this.disposer.disposed) {
+        while (!this.disposer.disposing) {
           const entries = await consumerStream.readGroup({ id: '>', group: this.groupName, consumer, block: BLOCK_DURATION, count: batchSize });
           const jobs: Job<DataType>[] = entries
             .map(({ id, data: { data: serializedData } }) => ({ id, serializedData }))
@@ -167,7 +157,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   }
 
   private async deleteInactiveConsumers(): Promise<void> {
-    this.disposer.deferDispose(async () => {
+    this.disposer.defer(async () => {
       const consumers = await this.stream.getConsumers(this.groupName);
 
       const consumersToDelete = consumers
@@ -186,7 +176,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   }
 
   private async retryPendingEntries(): Promise<void> {
-    this.disposer.deferDispose(async () => {
+    this.disposer.defer(async () => {
       const pendingEntries = await this.stream.getPendingEntries({ group: this.groupName, start: '-', end: '+', count: 50 });
       const ids = pendingEntries
         .filter((entry) => entry.elapsed > this.retryAfter)

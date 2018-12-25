@@ -52,10 +52,15 @@ export class PeriodicReporter {
       }
     }
 
+    this.running = false;
     this.stopped.resolve();
   }
 
   async stop(): Promise<void> {
+    if (!this.running) {
+      return;
+    }
+
     this.stopRequested = true;
     this.stopPromise.resolve();
     await this.stopped;

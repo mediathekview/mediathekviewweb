@@ -1,8 +1,8 @@
 import * as Elasticsearch from 'elasticsearch';
+import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/search-engine';
 import { SearchQuery } from '../../common/search-engine/query';
-import { timeout } from '../../common/utils';
 import { Converter } from './converter';
 
 type ElasticsearchBulkResponse = { took: number, errors: boolean, items: StringMap<ElasticsearchBulkResponseItem>[] };
@@ -13,31 +13,50 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly converter: Converter;
   private readonly indexName: string;
   private readonly typeName: string;
+  private readonly lockProvider: LockProvider;
   private readonly logger: Logger;
   private readonly indexSettings: object | undefined;
   private readonly indexMapping: object | undefined;
 
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger, indexSettings: object);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger, indexSettings: object, indexMapping: object);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, logger: Logger, indexSettings?: object, indexMapping?: object) {
+  private disposed: boolean;
+
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger, indexSettings: object);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger, indexSettings: object, indexMapping: object);
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger, indexSettings?: object, indexMapping?: object) {
     this.client = client;
     this.converter = converter;
     this.indexName = indexName;
     this.typeName = typeName;
+    this.lockProvider = lockProvider;
     this.logger = logger;
     this.indexSettings = indexSettings;
     this.indexMapping = indexMapping;
+
+    this.disposed = false;
   }
 
-  async initialize() {
-    const created = await this.ensureIndex();
+  async initialize(): Promise<void> {
+    const lock = this.lockProvider.get('ElasticsearchSearchEngine:initialize');
 
-    if (created) {
-      await this.putIndexOptions();
+    let success = false;
+
+    while (!success && !this.disposed) {
+      await lock.acquire(1000, async () => {
+        const created = await this.ensureIndex();
+
+        if (created) {
+          await this.putIndexOptions();
+        }
+
+        success = true;
+        this.logger.info('initialized elasticsearch search-engine');
+      });
     }
+  }
 
-    this.logger.info('initialized elasticsearch search-engine');
+  async dispose(): Promise<void> {
+    this.disposed = true;
   }
 
   async index(items: SearchEngineItem<T>[]): Promise<void> {
@@ -83,11 +102,13 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
       if (this.indexSettings != undefined) {
         await this.client.indices.putSettings({ index: this.indexName, body: this.indexSettings });
+        this.logger.info(`applied elasticsearch index settings for ${this.indexName}`);
       }
 
       if (this.indexMapping != undefined) {
         const elasticsearchMappingObject = this.createElasticsearchMappingObject(this.indexMapping);
         await this.client.indices.putMapping({ index: this.indexName, type: this.typeName, body: elasticsearchMappingObject });
+        this.logger.info(`applied elasticsearch index mapping for ${this.indexName}`);
       }
 
       await this.client.indices.open({ index: this.indexName });
@@ -110,6 +131,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
     if (!indexExists) {
       await this.client.indices.create({ index: this.indexName });
+      this.logger.info(`created elasticsearch index ${this.indexName}`);
       created = true;
     }
 

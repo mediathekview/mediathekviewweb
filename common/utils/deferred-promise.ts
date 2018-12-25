@@ -3,16 +3,25 @@ export class DeferredPromise<T = void> implements Promise<T> {
   private resolvePromise: (value?: T | PromiseLike<T>) => void;
   private rejectPromise: (reason?: any) => void;
 
-  private _settled: boolean;
+  private _resolved: boolean;
+  private _rejected: boolean;
 
   readonly [Symbol.toStringTag] = 'Promise';
 
-  get settled(): boolean {
-    return this._settled;
+  get resolved(): boolean {
+    return this._resolved;
+  }
+
+  get rejected(): boolean {
+    return this._rejected;
   }
 
   get pending(): boolean {
-    return !this._settled;
+    return !this._resolved && !this._rejected;
+  }
+
+  get settled(): boolean {
+    return this._resolved || this._rejected;
   }
 
   constructor() {
@@ -32,23 +41,19 @@ export class DeferredPromise<T = void> implements Promise<T> {
   }
 
   resolve(value?: T | PromiseLike<T>): this {
-    if (this._settled) {
-      throw new Error('already resolved or rejected');
-    }
+    this.ensurePendingState();
 
     this.resolvePromise(value);
-    this._settled = true;
+    this._resolved = true;
 
     return this;
   }
 
   reject(reason?: any): this {
-    if (this._settled) {
-      throw new Error('already resolved or rejected');
-    }
+    this.ensurePendingState();
 
     this.rejectPromise(reason);
-    this._settled = true;
+    this._rejected = true;
 
     return this;
   }
@@ -57,9 +62,21 @@ export class DeferredPromise<T = void> implements Promise<T> {
     this.backingPromise = new Promise<T>((resolve, reject) => {
       this.resolvePromise = resolve;
       this.rejectPromise = reject;
-      this._settled = false;
     });
 
+    this._resolved = false;
+    this._rejected = false;
+
     return this;
+  }
+
+  private ensurePendingState() {
+    if (this.resolved) {
+      throw new Error('promise already resolved');
+    }
+
+    if (this.resolved) {
+      throw new Error('promise already rejected');
+    }
   }
 }

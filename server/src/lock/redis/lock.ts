@@ -2,7 +2,7 @@ import * as Redis from 'ioredis';
 import { Observable, Subject } from 'rxjs';
 import { Lock, LockedFunction } from '../../common/lock';
 import { Logger } from '../../common/logger';
-import { immediate, timeout, Timer } from '../../common/utils';
+import { DeferredPromise, immediate, timeout, Timer } from '../../common/utils';
 import { AcquireResult } from './acquire-result';
 
 const LOCK_DURATION = 10000;
@@ -16,7 +16,7 @@ export class RedisLock implements Lock {
   private readonly lockLostSubject: Subject<void>;
 
   private expireTimestamp: number = 0;
-  private stopLockLoop: Function = () => { };
+  private stopLockLoop: () => Promise<void> = () => Promise.resolve();
 
   private get millisecondsLeft(): number {
     return this.expireTimestamp - Date.now();
@@ -87,7 +87,7 @@ export class RedisLock implements Lock {
   async release(): Promise<boolean>;
   async release(force: boolean): Promise<boolean>;
   async release(force: boolean = false): Promise<boolean> {
-    this.stopLockLoop();
+    await this.stopLockLoop();
 
     const result = await (this.redis as any)['lock:release'](this.key, this.id, force ? 1 : 0);
     const success = (result == 1);
@@ -108,14 +108,21 @@ export class RedisLock implements Lock {
     this.expireTimestamp = await (this.redis as any)['lock:owned'](this.key, this.id) as number;
   }
 
-  private refreshLoop(): () => void {
+  private refreshLoop(): () => Promise<void> {
+    const stopped = new DeferredPromise();
+
     let run = true;
     let error: Error | null = null;
 
     (async () => {
-      do {
+      while (run && this.owned) {
         try {
-          await this.tryRefresh();
+          const success = await this.tryRefresh();
+
+          if (!success) {
+            await this.forceUpdateOwned();
+          }
+
           error = null;
         }
         catch (refreshError) {
@@ -124,10 +131,7 @@ export class RedisLock implements Lock {
 
         const delay = Math.max(this.millisecondsLeft * 0.25, RETRY_DELAY);
         await timeout(delay);
-
-        await this.forceUpdateOwned();
       }
-      while (run && this.owned);
 
       if (error != null) {
         this.logger.error(error);
@@ -136,9 +140,16 @@ export class RedisLock implements Lock {
       if (run) {
         this.lockLostSubject.next();
       }
+
+      stopped.resolve();
     })();
 
-    return () => run = false;
+    const stopFunction = () => {
+      run = false;
+      return stopped;
+    };
+
+    return stopFunction;
   }
 
   private async tryAcquire(): Promise<AcquireResult> {

@@ -3,8 +3,8 @@ import { InstanceProvider } from './instance-provider';
 import { AsyncEnumerable } from './common/enumerable';
 
 (async () => {
-  const queueProvider = await InstanceProvider.queueProvider();
-  const lockProvider = await InstanceProvider.lockProvider();
+  const queueProvider = InstanceProvider.queueProvider();
+  const lockProvider = InstanceProvider.lockProvider();
 
   const queue = queueProvider.get<number>('test', 5000, 3);
 
@@ -19,8 +19,8 @@ import { AsyncEnumerable } from './common/enumerable';
 
 (async () => {
   await timeout(1000);
-  const queueProvider = await InstanceProvider.queueProvider();
-  const lockProvider = await InstanceProvider.lockProvider();
+  const queueProvider = InstanceProvider.queueProvider();
+  const lockProvider = InstanceProvider.lockProvider();
 
   const queue = queueProvider.get<number>('test', 5000, 3);
 

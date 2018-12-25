@@ -20,6 +20,10 @@ export class FilmlistEntrySource implements EntrySource {
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
   }
 
+  async initialize(): Promise<void> {
+    await this.importQueue.initialize();
+  }
+
   async dispose(): Promise<void> {
     this.disposed = true;
     await this.importQueue.dispose();

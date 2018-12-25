@@ -6,10 +6,7 @@ export class LoggerFactoryProvider {
 
   static get factory(): LoggerFactory {
     if (this.loggerFactory == null) {
-      const paddedPid = process.pid.toString().padStart(5, '0');
-      const globalPrefix = `[${paddedPid}]`;
-      
-      this.loggerFactory = new ConsoleLoggerFactory(LogLevel.Trace, globalPrefix);
+      this.loggerFactory = new ConsoleLoggerFactory(LogLevel.Trace);
     }
 
     return this.loggerFactory;

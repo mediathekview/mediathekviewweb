@@ -1,11 +1,38 @@
 import { AnyIterable } from './any-iterable';
 import { AwaitableList } from './collections/awaitable';
+import { DeferredPromise } from './deferred-promise';
+import { CustomError } from './custom-error';
+
+export class BufferedAsyncIterableError<T> extends CustomError {
+  readonly unyieldedItems: T[];
+  readonly innerError: Error;
+
+  get name(): string {
+    return this.innerError.name;
+  }
+
+  get stack(): string | undefined {
+    return this.innerError.stack;
+  }
+
+  constructor(unyieldedItems: T[], innerError: Error) {
+    super(`iterator error: ${innerError.message}`);
+
+    this.unyieldedItems = unyieldedItems;
+    this.innerError = innerError;
+  }
+}
 
 export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
-  private source: AnyIterable<T>;
-  private size: number;
-  private buffer: AwaitableList<T>;
+  private readonly source: AnyIterable<T>;
+  private readonly size: number;
+  private readonly buffer: AwaitableList<T>;
+  private readonly stopPromise: DeferredPromise;
+
   private end: boolean = false;
+  private stop: boolean = false;
+  private hasError: boolean = false;
+  private error: any;
 
   constructor(source: AnyIterable<T>, size: number) {
     if (size <= 0) {
@@ -16,6 +43,7 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
     this.size = size;
 
     this.buffer = new AwaitableList();
+    this.stopPromise = new DeferredPromise();
   }
 
   get fillRatio(): number {
@@ -25,15 +53,25 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
   async *[Symbol.asyncIterator](): AsyncIterableIterator<T> {
     this.read();
 
-    while (!this.end || this.buffer.size > 0) {
-      const waitForSource = !this.end && this.buffer.size == 0;
+    try {
+      while (!this.end || this.buffer.size > 0) {
+        const waitForSource = !this.end && this.buffer.size == 0;
 
-      if (waitForSource) {
-        await this.buffer.added;
+        if (waitForSource) {
+          await this.buffer.added;
+        }
+
+        const element = this.buffer.shift() as T;
+        yield element;
       }
-
-      const element = this.buffer.shift() as T;
-      yield element;
+    }
+    catch (error) {
+      this.hasError = true;
+      this.error = new BufferedAsyncIterableError([...this.buffer], error);
+    }
+    finally {
+      this.stop = true;
+      this.stopPromise.resolve();
     }
   }
 
@@ -42,7 +80,15 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
       this.buffer.append(element);
 
       if (this.buffer.size >= this.size) {
-        await this.buffer.removed;
+        await Promise.race([this.buffer.removed, this.stopPromise]);
+      }
+
+      if (this.hasError) {
+        throw this.error;
+      }
+
+      if (this.stop) {
+        return;
       }
     }
 

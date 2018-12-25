@@ -4,6 +4,8 @@ export type Job<DataType> = { id: string, data: DataType; };
 export type ProcessFunction<DataType> = (job: Job<DataType>) => Promise<void>;
 
 export interface Queue<DataType> extends AsyncDisposable {
+  initialize(): Promise<void>;
+
   enqueue(data: DataType): Promise<Job<DataType>>;
   enqueueMany(data: DataType[]): Promise<Job<DataType>[]>;
 

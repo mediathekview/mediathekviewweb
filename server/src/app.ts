@@ -1,66 +1,98 @@
-import * as Cluster from 'cluster';
 import * as Http from 'http';
-import { Subject } from 'rxjs';
+import { MediathekViewWebRestApi } from './api/rest-api';
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
 import { Serializer } from './common/serializer';
-import { AggregationMode, formatDuration, formatError, PeriodicSampler, Timer } from './common/utils';
+import { AggregationMode, formatDuration, PeriodicSampler, timeout, Timer } from './common/utils';
 import { config } from './config';
 import { Filmlist } from './entry-source/filmlist/filmlist';
 import { InstanceProvider } from './instance-provider';
-import { FilmlistManagerService } from './service/filmlist-manager';
-import { ImporterService } from './service/importer';
-import { MediathekViewWebIndexer } from './service/indexer';
-import { SaverService } from './service/saver';
+import { FilmlistManagerService, ImporterService, IndexerService, SaverService } from './micro-service';
+import { initializeSignals, requestShutdown, shutdown, shutdownPromise } from './process-shutdown';
+import { Service } from './service';
 
-type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
-const QUIT_SIGNALS: Signal[] = ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGBREAK'];
+const logger = InstanceProvider.coreLogger();
 
-const quitSubject = new Subject<void>();
-
+let shutdownStarted = false;
+shutdownPromise.then(() => shutdownStarted = true);
+initializeSignals();
 Serializer.registerPrototype(Filmlist);
 
 (async () => {
-  const logger = await InstanceProvider.coreLogger();
-
-  handleUncaughtExceptions(logger);
-
   try {
-    if (Cluster.isMaster) {
-      for (let i = 0; i < 1; i++) {
-        const worker = Cluster.fork();
-        logger.info(`worker ${worker.id} forked`);
-      }
-    }
-    else {
-      logger.info(`worker started`);
-
-      initEventLoopWatcher(logger);
-      await init();
-
-      logger.info(`worker initialized`);
-    }
+    await init();
+    logger.info(`worker initialized`);
   }
   catch (error) {
     logger.error(error);
   }
 })();
 
-function handleUncaughtExceptions(logger: Logger) {
-  process.on('uncaughtException', (error) => {
-    const message = formatError(error, true);
-    logger.error(`uncaught: ${message}`);
-  });
+async function runServices(...services: Service[]) {
+  logger.info('starting services');
+
+  const runPromises = services.map((service) => service.start());
+  await Promise.race(runPromises);
+}
+
+function handleApiInitializationError(error: any) {
+  logger.error(error);
+  requestShutdown();
+}
+
+async function connect(name: string, connectFunction: (() => Promise<any>)) {
+  let success = false;
+  while (!success && !shutdownStarted) {
+    try {
+      logger.info(`connecting to ${name}...`);
+      await connectFunction();
+      success = true;
+      logger.info(`connected to ${name}`);
+    }
+    catch (error) {
+      logger.warn(`error connecting to ${name}, trying again...`);
+      await timeout(1000);
+    }
+  }
+}
+
+async function connectToDatabases() {
+  const redis = InstanceProvider.redis();
+  const mongo = InstanceProvider.mongo();
+  const elasticsearch = InstanceProvider.elasticsearch();
+
+  await connect('redis', async () => await redis.connect());
+  await connect('mongo', async () => await mongo.connect());
+  await connect('elasticsearch', async () => await await elasticsearch.ping({ requestTimeout: 250 }));
 }
 
 async function init() {
+  initEventLoopWatcher(logger);
+
+  await connectToDatabases();
+
+  if (shutdownStarted) {
+    await InstanceProvider.disposeInstances();
+    return;
+  }
+
   const server = new Http.Server();
   const filmlistManagerService = new FilmlistManagerService();
   const importerService = new ImporterService();
   const saverService = new SaverService();
-  const indexerService = new MediathekViewWebIndexer();
+  const indexerService = new IndexerService();
 
-  const restApi = await InstanceProvider.mediathekViewWebRestApi();
+  await Promise.all([
+    filmlistManagerService.initialize()
+  ]);
+
+  await InstanceProvider.disposeInstances();
+  return requestShutdown();
+
+  const api = InstanceProvider.mediathekViewWebApi();
+  api.initialize().catch((error) => handleApiInitializationError(error));
+
+  const restApi = new MediathekViewWebRestApi(api);
 
   server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
     restApi.handleRequest(request, response);
@@ -68,46 +100,38 @@ async function init() {
 
   server.listen(config.api.port);
 
-  const lockProvider = await InstanceProvider.lockProvider();
+  for (const service of [filmlistManagerService, importerService, saverService, indexerService]) {
+    service.initialize();
+  }
 
-  const lock = lockProvider.get('init');
+  const skipRun = shutdownStarted;
 
-  await lock.acquire(Number.POSITIVE_INFINITY, async () => {
-    await Promise.all([
-      filmlistManagerService.initialize(),
-      importerService.initialize(),
-      saverService.initialize(),
-      indexerService.initialize()
-    ]);
-  });
+  const runPromise = skipRun ? Promise.resolve() : Promise.race([
+    filmlistManagerService.start(),
+    importerService.start(),
+    saverService.start(),
+    indexerService.start()
+  ]);
 
-  (async () => {
-    const runPromise = Promise.all([
-      filmlistManagerService.run(),
-      importerService.run(),
-      saverService.run(),
-      indexerService.run()
-    ]);
+  await Promise.race([runPromise, shutdownPromise]);
 
-    const quitPromise = quitSubject.toPromise();
+  console.log('shutdown started');
 
-    await Promise.race([runPromise, quitPromise]);
+  server.close();
 
-    console.log('shutdown');
-
-    server.close();
-
+  if (!skipRun) {
     await Promise.all([
       filmlistManagerService.stop(),
       importerService.stop(),
       saverService.stop(),
       indexerService.stop()
     ]);
+  }
 
-    await InstanceProvider.disposeInstances();
+  console.log('dispose');
+  await InstanceProvider.disposeInstances();
 
-    console.log('bye');
-  })();
+  console.log('bye');
 }
 
 async function measureEventLoopDelay(): Promise<number> {
@@ -131,43 +155,6 @@ async function initEventLoopWatcher(logger: Logger) {
 
   sampler.start();
 
-  quitSubject.subscribe(() => sampler.stop());
+  shutdown.subscribe(() => sampler.stop());
 }
 
-function quit() {
-  quitSubject.next();
-  quitSubject.complete();
-
-  const timeout = setTimeout(() => {
-    console.error('forcefully quitting after 10 seconds...');
-    process.exit(1);
-  }, 10000);
-
-  timeout.unref();
-}
-
-process.on('uncaughtException', (error: Error) => {
-  console.error('uncaughtException', error);
-  quit();
-});
-
-process.on('multipleResolves', (type, promise, reason) => {
-  console.error('multipleResolves', type, promise, reason);
-  quit();
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('unhandledRejection', promise, reason);
-  quit();
-});
-
-process.on('rejectionHandled', (promise) => {
-  console.error('rejectionHandled', promise);
-});
-
-for (const signal of QUIT_SIGNALS) {
-  process.on(signal as Signal, (signal) => {
-    console.info(`${signal} received, quitting.`);
-    quit();
-  });
-}

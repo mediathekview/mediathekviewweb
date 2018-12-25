@@ -1,5 +1,4 @@
 import { Redis } from 'ioredis';
-import { AsyncDisposable } from '../../common/disposable';
 import { SyncEnumerable } from '../../common/enumerable';
 import { Nullable } from '../../common/utils';
 import { Consumer } from './consumer';
@@ -55,21 +54,13 @@ type PendingReturnValue = [0, null, null, null] | [number, string, string, Pendi
 
 type InfoReturnValue = (string | number | EntryReturnValue)[];
 
-export class RedisStream<T extends StringMap<string>> implements AsyncDisposable {
+export class RedisStream<T extends StringMap<string>> {
   private readonly redis: Redis;
   private readonly stream: string;
-  private readonly quitRedisOnDispose: boolean;
 
-  constructor(redis: Redis, stream: string, quitRedisOnDispose: boolean) {
+  constructor(redis: Redis, stream: string) {
     this.redis = redis;
     this.stream = stream;
-    this.quitRedisOnDispose = quitRedisOnDispose;
-  }
-
-  async dispose(): Promise<void> {
-    if (this.quitRedisOnDispose) {
-      await this.redis.quit();
-    }
   }
 
   async add(entry: SourceEntry<T>): Promise<string> {
