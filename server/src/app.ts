@@ -3,7 +3,7 @@ import { MediathekViewWebRestApi } from './api/rest-api';
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
 import { Serializer } from './common/serializer';
-import { AggregationMode, formatDuration, PeriodicSampler, timeout, Timer } from './common/utils';
+import { AggregationMode, formatDuration, PeriodicSampler, timeout, Timer, cancelableTimeout } from './common/utils';
 import { config } from './config';
 import { Filmlist } from './entry-source/filmlist/filmlist';
 import { InstanceProvider } from './instance-provider';
@@ -21,7 +21,6 @@ Serializer.registerPrototype(Filmlist);
 (async () => {
   try {
     await init();
-    logger.info(`worker initialized`);
   }
   catch (error) {
     logger.error(error);
@@ -69,7 +68,10 @@ async function connectToDatabases() {
 async function init() {
   initEventLoopWatcher(logger);
 
-  await connectToDatabases();
+  await Promise.race([
+    connectToDatabases(),
+    shutdownPromise
+  ]);
 
   if (shutdownStarted) {
     await InstanceProvider.disposeInstances();

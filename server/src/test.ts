@@ -7,6 +7,7 @@ import { AsyncEnumerable } from './common/enumerable';
   const lockProvider = InstanceProvider.lockProvider();
 
   const queue = queueProvider.get<number>('test', 5000, 3);
+  await queue.initialize();
 
   const consumer = queue.getConsumer(false);
 
@@ -23,6 +24,7 @@ import { AsyncEnumerable } from './common/enumerable';
   const lockProvider = InstanceProvider.lockProvider();
 
   const queue = queueProvider.get<number>('test', 5000, 3);
+  await queue.initialize();
 
   AsyncEnumerable.fromRange(0, 5)
     .batch(50)

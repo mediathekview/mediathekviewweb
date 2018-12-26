@@ -130,9 +130,9 @@ export class InstanceProvider {
     });
 
     redis
-      .on('connect', () => logger.info('connected'))
+      .on('connect', () => logger.info('connecting'))
       .on('ready', () => logger.info('ready'))
-      .on('close', () => logger.warn('connection closed'))
+      .on('close', () => logger.warn('connection closing'))
       .on('reconnecting', (milliseconds) => logger.info(`reconnecting in ${milliseconds} ms`))
       .on('end', () => logger.warn(`connection end`))
       .on('error', (error: Error) => logger.error(error, false));
