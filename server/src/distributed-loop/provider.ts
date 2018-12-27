@@ -11,7 +11,7 @@ export class DistributedLoopProvider {
     this.logger = logger;
   }
 
-  get(key: string, throwError: boolean = true): DistributedLoop {
-    return new DistributedLoop(key, this.lockProvider, this.logger, throwError);
+  get(key: string, stopOnError: boolean = true): DistributedLoop {
+    return new DistributedLoop(key, this.lockProvider, this.logger, stopOnError);
   }
 }

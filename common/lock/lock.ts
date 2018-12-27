@@ -1,20 +1,15 @@
-import { Observable } from 'rxjs';
+export type LockedFunction = (controller: LockController) => any | Promise<any>;
 
-export type LockedFunction = () => any | Promise<any>;
+export interface LockController {
+  readonly lost: boolean;
+  release(): Promise<void>;
+}
 
 export interface Lock {
-  readonly owned: boolean;
-  readonly lockLost: Observable<void>;
-
-  acquire(): Promise<boolean>;
-  acquire(timeout: number): Promise<boolean>;
-  acquire(func: LockedFunction): Promise<boolean>;
-  acquire(timeout: number, func: LockedFunction): Promise<boolean>;
-
-  release(): Promise<boolean>;
-  release(force: boolean): Promise<boolean>;
+  acquire(): Promise<LockController | false>;
+  acquire(timeout: number): Promise<LockController | false>;
+  acquire(func: LockedFunction): Promise<LockController | false>;
+  acquire(timeout: number, func: LockedFunction): Promise<LockController | false>;
 
   exists(): Promise<boolean>;
-
-  forceUpdateOwned(): Promise<void>;
 }

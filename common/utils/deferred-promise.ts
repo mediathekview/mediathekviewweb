@@ -75,7 +75,7 @@ export class DeferredPromise<T = void> implements Promise<T> {
       throw new Error('promise already resolved');
     }
 
-    if (this.resolved) {
+    if (this.rejected) {
       throw new Error('promise already rejected');
     }
   }

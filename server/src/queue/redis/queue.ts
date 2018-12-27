@@ -28,7 +28,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   private readonly retryAfter: number;
   private readonly maxRetries: number;
   private readonly logger: Logger;
-  private readonly distributedRetryLoop: DistributedLoop;
+  private readonly retryLoop: DistributedLoop;
   private readonly consumerDeleteLoop: DistributedLoop;
 
   constructor(redis: Redis.Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, key: string, retryAfter: number, maxRetries: number, logger: Logger) {
@@ -44,14 +44,14 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
     this.disposer = new AsyncDisposer();
     this.stream = new RedisStream(redis, this.streamName);
-    this.distributedRetryLoop = distributedLoopProvider.get(`queue:${key}:retry`);
+    this.retryLoop = distributedLoopProvider.get(`queue:${key}:retry`);
     this.consumerDeleteLoop = distributedLoopProvider.get(`queue:${key}:consumer-delete`);
   }
 
   async initialize(): Promise<void> {
     const lock = this.lockProvider.get(`queue:${this.key}:initialize`);
 
-    const acquired = await lock.acquire(2500, async () => {
+    const lockController = await lock.acquire(2500, async () => {
       const hasGroup = await this.stream.hasGroup(this.groupName);
 
       if (!hasGroup) {
@@ -60,12 +60,15 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       }
     });
 
-    if (!acquired) {
-      throw new Error('could not acquire lock')
+    if (!lockController) {
+      throw new Error('could not acquire lock for initialization')
     }
 
-    this.distributedRetryLoop.run((_controller) => this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);
-    this.consumerDeleteLoop.run((_controller) => this.deleteInactiveConsumers(), 3000, 1500);
+    const retryLoopController = this.retryLoop.run((_controller) => this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);
+    const consumerDeleteLoopController = this.consumerDeleteLoop.run((_controller) => this.deleteInactiveConsumers(), 3000, 1500);
+
+    this.disposer.addDisposeTasks(async () => await retryLoopController.stop());
+    this.disposer.addDisposeTasks(async () => await consumerDeleteLoopController.stop());
   }
 
   async dispose(): Promise<void> {
@@ -120,9 +123,9 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       const consumer = this.getConsumerName();
       const lock = this.lockProvider.get(consumer);
 
-      const success = await lock.acquire();
+      const lockController = await lock.acquire();
 
-      if (!success) {
+      if (!lockController) {
         throw new Error('failed acquiring lock');
       }
 
@@ -140,7 +143,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       }
       finally {
         try {
-          await lock.release();
+          await lockController.release();
         }
         catch (error) {
           this.logger.error(error);

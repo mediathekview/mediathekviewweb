@@ -11,12 +11,14 @@ import { Service } from '../../service';
 import { ServiceBase } from '../../service-base';
 import { Filmlist } from './filmlist';
 import { FilmlistRepository } from './repository';
+import { AsyncDisposer } from '../../common/disposable';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
 
 export class FilmlistManager extends ServiceBase implements Service {
+  private readonly disposer: AsyncDisposer;
   private readonly filmlistRepository: FilmlistRepository;
   private readonly enqueuedFilmlistDates: Set<Date>;
   private readonly importedFilmlistDates: Set<Date>;
@@ -34,16 +36,19 @@ export class FilmlistManager extends ServiceBase implements Service {
     this.filmlistRepository = filmlistRepository;
     this.logger = logger;
 
+    this.disposer = new AsyncDisposer();
     this.lastLatestCheck = datastoreFactory.key(Keys.LastLatestCheck, DataType.Date);
     this.lastArchiveCheck = datastoreFactory.key(Keys.LastArchiveCheck, DataType.Date);
     this.enqueuedFilmlistDates = datastoreFactory.set(Keys.EnqueuedFilmlistDates, DataType.Date);
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
     this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
     this.distributedLoop = distributedLoopProvider.get(Keys.FilmlistManagerLoop, true);
+
+    this.disposer.addDisposeTasks(async () => await this.importQueue.dispose());
   }
 
   protected async _dispose(): Promise<void> {
-    await this.importQueue.dispose();
+    await this.disposer.dispose();
   }
 
   protected async _initialize(): Promise<void> {
@@ -52,6 +57,8 @@ export class FilmlistManager extends ServiceBase implements Service {
 
   protected async _start(): Promise<void> {
     this.loopController = this.distributedLoop.run(() => this.loop(), 60000, 10000);
+    this.disposer.addDisposeTasks(async () => await this.loopController.stop());
+
     await this.loopController.stopped;
   }
 

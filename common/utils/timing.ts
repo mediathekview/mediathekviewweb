@@ -23,7 +23,7 @@ export function cancelableTimeout(cancelPromise: Promise<void>): Promise<boolean
 export function cancelableTimeout(cancelPromise: Promise<void>, resolveOnCancel: boolean): Promise<boolean>;
 export function cancelableTimeout(cancelPromise: Promise<void>, milliseconds: number): Promise<boolean>;
 export function cancelableTimeout(cancelPromise: Promise<void>, milliseconds: number, resolveOnCancel: boolean): Promise<boolean>;
-export function cancelableTimeout(cancelPromise: Promise<void>, millisecondsOrResolveOnCancel: number | boolean = 0, resolveOnCancel: boolean = false): Promise<boolean> {
+export function cancelableTimeout(cancelPromise: Promise<void>, millisecondsOrResolveOnCancel: number | boolean = 0, resolveOnCancel: boolean = true): Promise<boolean> {
   const milliseconds = (typeof millisecondsOrResolveOnCancel == 'number') ? millisecondsOrResolveOnCancel : 0;
 
   if (typeof millisecondsOrResolveOnCancel == 'boolean') {
@@ -35,21 +35,20 @@ export function cancelableTimeout(cancelPromise: Promise<void>, millisecondsOrRe
 
     const timer = setTimeout(() => {
       if (!resolved) {
-        resolve(false);
         resolved = true;
+        resolve(false);
       }
     }, milliseconds);
 
     await cancelPromise;
 
     if (!resolved) {
+      resolved = true;
       clearTimeout(timer);
 
       if (resolveOnCancel) {
         resolve(true);
       }
-
-      resolved = true;
     }
   });
 }

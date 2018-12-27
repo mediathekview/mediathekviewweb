@@ -13,6 +13,7 @@ export class ImporterService extends MicroServiceBase implements MicroService {
 
     this.disposer = new AsyncDisposer();
     this.importer = InstanceProvider.entriesImporter();
+
     this.disposer.addSubDisposables(this.importer);
   }
 

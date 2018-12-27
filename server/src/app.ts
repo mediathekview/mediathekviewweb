@@ -84,11 +84,19 @@ async function init() {
   const saverService = new SaverService();
   const indexerService = new IndexerService();
 
+  console.log('init')
   await Promise.all([
-    filmlistManagerService.initialize()
+    filmlistManagerService.initialize(),
+    importerService.initialize()
   ]);
 
+  console.log('dispose filmlistManagerService')
+  await filmlistManagerService.dispose();
+  console.log('dispose importerService')
+  await importerService.dispose();
+  console.log('disposeInstances')
   await InstanceProvider.disposeInstances();
+  console.log('requestShutdown')
   return requestShutdown();
 
   const api = InstanceProvider.mediathekViewWebApi();

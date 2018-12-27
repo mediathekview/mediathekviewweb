@@ -1,8 +1,8 @@
 import * as Redis from 'ioredis';
-import { Observable, Subject } from 'rxjs';
-import { Lock, LockedFunction } from '../../common/lock';
+import { Lock, LockController, LockedFunction } from '../../common/lock';
 import { Logger } from '../../common/logger';
-import { DeferredPromise, immediate, timeout, Timer } from '../../common/utils';
+import { cancelableTimeout, currentTimestamp, DeferredPromise, immediate, timeout, Timer } from '../../common/utils';
+import { uniqueId } from '../../utils';
 import { AcquireResult } from './acquire-result';
 
 const LOCK_DURATION = 10000;
@@ -12,41 +12,20 @@ export class RedisLock implements Lock {
   private readonly redis: Redis.Redis;
   private readonly logger: Logger;
   private readonly key: string;
-  private readonly id: string;
-  private readonly lockLostSubject: Subject<void>;
 
-  private expireTimestamp: number = 0;
-  private stopLockLoop: () => Promise<void> = () => Promise.resolve();
-
-  private get millisecondsLeft(): number {
-    return this.expireTimestamp - Date.now();
-  }
-
-  get owned(): boolean {
-    return this.expireTimestamp > Date.now();
-  }
-
-  get lockLost(): Observable<void> {
-    return this.lockLostSubject.asObservable();
-  }
-
-  constructor(redis: Redis.Redis, key: string, id: string, logger: Logger) {
+  constructor(redis: Redis.Redis, key: string, logger: Logger) {
     this.redis = redis;
     this.logger = logger;
     this.key = key;
-    this.id = id;
-
-    this.lockLostSubject = new Subject();
   }
 
-  /**
-   * @param
-   */
-  async acquire(): Promise<boolean>;
-  async acquire(timeout: number): Promise<boolean>;
-  async acquire(func: LockedFunction): Promise<boolean>;
-  async acquire(timeout: number, func: LockedFunction): Promise<boolean>;
-  async acquire(funcOrTimeout?: number | LockedFunction, func?: LockedFunction): Promise<boolean> {
+  async acquire(): Promise<LockController | false>;
+  async acquire(timeout: number): Promise<LockController | false>;
+  async acquire(func: LockedFunction): Promise<LockController | false>;
+  async acquire(timeout: number, func: LockedFunction): Promise<LockController | false>;
+  async acquire(funcOrTimeout?: number | LockedFunction, func?: LockedFunction): Promise<LockController | false> {
+    const id = uniqueId();
+
     let acquireTimeout = 1000;
 
     if (typeof funcOrTimeout == 'number') {
@@ -55,46 +34,94 @@ export class RedisLock implements Lock {
       func = funcOrTimeout;
     }
 
-    const timer = new Timer(true);
-    let success = false;
+    const newExpireTimestamp = await this._acquire(id, acquireTimeout);
 
-    do {
-      const result = await this.tryAcquire();
-      success = ((result == AcquireResult.Acquired) || (result == AcquireResult.Owned));
+    if (newExpireTimestamp == -1) {
+      return false;
+    }
 
-      if (!success && (timer.milliseconds < acquireTimeout)) {
-        await timeout(RETRY_DELAY);
+    let stopRefresh = false;
+    let stopPromise = new DeferredPromise();
+    let stoppedPromise = new DeferredPromise();
+    let expireTimestamp = newExpireTimestamp;
+
+    const controller: LockController = {
+      get lost(): boolean {
+        return (expireTimestamp < currentTimestamp());
+      },
+      release: async () => {
+        if (stopRefresh) {
+          return await stoppedPromise;
+        }
+
+        stopRefresh = true;
+        stopPromise.resolve();
+        await stoppedPromise;
+        await this.release(id);
+        expireTimestamp = -1;
       }
-    } while (!success && (timer.milliseconds < acquireTimeout));
+    };
 
-    if (success) {
-      this.stopLockLoop = this.refreshLoop();
-
-      if (func != undefined) {
+    (async () => {
+      while (!stopRefresh && !controller.lost) {
         try {
-          await func();
-          await immediate();
+          const newExpireTimestamp = this.getNewExpireTimestamp();
+          const success = await this.refresh(id, newExpireTimestamp);
+
+          if (success) {
+            expireTimestamp = newExpireTimestamp;
+          }
         }
-        finally {
-          await this.release(false);
+        catch (error) {
+          this.logger.error(error);
         }
+
+        const millisecondsLeft = (expireTimestamp - currentTimestamp());
+        const delay = Math.max(millisecondsLeft * 0.5, RETRY_DELAY);
+        await cancelableTimeout(stopPromise, delay);
+      }
+
+      stoppedPromise.resolve();
+    })();
+
+    if (func != undefined) {
+      try {
+        await func(controller);
+        await immediate();
+      }
+      finally {
+        await this.release(id, false);
       }
     }
 
-    return success;
+    return controller;
   }
 
-  async release(): Promise<boolean>;
-  async release(force: boolean): Promise<boolean>;
-  async release(force: boolean = false): Promise<boolean> {
-    await this.stopLockLoop();
+  private async _acquire(id: string, acquireTimeout: number): Promise<number> {
+    const timer = new Timer(true);
+    let expireTimestamp = -1;
 
-    const result = await (this.redis as any)['lock:release'](this.key, this.id, force ? 1 : 0);
-    const success = (result == 1);
+    while ((expireTimestamp == -1) && (timer.milliseconds < acquireTimeout)) {
+      const newExpireTimestamp = this.getNewExpireTimestamp();
+      const result = await this.tryAcquire(id, newExpireTimestamp);
 
-    if (success) {
-      this.expireTimestamp = 0;
+      if ((result == AcquireResult.Acquired) || (result == AcquireResult.Owned)) {
+        expireTimestamp = newExpireTimestamp;
+      }
+
+      if ((expireTimestamp == -1) && (timer.milliseconds < acquireTimeout)) {
+        await timeout(RETRY_DELAY);
+      }
     }
+
+    return expireTimestamp;
+  }
+
+  private async release(id: string): Promise<boolean>;
+  private async release(id: string, force: boolean): Promise<boolean>;
+  private async release(id: string, force: boolean = false): Promise<boolean> {
+    const result = await (this.redis as any)['lock:release'](this.key, id, force ? 1 : 0);
+    const success = (result == 1);
 
     return success;
   }
@@ -104,75 +131,19 @@ export class RedisLock implements Lock {
     return result == 1;
   }
 
-  async forceUpdateOwned(): Promise<void> {
-    this.expireTimestamp = await (this.redis as any)['lock:owned'](this.key, this.id) as number;
+  async getExpireTimestamp(id: string): Promise<number> {
+    const expireTimestamp = await (this.redis as any)['lock:owned'](this.key, id) as number;
+    return expireTimestamp;
   }
 
-  private refreshLoop(): () => Promise<void> {
-    const stopped = new DeferredPromise();
-
-    let run = true;
-    let error: Error | null = null;
-
-    (async () => {
-      while (run && this.owned) {
-        try {
-          const success = await this.tryRefresh();
-
-          if (!success) {
-            await this.forceUpdateOwned();
-          }
-
-          error = null;
-        }
-        catch (refreshError) {
-          error = refreshError;
-        }
-
-        const delay = Math.max(this.millisecondsLeft * 0.25, RETRY_DELAY);
-        await timeout(delay);
-      }
-
-      if (error != null) {
-        this.logger.error(error);
-      }
-
-      if (run) {
-        this.lockLostSubject.next();
-      }
-
-      stopped.resolve();
-    })();
-
-    const stopFunction = () => {
-      run = false;
-      return stopped;
-    };
-
-    return stopFunction;
-  }
-
-  private async tryAcquire(): Promise<AcquireResult> {
-    const expireTimestamp = this.getNewExpireTimestamp();
-
-    const result = await (this.redis as any)['lock:acquire'](this.key, this.id, expireTimestamp) as AcquireResult;
-
-    if (result == AcquireResult.Acquired) {
-      this.expireTimestamp = expireTimestamp;
-    }
-
+  private async tryAcquire(id: string, expireTimestamp: number): Promise<AcquireResult> {
+    const result = await (this.redis as any)['lock:acquire'](this.key, id, expireTimestamp) as AcquireResult;
     return result;
   }
 
-  private async tryRefresh(): Promise<boolean> {
-    const expireTimestamp = this.getNewExpireTimestamp();
-
-    const result = await (this.redis as any)['lock:refresh'](this.key, this.id, expireTimestamp);
+  private async refresh(id: string, expireTimestamp: number): Promise<boolean> {
+    const result = await (this.redis as any)['lock:refresh'](this.key, id, expireTimestamp);
     const success = (result == 1);
-
-    if (success) {
-      this.expireTimestamp = expireTimestamp;
-    }
 
     return success;
   }

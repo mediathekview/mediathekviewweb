@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import { DeferredPromise } from './common/utils';
 
 type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
 type QuitEvent = 'uncaughtException' | 'multipleResolves' | 'unhandledRejection' | 'rejectionHandled';
@@ -9,7 +10,7 @@ const QUIT_EVENTS: QuitEvent[] = ['uncaughtException', 'multipleResolves', 'unha
 const shutdownSubject = new Subject<void>();
 
 export const shutdown = shutdownSubject.asObservable();
-export const shutdownPromise = shutdown.toPromise();
+export const shutdownPromise = new DeferredPromise();
 
 let requested = false;
 
@@ -21,6 +22,7 @@ export function requestShutdown() {
   requested = true;
   shutdownSubject.next();
   shutdownSubject.complete();
+  shutdownPromise.resolve();
 
   const timeout = setTimeout(() => {
     console.warn('forcefully quitting after 10 seconds...');

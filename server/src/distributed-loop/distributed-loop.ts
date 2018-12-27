@@ -1,4 +1,3 @@
-import { Subject } from 'rxjs';
 import { LockProvider } from '../common/lock';
 import { Logger } from '../common/logger';
 import { cancelableTimeout, DeferredPromise, Timer } from '../common/utils';
@@ -10,27 +9,38 @@ export class DistributedLoop {
   private readonly key: string;
   private readonly lockProvider: LockProvider;
   private readonly logger: Logger;
-  private readonly throwError: boolean;
+  private readonly stopOnError: boolean;
 
   constructor(key: string, lockProvider: LockProvider, logger: Logger)
-  constructor(key: string, lockProvider: LockProvider, logger: Logger, throwError: boolean)
-  constructor(key: string, lockProvider: LockProvider, logger: Logger, throwError: boolean = true) {
+  constructor(key: string, lockProvider: LockProvider, logger: Logger, stopOnError: boolean)
+  constructor(key: string, lockProvider: LockProvider, logger: Logger, stopOnError: boolean = true) {
     this.key = `loop:${key}`;
     this.lockProvider = lockProvider;
     this.logger = logger;
-    this.throwError = throwError;
+    this.stopOnError = stopOnError;
   }
 
   run(func: LoopFunction, interval: number, accuracy: number): LoopController {
     const stopped = new DeferredPromise();
     const stopPromise = new DeferredPromise();
-    const errorSubject = new Subject<void>();
+    let loopError: Error | null = null;
 
     let stop = false;
 
+    const stopFunction = () => {
+      console.log('stop', this.key);
+      if (!stop) {
+        stop = true;
+        stopPromise.resolve();
+      }
+
+      return stopped;
+    };
+
     const controller: LoopController = {
-      stop: async () => { stop = true; stopPromise.resolve(); await stopped; },
+      stop: stopFunction,
       stopped: stopped,
+      error: loopError,
       setTiming: (timing) => {
         if (timing.interval != undefined) {
           interval = timing.interval;
@@ -38,53 +48,43 @@ export class DistributedLoop {
         if (timing.accuracy != undefined) {
           accuracy = timing.accuracy;
         }
-      },
-      error: errorSubject.asObservable()
+      }
     };
 
     (async () => {
       const lock = this.lockProvider.get(this.key);
-      const timer = new Timer(true);
+      const timer = new Timer();
 
       try {
         while (!stop) {
-          timer.restart();
+          try {
+            timer.restart();
 
-          const acquired = await lock.acquire(0);
-          const acquireDuration = timer.milliseconds;
-
-          if (acquired) {
-            try {
+            console.log('acquire', this.key)
+            await lock.acquire(0, async () => {
               await func(controller);
-            }
-            catch (error) {
-              errorSubject.next(error);
 
-              if (this.throwError) {
-                throw error;
-              }
-            }
+              const timeLeft = interval - timer.milliseconds;
+              const timeoutDuration = timeLeft - (accuracy / 2);
+              await cancelableTimeout(stopPromise, timeoutDuration);
+            });
 
-            const timeLeft = interval - timer.milliseconds;
-            await cancelableTimeout(stopPromise, timeLeft);
-
-            try {
-              await lock.release();
-            }
-            catch (error) {
-              this.logger.error(error);
-            }
-
-            await cancelableTimeout(stopPromise, interval - acquireDuration);
+            await cancelableTimeout(stopPromise, accuracy);
           }
-          else {
-            await cancelableTimeout(stopPromise, accuracy - acquireDuration);
+          catch (error) {
+            if (this.stopOnError) {
+              loopError = error;
+              return;
+            }
+            else {
+              this.logger.error(error);
+              await cancelableTimeout(stopPromise, accuracy);
+            }
           }
         }
       }
       finally {
         stopped.resolve();
-        await lock.release();
       }
     })();
 

@@ -1,7 +1,6 @@
 import { Redis } from 'ioredis';
 import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
-import { uniqueId } from '../../utils/unique-id';
 import { RedisLock } from './lock';
 
 export class RedisLockProvider implements LockProvider {
@@ -17,9 +16,8 @@ export class RedisLockProvider implements LockProvider {
 
   get(key: string): RedisLock {
     key = `lock:${key}`;
-    const id = uniqueId();
 
-    const lock = new RedisLock(this.redis, key, id, this.logger);
+    const lock = new RedisLock(this.redis, key, this.logger);
     return lock;
   }
 

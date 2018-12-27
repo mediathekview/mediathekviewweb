@@ -5,19 +5,22 @@ import { Keys } from '../../keys';
 import { Queue, QueueProvider } from '../../queue';
 import { EntrySource } from '../entry-source';
 import { Filmlist } from './filmlist';
+import { AsyncDisposer } from '../../common/disposable';
 
 export class FilmlistEntrySource implements EntrySource {
+  private readonly disposer: AsyncDisposer;
   private readonly importQueue: Queue<Filmlist>;
   private readonly importedFilmlistDates: Set<Date>;
   private readonly logger: Logger;
 
-  private disposed: boolean;
-
   constructor(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider, logger: Logger) {
     this.logger = logger;
 
+    this.disposer = new AsyncDisposer();
     this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
+
+    this.disposer.addSubDisposables(this.importQueue);
   }
 
   async initialize(): Promise<void> {
@@ -25,16 +28,15 @@ export class FilmlistEntrySource implements EntrySource {
   }
 
   async dispose(): Promise<void> {
-    this.disposed = true;
-    await this.importQueue.dispose();
+    await this.disposer.dispose();
   }
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Entry[]> {
-    const consumer = this.importQueue.getConsumer(false);
-
-    if (this.disposed) {
-      return;
+    if (this.disposer.disposing) {
+      throw new Error('disposing');
     }
+
+    const consumer = this.importQueue.getConsumer(false);
 
     for await (const job of consumer) {
       const { data: filmlist } = job;
@@ -55,7 +57,7 @@ export class FilmlistEntrySource implements EntrySource {
         }
       }
 
-      if (this.disposed) {
+      if (this.disposer.disposing) {
         break;
       }
     }
