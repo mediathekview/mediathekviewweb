@@ -27,28 +27,19 @@ export class DistributedLoop {
 
     let stop = false;
 
-    const stopFunction = () => {
-      console.log('stop', this.key);
+    const stopFunction = async () => {
       if (!stop) {
         stop = true;
         stopPromise.resolve();
       }
 
-      return stopped;
+      await stopped;
     };
 
     const controller: LoopController = {
       stop: stopFunction,
       stopped: stopped,
-      error: loopError,
-      setTiming: (timing) => {
-        if (timing.interval != undefined) {
-          interval = timing.interval;
-        }
-        if (timing.accuracy != undefined) {
-          accuracy = timing.accuracy;
-        }
-      }
+      error: loopError
     };
 
     (async () => {
@@ -60,7 +51,6 @@ export class DistributedLoop {
           try {
             timer.restart();
 
-            console.log('acquire', this.key)
             await lock.acquire(0, async () => {
               await func(controller);
 

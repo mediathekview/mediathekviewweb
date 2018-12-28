@@ -90,7 +90,7 @@ export class RedisLock implements Lock {
         await immediate();
       }
       finally {
-        await this.release(id, false);
+        await controller.release();
       }
     }
 

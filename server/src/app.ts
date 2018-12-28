@@ -3,13 +3,14 @@ import { MediathekViewWebRestApi } from './api/rest-api';
 import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
 import { Serializer } from './common/serializer';
-import { AggregationMode, formatDuration, PeriodicSampler, timeout, Timer, cancelableTimeout } from './common/utils';
+import { AggregationMode, cancelableTimeout, formatDuration, PeriodicSampler, timeout, Timer } from './common/utils';
 import { config } from './config';
 import { Filmlist } from './entry-source/filmlist/filmlist';
 import { InstanceProvider } from './instance-provider';
 import { FilmlistManagerService, ImporterService, IndexerService, SaverService } from './micro-service';
-import { initializeSignals, requestShutdown, shutdown, shutdownPromise } from './process-shutdown';
-import { Service } from './service';
+import { initializeSignals, shutdown, shutdownPromise } from './process-shutdown';
+import { MicroService, Service } from './service';
+import * as Net from 'net';
 
 const logger = InstanceProvider.coreLogger();
 
@@ -27,16 +28,19 @@ Serializer.registerPrototype(Filmlist);
   }
 })();
 
-async function runServices(...services: Service[]) {
-  logger.info('starting services');
+async function initializeServices(services: Service[]) {
+  const runPromises = services.map((service) => service.initialize());
+  await Promise.race(runPromises);
+}
 
+async function startServices(services: Service[]) {
   const runPromises = services.map((service) => service.start());
   await Promise.race(runPromises);
 }
 
-function handleApiInitializationError(error: any) {
-  logger.error(error);
-  requestShutdown();
+async function disposeServices(services: Service[]) {
+  const runPromises = services.map((service) => service.dispose());
+  await Promise.race(runPromises);
 }
 
 async function connect(name: string, connectFunction: (() => Promise<any>)) {
@@ -65,6 +69,26 @@ async function connectToDatabases() {
   await connect('elasticsearch', async () => await await elasticsearch.ping({ requestTimeout: 250 }));
 }
 
+function getMicroServices(): MicroService[] {
+  const filmlistManagerService = new FilmlistManagerService();
+  const importerService = new ImporterService();
+  const saverService = new SaverService();
+  const indexerService = new IndexerService();
+
+  return [filmlistManagerService, importerService, saverService, indexerService];
+}
+
+async function initializeApi(server: Http.Server): Promise<void> {
+  const api = InstanceProvider.mediathekViewWebApi();
+  await api.initialize();
+
+  const restApi = new MediathekViewWebRestApi(api);
+
+  server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
+    restApi.handleRequest(request, response);
+  });
+}
+
 async function init() {
   initEventLoopWatcher(logger);
 
@@ -74,74 +98,98 @@ async function init() {
   ]);
 
   if (shutdownStarted) {
+    Net
     await InstanceProvider.disposeInstances();
     return;
   }
 
+  const services = getMicroServices();
   const server = new Http.Server();
-  const filmlistManagerService = new FilmlistManagerService();
-  const importerService = new ImporterService();
-  const saverService = new SaverService();
-  const indexerService = new IndexerService();
+  const sockets = new Set<Net.Socket>();
 
-  console.log('init')
-  await Promise.all([
-    filmlistManagerService.initialize(),
-    importerService.initialize()
-  ]);
+  trackSockets(server, sockets);
+  initializeApi(server);
 
-  console.log('dispose filmlistManagerService')
-  await filmlistManagerService.dispose();
-  console.log('dispose importerService')
-  await importerService.dispose();
-  console.log('disposeInstances')
-  await InstanceProvider.disposeInstances();
-  console.log('requestShutdown')
-  return requestShutdown();
+  if (shutdownStarted) {
+    await InstanceProvider.disposeInstances();
+    return;
+  }
 
-  const api = InstanceProvider.mediathekViewWebApi();
-  api.initialize().catch((error) => handleApiInitializationError(error));
-
-  const restApi = new MediathekViewWebRestApi(api);
-
-  server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
-    restApi.handleRequest(request, response);
-  });
-
+  logger.info(`listen on port ${config.api.port}`)
   server.listen(config.api.port);
 
-  for (const service of [filmlistManagerService, importerService, saverService, indexerService]) {
-    service.initialize();
+  logger.info('initializing services');
+  await initializeServices(services);
+
+  if (!shutdownStarted) {
+    logger.info('starting services');
+    await startServices(services);
   }
 
-  const skipRun = shutdownStarted;
+  await shutdownPromise;
 
-  const runPromise = skipRun ? Promise.resolve() : Promise.race([
-    filmlistManagerService.start(),
-    importerService.start(),
-    saverService.start(),
-    indexerService.start()
-  ]);
+  logger.info('closing http server');
+  const serverClosePromise = closeServer(server, sockets, 3000);
 
-  await Promise.race([runPromise, shutdownPromise]);
+  logger.info('stopping services');
+  await disposeServices(services);
 
-  console.log('shutdown started');
-
-  server.close();
-
-  if (!skipRun) {
-    await Promise.all([
-      filmlistManagerService.stop(),
-      importerService.stop(),
-      saverService.stop(),
-      indexerService.stop()
-    ]);
-  }
+  logger.info('waiting for http server to be closed');
+  await serverClosePromise;
 
   console.log('dispose');
   await InstanceProvider.disposeInstances();
 
   console.log('bye');
+}
+
+async function closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeout: number): Promise<void> {
+  const timer = new Timer(true);
+
+  const closePromise = new Promise<void>((resolve, _reject) => server.close(() => resolve()));
+
+  while (true) {
+    const connections = await getConnections(server);
+
+    if (timer.milliseconds >= timeout) {
+      logger.info(`force closing remaining sockets after waiting for ${timeout} milliseconds`);
+      destroySockets(sockets);
+      break;
+    }
+
+    if (connections > 0) {
+      logger.info(`waiting for ${connections} to end`);
+      await cancelableTimeout(closePromise, 1000, true);
+    }
+  }
+}
+
+function destroySockets(sockets: Iterable<Net.Socket>) {
+  for (const socket of sockets) {
+    socket.destroy();
+  }
+}
+
+function trackSockets(server: Net.Server, sockets: Set<Net.Socket>) {
+  server.on('connection', (socket) => {
+    sockets.add(socket);
+
+    socket.on('close', () => {
+      sockets.delete(socket);
+    });
+  });
+}
+
+async function getConnections(server: Http.Server): Promise<number> {
+  return new Promise<number>((resolve, reject) => {
+    server.getConnections((error, count) => {
+      if (error != null) {
+        return reject(error);
+      }
+
+      resolve(count);
+    });
+  });
 }
 
 async function measureEventLoopDelay(): Promise<number> {

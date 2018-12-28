@@ -20,7 +20,7 @@ export class FilmlistEntrySource implements EntrySource {
     this.importQueue = queueProvider.get(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
     this.importedFilmlistDates = datastoreFactory.set(Keys.ImportedFilmlistDates, DataType.Date);
 
-    this.disposer.addSubDisposables(this.importQueue);
+    this.disposer.addDisposeTasks(async () => await this.importQueue.dispose());
   }
 
   async initialize(): Promise<void> {

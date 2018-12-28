@@ -38,7 +38,8 @@ export class EntriesSaver extends ServiceBase implements Service {
     this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30000, 3);
     this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 30000, 3);
 
-    this.disposer.addSubDisposables(this.entriesToBeSavedQueue, this.entriesToBeIndexedQueue);
+    this.disposer.addDisposeTasks(async () => await this.entriesToBeSavedQueue.dispose());
+    this.disposer.addDisposeTasks(async () => await this.entriesToBeIndexedQueue.dispose());
 
     this.stopped = new DeferredPromise();
   }

@@ -14,7 +14,7 @@ export class ImporterService extends MicroServiceBase implements MicroService {
     this.disposer = new AsyncDisposer();
     this.importer = InstanceProvider.entriesImporter();
 
-    this.disposer.addSubDisposables(this.importer);
+    this.disposer.addDisposeTasks(async () => await this.importer.dispose());
   }
 
   async _dispose(): Promise<void> {
@@ -27,7 +27,7 @@ export class ImporterService extends MicroServiceBase implements MicroService {
     const source = InstanceProvider.filmlistEntrySource();
     await source.initialize();
 
-    this.disposer.addSubDisposables(source);
+    this.disposer.addDisposeTasks(async () => await source.dispose());
     this.importer.registerSources(source);
   }
 

@@ -35,7 +35,7 @@ export class EntriesIndexer extends ServiceBase implements Service {
     this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
     this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 15000, 3);
 
-    this.disposer.addSubDisposables(this.entriesToBeIndexedQueue);
+    this.disposer.addDisposeTasks(async () => await this.entriesToBeIndexedQueue.dispose());
   }
 
   protected async _dispose(): Promise<void> {

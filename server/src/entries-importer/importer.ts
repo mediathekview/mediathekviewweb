@@ -30,7 +30,7 @@ export class EntriesImporter extends ServiceBase implements Service {
     this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
     this.sources = [];
 
-    this.disposer.addSubDisposables(this.entriesToBeSavedQueue);
+    this.disposer.addDisposeTasks(async () => await this.entriesToBeSavedQueue.dispose());
   }
 
   protected async _dispose(): Promise<void> {

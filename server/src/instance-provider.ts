@@ -266,7 +266,7 @@ export class InstanceProvider {
 
       const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
 
-      this.disposer.addSubDisposables(elasticsearchSearchEngine);
+      this.disposer.addDisposeTasks(async () => await elasticsearchSearchEngine.dispose());
 
       return elasticsearchSearchEngine;
     });

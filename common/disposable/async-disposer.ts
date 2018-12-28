@@ -9,7 +9,6 @@ export class AsyncDisposer implements AsyncDisposable {
   private readonly disposedPromise: DeferredPromise;
   private readonly disposeDeferrers: Promise<void>[];
   private readonly disposeTasks: DisposeTask[];
-  private readonly subDisposables: AsyncDisposable[];
 
   private _disposing: boolean;
   private _disposed: boolean;
@@ -47,13 +46,6 @@ export class AsyncDisposer implements AsyncDisposable {
     finally {
       disposeDeferrer.resolve();
     }
-  }
-
-  addSubDisposables(...disposables: AsyncDisposable[]) {
-    const subDisposablesTasks = this.subDisposables.map((disposable) => () => disposable.dispose());
-
-    this.disposeTasks.push(...subDisposablesTasks);
-    this.subDisposables.push(...disposables);
   }
 
   addDisposeTasks(...tasks: DisposeTask[]) {
