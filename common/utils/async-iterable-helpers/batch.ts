@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { isAsyncIterable } from './is-async-iterable';
 
 export function batchAsync<T>(iterable: AnyIterable<T>, size: number): AsyncIterableIterator<T[]> {

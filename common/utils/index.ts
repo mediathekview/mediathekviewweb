@@ -1,4 +1,4 @@
-export * from './any-iterable';
+export * from './any-iterable-iterator';
 export * from './async-iterable-helpers';
 export * from './buffered-async-iterable';
 export * from './deferred-promise';

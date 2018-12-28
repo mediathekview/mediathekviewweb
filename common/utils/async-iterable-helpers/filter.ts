@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { AsyncPredicate } from './types';
 
 export async function* filterAsync<T>(iterable: AnyIterable<T>, predicate: AsyncPredicate<T>): AsyncIterableIterator<T> {

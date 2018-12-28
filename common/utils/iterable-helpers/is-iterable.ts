@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 
 export function isIterable<T>(anyIterable: AnyIterable<T>): anyIterable is Iterable<T>;
 export function isIterable<T = any>(obj: any): obj is Iterable<T> {

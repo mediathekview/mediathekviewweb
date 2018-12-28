@@ -67,7 +67,7 @@ export class EntriesImporter extends ServiceBase implements Service {
 
   private async _import(source: EntrySource): Promise<void> {
     await AsyncEnumerable.from(source)
-      .while(() => !this.stopRequested)
+      .cancelable(this.stopRequestedPromise)
       .forEach(async (batch) => {
         let success = false;
 

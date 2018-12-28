@@ -1,8 +1,8 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable, AnyIterator } from '../any-iterable-iterator';
 import { isIterable } from '../iterable-helpers/is-iterable';
 import { isAsyncIterable } from './is-async-iterable';
 
-export function toAsyncIterator<T>(iterable: AnyIterable<T>): AsyncIterator<T> {
+export function iterableToAsyncIterator<T>(iterable: AnyIterable<T>): AsyncIterator<T> {
   let asyncIterator: AsyncIterator<T>;
 
   if (isIterable(iterable)) {
@@ -18,17 +18,17 @@ export function toAsyncIterator<T>(iterable: AnyIterable<T>): AsyncIterator<T> {
   return asyncIterator;
 }
 
-function iteratorToAsyncIterator<T>(iterator: Iterator<T>): AsyncIterator<T> {
+export function iteratorToAsyncIterator<T>(iterator: AnyIterator<T>): AsyncIterator<T> {
   const asyncIterator: AsyncIterator<T> = {
     next: async (value?: any) => iterator.next(value)
   };
 
   if (iterator.return != undefined) {
-    asyncIterator.return = (value?: any) => Promise.resolve(iterator.return!(value));
+    asyncIterator.return = (value?: any) => (value instanceof Promise) ? value : Promise.resolve(iterator.return!(value));
   }
 
   if (iterator.throw != undefined) {
-    asyncIterator.throw = (e?: any) => Promise.resolve(iterator.throw!(e));
+    asyncIterator.throw = (e?: any) => (e instanceof Promise) ? e : Promise.resolve(iterator.throw!(e));
   }
 
   return asyncIterator;

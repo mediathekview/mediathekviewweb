@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { FeedableAsyncIterable } from '../feedable-async-iterable';
 
 export function multiplex<T>(iterable: AnyIterable<T>, count: number, bufferSize: number): AsyncIterable<T>[] {

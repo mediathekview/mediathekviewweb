@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { AsyncIteratorFunction } from './types';
 
 export async function* interceptAsync<T>(iterable: AnyIterable<T>, interceptor: AsyncIteratorFunction<T, void>): AsyncIterableIterator<T> {

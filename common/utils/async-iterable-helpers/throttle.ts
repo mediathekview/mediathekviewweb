@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { timeout } from '../timing';
 import { ThrottleFunction } from './types';
 

@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { isIterable } from '../iterable-helpers/is-iterable';
 
 export async function toSync<T>(iterable: AnyIterable<T>): Promise<Iterable<T>> {

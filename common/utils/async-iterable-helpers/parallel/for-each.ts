@@ -1,4 +1,4 @@
-import { AnyIterable } from '../../any-iterable';
+import { AnyIterable } from '../../any-iterable-iterator';
 import { AwaitableSet } from '../../collections/awaitable';
 import { ParallelizableIteratorFunction } from '../types';
 import { MultiError } from '../../multi-error';

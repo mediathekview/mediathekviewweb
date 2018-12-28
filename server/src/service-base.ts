@@ -1,4 +1,5 @@
 import { MicroService, MicroServiceName, Service } from './service';
+import { DeferredPromise } from './common/utils';
 
 export enum ServiceState {
   Uninitialized,
@@ -12,9 +13,18 @@ export enum ServiceState {
 }
 
 export abstract class ServiceBase implements Service {
+  private readonly _stopRequestedPromise: DeferredPromise<void>;
+
+  private _stopRequested: boolean;
   private state: ServiceState;
 
-  protected stopRequested: boolean;
+  protected get stopRequested(): boolean {
+    return this._stopRequested;
+  }
+
+  protected get stopRequestedPromise(): Promise<void> {
+    return this._stopRequestedPromise;
+  }
 
   private get stateString(): string {
     return ServiceState[this.state].toLowerCase();
@@ -22,7 +32,8 @@ export abstract class ServiceBase implements Service {
 
   constructor() {
     this.state = ServiceState.Uninitialized;
-    this.stopRequested = false;
+    this._stopRequested = false;
+    this._stopRequestedPromise = new DeferredPromise();
   }
 
   protected abstract _dispose(): Promise<void>;
@@ -72,7 +83,12 @@ export abstract class ServiceBase implements Service {
     }
 
     try {
-      this.stopRequested = false;
+      this._stopRequested = false;
+
+      if (this._stopRequestedPromise.resolved) {
+        this._stopRequestedPromise.reset();
+      }
+
       this.state = ServiceState.Running;
       await this._start();
       this.state = ServiceState.Stopped;
@@ -89,7 +105,9 @@ export abstract class ServiceBase implements Service {
     }
 
     try {
-      this.stopRequested = true;
+      this._stopRequested = true;
+      this._stopRequestedPromise.resolve();
+
       this.state = ServiceState.Stopping;
       await this._stop();
       this.state = ServiceState.Stopped;

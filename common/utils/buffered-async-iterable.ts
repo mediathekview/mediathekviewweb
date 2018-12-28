@@ -1,4 +1,4 @@
-import { AnyIterable } from './any-iterable';
+import { AnyIterable } from './any-iterable-iterator';
 import { AwaitableList } from './collections/awaitable';
 import { DeferredPromise } from './deferred-promise';
 import { CustomError } from './custom-error';

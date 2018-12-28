@@ -13,6 +13,7 @@ import { Service } from '../service';
 
 const BATCH_SIZE = 250;
 const BUFFER_SIZE = 3;
+const CONCURRENCY = 3;
 
 const REPORT_INTERVAL = 10000;
 
@@ -62,9 +63,9 @@ export class EntriesSaver extends ServiceBase implements Service {
     const consumer = this.entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, false);
 
     await AsyncEnumerable.from(consumer)
-      .while(() => !this.stopRequested)
+      .cancelable(this.stopRequestedPromise)
       .buffer(BUFFER_SIZE)
-      .parallelForEach(3, async (batch) => {
+      .parallelForEach(CONCURRENCY, async (batch) => {
         try {
           const entries = batch.map((job) => job.data);
           await this.saveEntries(entries);
@@ -76,6 +77,7 @@ export class EntriesSaver extends ServiceBase implements Service {
         }
       });
 
+    console.log('STOPPED');
     this.stopped.resolve();
   }
 

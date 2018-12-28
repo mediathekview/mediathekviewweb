@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { AsyncIteratorFunction } from './types';
 import { isAsyncIterable } from './is-async-iterable';
 

@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { toArrayAsync } from './to-array';
 import { AsyncComparator } from './types';
 

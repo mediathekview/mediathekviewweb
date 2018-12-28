@@ -1,4 +1,4 @@
-import { AnyIterable } from '../../any-iterable';
+import { AnyIterable } from '../../any-iterable-iterator';
 import { FeedableAsyncIterable } from '../../feedable-async-iterable';
 import { OrderedFeedableAsyncIterable } from '../../ordered-feedable-async-iterable';
 import { parallelForEach } from './for-each';

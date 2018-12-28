@@ -30,7 +30,7 @@ Serializer.registerPrototype(Filmlist);
 
 async function initializeServices(services: Service[]) {
   const runPromises = services.map((service) => service.initialize());
-  await Promise.race(runPromises);
+  await Promise.all(runPromises);
 }
 
 async function startServices(services: Service[]) {
@@ -40,7 +40,7 @@ async function startServices(services: Service[]) {
 
 async function disposeServices(services: Service[]) {
   const runPromises = services.map((service) => service.dispose());
-  await Promise.race(runPromises);
+  await Promise.all(runPromises);
 }
 
 async function connect(name: string, connectFunction: (() => Promise<any>)) {
@@ -75,7 +75,7 @@ function getMicroServices(): MicroService[] {
   const saverService = new SaverService();
   const indexerService = new IndexerService();
 
-  return [filmlistManagerService, importerService, saverService, indexerService];
+  return [filmlistManagerService, importerService, saverService];//, indexerService];
 }
 
 async function initializeApi(server: Http.Server): Promise<void> {
@@ -123,10 +123,11 @@ async function init() {
 
   if (!shutdownStarted) {
     logger.info('starting services');
-    await startServices(services);
+    await Promise.race([
+      startServices(services),
+      shutdownPromise
+    ]);
   }
-
-  await shutdownPromise;
 
   logger.info('closing http server');
   const serverClosePromise = closeServer(server, sockets, 3000);
@@ -150,6 +151,10 @@ async function closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeou
 
   while (true) {
     const connections = await getConnections(server);
+
+    if (connections == 0) {
+      break;
+    }
 
     if (timer.milliseconds >= timeout) {
       logger.info(`force closing remaining sockets after waiting for ${timeout} milliseconds`);

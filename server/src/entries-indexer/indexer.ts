@@ -55,7 +55,7 @@ export class EntriesIndexer extends ServiceBase implements Service {
     const consumer = this.entriesToBeIndexedQueue.getBatchConsumer(BATCH_SIZE, true);
 
     await AsyncEnumerable.from(consumer)
-      .while(() => !this.stopRequested)
+      .cancelable(this.stopRequestedPromise)
       .buffer(BUFFER_SIZE)
       .forEach(async (batch) => {
         try {

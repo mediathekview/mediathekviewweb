@@ -1,4 +1,4 @@
-import { AnyIterable } from '../any-iterable';
+import { AnyIterable } from '../any-iterable-iterator';
 import { AsyncPredicate } from './types';
 
 export async function singleAsync<T>(iterable: AnyIterable<T>): Promise<T>

@@ -1,4 +1,4 @@
-import { AnyIterable } from '../../any-iterable';
+import { AnyIterable } from '../../any-iterable-iterator';
 import { ParallelizablePredicate } from '../types';
 import { parallelFeed } from './feed';
 

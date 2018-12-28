@@ -1,12 +1,13 @@
 import {
-  anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable, drain, filterAsync, forEachAsync,
-  interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable, mapAsync, mapManyAsync, multiplex,
-  ParallelizableIteratorFunction, ParallelizablePredicate, range, reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync,
-  toAsyncIterableIterator, toAsyncIterator, toSync, whileAsync
+  anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable, drain, filterAsync,
+  forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable,
+  iterableToAsyncIterator, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction, ParallelizablePredicate,
+  range, reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator, toSync, whileAsync
 } from '../utils';
-import { AnyIterable } from '../utils/any-iterable';
+import { AnyIterable } from '../utils/any-iterable-iterator';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
 import { parallelFilter, parallelForEach, parallelGroup, parallelIntercept, parallelMap } from '../utils/async-iterable-helpers/parallel';
+import { CancelableAsyncIterable } from '../utils/cancelable-async-iterable';
 import { SyncEnumerable } from './sync-enumerable';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
@@ -38,6 +39,11 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   while(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {
     const whiled = whileAsync(this.source, predicate);
     return new AsyncEnumerable(whiled);
+  }
+
+  cancelable(cancelationPromise: Promise<void>): AsyncEnumerable<T> {
+    const cancelabled = new CancelableAsyncIterable(this.source, cancelationPromise);
+    return new AsyncEnumerable(cancelabled);
   }
 
   filter(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {
@@ -168,7 +174,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   }
 
   toIterator(): AsyncIterator<T> {
-    const iterator = toAsyncIterator(this.source);
+    const iterator = iterableToAsyncIterator(this.source);
     return iterator;
   }
 
