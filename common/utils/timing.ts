@@ -31,19 +31,19 @@ export function cancelableTimeout(cancelPromise: Promise<void>, millisecondsOrRe
   }
 
   return new Promise<boolean>(async (resolve) => {
-    let resolved = false;
+    let pending = true;
 
     const timer = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
+      if (pending) {
+        pending = false;
         resolve(false);
       }
     }, milliseconds);
 
     await cancelPromise;
 
-    if (!resolved) {
-      resolved = true;
+    if (pending) {
+      pending = false;
       clearTimeout(timer);
 
       if (resolveOnCancel) {

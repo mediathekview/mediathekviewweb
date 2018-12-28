@@ -50,7 +50,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
         }
 
         success = true;
-        this.logger.info('initialized elasticsearch search-engine');
+        this.logger.verbose('initialized elasticsearch search-engine');
       });
     }
   }
@@ -102,13 +102,13 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
       if (this.indexSettings != undefined) {
         await this.client.indices.putSettings({ index: this.indexName, body: this.indexSettings });
-        this.logger.info(`applied elasticsearch index settings for ${this.indexName}`);
+        this.logger.verbose(`applied elasticsearch index settings for ${this.indexName}`);
       }
 
       if (this.indexMapping != undefined) {
         const elasticsearchMappingObject = this.createElasticsearchMappingObject(this.indexMapping);
         await this.client.indices.putMapping({ index: this.indexName, type: this.typeName, body: elasticsearchMappingObject });
-        this.logger.info(`applied elasticsearch index mapping for ${this.indexName}`);
+        this.logger.verbose(`applied elasticsearch index mapping for ${this.indexName}`);
       }
 
       await this.client.indices.open({ index: this.indexName });
@@ -131,7 +131,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
     if (!indexExists) {
       await this.client.indices.create({ index: this.indexName });
-      this.logger.info(`created elasticsearch index ${this.indexName}`);
+      this.logger.verbose(`created elasticsearch index ${this.indexName}`);
       created = true;
     }
 

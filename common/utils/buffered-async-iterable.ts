@@ -1,6 +1,6 @@
 import { AnyIterable } from './any-iterable-iterator';
 import { AwaitableList } from './collections/awaitable';
-import { DeferredPromise } from './deferred-promise';
+import { DeferredPromise } from '../promise/deferred-promise';
 import { CustomError } from './custom-error';
 
 export class BufferedAsyncIterableError<T> extends CustomError {
@@ -29,6 +29,7 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
   private readonly buffer: AwaitableList<T>;
   private readonly stopPromise: DeferredPromise;
 
+  private endPromise = new DeferredPromise();
   private end: boolean = false;
   private stop: boolean = false;
   private hasError: boolean = false;
@@ -58,10 +59,14 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
         const waitForSource = !this.end && this.buffer.size == 0;
 
         if (waitForSource) {
-          await this.buffer.added;
+          await Promise.race([this.buffer.added, this.endPromise]);
+
+          if (this.end) {
+            break;
+          }
         }
 
-        const element = this.buffer.shift() as T;
+        const element = this.buffer.shift();
         yield element;
       }
     }
@@ -93,5 +98,6 @@ export class BufferedAsyncIterable<T> implements AsyncIterable<T> {
     }
 
     this.end = true;
+    this.endPromise.resolve();
   }
 }

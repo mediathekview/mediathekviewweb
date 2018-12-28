@@ -1,6 +1,6 @@
 import { AnyIterable } from './any-iterable-iterator';
 import { iterableToAsyncIterator } from './async-iterable-helpers/to-iterator';
-import { cancelablePromise } from './cancelable-promise';
+import { cancelablePromise } from '../promise/cancelable-promise';
 
 export class CancelableAsyncIterable<T> implements AsyncIterable<T> {
   private readonly source: AnyIterable<T>;

@@ -101,7 +101,7 @@ export class RedisLock implements Lock {
     const timer = new Timer(true);
     let expireTimestamp = -1;
 
-    while ((expireTimestamp == -1) && (timer.milliseconds < acquireTimeout)) {
+    do {
       const newExpireTimestamp = this.getNewExpireTimestamp();
       const result = await this.tryAcquire(id, newExpireTimestamp);
 
@@ -113,6 +113,7 @@ export class RedisLock implements Lock {
         await timeout(RETRY_DELAY);
       }
     }
+    while ((expireTimestamp == -1) && (timer.milliseconds < acquireTimeout));
 
     return expireTimestamp;
   }

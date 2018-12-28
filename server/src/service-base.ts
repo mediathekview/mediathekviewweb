@@ -1,5 +1,5 @@
-import { MicroService, MicroServiceName, Service } from './service';
 import { DeferredPromise } from './common/utils';
+import { MicroService, Service } from './service';
 
 export enum ServiceState {
   Uninitialized,
@@ -120,11 +120,11 @@ export abstract class ServiceBase implements Service {
 }
 
 export abstract class MicroServiceBase extends ServiceBase implements MicroService {
-  readonly [MicroServiceName]: string;
+  readonly name: string;
 
   constructor(serviceName: string) {
     super();
 
-    this[MicroServiceName] = serviceName;
+    this.name = serviceName;
   }
 }

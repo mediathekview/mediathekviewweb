@@ -12,7 +12,6 @@ import { AggregatedEntryRepository } from '../repository';
 import { Service } from '../service';
 
 const BATCH_SIZE = 100;
-const BUFFER_SIZE = 5;
 
 const REPORT_INTERVAL = 10000;
 
@@ -56,7 +55,6 @@ export class EntriesIndexer extends ServiceBase implements Service {
 
     await AsyncEnumerable.from(consumer)
       .cancelable(this.stopRequestedPromise)
-      .buffer(BUFFER_SIZE)
       .forEach(async (batch) => {
         try {
           const ids = batch.map((job) => job.data);

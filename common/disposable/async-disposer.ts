@@ -5,13 +5,22 @@ import { AsyncDisposable } from './disposable';
 
 export type DisposeTask = () => any | Promise<any>;
 
+export type DisposeDeferrer = {
+  yield(): void;
+};
+
 export class AsyncDisposer implements AsyncDisposable {
   private readonly disposedPromise: DeferredPromise;
   private readonly disposeDeferrers: Promise<void>[];
   private readonly disposeTasks: DisposeTask[];
 
+  private _disposingPromise: DeferredPromise;
   private _disposing: boolean;
   private _disposed: boolean;
+
+  get disposingPromise(): Promise<void> {
+    return this._disposingPromise;
+  }
 
   get disposing(): boolean {
     return this._disposing;
@@ -25,16 +34,21 @@ export class AsyncDisposer implements AsyncDisposable {
     this.disposedPromise = new DeferredPromise();
     this.disposeDeferrers = [];
     this.disposeTasks = [];
-    this.subDisposables = [];
+
+    this._disposingPromise = new DeferredPromise();
     this._disposing = false;
     this._disposed = false;
   }
 
-  getDeferrer(): DeferredPromise {
+  getDeferrer(): DisposeDeferrer {
     const deferredPromise = new DeferredPromise();
     this.disposeDeferrers.push(deferredPromise);
 
-    return deferredPromise;
+    const deferrer: DisposeDeferrer = {
+      yield: () => deferredPromise.resolve()
+    };
+
+    return deferrer;
   }
 
   async defer<T>(deferrer: () => Promise<T>): Promise<T> {
@@ -44,7 +58,7 @@ export class AsyncDisposer implements AsyncDisposable {
       return await deferrer();
     }
     finally {
-      disposeDeferrer.resolve();
+      disposeDeferrer.yield();
     }
   }
 

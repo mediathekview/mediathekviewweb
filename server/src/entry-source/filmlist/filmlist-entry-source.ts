@@ -6,6 +6,7 @@ import { Queue, QueueProvider } from '../../queue';
 import { EntrySource } from '../entry-source';
 import { Filmlist } from './filmlist';
 import { AsyncDisposer } from '../../common/disposable';
+import { CancelableAsyncIterable } from '../../common/utils/cancelable-async-iterable';
 
 export class FilmlistEntrySource implements EntrySource {
   private readonly disposer: AsyncDisposer;
@@ -36,30 +37,37 @@ export class FilmlistEntrySource implements EntrySource {
       throw new Error('disposing');
     }
 
+    const deferrer = this.disposer.getDeferrer();
     const consumer = this.importQueue.getConsumer(false);
 
-    for await (const job of consumer) {
-      const { data: filmlist } = job;
-      this.logger.info(`processing filmlist from ${filmlist.date}`);
+    try {
+      for await (const job of consumer) {
+        const { data: filmlist } = job;
+        this.logger.info(`processing filmlist from ${filmlist.date}`);
 
-      let hasError = false;
-      try {
-        yield* filmlist;
-      }
-      catch (error) {
-        hasError = true;
-        this.logger.error(error);
-      }
-      finally {
-        if (!hasError) {
-          await this.importedFilmlistDates.add(filmlist.date);
-          await this.importQueue.acknowledge(job);
+        let hasError = false;
+        try {
+          const cancelableFilmlist = new CancelableAsyncIterable(filmlist, this.disposer.disposingPromise);
+          yield* cancelableFilmlist;
+        }
+        catch (error) {
+          hasError = true;
+          this.logger.error(error);
+        }
+        finally {
+          if (!hasError) {
+            await this.importedFilmlistDates.add(filmlist.date);
+            await this.importQueue.acknowledge(job);
+          }
+        }
+
+        if (this.disposer.disposing) {
+          break;
         }
       }
-
-      if (this.disposer.disposing) {
-        break;
-      }
+    }
+    finally {
+      deferrer.yield();
     }
   }
 }

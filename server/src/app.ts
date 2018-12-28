@@ -1,16 +1,15 @@
 import * as Http from 'http';
+import * as Net from 'net';
 import { MediathekViewWebRestApi } from './api/rest-api';
-import './common/async-iterator-symbol';
 import { Logger } from './common/logger';
 import { Serializer } from './common/serializer';
-import { AggregationMode, cancelableTimeout, formatDuration, PeriodicSampler, timeout, Timer } from './common/utils';
+import { AggregationMode, cancelableTimeout, formatDuration, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
 import { Filmlist } from './entry-source/filmlist/filmlist';
 import { InstanceProvider } from './instance-provider';
 import { FilmlistManagerService, ImporterService, IndexerService, SaverService } from './micro-service';
-import { initializeSignals, shutdown, shutdownPromise } from './process-shutdown';
+import { initializeSignals, requestShutdown, shutdown, shutdownPromise } from './process-shutdown';
 import { MicroService, Service } from './service';
-import * as Net from 'net';
 
 const logger = InstanceProvider.coreLogger();
 
@@ -25,48 +24,46 @@ Serializer.registerPrototype(Filmlist);
   }
   catch (error) {
     logger.error(error);
+    requestShutdown();
   }
 })();
 
-async function initializeServices(services: Service[]) {
-  const runPromises = services.map((service) => service.initialize());
-  await Promise.all(runPromises);
+async function initializeServices(services: MicroService[]) {
+  const promises = services.map((service) => {
+    logger.verbose(`initializing service ${service.name}`);
+
+    const promise = service.initialize();
+    promise.then(() => logger.verbose(`initialized service ${service.name}`));
+
+    return promise;
+  });
+
+  await Promise.all(promises);
 }
 
-async function startServices(services: Service[]) {
-  const runPromises = services.map((service) => service.start());
-  await Promise.race(runPromises);
+async function startServices(services: MicroService[]) {
+  const promises = services.map((service) => {
+    logger.verbose(`starting service ${service.name}`);
+
+    const promise = service.start();
+
+    return promise;
+  });
+
+  await Promise.race(promises);
 }
 
-async function disposeServices(services: Service[]) {
-  const runPromises = services.map((service) => service.dispose());
-  await Promise.all(runPromises);
-}
+async function disposeServices(services: MicroService[]) {
+  const promises = services.map((service) => {
+    logger.verbose(`stopping service ${service.name}`);
 
-async function connect(name: string, connectFunction: (() => Promise<any>)) {
-  let success = false;
-  while (!success && !shutdownStarted) {
-    try {
-      logger.info(`connecting to ${name}...`);
-      await connectFunction();
-      success = true;
-      logger.info(`connected to ${name}`);
-    }
-    catch (error) {
-      logger.warn(`error connecting to ${name}, trying again...`);
-      await timeout(1000);
-    }
-  }
-}
+    const promise = service.dispose();
+    promise.then(() => logger.verbose(`stopped service ${service.name}`));
 
-async function connectToDatabases() {
-  const redis = InstanceProvider.redis();
-  const mongo = InstanceProvider.mongo();
-  const elasticsearch = InstanceProvider.elasticsearch();
+    return promise;
+  });
 
-  await connect('redis', async () => await redis.connect());
-  await connect('mongo', async () => await mongo.connect());
-  await connect('elasticsearch', async () => await await elasticsearch.ping({ requestTimeout: 250 }));
+  await Promise.all(promises);
 }
 
 function getMicroServices(): MicroService[] {
@@ -75,7 +72,7 @@ function getMicroServices(): MicroService[] {
   const saverService = new SaverService();
   const indexerService = new IndexerService();
 
-  return [filmlistManagerService, importerService, saverService];//, indexerService];
+  return [filmlistManagerService, importerService, saverService, indexerService];
 }
 
 async function initializeApi(server: Http.Server): Promise<void> {
@@ -93,12 +90,11 @@ async function init() {
   initEventLoopWatcher(logger);
 
   await Promise.race([
-    connectToDatabases(),
+    InstanceProvider.initialize(),
     shutdownPromise
   ]);
 
   if (shutdownStarted) {
-    Net
     await InstanceProvider.disposeInstances();
     return;
   }
@@ -107,7 +103,7 @@ async function init() {
   const server = new Http.Server();
   const sockets = new Set<Net.Socket>();
 
-  trackSockets(server, sockets);
+  trackConnectedSockets(server, sockets);
   initializeApi(server);
 
   if (shutdownStarted) {
@@ -138,10 +134,10 @@ async function init() {
   logger.info('waiting for http server to be closed');
   await serverClosePromise;
 
-  console.log('dispose');
+  logger.info('dispose');
   await InstanceProvider.disposeInstances();
 
-  console.log('bye');
+  logger.info('bye');
 }
 
 async function closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeout: number): Promise<void> {
@@ -175,7 +171,7 @@ function destroySockets(sockets: Iterable<Net.Socket>) {
   }
 }
 
-function trackSockets(server: Net.Server, sockets: Set<Net.Socket>) {
+function trackConnectedSockets(server: Net.Server, sockets: Set<Net.Socket>) {
   server.on('connection', (socket) => {
     sockets.add(socket);
 

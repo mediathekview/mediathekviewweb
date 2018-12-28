@@ -32,6 +32,7 @@ import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { ElasticsearchLogAdapterFactory } from './utils/elasticsearch-log-adapter-factory';
 import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
+import { immediate, timeout } from './common/utils';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -76,8 +77,39 @@ export class InstanceProvider {
   private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
   private static disposer: AsyncDisposer = new AsyncDisposer();
 
-  static async disposeInstances() {
+  static async initialize(): Promise<void> {
+    await this.connectToDatabases();
+  }
+
+  static async disposeInstances(): Promise<void> {
     await this.disposer.dispose();
+  }
+
+  private static async connectToDatabases() {
+    const logger = this.coreLogger();
+    const redis = InstanceProvider.redis();
+    const mongo = InstanceProvider.mongo();
+    const elasticsearch = InstanceProvider.elasticsearch();
+
+    await this.connect('redis', async () => await redis.connect(), logger);
+    await this.connect('mongo', async () => await mongo.connect(), logger);
+    await this.connect('elasticsearch', async () => await await elasticsearch.ping({ requestTimeout: 250 }), logger);
+  }
+
+  private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger) {
+    let success = false;
+    while (!success && !this.disposer.disposing) {
+      try {
+        logger.info(`connecting to ${name}...`);
+        await connectFunction();
+        success = true;
+        logger.info(`connected to ${name}`);
+      }
+      catch (error) {
+        logger.verbose(`error connecting to ${name} (${(error as Error).message}), trying again...`);
+        await timeout(1000);
+      }
+    }
   }
 
   static mediathekViewWebApi(): MediathekViewWebApi {
@@ -130,14 +162,19 @@ export class InstanceProvider {
     });
 
     redis
-      .on('connect', () => logger.info('connecting'))
-      .on('ready', () => logger.info('ready'))
-      .on('close', () => logger.warn('connection closing'))
-      .on('reconnecting', (milliseconds) => logger.info(`reconnecting in ${milliseconds} ms`))
-      .on('end', () => logger.warn(`connection end`))
+      .on('connect', () => logger.verbose('connecting'))
+      .on('ready', () => logger.verbose('ready'))
+      .on('close', () => logger.verbose('connection closing'))
+      .on('reconnecting', (milliseconds) => logger.verbose(`reconnecting in ${milliseconds} ms`))
+      .on('end', () => logger.verbose(`connection end`))
       .on('error', (error: Error) => logger.error(error, false));
 
-    this.disposer.addDisposeTasks(async () => await redis.quit());
+    this.disposer.addDisposeTasks(async () => {
+      const endPromise = new Promise<void>((resolve) => redis.once('end', resolve));
+
+      await redis.quit();
+      await endPromise;
+    });
 
     return redis;
   }
@@ -168,12 +205,12 @@ export class InstanceProvider {
       const mongoClient: Mongo.MongoClient = new Mongo.MongoClient(MONGO_CONNECTION_STRING, MONGO_CLIENT_OPTIONS);
 
       mongoClient
-        .on('fullsetup', () => logger.info('connection setup'))
+        .on('fullsetup', () => logger.verbose('connection setup'))
         .on('reconnect', () => logger.warn('reconnected'))
         .on('timeout', () => logger.warn('connection timed out'))
-        .on('close', () => logger.warn('connection closed'));
+        .on('close', () => logger.verbose('connection closed'));
 
-      this.disposer.addDisposeTasks(async () => await mongoClient!.close());
+      this.disposer.addDisposeTasks(async () => await mongoClient.close());
 
       return mongoClient;
     });

@@ -26,7 +26,8 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
   loadMany(ids: AnyIterable<string>): AsyncIterable<AggregatedEntry> {
     const entryDocuments = this.entryRepository.loadMany(ids);
 
-    const result = AsyncEnumerable.from(entryDocuments).map((entryDocument) => this.toAggregated(entryDocument));
+    const result = AsyncEnumerable.from(entryDocuments)
+      .map((entryDocument) => this.toAggregated(entryDocument));
     return result;
   }
 

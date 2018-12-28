@@ -56,6 +56,8 @@ export class FilmlistManager extends ServiceBase implements Service {
   }
 
   protected async _start(): Promise<void> {
+    console.log('start')
+
     this.loopController = this.distributedLoop.run(() => this.loop(), 60000, 10000);
     this.disposer.addDisposeTasks(async () => await this.loopController.stop());
 
@@ -87,13 +89,13 @@ export class FilmlistManager extends ServiceBase implements Service {
   }
 
   private async checkLatest() {
-    this.logger.info('checking for new current-filmlist');
+    this.logger.verbose('checking for new current-filmlist');
     const filmlist = await this.filmlistRepository.getLatest();
     await this.checkFilmlist(filmlist);
   }
 
   private async checkArchive(): Promise<void> {
-    this.logger.info('checking for new archive-filmlist');
+    this.logger.verbose('checking for new archive-filmlist');
 
     const minimumDate = now();
     minimumDate.setDate(minimumDate.getDate() - MAX_AGE_DAYS);
@@ -102,6 +104,7 @@ export class FilmlistManager extends ServiceBase implements Service {
     const filmlists = new AsyncEnumerable(archiveIterable);
 
     await filmlists
+      .cancelable(this.disposer.disposingPromise)
       .filter((filmlist) => filmlist.date >= minimumDate)
       .parallelForEach(3, (filmlist) => this.checkFilmlist(filmlist));
   }

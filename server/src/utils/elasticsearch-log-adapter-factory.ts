@@ -12,7 +12,7 @@ export class ElasticsearchLogAdapterFactory {
       }
 
       info(message: string) {
-        logger.info(message);
+        logger.verbose(message);
       }
 
       debug(_message: string) {
@@ -24,7 +24,7 @@ export class ElasticsearchLogAdapterFactory {
       }
 
       close() {
-        logger.info('close');
+        logger.verbose('close');
       }
     }
   }

@@ -3,10 +3,10 @@ import { AsyncDisposable, AsyncDisposer } from '../../common/disposable';
 import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { Serializer } from '../../common/serializer';
-import { currentTimestamp } from '../../common/utils';
+import { currentTimestamp, timeout } from '../../common/utils';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { RedisProvider } from '../../redis/provider';
-import { RedisStream, SourceEntry } from '../../redis/stream';
+import { Entry, RedisStream, SourceEntry } from '../../redis/stream';
 import { uniqueId } from '../../utils';
 import { Job, Queue } from '../queue';
 
@@ -56,7 +56,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
       if (!hasGroup) {
         await this.stream.createGroup(this.groupName, '0', true);
-        this.logger.info(`created consumer group ${this.groupName}`);
+        this.logger.debug(`created consumer group ${this.groupName}`);
       }
     });
 
@@ -131,7 +131,18 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
       try {
         while (!this.disposer.disposing) {
-          const entries = await consumerStream.readGroup({ id: '>', group: this.groupName, consumer, block: BLOCK_DURATION, count: batchSize });
+          let entries: Entry<StreamEntryType>[] | null = null;
+
+          while (entries == null) {
+            try {
+              entries = await consumerStream.readGroup({ id: '>', group: this.groupName, consumer, block: BLOCK_DURATION, count: batchSize });
+            }
+            catch (error) {
+              this.logger.error(error);
+              await timeout(2500);
+            }
+          }
+
           const jobs: Job<DataType>[] = entries
             .map(({ id, data: { data: serializedData } }) => ({ id, serializedData }))
             .map(({ id, serializedData }) => ({ id, data: Serializer.deserialize(serializedData) }));
@@ -151,7 +162,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       }
     }
     finally {
-      disposeDeferrer.resolve();
+      disposeDeferrer.yield();
     }
   }
 
@@ -172,7 +183,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
         await lock.acquire(0, async () => {
           await this.stream.deleteConsumer(this.groupName, consumer.name);
-          this.logger.info(`deleted consumer ${consumer.name} from ${this.streamName}`);
+          this.logger.debug(`deleted consumer ${consumer.name} from ${this.streamName}`);
         });
       }
     });

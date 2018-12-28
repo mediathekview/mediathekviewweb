@@ -1,4 +1,12 @@
+const promiseConstructor = Promise;
+
 export class DeferredPromise<T = void> implements Promise<T> {
+  static all = promiseConstructor.all;
+  static race = promiseConstructor.race;
+  static resolve = promiseConstructor.resolve;
+  static reject = promiseConstructor.reject;
+  static [Symbol.species] = promiseConstructor;
+
   private backingPromise: Promise<T>;
   private resolvePromise: (value?: T | PromiseLike<T>) => void;
   private rejectPromise: (reason?: any) => void;
@@ -24,8 +32,12 @@ export class DeferredPromise<T = void> implements Promise<T> {
     return this._resolved || this._rejected;
   }
 
-  constructor() {
+  constructor(executor?: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
     this.reset();
+
+    if (executor != undefined) {
+      executor((value) => this.resolve(value), (reason) => this.reject(reason));
+    }
   }
 
   then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2> {
@@ -41,7 +53,7 @@ export class DeferredPromise<T = void> implements Promise<T> {
   }
 
   resolve(value?: T | PromiseLike<T>): this {
-    this.ensurePendingState();
+    this.ensurePendingState(value);
 
     this.resolvePromise(value);
     this._resolved = true;
@@ -59,7 +71,7 @@ export class DeferredPromise<T = void> implements Promise<T> {
   }
 
   reset(): this {
-    this.backingPromise = new Promise<T>((resolve, reject) => {
+    this.backingPromise = new promiseConstructor<T>((resolve, reject) => {
       this.resolvePromise = resolve;
       this.rejectPromise = reject;
     });
@@ -70,8 +82,9 @@ export class DeferredPromise<T = void> implements Promise<T> {
     return this;
   }
 
-  private ensurePendingState() {
+  private ensurePendingState(value?: any) {
     if (this.resolved) {
+      console.log(value)
       throw new Error('promise already resolved');
     }
 

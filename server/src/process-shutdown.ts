@@ -5,7 +5,7 @@ type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
 type QuitEvent = 'uncaughtException' | 'multipleResolves' | 'unhandledRejection' | 'rejectionHandled';
 
 const QUIT_SIGNALS: Signal[] = ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGBREAK'];
-const QUIT_EVENTS: QuitEvent[] = ['uncaughtException', 'multipleResolves', 'unhandledRejection', 'rejectionHandled'];
+const QUIT_EVENTS: QuitEvent[] = ['uncaughtException' /* , 'multipleResolves' */, 'unhandledRejection', 'rejectionHandled'];
 
 const shutdownSubject = new Subject<void>();
 

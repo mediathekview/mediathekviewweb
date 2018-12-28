@@ -1,5 +1,5 @@
 import { AwaitableList } from './collections/awaitable';
-import { DeferredPromise } from './deferred-promise';
+import { DeferredPromise } from '../promise/deferred-promise';
 
 export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
   private readonly _read: DeferredPromise;

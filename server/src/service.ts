@@ -1,7 +1,5 @@
 import { AsyncDisposable } from './common/disposable';
 
-export const MicroServiceName = Symbol('ServiceName');
-
 export interface Service extends AsyncDisposable {
   initialize(): Promise<void>;
   start(): Promise<void>;
@@ -9,5 +7,5 @@ export interface Service extends AsyncDisposable {
 }
 
 export interface MicroService extends Service {
-  readonly [MicroServiceName]: string;
+  readonly name: string;
 }

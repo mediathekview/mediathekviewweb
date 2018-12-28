@@ -81,7 +81,7 @@ export class EntriesImporter extends ServiceBase implements Service {
             this.logger.error(error);
 
             if (!this.stopRequested) {
-              await timeout(5000);
+              await timeout(1000);
             }
           }
         }

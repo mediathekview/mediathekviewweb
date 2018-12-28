@@ -1,4 +1,4 @@
-import { DeferredPromise } from '../../deferred-promise';
+import { DeferredPromise } from '../../../promise/deferred-promise';
 
 export class AwaitableList<T> implements Iterable<T> {
   private readonly _added: DeferredPromise<T | T[]>;

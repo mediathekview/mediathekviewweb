@@ -1,18 +1,38 @@
-import { AsyncEnumerable } from './common/enumerable';
-import { DeferredPromise, timeout } from './common/utils';
+import { InstanceProvider } from './instance-provider';
+import { timeout } from './common/utils';
 
 (async () => {
-  const cancelPromise = new DeferredPromise();
+  await connectToDatabases();
 
-  AsyncEnumerable.fromRange(0, 5)
-    .interruptEvery(1)
-    .cancelable(cancelPromise)
-    .intercept(() => timeout(1000))
-    .forEach((value) => {
-      console.log(value);
+  const loopProvider = InstanceProvider.distributedLoopProvider();
 
-      if (value == 1) {
-        cancelPromise.resolve();
-      }
-    });
+  const loop = loopProvider.get('test');
+
+  loop.run(async () => console.log('hi'), 5000, 1000);
 })();
+
+async function connectToDatabases() {
+  const redis = InstanceProvider.redis();
+  const mongo = InstanceProvider.mongo();
+  const elasticsearch = InstanceProvider.elasticsearch();
+
+  await connect('redis', async () => await redis.connect());
+  await connect('mongo', async () => await mongo.connect());
+  await connect('elasticsearch', async () => await await elasticsearch.ping({ requestTimeout: 250 }));
+}
+
+async function connect(name: string, connectFunction: (() => Promise<any>)) {
+  let success = false;
+  while (!success) {
+    try {
+      console.info(`connecting to ${name}...`);
+      await connectFunction();
+      success = true;
+      console.info(`connected to ${name}`);
+    }
+    catch (error) {
+      console.error(error);
+      await timeout(1000);
+    }
+  }
+}

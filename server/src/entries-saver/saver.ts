@@ -77,7 +77,6 @@ export class EntriesSaver extends ServiceBase implements Service {
         }
       });
 
-    console.log('STOPPED');
     this.stopped.resolve();
   }
 
