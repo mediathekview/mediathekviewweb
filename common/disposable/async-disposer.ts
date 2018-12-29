@@ -72,6 +72,7 @@ export class AsyncDisposer implements AsyncDisposable {
     }
 
     this._disposing = true;
+    this._disposingPromise.resolve();
 
     const errors: Error[] = [];
 

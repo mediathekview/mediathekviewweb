@@ -9,10 +9,6 @@ export class MediathekViewWebApi {
     this.searchEngine = searchEngine;
   }
 
-  async initialize(): Promise<void> {
-    await this.searchEngine.initialize();
-  }
-
   async search(searchQuery: SearchQuery): Promise<EntrySearchResult> {
     const result = await this.searchEngine.search(searchQuery);
     return result;

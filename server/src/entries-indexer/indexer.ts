@@ -59,6 +59,7 @@ export class EntriesIndexer extends ServiceBase implements Service {
         try {
           const ids = batch.map((job) => job.data);
           await this.indexEntries(ids);
+          await this.entriesToBeIndexedQueue.acknowledge(...batch);
         }
         catch (error) {
           this.logger.error(error);

@@ -18,7 +18,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly indexSettings: object | undefined;
   private readonly indexMapping: object | undefined;
 
-  private disposed: boolean;
+  private disposing: boolean;
 
   constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger);
   constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger, indexSettings: object);
@@ -33,7 +33,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     this.indexSettings = indexSettings;
     this.indexMapping = indexMapping;
 
-    this.disposed = false;
+    this.disposing = false;
   }
 
   async initialize(): Promise<void> {
@@ -41,7 +41,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
     let success = false;
 
-    while (!success && !this.disposed) {
+    while (!success && !this.disposing) {
       await lock.acquire(1000, async () => {
         const created = await this.ensureIndex();
 
@@ -56,7 +56,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   }
 
   async dispose(): Promise<void> {
-    this.disposed = true;
+    this.disposing = true;
   }
 
   async index(items: SearchEngineItem<T>[]): Promise<void> {
@@ -131,6 +131,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
     if (!indexExists) {
       await this.client.indices.create({ index: this.indexName });
+      await this.client.indices.open({ index: this.indexName });
       this.logger.verbose(`created elasticsearch index ${this.indexName}`);
       created = true;
     }

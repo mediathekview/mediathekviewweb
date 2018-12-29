@@ -77,8 +77,6 @@ function getMicroServices(): MicroService[] {
 
 async function initializeApi(server: Http.Server): Promise<void> {
   const api = InstanceProvider.mediathekViewWebApi();
-  await api.initialize();
-
   const restApi = new MediathekViewWebRestApi(api);
 
   server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
@@ -100,10 +98,13 @@ async function init() {
   }
 
   const services = getMicroServices();
+  const searchEngine = InstanceProvider.entrySearchEngine();
   const server = new Http.Server();
   const sockets = new Set<Net.Socket>();
 
   trackConnectedSockets(server, sockets);
+
+  await searchEngine.initialize();
   initializeApi(server);
 
   if (shutdownStarted) {
@@ -206,10 +207,10 @@ async function measureEventLoopDelay(): Promise<number> {
 }
 
 async function initEventLoopWatcher(logger: Logger) {
-  const sampler = new PeriodicSampler(measureEventLoopDelay, 1);
+  const sampler = new PeriodicSampler(measureEventLoopDelay, 50);
 
   sampler
-    .watch(0, 5000, AggregationMode.ThirdQuartile)
+    .watch(0, 100, AggregationMode.ThirdQuartile)
     .subscribe((delay) => logger.info(`eventloop: ${formatDuration(delay, 2)}`));
 
   sampler.start();

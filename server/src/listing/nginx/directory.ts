@@ -56,9 +56,11 @@ export class NginxDirectory implements Directory {
     yield* this.directories;
 
     if (recursive) {
-      for (const directory of this.directories) {
-        yield* directory.getDirectories(true);
-      }
+      const subDirectories = AsyncEnumerable.from(this.directories)
+        .parallelMap(10, true, async (directory) => directory.getDirectories(true))
+        .mapMany((directories) => directories);
+
+      yield* subDirectories;
     }
   }
 

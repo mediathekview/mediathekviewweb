@@ -25,9 +25,9 @@ export function requestShutdown() {
   shutdownPromise.resolve();
 
   const timeout = setTimeout(() => {
-    console.warn('forcefully quitting after 10 seconds...');
+    console.warn('forcefully quitting after 20 seconds...');
     process.exit(1);
-  }, 10000);
+  }, 20000);
 
   timeout.unref();
 }

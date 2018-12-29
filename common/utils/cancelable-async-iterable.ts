@@ -41,7 +41,7 @@ export class CancelableAsyncIterable<T> implements AsyncIterable<T> {
         const result = await cancelablePromise(nextPromise, this.cancelationPromise);
 
         if (result.canceled) {
-          return { done: true, value: undefined as any };
+          return { done: true } as IteratorResult<T>;
         }
 
         return result.value;
