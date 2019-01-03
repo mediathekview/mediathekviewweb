@@ -11,7 +11,7 @@ export type Response<T> = Partial<ResultResponse<T> | ErrorResponse>;
 export type ResultError = {
   message: string,
   details?: any
-}
+};
 
 export function createErrorResponse(message: string, details?: any): ErrorResponse {
   const response: ErrorResponse = {
@@ -19,7 +19,7 @@ export function createErrorResponse(message: string, details?: any): ErrorRespon
       message: message,
       details: details
     }
-  }
+  };
 
   return response;
 }

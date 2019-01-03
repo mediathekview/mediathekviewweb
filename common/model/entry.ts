@@ -17,13 +17,13 @@ export type Entry = Entity & {
     identifier: string,
     data?: any
   }
-}
+};
 
 export type AggregatedEntry = Entry & {
   date: number;
   time: number;
   metadata: EntryMetadata;
-}
+};
 
 export enum Field {
   ID = 'id',
@@ -60,16 +60,16 @@ export interface Media {
 export type Video = Media & {
   type: MediaType.Video;
   quality: Quality;
-}
+};
 
 export type Audio = Media & {
   type: MediaType.Audio;
   quality: Quality;
-}
+};
 
 export type Subtitle = Media & {
   type: MediaType.Subtitle;
-}
+};
 
 export enum Quality {
   UltraLow = 0,

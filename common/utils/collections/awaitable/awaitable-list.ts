@@ -19,16 +19,16 @@ export class AwaitableList<T> implements Iterable<T> {
     return this._cleared;
   }
 
+  get size(): number {
+    return this.backingArray.length;
+  }
+
   constructor() {
     this.backingArray = [];
 
     this._added = new DeferredPromise();
     this._removed = new DeferredPromise();
     this._cleared = new DeferredPromise();
-  }
-
-  get size(): number {
-    return this.backingArray.length;
   }
 
   get(index: number): T {

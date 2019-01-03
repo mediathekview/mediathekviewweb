@@ -8,7 +8,7 @@ export enum RangeType {
   GreaterEquals
 }
 
-export type Range = { type: RangeType, text: string }
+export type Range = { type: RangeType, text: string };
 
 const RANGE_TYPE_MAP = new Map<string, RangeType>([
   ['', RangeType.Equals],
@@ -79,7 +79,7 @@ export class RangeParser {
     const rightRange: Range = {
       type: this.inclusive ? RangeType.LessEquals : RangeType.Less,
       text: right
-    }
+    };
 
     return [leftRange, rightRange];
   }

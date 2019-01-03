@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, OnDestroy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Subscription, Observable } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
@@ -9,7 +9,7 @@ import { Segment, Segmentizer } from 'src/app/common/search-string-parser';
   templateUrl: './search-input.component.html',
   styleUrls: ['./search-input.component.scss']
 })
-export class SearchInputComponent implements OnInit {
+export class SearchInputComponent implements OnInit, OnDestroy {
   private readonly segmentizer: Segmentizer;
   private inputChangeSubscription: Subscription;
   readonly searchInput: FormControl;

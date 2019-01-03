@@ -6,6 +6,8 @@ export class AwaitableMap<K, V> implements Map<K, V> {
   private readonly _cleared: DeferredPromise;
   private readonly _deleted: DeferredPromise<K>;
 
+  [Symbol.toStringTag]: 'Map' = 'Map';
+
   get setted(): Promise<[K, V]> {
     return this._setted;
   }
@@ -18,8 +20,12 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     return this._deleted;
   }
 
-  constructor()
-  constructor(referenceMap: Map<K, V>)
+  get size(): number {
+    return this.backingMap.size;
+  }
+
+  constructor();
+  constructor(referenceMap: Map<K, V>);
   constructor(map = new Map<K, V>()) {
     this.backingMap = map;
 
@@ -28,8 +34,8 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     this._deleted = new DeferredPromise();
   }
 
-  static from<K, V>(map: Map<K, V>): AwaitableMap<K, V>
-  static from<K, V>(map: Map<K, V>, clone: boolean): AwaitableMap<K, V>
+  static from<K, V>(map: Map<K, V>): AwaitableMap<K, V>;
+  static from<K, V>(map: Map<K, V>, clone: boolean): AwaitableMap<K, V>;
   static from<K, V>(map: Map<K, V>, clone = true): AwaitableMap<K, V> {
     if (!clone) {
       return new AwaitableMap(map);
@@ -42,10 +48,6 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     }
 
     return awaitableMap;
-  }
-
-  get size(): number {
-    return this.backingMap.size;
   }
 
   [Symbol.iterator](): IterableIterator<[K, V]> {
@@ -113,6 +115,4 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     const union = this.backingMap.union(...maps);
     return AwaitableMap.from(union, false);
   }
-
-  [Symbol.toStringTag]: 'Map' = 'Map';
 }

@@ -1,5 +1,5 @@
-import { AwaitableList } from './collections/awaitable';
 import { DeferredPromise } from '../promise/deferred-promise';
+import { AwaitableList } from './collections/awaitable';
 
 export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
   private readonly _read: DeferredPromise;
@@ -58,7 +58,7 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
       }
 
       const out = this.buffer;
-      this.buffer = new AwaitableList();;
+      this.buffer = new AwaitableList();
 
       for (const { item, error } of out) {
         if (error != undefined) {

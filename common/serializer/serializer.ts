@@ -12,9 +12,10 @@ interface SerializerStatic {
 
   deserialize(serializedString: string): any;
   deserialize(serializedElement: SerializedElement): any;
-  deserialize(serializedStringOrElement: string | SerializedElement): any
+  deserialize(serializedStringOrElement: string | SerializedElement): any;
 }
 
+// tslint:disable-next-line: class-name
 class _Serializer {
   private static readonly handlers: SerializeHandler[] = [];
 
@@ -85,7 +86,7 @@ class _Serializer {
   }
 }
 
-const prototypeSerializeHandler = new PrototypeSerializeHandler()
+const prototypeSerializeHandler = new PrototypeSerializeHandler();
 
 const handlers: SerializeHandler[] = [
   new PrimitivesSerializeHandler(),

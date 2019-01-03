@@ -30,6 +30,13 @@ export class Timer {
   private elapsedNanoseconds: number;
   private begin: any | null;
 
+  static measure(func: () => void): number;
+  static measure(func: () => Promise<void>): Promise<number>;
+  static measure(func: () => void | Promise<void>): number | Promise<number> {
+    const timer = new Timer();
+    return timer.measure(func);
+  }
+
   constructor();
   constructor(start: boolean);
   constructor(start: boolean = false) {
@@ -94,13 +101,6 @@ export class Timer {
     } else {
       return this.milliseconds;
     }
-  }
-
-  static measure(func: () => void): number;
-  static measure(func: () => Promise<void>): Promise<number>;
-  static measure(func: () => void | Promise<void>): number | Promise<number> {
-    const timer = new Timer();
-    return timer.measure(func);
   }
 
   private read(): number {

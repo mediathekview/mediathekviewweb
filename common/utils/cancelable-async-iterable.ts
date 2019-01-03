@@ -1,6 +1,6 @@
+import { cancelablePromise } from '../promise/cancelable-promise';
 import { AnyIterable } from './any-iterable-iterator';
 import { iterableToAsyncIterator } from './async-iterable-helpers/to-iterator';
-import { cancelablePromise } from '../promise/cancelable-promise';
 
 export class CancelableAsyncIterable<T> implements AsyncIterable<T> {
   private readonly source: AnyIterable<T>;
@@ -26,8 +26,8 @@ export class CancelableAsyncIterable<T> implements AsyncIterable<T> {
       });
 
     const cancelabledIterator: AsyncIterator<T> = {
-      return: (value?: any) => iterator.return!(value),
-      throw: (e?: any) => iterator.throw!(e),
+      return: (value?: any) => iterator.return!(value), // tslint:disable-line: no-non-null-assertion
+      throw: (e?: any) => iterator.throw!(e), // tslint:disable-line: no-non-null-assertion
       next: async (value?: any) => {
         if (stop) {
           return { done: true, value: undefined as any };

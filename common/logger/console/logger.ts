@@ -1,3 +1,5 @@
+/* tslint:disable: no-console */
+
 import { formatError } from '../../utils';
 import { LogLevel } from '../level';
 import { LogEntry, Logger } from '../logger';

@@ -5,4 +5,4 @@ export type EntryMetadata = {
   averageRating: number;
   secondsPlayed: number;
   secondsPaused: number;
-}
+};

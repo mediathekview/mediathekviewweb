@@ -13,7 +13,7 @@ export class DateParser {
     let result: Date | null = null;
 
     const now = new Date();
-    let [, dayString, monthString, yearString] = match;
+    let [, dayString, monthString, yearString] = match; // tslint:disable-line: prefer-const
 
     let month = now.getMonth();
     let year = now.getFullYear();

@@ -60,7 +60,7 @@ export class TimeQueryValueBuilder {
 
     let timeString = (this._time instanceof Date) ? (Math.floor(this._time.getTime() / 1000) + '||') : this._time;
 
-    for (let offset of this.offsets) {
+    for (const offset of this.offsets) {
       const value = offset[0];
       const timeUnit = offset[1];
 

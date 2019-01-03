@@ -12,7 +12,7 @@ export abstract class PayloadAction<T> implements Action {
 export function createSimpleAction<T extends string>(type: T) {
   return class SimpleAction implements Action {
     readonly type: T = type;
-  }
+  };
 }
 
 export function createPayloadAction<T extends string, P>(type: T) {
@@ -23,5 +23,5 @@ export function createPayloadAction<T extends string, P>(type: T) {
     constructor(payload: P) {
       this.payload = payload;
     }
-  }
+  };
 }

@@ -26,7 +26,7 @@ export class TextQueryBuilder extends QueryBuilder {
 
   operator(operator: Operator): TextQueryBuilder {
     if (operator != 'or' && operator != 'and') {
-      throw new Error('operator is neither and nor or'); //just in case a passed string isn't and | or
+      throw new Error('operator is neither and nor or');
     }
 
     this._operator = operator;

@@ -1,5 +1,5 @@
-import { Timer } from './timer';
 import { getGetter } from './helpers';
+import { Timer } from './timer';
 
 const millisecondsPerTimerRead = measureTimerOverhead(3);
 
@@ -72,7 +72,7 @@ function measureTimerOverhead(runs: number) {
 
   const results: number[] = [];
 
-  runs += 1; //because first is skipped as warmup
+  runs += 1; // because first is skipped as warmup
   for (let i = 0; i < runs; i++) {
     const result = benchmark(1000000, millisecondsGetter);
 

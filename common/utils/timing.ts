@@ -18,7 +18,6 @@ export function timeout(milliseconds: number = 0): Promise<void> {
   return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 }
 
-
 export function cancelableTimeout(cancelPromise: Promise<void>): Promise<boolean>;
 export function cancelableTimeout(cancelPromise: Promise<void>, resolveOnCancel: boolean): Promise<boolean>;
 export function cancelableTimeout(cancelPromise: Promise<void>, milliseconds: number): Promise<boolean>;
@@ -66,7 +65,7 @@ export function animationFrame(): Promise<number> {
 }
 
 export function idle(): Promise<IdleDeadline>;
-export function idle(timeout: number): Promise<IdleDeadline>
+export function idle(timeout: number): Promise<IdleDeadline>;
 export function idle(timeout?: number): Promise<IdleDeadline> {
   return new Promise<IdleDeadline>((resolve) => requestIdleCallback(resolve, { timeout }));
 }

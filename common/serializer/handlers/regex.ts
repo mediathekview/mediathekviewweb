@@ -6,7 +6,7 @@ const TYPE = 'regexp';
 type SerializedRegexData = {
   pattern: string,
   flags: string
-}
+};
 
 export class RegexSerializeHandler implements SerializeHandler {
   canSerialize(obj: any): boolean {

@@ -31,6 +31,10 @@ export class SettingsService {
 
   saveSettings(settings: StringMap): void {
     for (const key in settings) {
+      if (!(settings as Object).hasOwnProperty(key)) {
+        continue;
+      }
+
       const value = settings[key];
       this.localStorageService.set(LOCAL_STORAGE_NAMESPACE, key, value);
     }

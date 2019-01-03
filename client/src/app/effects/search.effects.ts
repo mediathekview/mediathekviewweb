@@ -22,7 +22,7 @@ export class SearchEffects {
         .pipe(
           map((result) => new SearchSuccess({ ...result, items: [...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items] })),
           catchError((error) => of(new SearchError(error)))
-        )
+        );
     })
   );
 }

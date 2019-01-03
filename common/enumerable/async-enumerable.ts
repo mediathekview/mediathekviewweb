@@ -63,9 +63,9 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return result;
   }
 
-  single(): Promise<T>
-  single(predicate: AsyncPredicate<T>): Promise<T>
-  single(predicate?: AsyncPredicate<T>): Promise<T>
+  single(): Promise<T>;
+  single(predicate: AsyncPredicate<T>): Promise<T>;
+  single(predicate?: AsyncPredicate<T>): Promise<T>;
   async single(predicate?: AsyncPredicate<T>): Promise<T> {
     const result = await singleAsync(this.source, predicate);
     return result;

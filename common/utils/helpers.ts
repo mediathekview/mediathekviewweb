@@ -50,11 +50,11 @@ export function cloneOwnProperties(obj: any): any {
   return result;
 }
 
-export function throttleFunction(func: () => void, interval: number): () => void
-export function throttleFunction<T>(func: (arg: T) => void, interval: number): (arg: T) => void
-export function throttleFunction<T1, T2>(func: (arg1: T1, arg2: T2) => void, interval: number): (arg1: T1, arg2: T2) => void
-export function throttleFunction<T1, T2, T3>(func: (arg1: T1, arg2: T2, arg3: T3) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3) => void
-export function throttleFunction<T1, T2, T3, T4>(func: (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void
+export function throttleFunction(func: () => void, interval: number): () => void;
+export function throttleFunction<T>(func: (arg: T) => void, interval: number): (arg: T) => void;
+export function throttleFunction<T1, T2>(func: (arg1: T1, arg2: T2) => void, interval: number): (arg1: T1, arg2: T2) => void;
+export function throttleFunction<T1, T2, T3>(func: (arg1: T1, arg2: T2, arg3: T3) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3) => void;
+export function throttleFunction<T1, T2, T3, T4>(func: (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void, interval: number): (arg1: T1, arg2: T2, arg3: T3, arg4: T4) => void;
 export function throttleFunction(func: (...args: any[]) => void, interval: number): (...args: any[]) => void {
   let lastCall = 0;
   let nextArguments: any[];
@@ -117,11 +117,14 @@ export function toError(obj: any): Error {
     return obj;
   }
 
-  let message = 'take a look at the data property of error';
+  let message: string;
 
   try {
     message = JSON.stringify(obj);
-  } catch { }
+  }
+  catch {
+    message = 'serialization of error reason failed. Take a look at the data property of this error instance.';
+  }
 
   const error = new Error(message);
   (error as any)['data'] = obj;

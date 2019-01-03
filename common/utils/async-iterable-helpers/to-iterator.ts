@@ -11,7 +11,8 @@ export function iterableToAsyncIterator<T>(iterable: AnyIterable<T>): AsyncItera
   }
   else if (isAsyncIterable(iterable)) {
     asyncIterator = iterable[Symbol.asyncIterator]();
-  } else {
+  }
+  else {
     throw new Error('parameter is neither iterable nor async-iterable');
   }
 
@@ -24,11 +25,11 @@ export function iteratorToAsyncIterator<T>(iterator: AnyIterator<T>): AsyncItera
   };
 
   if (iterator.return != undefined) {
-    asyncIterator.return = (value?: any) => (value instanceof Promise) ? value : Promise.resolve(iterator.return!(value));
+    asyncIterator.return = (value?: any) => (value instanceof Promise) ? value : Promise.resolve(iterator.return!(value)); // tslint:disable-line: no-non-null-assertion
   }
 
   if (iterator.throw != undefined) {
-    asyncIterator.throw = (e?: any) => (e instanceof Promise) ? e : Promise.resolve(iterator.throw!(e));
+    asyncIterator.throw = (e?: any) => (e instanceof Promise) ? e : Promise.resolve(iterator.throw!(e)); // tslint:disable-line: no-non-null-assertion
   }
 
   return asyncIterator;

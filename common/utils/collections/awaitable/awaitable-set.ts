@@ -7,6 +7,8 @@ export class AwaitableSet<T> implements Set<T> {
   private readonly _deleted: DeferredPromise<T>;
   private readonly _cleared: DeferredPromise;
 
+  [Symbol.toStringTag]: 'Set' = 'Set';
+
   get added(): Promise<T | T[]> {
     return this._added;
   }
@@ -19,16 +21,16 @@ export class AwaitableSet<T> implements Set<T> {
     return this._deleted;
   }
 
+  get size(): number {
+    return this.backingSet.size;
+  }
+
   constructor() {
     this.backingSet = new Set();
 
     this._added = new DeferredPromise();
     this._cleared = new DeferredPromise();
     this._deleted = new DeferredPromise();
-  }
-
-  get size(): number {
-    return this.backingSet.size;
   }
 
   add(value: T): this {
@@ -74,20 +76,18 @@ export class AwaitableSet<T> implements Set<T> {
   }
 
   entries(): IterableIterator<[T, T]> {
-    return this.backingSet.entries()
+    return this.backingSet.entries();
   }
 
   keys(): IterableIterator<T> {
-    return this.backingSet.keys()
+    return this.backingSet.keys();
   }
 
   values(): IterableIterator<T> {
-    return this.backingSet.values()
+    return this.backingSet.values();
   }
 
   [Symbol.iterator](): IterableIterator<T> {
     return this.backingSet[Symbol.iterator]();
   }
-
-  [Symbol.toStringTag]: 'Set' = 'Set';
 }

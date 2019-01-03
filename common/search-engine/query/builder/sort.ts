@@ -7,8 +7,8 @@ export class SortBuilder {
     this._sort = [];
   }
 
-  add(field: string, order: Order): this
-  add(field: string, order: Order, aggregation: Aggregation): this
+  add(field: string, order: Order): this;
+  add(field: string, order: Order, aggregation: Aggregation): this;
   add(field: string, order: Order, aggregation?: Aggregation): this {
     const sort: Sort = {
       field,

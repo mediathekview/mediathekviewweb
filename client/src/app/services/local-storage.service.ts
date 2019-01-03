@@ -5,8 +5,6 @@ import { SyncEnumerable } from '../common/enumerable';
   providedIn: 'root'
 })
 export class LocalStorageService {
-  constructor() { }
-
   set(namespace: string, key: string, value: any): void {
     const serializedValue = JSON.stringify(value);
     const storageKey = `${namespace}:${key}`;
@@ -26,6 +24,7 @@ export class LocalStorageService {
       }
     }
     catch (error) {
+      // tslint:disable-next-line: no-console
       console.error(error);
     }
 

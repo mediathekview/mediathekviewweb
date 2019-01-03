@@ -1,9 +1,9 @@
 import { AnyIterable } from '../any-iterable-iterator';
 import { AsyncPredicate } from './types';
 
-export async function singleAsync<T>(iterable: AnyIterable<T>): Promise<T>
-export async function singleAsync<T>(iterable: AnyIterable<T>, predicate: AsyncPredicate<T>): Promise<T>
-export async function singleAsync<T>(iterable: AnyIterable<T>, predicate?: AsyncPredicate<T>): Promise<T>
+export async function singleAsync<T>(iterable: AnyIterable<T>): Promise<T>;
+export async function singleAsync<T>(iterable: AnyIterable<T>, predicate: AsyncPredicate<T>): Promise<T>;
+export async function singleAsync<T>(iterable: AnyIterable<T>, predicate?: AsyncPredicate<T>): Promise<T>;
 export async function singleAsync<T>(iterable: AnyIterable<T>, predicate: AsyncPredicate<T> = (() => true)): Promise<T> {
   let matched = false;
   let result: T | undefined;

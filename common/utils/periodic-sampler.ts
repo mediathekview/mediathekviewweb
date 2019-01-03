@@ -48,10 +48,10 @@ export class PeriodicSampler {
     await this.stopped;
   }
 
-  watch(): Observable<number>
-  watch(threshold: number): Observable<number>
-  watch(threshold: number, samples: number): Observable<number>
-  watch(threshold: number, samples: number, aggregation: AggregationMode): Observable<number>
+  watch(): Observable<number>;
+  watch(threshold: number): Observable<number>;
+  watch(threshold: number, samples: number): Observable<number>;
+  watch(threshold: number, samples: number, aggregation: AggregationMode): Observable<number>;
   watch(threshold: number = 0, samples: number = 1, aggregation: AggregationMode = AggregationMode.Maximum): Observable<number> {
     const observable = this.subject.pipe(
       bufferCount(samples),

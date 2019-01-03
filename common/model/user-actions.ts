@@ -10,12 +10,12 @@ export type Agent = {
   },
   referrer: string,
   timestamp: number
-}
+};
 
 export type Timing = {
   source: string,
   data: StringMap
-}
+};
 
 export enum UserActionType {
   Visit = 'visit',
@@ -34,46 +34,46 @@ export type UserAction = Entity & {
   timestamp: number,
   visitId: string,
   pageViewId: string
-}
+};
 
 type EntryAction = UserAction & {
   entryID: string
-}
+};
 
 type PlayPause = EntryAction & {
   seconds: number
-}
+};
 
 export type Visit = UserAction & {
   actionType: UserActionType.Visit,
   route: string,
   agent: Agent,
   timings: Timing[]
-}
+};
 
 export type Download = EntryAction & {
   actionType: UserActionType.Download,
   quality: Quality
-}
+};
 
 export type Play = PlayPause & {
   actionType: UserActionType.Play,
   quality: Quality
-}
+};
 
 export type Pause = PlayPause & {
   actionType: UserActionType.Pause,
-}
+};
 
 export type Comment = EntryAction & {
   actionType: UserActionType.Comment,
   text: string
-}
+};
 
 export type Rating = EntryAction & {
   actionType: UserActionType.Rating,
   value: number
-}
+};
 
 export type UserActionWithPartialId = EntityWithPartialId<UserAction>;
 

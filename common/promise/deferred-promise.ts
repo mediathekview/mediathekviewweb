@@ -53,7 +53,7 @@ export class DeferredPromise<T = void> implements Promise<T> {
   }
 
   resolve(value?: T | PromiseLike<T>): this {
-    this.ensurePendingState(value);
+    this.ensurePendingState();
 
     this.resolvePromise(value);
     this._resolved = true;
@@ -82,9 +82,8 @@ export class DeferredPromise<T = void> implements Promise<T> {
     return this;
   }
 
-  private ensurePendingState(value?: any) {
+  private ensurePendingState() {
     if (this.resolved) {
-      console.log(value)
       throw new Error('promise already resolved');
     }
 

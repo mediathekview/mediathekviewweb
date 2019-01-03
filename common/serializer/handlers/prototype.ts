@@ -6,7 +6,7 @@ import { Serializer } from '../serializer';
 type SerializedInstanceData = {
   prototype: string;
   data: any;
-}
+};
 
 type SerializedInstance = SerializedElement<SerializedInstanceData>;
 

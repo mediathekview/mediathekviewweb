@@ -74,7 +74,7 @@ export function validateType(value: unknown, ...types: ValidationTypes[]): Prope
     const error: PropertyValidationError = {
       message: `invalid type ${typeof value}`,
       hint: `value must be of type ${allowedTypesString}`
-    }
+    };
 
     return error;
   }
