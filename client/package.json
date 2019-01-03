@@ -13,19 +13,19 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "bootstrap": "^3.3.7",
+    "bootstrap": "^3.4.0",
     "datatables.net": "^1.10.19",
     "jquery": "^3.3.1",
     "js-cookie": "^2.2.0",
     "lodash": "^4.17.11",
     "moment": "^2.23.0",
     "socket.io-client": "^2.2.0",
-    "video.js": "^7.3.0"
+    "video.js": "^7.4.1"
   },
   "devDependencies": {
     "@types/bootstrap": "^3.3.40",
-    "@types/datatables.net": "^1.10.13",
-    "@types/jquery": "^3.3.28",
+    "@types/datatables.net": "^1.10.14",
+    "@types/jquery": "^3.3.29",
     "@types/lodash": "^4.14.119",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.2.5",
