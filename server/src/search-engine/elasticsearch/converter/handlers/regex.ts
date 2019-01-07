@@ -1,14 +1,14 @@
 import { RegexQuery } from '../../../../common/search-engine/query';
-import { ConvertHandler } from '../convert-handler';
+import { ConvertHandler, ConvertResult } from '../convert-handler';
 
-type ElasticsearchRegexQuery = { regexp: StringMap<string> }
+type ElasticsearchRegexQuery = { regexp: StringMap<string> };
 
 export class RegexQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: RegexQuery, _index: string, _type: string): object | null {
+  tryConvert(query: RegexQuery, _index: string, _type: string): ConvertResult {
     const canHandle = ('regex' in query);
 
     if (!canHandle) {
-      return null;
+      return false;
     }
 
     const queryObject: ElasticsearchRegexQuery = {

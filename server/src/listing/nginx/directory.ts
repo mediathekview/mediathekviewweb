@@ -11,10 +11,10 @@ const SIZE_REGEX = /^(\d+)((?:K|M|G)?)$/;
 type ParseResult = { files: HttpFile[], directories: NginxDirectory[] };
 
 export class NginxDirectory implements Directory {
-  private fetchPromise: Promise<ParseResult> | null = null;
+  private fetchPromise: Promise<ParseResult> | undefined;
 
-  private files: HttpFile[] | null = null;
-  private directories: NginxDirectory[] | null = null;
+  private files: HttpFile[] | undefined;
+  private directories: NginxDirectory[] | undefined;
 
   resource: string;
   name: string;
@@ -29,7 +29,7 @@ export class NginxDirectory implements Directory {
   getFiles(): AsyncEnumerable<HttpFile>;
   getFiles(recursive: boolean): AsyncIterable<HttpFile>;
   async *getFiles(recursive: boolean = false): AsyncIterable<HttpFile> {
-    if (this.files == null) {
+    if (this.files == undefined) {
       const result = await this.fetch();
       this.files = result.files;
     }
@@ -45,10 +45,8 @@ export class NginxDirectory implements Directory {
     }
   }
 
-  getDirectories(): AsyncIterable<NginxDirectory>;
-  getDirectories(recursive: boolean): AsyncIterable<NginxDirectory>;
   async *getDirectories(recursive: boolean = false): AsyncIterable<NginxDirectory> {
-    if (this.directories == null) {
+    if (this.directories == undefined) {
       const result = await this.fetch();
       this.directories = result.directories;
     }
@@ -65,7 +63,7 @@ export class NginxDirectory implements Directory {
   }
 
   private fetch(): Promise<ParseResult> {
-    if (this.fetchPromise == null) {
+    if (this.fetchPromise == undefined) {
       this.fetchPromise = new Promise<ParseResult>(async (resolve, reject) => {
         const response = await HttpClient.getString(this.resource);
 
@@ -93,32 +91,32 @@ export class NginxDirectory implements Directory {
     const files: HttpFile[] = [];
     const directories: NginxDirectory[] = [];
 
-    for (let match of matches) {
+    for (const match of matches) {
       const parsedMatch = this.parseMatch(match);
 
-      if (parsedMatch.directory != null) {
+      if (parsedMatch.directory != undefined) {
         directories.push(parsedMatch.directory);
       }
 
-      if (parsedMatch.file != null) {
+      if (parsedMatch.file != undefined) {
         files.push(parsedMatch.file);
       }
     }
 
     return {
-      files: files,
-      directories: directories
+      files,
+      directories
     };
   }
 
-  private parseMatch(match: RegExpExecArray): { directory: NginxDirectory | null, file: HttpFile | null } {
+  private parseMatch(match: RegExpExecArray): { directory: NginxDirectory | undefined, file: HttpFile | undefined } {
     const [fullMatch, href, name, date, time, size] = match;
 
     const url = URL.resolve(this.resource, href);
     const parsedDate = this.parseDate(date, time);
 
-    let directory: NginxDirectory | null = null;
-    let file: HttpFile | null = null;
+    let directory: NginxDirectory | undefined;
+    let file: HttpFile | undefined;
 
     if (url.endsWith('/')) {
       const slicedName = name.slice(0, -1);
@@ -129,8 +127,8 @@ export class NginxDirectory implements Directory {
     }
 
     return {
-      directory: directory,
-      file: file
+      directory,
+      file
     };
   }
 
@@ -146,7 +144,7 @@ export class NginxDirectory implements Directory {
   private parseSize(sizeString: string): number {
     const match = sizeString.match(SIZE_REGEX);
 
-    if (match == null) {
+    if (match == undefined) {
       throw new Error('sizeString did not match regex');
     }
 

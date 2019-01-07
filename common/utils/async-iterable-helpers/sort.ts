@@ -2,16 +2,11 @@ import { AnyIterable } from '../any-iterable-iterator';
 import { toArrayAsync } from './to-array';
 import { AsyncComparator } from './types';
 
-export function sortAsync<T>(iterable: AnyIterable<T>): AsyncIterable<T>;
-export function sortAsync<T>(iterable: AnyIterable<T>, comparator: AsyncComparator<T>): AsyncIterable<T>;
 export function sortAsync<T>(iterable: AnyIterable<T>, comparator?: AsyncComparator<T>): AsyncIterable<T> {
-  let sortedAsyncIterable: AsyncIterable<T>;
-
-  if (comparator == undefined) {
-    sortedAsyncIterable = sortWithoutComparator(iterable);
-  } else {
-    sortedAsyncIterable = sortWithComparator(iterable, comparator);
-  }
+  const sortedAsyncIterable =
+    (comparator == undefined)
+      ? sortWithoutComparator(iterable)
+      : sortWithComparator(iterable, comparator);
 
   return sortedAsyncIterable;
 }

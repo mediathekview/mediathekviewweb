@@ -1,12 +1,12 @@
 import { AsyncDisposer } from '../common/disposable';
 import { EntriesImporter } from '../entries-importer/importer';
 import { InstanceProvider } from '../instance-provider';
+import { MicroServiceBase } from '../micro-service-base';
 import { MicroService } from '../service';
-import { MicroServiceBase } from '../service-base';
 
 export class ImporterService extends MicroServiceBase implements MicroService {
-  private disposer: AsyncDisposer;
-  private importer: EntriesImporter;
+  private readonly disposer: AsyncDisposer;
+  private readonly importer: EntriesImporter;
 
   constructor() {
     super('Importer');

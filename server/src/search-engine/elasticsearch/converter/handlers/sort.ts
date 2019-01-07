@@ -1,14 +1,12 @@
 import { Aggregation, Sort } from '../../../../common/search-engine/query';
 
-type ElasticsearchSortOrder = 'asc' | 'desc'
-type ElasticsearchSortMode = 'min' | 'max' | 'sum' | 'avg' | 'median'
-type ElasticsearchSort = string | StringMap<{ order?: ElasticsearchSortOrder, mode?: ElasticsearchSortMode }> | StringMap<ElasticsearchSortOrder>
+type ElasticsearchSortOrder = 'asc' | 'desc';
+type ElasticsearchSortMode = 'min' | 'max' | 'sum' | 'avg' | 'median';
+type ElasticsearchSort = string | StringMap<{ order?: ElasticsearchSortOrder, mode?: ElasticsearchSortMode }> | StringMap<ElasticsearchSortOrder>;
 
 export class SortConverter {
   private readonly sortKeywordRewrite: Set<string>;
 
-  constructor();
-  constructor(sortKeywordRewrite: Set<string>);
   constructor(sortKeywordRewrite: Set<string> = new Set()) {
     this.sortKeywordRewrite = sortKeywordRewrite;
   }
@@ -31,10 +29,7 @@ export class SortConverter {
       const order = (sort.order == 'ascending') ? 'asc' : 'desc';
       const mode = this.aggregationToMode(sort.aggregation);
 
-      sortObj[field] = {
-        order: order,
-        mode: mode
-      }
+      sortObj[field] = { order, mode };
     }
 
     return sortObj;

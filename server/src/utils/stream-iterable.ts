@@ -4,13 +4,11 @@ import { DeferredPromise } from '../common/utils';
 export class StreamIterable<T> implements AsyncIterable<T> {
   private readonly stream: Readable;
   private readonly readSize: number | undefined;
+  private readonly readable: DeferredPromise;
 
   private end: boolean;
-  private readable: DeferredPromise;
 
-  constructor(stream: Readable)
-  constructor(stream: Readable, readSize: number)
-  constructor(stream: Readable, readSize: number | undefined = undefined) {
+  constructor(stream: Readable, readSize?: number) {
     this.stream = stream;
     this.readSize = readSize;
 
@@ -28,20 +26,25 @@ export class StreamIterable<T> implements AsyncIterable<T> {
       await this.readable;
       this.readable.reset();
 
-      let chunk;
-      while ((chunk = this.stream.read(this.readSize)) != null) {
+      while (true) {
+        const chunk = this.stream.read(this.readSize) as T;
+
+        if (chunk === null) {
+          break;
+        }
+
         yield chunk;
       }
     }
   }
 
-  private handleReadable() {
+  private handleReadable(): void {
     if (this.readable.pending) {
       this.readable.resolve();
     }
   }
 
-  private handleEnd() {
+  private handleEnd(): void {
     this.end = true;
 
     if (this.readable.pending) {

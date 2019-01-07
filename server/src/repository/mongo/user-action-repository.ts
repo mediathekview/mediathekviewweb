@@ -14,16 +14,16 @@ export class MongoUserActionRepository implements UserActionRepository {
     this.baseRepository = new MongoBaseRepository(collection);
   }
 
-  save(action: UserActionWithPartialId): Promise<UserAction> {
-    return this.baseRepository.save(action);
+  async save(action: UserActionWithPartialId): Promise<UserAction> {
+    return await this.baseRepository.save(action);
   }
 
   async saveMany(actions: UserActionWithPartialId[]): Promise<UserAction[]> {
     return await this.baseRepository.saveMany(actions);
   }
 
-  load(id: string): Promise<UserAction | null> {
-    return this.baseRepository.load(id);
+  async load(id: string): Promise<UserAction | undefined> {
+    return await this.baseRepository.load(id);
   }
 
   loadManyById(ids: string[]): AsyncIterable<UserAction> {
@@ -35,7 +35,7 @@ export class MongoUserActionRepository implements UserActionRepository {
     return this.baseRepository.loadManyByFilter(dotNotatedFilter);
   }
 
-  drop(): Promise<void> {
-    return this.baseRepository.drop();
+  async drop(): Promise<void> {
+    await this.baseRepository.drop();
   }
 }

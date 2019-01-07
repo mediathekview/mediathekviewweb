@@ -19,4 +19,4 @@ export type BSONType =
   | 18 | 'long'
   | 19 | 'decimal'
   | -1 | 'minKey'
-  | 127 | 'maxKey'
+  | 127 | 'maxKey';

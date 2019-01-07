@@ -6,4 +6,4 @@ export enum ResourceType {
 export type Resource = {
   type: ResourceType,
   uri: string
-}
+};

@@ -1,5 +1,5 @@
 import { RangeQuery } from '../../../../common/search-engine/query';
-import { ConvertHandler } from '../convert-handler';
+import { ConvertHandler, ConvertResult } from '../convert-handler';
 
 type ElasticsearchRangeQueryValue = number | string;
 
@@ -16,11 +16,11 @@ type ElasticsearchRangeQuery = {
 };
 
 export class RangeQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: RangeQuery, _index: string, _type: string): object | null {
+  tryConvert(query: RangeQuery, _index: string, _type: string): ConvertResult {
     const canHandle = ('range' in query);
 
     if (!canHandle) {
-      return null;
+      return false;
     }
 
     const queryObj: ElasticsearchRangeQuery = {

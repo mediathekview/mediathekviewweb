@@ -1,4 +1,4 @@
-export type LockedFunction = (controller: LockController) => any | Promise<any>;
+export type LockedFunction = (controller: LockController) => Promise<void> | void;
 
 export interface LockController {
   readonly lost: boolean;

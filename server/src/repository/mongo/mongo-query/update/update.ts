@@ -1,3 +1,3 @@
 import { FieldOperator } from './field-operator';
 
-export type MongoUpdate = FieldOperator
+export type MongoUpdate = FieldOperator;

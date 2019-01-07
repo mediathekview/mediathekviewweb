@@ -1,8 +1,15 @@
 import { BoolQuery, QueryBody } from '../../../../common/search-engine/query';
-import { ConvertHandler } from '../convert-handler';
+import { ConvertHandler, ConvertResult } from '../convert-handler';
 import { Converter } from '../converter';
 
-type ElasticsearchBooleanQuery = { bool: { must?: object, should?: object, must_not?: object, filter?: object } }
+type ElasticsearchBooleanQuery = {
+  bool: {
+    must?: object,
+    should?: object,
+    must_not?: object,
+    filter?: object
+  }
+};
 
 export class BoolQueryConvertHandler implements ConvertHandler {
   private readonly converter: Converter;
@@ -11,11 +18,11 @@ export class BoolQueryConvertHandler implements ConvertHandler {
     this.converter = converter;
   }
 
-  tryConvert(query: BoolQuery, index: string, type: string): object | null {
-    const canHandle = ('bool' in query);
+  tryConvert(query: BoolQuery, index: string, type: string): ConvertResult {
+    const canHandle = query.hasOwnProperty('bool');
 
     if (!canHandle) {
-      return null;
+      return { success: false };
     }
 
     const queryObj: ElasticsearchBooleanQuery = {
@@ -27,7 +34,7 @@ export class BoolQueryConvertHandler implements ConvertHandler {
       }
     };
 
-    return queryObj;
+    return { success: true, result: queryObj };
   }
 
   private convertArray(queries: QueryBody[] | undefined, index: string, type: string): object[] | undefined {

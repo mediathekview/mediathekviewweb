@@ -1,6 +1,6 @@
 import { SearchParams } from 'elasticsearch';
 import { QueryBody, SearchQuery } from '../../../common/search-engine/query';
-import { ConvertHandler } from './convert-handler';
+import { ConvertHandler, ConvertResult } from './convert-handler';
 import { SortConverter } from './handlers';
 
 const DEFAULT_LIMIT = 25;
@@ -15,7 +15,7 @@ export class Converter {
     this.sortConverter = sortConverter;
   }
 
-  registerHandler(...handlers: ConvertHandler[]) {
+  registerHandler(...handlers: ConvertHandler[]): void {
     this.handlers.push(...handlers);
   }
 
@@ -38,31 +38,31 @@ export class Converter {
       from: query.skip,
       size: query.limit,
       body: {
-        query: queryBody
+        query: queryBody,
+        sort: this.getSort(query)
       }
     };
 
-    this.setSort(query, elasticQuery);
-
     return elasticQuery;
-  }
-
-  private setSort(query: SearchQuery, elasticQuery: SearchParams) {
-    if (query.sort != undefined && query.sort.length > 0) {
-      const sort = query.sort.map((sort) => this.sortConverter.convert(sort));
-      elasticQuery.body['sort'] = sort;
-    }
   }
 
   convertBody(queryBody: QueryBody, index: string, type: string): object {
     for (const handler of this.handlers) {
       const converted = handler.tryConvert(queryBody, index, type);
 
-      if (converted != null) {
+      if (converted.success) {
         return converted;
       }
     }
 
     throw new Error('not suitable handler for query available');
+  }
+
+  private getSort(query: SearchQuery): object | undefined {
+    if (query.sort == undefined || query.sort.length == 0) {
+      return undefined;
+    }
+
+    return query.sort.map((sort) => this.sortConverter.convert(sort));
   }
 }

@@ -1,9 +1,9 @@
 import * as LZMA from 'lzma-native';
-import { Readable, Duplex } from 'stream';
+import { Readable } from 'stream';
 
 export function decompress(stream: Readable): Readable {
-    const decompressor = LZMA.createDecompressor() as Duplex;
+  const decompressor = LZMA.createDecompressor();
+  const decompressedStream = stream.pipe(decompressor);
 
-    const decompressedStream = stream.pipe(decompressor);
-    return decompressedStream;
+  return decompressedStream;
 }

@@ -1,7 +1,7 @@
 import { FilmlistManager } from '../entry-source/filmlist/filmlist-manager';
 import { InstanceProvider } from '../instance-provider';
+import { MicroServiceBase } from '../micro-service-base';
 import { MicroService } from '../service';
-import { MicroServiceBase } from '../service-base';
 
 export class FilmlistManagerService extends MicroServiceBase implements MicroService {
   private readonly filmlistManager: FilmlistManager;

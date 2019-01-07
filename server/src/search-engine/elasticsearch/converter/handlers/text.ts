@@ -1,12 +1,11 @@
 import { TextQuery } from '../../../../common/search-engine/query';
-import { ConvertHandler } from '../convert-handler';
+import { ConvertHandler, ConvertResult } from '../convert-handler';
 
 type ElasticsearchMatchOperator = 'and' | 'or';
+
 type ElasticsearchMatchType = { query: string, operator: ElasticsearchMatchOperator };
 
-type ElasticsearchMatchQuery = {
-  match: StringMap<ElasticsearchMatchType>
-};
+type ElasticsearchMatchQuery = { match: StringMap<ElasticsearchMatchType> };
 
 type ElasticsearchMultiMatchType = 'best_fields' | 'most_fields' | 'cross_fields' | 'phrase' | 'phrase_prefix';
 
@@ -17,14 +16,14 @@ type ElasticsearchMultiMatchQuery = {
     query: string,
     operator: ElasticsearchMatchOperator
   }
-}
+};
 
 export class TextQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: TextQuery, _index: string, _type: string): object | null {
-    const canHandle = ('text' in query);
+  tryConvert(query: TextQuery, _index: string, _type: string): ConvertResult {
+    const canHandle = query.hasOwnProperty('text');
 
     if (!canHandle) {
-      return null;
+      return false;
     }
 
     let queryObject: object;
@@ -40,7 +39,7 @@ export class TextQueryConvertHandler implements ConvertHandler {
     return queryObject;
   }
 
-  convertToMatch(field: string, text: string, operator: ElasticsearchMatchOperator): ElasticsearchMatchQuery {
+  private convertToMatch(field: string, text: string, operator: ElasticsearchMatchOperator): ElasticsearchMatchQuery {
     const queryObj: ElasticsearchMatchQuery = {
       match: {
         [field]: {
@@ -53,7 +52,7 @@ export class TextQueryConvertHandler implements ConvertHandler {
     return queryObj;
   }
 
-  convertToMultiMatch(query: TextQuery): ElasticsearchMultiMatchQuery {
+  private convertToMultiMatch(query: TextQuery): ElasticsearchMultiMatchQuery {
     const queryObj: ElasticsearchMultiMatchQuery = {
       multi_match: {
         type: 'cross_fields',

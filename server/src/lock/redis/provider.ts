@@ -15,13 +15,13 @@ export class RedisLockProvider implements LockProvider {
   }
 
   get(key: string): RedisLock {
-    key = `lock:${key}`;
+    const lockKey = `lock:${key}`;
 
-    const lock = new RedisLock(this.redis, key, this.logger);
+    const lock = new RedisLock(this.redis, lockKey, this.logger);
     return lock;
   }
 
-  private defineCommands() {
+  private defineCommands(): void {
     this.redis.defineCommand('lock:acquire', {
       numberOfKeys: 1,
       lua: `

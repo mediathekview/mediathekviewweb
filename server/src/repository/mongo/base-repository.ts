@@ -1,7 +1,6 @@
 import * as Mongo from 'mongodb';
-import { AsyncEnumerable, SyncEnumerable } from '../../common/enumerable';
+import { SyncEnumerable } from '../../common/enumerable';
 import { Entity } from '../../common/model';
-import { AnyIterable } from '../../common/utils';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter, TypedMongoFilter } from './mongo-query';
 import { objectIdOrStringToString, UpsertedIds } from './utils';
@@ -17,11 +16,11 @@ export class MongoBaseRepository<T extends Entity> {
 
   async save(entity: TWithPartialId<T>): Promise<T> {
     const savedEntities = await this.saveMany([entity]);
-    return await SyncEnumerable.from(savedEntities).single();
+    return SyncEnumerable.from(savedEntities).single(); // tslint:disable-line: newline-per-chained-call
   }
 
-  async saveMany(entities: TWithPartialId<T>[]): Promise<T[]> {
-    const operations = entities.map((entity) => toReplaceOneOperation(entity));
+  async saveMany(entities: Array<TWithPartialId<T>>): Promise<T[]> {
+    const operations = entities.map(toReplaceOneOperation);
     const bulkWriteResult = await this.collection.bulkWrite(operations);
     const upsertedIds = bulkWriteResult.upsertedIds as UpsertedIds;
     const savedEntities = entities.map((entity, index) => {
@@ -38,13 +37,13 @@ export class MongoBaseRepository<T extends Entity> {
     return savedEntities;
   }
 
-  async load(id: string): Promise<T | null> {
+  async load(id: string): Promise<T | undefined> {
     const filter = {
       _id: id
     };
 
     const document = await this.collection.findOne(filter);
-    const entity = (document == null) ? null : toEntity(document);
+    const entity = (document == undefined) ? undefined : toEntity(document);
 
     return entity;
   }
@@ -57,28 +56,31 @@ export class MongoBaseRepository<T extends Entity> {
     return this.loadManyByFilter(filter);
   }
 
-  async *loadManyByFilter(filter: MongoFilter) {
+  async *loadManyByFilter(filter: MongoFilter): AsyncIterableIterator<T> {
     const cursor = this.collection.find<MongoDocument<T>>(filter);
 
-    let document: MongoDocument<T> | null;
-    while ((document = await cursor.next()) != null) {
+    while (true) {
+      const document = await cursor.next();
+
+      if (document === null) {
+        break;
+      }
+
       const entity = toEntity(document);
       yield entity;
     }
   }
 
-  async has(id: string) {
+  async has(id: string): Promise<boolean> {
     const cursor = this.collection.find({ _id: id });
     const count = await cursor.count();
 
     return count > 0;
   }
 
-  async hasMany(ids: AnyIterable<string>) {
-    const array = await AsyncEnumerable.from(ids).toArray();
-
+  async hasMany(ids: string[]): Promise<string[]> {
     const filter: MongoFilter = {
-      _id: { $in: array }
+      _id: { $in: ids }
     };
 
     const result = await this.collection.distinct('_id', filter) as string[];
@@ -90,11 +92,11 @@ export class MongoBaseRepository<T extends Entity> {
   }
 }
 
-function toReplaceOneOperation<T extends Entity>(entity: TWithPartialId<T>) {
+function toReplaceOneOperation<T extends Entity>(entity: TWithPartialId<T>): object {
   const filter: TypedMongoFilter<T> = {};
 
   if (entity.id != undefined) {
-    filter['_id'] = entity.id;
+    filter._id = entity.id;
   }
 
   const replacement = toMongoDocumentWithPartialId(entity);

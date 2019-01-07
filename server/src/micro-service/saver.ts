@@ -1,7 +1,7 @@
-import { MicroServiceBase } from '../service-base';
-import { MicroService } from '../service';
 import { EntriesSaver } from '../entries-saver/saver';
 import { InstanceProvider } from '../instance-provider';
+import { MicroServiceBase } from '../micro-service-base';
+import { MicroService } from '../service';
 
 export class SaverService extends MicroServiceBase implements MicroService {
   private readonly entriesSaver: EntriesSaver;

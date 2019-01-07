@@ -5,8 +5,17 @@ import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/searc
 import { SearchQuery } from '../../common/search-engine/query';
 import { Converter } from './converter';
 
-type ElasticsearchBulkResponse = { took: number, errors: boolean, items: StringMap<ElasticsearchBulkResponseItem>[] };
-type ElasticsearchBulkResponseItem = { [key: string]: any, status: number, error?: any };
+type ElasticsearchBulkResponse = {
+  took: number,
+  errors: boolean,
+  items: StringMap<ElasticsearchBulkResponseItem>[]
+};
+
+type ElasticsearchBulkResponseItem = {
+  [key: string]: any,
+  status: number,
+  error?: any
+};
 
 export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly client: Elasticsearch.Client;
@@ -20,9 +29,6 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
   private disposing: boolean;
 
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger, indexSettings: object);
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger, indexSettings: object, indexMapping: object);
   constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, typeName: string, lockProvider: LockProvider, logger: Logger, indexSettings?: object, indexMapping?: object) {
     this.client = client;
     this.converter = converter;
@@ -64,11 +70,11 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       index: this.indexName,
       type: this.typeName,
       refresh: false,
-      body: [] as any[]
+      body: [] as any[] // tslint:disable-line: no-any
     };
 
     for (const item of items) {
-      bulkRequest.body.push(
+      bulkRequest.body.push( // tslint:disable-line: no-unsafe-any space-within-parens
         { index: { _id: item.id } },
         item.document
       );
@@ -77,7 +83,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     const response = await this.client.bulk(bulkRequest) as ElasticsearchBulkResponse;
 
     if (response.errors) {
-      throw new Error(JSON.stringify(response, null, 2));
+      throw new Error(JSON.stringify(response, undefined, 2));
     }
   }
 
@@ -90,7 +96,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     const searchResult: SearchResult<T> = {
       total: result.hits.total,
       milliseconds: result.took,
-      items: items
+      items
     };
 
     return searchResult;

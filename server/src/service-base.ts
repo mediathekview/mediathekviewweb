@@ -1,5 +1,5 @@
 import { DeferredPromise } from './common/utils';
-import { MicroService, Service } from './service';
+import { Service } from './service';
 
 export enum ServiceState {
   Uninitialized,
@@ -13,7 +13,7 @@ export enum ServiceState {
 }
 
 export abstract class ServiceBase implements Service {
-  private readonly _stopRequestedPromise: DeferredPromise<void>;
+  private readonly _stopRequestedPromise: DeferredPromise;
 
   private _stopRequested: boolean;
   private state: ServiceState;
@@ -35,11 +35,6 @@ export abstract class ServiceBase implements Service {
     this._stopRequested = false;
     this._stopRequestedPromise = new DeferredPromise();
   }
-
-  protected abstract _dispose(): Promise<void>;
-  protected abstract _initialize(): Promise<void>;
-  protected abstract _start(): Promise<void>;
-  protected abstract _stop(): Promise<void>;
 
   async dispose(): Promise<void> {
     if (this.state == ServiceState.Disposing || this.state == ServiceState.Disposed) {
@@ -117,14 +112,9 @@ export abstract class ServiceBase implements Service {
       throw error;
     }
   }
-}
 
-export abstract class MicroServiceBase extends ServiceBase implements MicroService {
-  readonly name: string;
-
-  constructor(serviceName: string) {
-    super();
-
-    this.name = serviceName;
-  }
+  protected abstract _dispose(): Promise<void>;
+  protected abstract _initialize(): Promise<void>;
+  protected abstract _start(): Promise<void>;
+  protected abstract _stop(): Promise<void>;
 }

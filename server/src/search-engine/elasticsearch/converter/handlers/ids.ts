@@ -1,24 +1,24 @@
 import { IDsQuery } from '../../../../common/search-engine/query';
-import { ConvertHandler } from '../convert-handler';
+import { ConvertHandler, ConvertResult } from '../convert-handler';
 
 type ElasticsearchIDsQuery = {
   ids: {
     type?: string | string[],
     values: string[]
   }
-}
+};
 
 export class IDsQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: IDsQuery, _index: string, type: string): object | null {
+  tryConvert(query: IDsQuery, _index: string, type: string): ConvertResult {
     const canHandle = ('ids' in query);
 
     if (!canHandle) {
-      return null;
+      return false;
     }
 
     const queryObj: ElasticsearchIDsQuery = {
       ids: {
-        type: type,
+        type,
         values: query.ids
       }
     };

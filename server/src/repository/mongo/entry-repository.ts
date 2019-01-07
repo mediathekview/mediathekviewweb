@@ -20,11 +20,11 @@ export class MongoEntryRepository implements EntryRepository {
   }
 
   async saveMany(entries: Entry[]): Promise<void> {
-    const operations = entries.map((entry) => toUpdateOneOperation(entry))
+    const operations = entries.map(toUpdateOneOperation);
     await this.collection.bulkWrite(operations, { ordered: false });
   }
 
-  async load(id: string): Promise<Entry | null> {
+  async load(id: string): Promise<Entry | undefined> {
     return await this.baseRepository.load(id);
   }
 
@@ -32,11 +32,12 @@ export class MongoEntryRepository implements EntryRepository {
     return this.baseRepository.loadManyById(ids);
   }
 
-  async  drop(): Promise<void> {
-    return await this.baseRepository.drop();
+  async drop(): Promise<void> {
+    await this.baseRepository.drop();
   }
 }
 
+// tslint:disable-next-line: typedef
 function toUpdateOneOperation(entry: Entry) {
   const filter: TypedMongoFilter<Entry> = {
     _id: entry.id

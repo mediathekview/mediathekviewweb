@@ -1,4 +1,4 @@
-import { AnyIterable, Nullable } from '../common/utils';
+import { Nullable } from '../common/utils';
 
 export type SortedSetItem<T> = {
   value: T;
@@ -12,20 +12,20 @@ export type SortedSetRankedItem<T> = {
 
 export interface SortedSet<T> {
   add(item: SortedSetItem<T>): Promise<void>;
-  addMany(items: AnyIterable<SortedSetItem<T>>): Promise<void>;
+  addMany(items: Array<SortedSetItem<T>>): Promise<void>;
 
   getScore(value: T): Promise<Undefinable<number>>;
-  getScoreMany(values: AnyIterable<T>): AsyncIterable<Nullable<SortedSetItem<T>>>;
+  getScoreMany(values: T[]): Nullable<SortedSetItem<T>>;
   getRank(value: T): Promise<Undefinable<number>>;
   getRankReversed(value: T): Promise<Undefinable<number>>;
-  getRankMany(values: AnyIterable<T>): AsyncIterable<SortedSetRankedItem<T>>;
-  getRankManyReversed(values: AnyIterable<T>): AsyncIterable<SortedSetRankedItem<T>>;
+  getRankMany(values: T[]): Array<SortedSetRankedItem<T>>;
+  getRankManyReversed(values: T[]): Array<SortedSetRankedItem<T>>;
 
   has(value: T): Promise<boolean>;
-  hasMany(values: AnyIterable<T>): AsyncIterable<boolean>;
+  hasMany(values: T[]): AsyncIterable<boolean>;
 
   delete(value: T): Promise<boolean>;
-  deleteMany(values: AnyIterable<T>): Promise<number>;
+  deleteMany(values: T[]): Promise<number>;
   deleteByRank(rank: number): Promise<boolean>;
   deleteManyByRank(rank: number): Promise<number>;
   deleteByScore(minScore: number, maxScore: number): Promise<number>;
@@ -33,9 +33,9 @@ export interface SortedSet<T> {
   increaseScore(value: T, increment: number): Promise<void>;
 
   popMin(): Promise<Undefinable<SortedSetItem<T>>>;
-  popMin(count: number): Promise<SortedSetItem<T>[]>;
+  popMin(count: number): Promise<Array<SortedSetItem<T>>>;
   popMax(): Promise<Undefinable<SortedSetItem<T>>>;
-  popMax(count: number): Promise<SortedSetItem<T>[]>;
+  popMax(count: number): Promise<Array<SortedSetItem<T>>>;
 
   popAll(batchCount: number): AsyncIterable<T>;
 

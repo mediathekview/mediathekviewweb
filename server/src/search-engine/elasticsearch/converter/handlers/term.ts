@@ -1,14 +1,14 @@
 import { TermQuery } from '../../../../common/search-engine/query';
-import { ConvertHandler } from '../convert-handler';
+import { ConvertHandler, ConvertResult } from '../convert-handler';
 
-type ElasticsearchTermQuery = { term: StringMap<string | number | boolean | Date> }
+type ElasticsearchTermQuery = { term: StringMap<string | number | boolean | Date> };
 
 export class TermQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: TermQuery, _index: string, _type: string): object | null {
+  tryConvert(query: TermQuery, _index: string, _type: string): ConvertResult {
     const canHandle = ('term' in query);
 
     if (!canHandle) {
-      return null;
+      return false;
     }
 
     const queryObject: ElasticsearchTermQuery = {

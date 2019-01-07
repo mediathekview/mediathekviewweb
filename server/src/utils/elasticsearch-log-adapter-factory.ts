@@ -1,31 +1,19 @@
 import { Logger } from '../common/logger';
 
-export class ElasticsearchLogAdapterFactory {
-  static getLogAdapter(logger: Logger) {
-    return class ElasticsearchLogAdapter {
-      error(message: string) {
-        logger.error(message);
-      }
+interface ElasticsearchLogAdapter {
+  error(message: string): void;
+  warning(message: string): void;
+  info(message: string): void;
+  debug(message: string): void;
+  close(): void;
+}
 
-      warning(message: string) {
-        logger.warn(message);
-      }
-
-      info(message: string) {
-        logger.verbose(message);
-      }
-
-      debug(_message: string) {
-        //ignore
-      }
-
-      trace(_method: any, _requestUrl: any, _body: any, _responseBody: any, _responseStatus: any) {
-        //ignore
-      }
-
-      close() {
-        logger.verbose('close');
-      }
-    }
-  }
+export function getElasticsearchLogAdapter(logger: Logger): ElasticsearchLogAdapter {
+  return {
+    error: (message: string) => logger.error(message),
+    warning: (message: string) => logger.warn(message),
+    info: (message: string) => logger.info(message),
+    debug: (message: string) => logger.debug(message),
+    close: () => { /* no need of close */ }
+  };
 }

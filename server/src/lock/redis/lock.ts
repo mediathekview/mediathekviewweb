@@ -40,21 +40,22 @@ export class RedisLock implements Lock {
       return false;
     }
 
-    let stopRefresh = false;
-    let stopPromise = new DeferredPromise();
-    let stoppedPromise = new DeferredPromise();
+    let stop = false;
     let expireTimestamp = newExpireTimestamp;
+    const stopPromise = new DeferredPromise();
+    const stoppedPromise = new DeferredPromise();
 
     const controller: LockController = {
       get lost(): boolean {
         return (expireTimestamp < currentTimestamp());
       },
       release: async () => {
-        if (stopRefresh) {
-          return await stoppedPromise;
+        if (stop) {
+          await stoppedPromise;
+          return;
         }
 
-        stopRefresh = true;
+        stop = true;
         stopPromise.resolve();
         await stoppedPromise;
         await this.release(id);
@@ -62,8 +63,9 @@ export class RedisLock implements Lock {
       }
     };
 
+    // tslint:disable-next-line: no-floating-promises
     (async () => {
-      while (!stopRefresh && !controller.lost) {
+      while (!stop && !controller.lost) {
         try {
           const newExpireTimestamp = this.getNewExpireTimestamp();
           const success = await this.refresh(id, newExpireTimestamp);
@@ -73,7 +75,7 @@ export class RedisLock implements Lock {
           }
         }
         catch (error) {
-          this.logger.error(error);
+          this.logger.error(error); // tslint:disable-line: no-unsafe-any
         }
 
         const millisecondsLeft = (expireTimestamp - currentTimestamp());
@@ -82,7 +84,8 @@ export class RedisLock implements Lock {
       }
 
       stoppedPromise.resolve();
-    })();
+    })()
+      .catch((error) => this.logger.error(error)); // tslint:disable-line: no-unsafe-any
 
     if (func != undefined) {
       try {
@@ -95,6 +98,16 @@ export class RedisLock implements Lock {
     }
 
     return controller;
+  }
+
+  async exists(): Promise<boolean> {
+    const result = await this.redis.exists(this.key);
+    return result == 1;
+  }
+
+  async getExpireTimestamp(id: string): Promise<number> {
+    const expireTimestamp = await (this.redis as any)['lock:owned'](this.key, id) as number; // tslint:disable-line: no-unsafe-any
+    return expireTimestamp;
   }
 
   private async _acquire(id: string, acquireTimeout: number): Promise<number> {
@@ -118,32 +131,20 @@ export class RedisLock implements Lock {
     return expireTimestamp;
   }
 
-  private async release(id: string): Promise<boolean>;
-  private async release(id: string, force: boolean): Promise<boolean>;
   private async release(id: string, force: boolean = false): Promise<boolean> {
-    const result = await (this.redis as any)['lock:release'](this.key, id, force ? 1 : 0);
+    const result = await (this.redis as any)['lock:release'](this.key, id, force ? 1 : 0); // tslint:disable-line: no-unsafe-any
     const success = (result == 1);
 
     return success;
   }
 
-  async exists(): Promise<boolean> {
-    const result = await this.redis.exists(this.key);
-    return result == 1;
-  }
-
-  async getExpireTimestamp(id: string): Promise<number> {
-    const expireTimestamp = await (this.redis as any)['lock:owned'](this.key, id) as number;
-    return expireTimestamp;
-  }
-
   private async tryAcquire(id: string, expireTimestamp: number): Promise<AcquireResult> {
-    const result = await (this.redis as any)['lock:acquire'](this.key, id, expireTimestamp) as AcquireResult;
+    const result = await (this.redis as any)['lock:acquire'](this.key, id, expireTimestamp) as AcquireResult; // tslint:disable-line: no-unsafe-any
     return result;
   }
 
   private async refresh(id: string, expireTimestamp: number): Promise<boolean> {
-    const result = await (this.redis as any)['lock:refresh'](this.key, id, expireTimestamp);
+    const result = await (this.redis as any)['lock:refresh'](this.key, id, expireTimestamp); // tslint:disable-line: no-unsafe-any
     const success = (result == 1);
 
     return success;

@@ -1,10 +1,10 @@
 import { EntriesIndexer } from '../entries-indexer/indexer';
 import { InstanceProvider } from '../instance-provider';
+import { MicroServiceBase } from '../micro-service-base';
 import { MicroService } from '../service';
-import { MicroServiceBase } from '../service-base';
 
 export class IndexerService extends MicroServiceBase implements MicroService {
-  private indexer: EntriesIndexer;
+  private readonly indexer: EntriesIndexer;
 
   constructor() {
     super('Indexer');

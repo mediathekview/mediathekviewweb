@@ -1,17 +1,11 @@
 import { log, LoggerState } from 'mongodb';
 import { Logger } from '../common/logger';
 
-export class MongoLogAdapterFactory {
-  static getLogFunction(logger: Logger) {
-    const logFunction: log = (message?: string, state?: LoggerState) => {
-      const debugLogMessage = JSON.stringify({
-        message,
-        state
-      }, null, 2);
+export function getMongoLogAdapter(logger: Logger): log {
+  const logFunction: log = (message?: string, state?: LoggerState) => {
+    const debugLogMessage = JSON.stringify({ message, state }, undefined, 2);
+    logger.debug(debugLogMessage);
+  };
 
-      logger.debug(debugLogMessage);
-    };
-
-    return logFunction;
-  }
+  return logFunction;
 }

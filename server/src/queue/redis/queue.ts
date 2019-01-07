@@ -37,7 +37,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     this.distributedLoopProvider = distributedLoopProvider;
     this.key = key;
     this.streamName = `stream:${key}`;
-    this.groupName = `queue`;
+    this.groupName = 'queue';
     this.retryAfter = retryAfter;
     this.maxRetries = maxRetries;
     this.logger = logger;
@@ -64,8 +64,8 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       throw new Error('could not acquire lock for initialization')
     }
 
-    const retryLoopController = this.retryLoop.run((_controller) => this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);
-    const consumerDeleteLoopController = this.consumerDeleteLoop.run((_controller) => this.deleteInactiveConsumers(), 3000, 1500);
+    const retryLoopController = this.retryLoop.run(async (_controller) => await this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);
+    const consumerDeleteLoopController = this.consumerDeleteLoop.run(async (_controller) => await this.deleteInactiveConsumers(), 3000, 1500);
 
     this.disposer.addDisposeTasks(async () => await retryLoopController.stop());
     this.disposer.addDisposeTasks(async () => await consumerDeleteLoopController.stop());
@@ -73,13 +73,6 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
   async dispose(): Promise<void> {
     await this.disposer.dispose();
-  }
-
-  private getConsumerStream(): RedisStream<StreamEntryType> {
-    const consumerRedis = this.redisProvider.get('CONSUMER');
-    const consumerStream = new RedisStream<StreamEntryType>(consumerRedis, this.streamName);
-
-    return consumerStream;
   }
 
   async enqueue(data: DataType): Promise<RedisJob<DataType>> {
@@ -157,7 +150,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
           await lockController.release();
         }
         catch (error) {
-          this.logger.error(error);
+          this.logger.error(error); // tslint:disable-line: no-unsafe-any
         }
       }
     }
@@ -170,13 +163,20 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     await this.stream.trim(0, false);
   }
 
+  private getConsumerStream(): RedisStream<StreamEntryType> {
+    const consumerRedis = this.redisProvider.get('CONSUMER');
+    const consumerStream = new RedisStream<StreamEntryType>(consumerRedis, this.streamName);
+
+    return consumerStream;
+  }
+
   private async deleteInactiveConsumers(): Promise<void> {
-    this.disposer.defer(async () => {
+    await this.disposer.defer(async () => {
       const consumers = await this.stream.getConsumers(this.groupName);
 
       const consumersToDelete = consumers
         .filter((consumer) => consumer.pending == 0)
-        .filter((consumer) => consumer.idle >= MINIMUM_CONSUMER_IDLE_TIME_BEFORE_DELETION)
+        .filter((consumer) => consumer.idle >= MINIMUM_CONSUMER_IDLE_TIME_BEFORE_DELETION);
 
       for (const consumer of consumersToDelete) {
         const lock = this.lockProvider.get(consumer.name);
@@ -190,7 +190,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   }
 
   private async retryPendingEntries(): Promise<void> {
-    this.disposer.defer(async () => {
+    await this.disposer.defer(async () => {
       const pendingEntries = await this.stream.getPendingEntries({ group: this.groupName, start: '-', end: '+', count: 50 });
       const ids = pendingEntries
         .filter((entry) => entry.elapsed > this.retryAfter)
@@ -207,7 +207,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
         const retryEntry: SourceEntry<StreamEntryType> = {
           data: {
             retries: (parseInt(retries) + 1).toString(),
-            enqueueTimestamp: currentTimestamp().toString(),
+            enqueueTimestamp: currentTimestamp().toString(), // tslint:disable-line: newline-per-chained-call
             data
           }
         };

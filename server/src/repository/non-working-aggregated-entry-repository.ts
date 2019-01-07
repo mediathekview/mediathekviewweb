@@ -1,8 +1,7 @@
+import { AsyncEnumerable } from '../common/enumerable';
+import { AggregatedEntry, Entry } from '../common/model';
 import { AggregatedEntryRepository } from './aggregated-entry-repository';
 import { EntryRepository } from './entry-repository';
-import { AggregatedEntry, Entry } from '../common/model';
-import { AnyIterable } from '../common/utils';
-import { AsyncEnumerable } from '../common/enumerable';
 
 export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepository {
   private readonly entryRepository: EntryRepository;
@@ -11,23 +10,24 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
     this.entryRepository = entryRepository;
   }
 
-  async load(id: string): Promise<AggregatedEntry | null> {
-    let result: AggregatedEntry | null = null;
+  async load(id: string): Promise<AggregatedEntry | undefined> {
+    let result: AggregatedEntry | undefined;
 
     const entry = await this.entryRepository.load(id);
 
-    if (entry != null) {
+    if (entry != undefined) {
       result = this.toAggregated(entry);
     }
 
     return result;
   }
 
-  loadMany(ids: AnyIterable<string>): AsyncIterable<AggregatedEntry> {
+  loadMany(ids: string[]): AsyncIterable<AggregatedEntry> {
     const entryDocuments = this.entryRepository.loadMany(ids);
 
     const result = AsyncEnumerable.from(entryDocuments)
       .map((entryDocument) => this.toAggregated(entryDocument));
+
     return result;
   }
 

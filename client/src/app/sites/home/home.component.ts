@@ -13,6 +13,7 @@ import { selectSearchError, selectSearchResult } from 'src/app/selectors/search.
 })
 export class HomeComponent {
   private readonly store: Store<AppState>;
+
   readonly result$: Observable<EntrySearchResult | null>;
   readonly error$: Observable<Error | null>;
 
@@ -22,7 +23,7 @@ export class HomeComponent {
     this.result$ = store.pipe(select(selectSearchResult));
   }
 
-  searchStringChanged(searchString: string) {
+  searchStringChanged(searchString: string): void {
     const stringSearch = new StringSearch({ searchString, skip: 0, limit: 250, sort: [] });
     this.store.dispatch(stringSearch);
   }
