@@ -650,7 +650,7 @@ function createVideoActionButton(entry) {
 
   const button = $('<a>', {
     target: '_blank',
-    href: entry.url_video,
+    href: highestQualityUrl,
     click: () => {
       if (!(button as any).clicked) {
         (button as any).clicked = true;
