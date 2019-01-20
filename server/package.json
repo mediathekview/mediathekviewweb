@@ -39,6 +39,6 @@
     "@types/request": "^2.48.1",
     "@types/rss": "0.0.28",
     "@types/socket.io": "^2.1.2",
-    "typescript": "^3.2.2"
+    "typescript": "^3.2.4"
   }
 }
