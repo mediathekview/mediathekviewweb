@@ -26,9 +26,9 @@
     "@types/bootstrap": "^3.3.40",
     "@types/datatables.net": "^1.10.14",
     "@types/jquery": "^3.3.29",
-    "@types/lodash": "^4.14.119",
+    "@types/lodash": "^4.14.120",
     "@types/socket.io-client": "^1.4.32",
-    "@types/video.js": "^7.2.5",
-    "typescript": "^3.1.6"
+    "@types/video.js": "^7.2.6",
+    "typescript": "3.1.6"
   }
 }
