@@ -7,7 +7,6 @@ import { SearchQuery } from '../common/search-engine/query';
 import { precisionRound, Timer } from '../common/utils';
 import { StreamIterable } from '../utils';
 import { MediathekViewWebApi } from './api';
-import { SearchQueryValidator } from './validator/search-query';
 
 type RequestHandler = (request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse) => void;
 
@@ -17,7 +16,6 @@ export class MediathekViewWebRestApi {
   private readonly api: MediathekViewWebApi;
   private readonly koa: Koa<void, void>;
   private readonly router: KoaRouter<void, void>;
-  private readonly searchQueryValidator: SearchQueryValidator;
   private readonly requestHandler: RequestHandler;
 
   constructor(api: MediathekViewWebApi) {
@@ -25,7 +23,6 @@ export class MediathekViewWebRestApi {
 
     this.koa = new Koa();
     this.router = new KoaRouter();
-    this.searchQueryValidator = new SearchQueryValidator();
 
     this.requestHandler = this.koa.callback();
 
@@ -72,7 +69,7 @@ export class MediathekViewWebRestApi {
       return;
     }
 
-    const validation = this.searchQueryValidator.validate(body);
+    const validation = { valid: true };
 
     if (validation.valid == true) {
       response.body = await this.api.search(body as SearchQuery);

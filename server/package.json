@@ -6,11 +6,13 @@
     "start": "node ./dist/app.js",
     "build": "tsc",
     "build-watch": "tsc --watch",
+    "build-schema": "typescript-json-schema --include src/common/search-engine/query/definition.ts --out src/schemas/search-query.json --aliasRefs --titles --noExtraProps --required tsconfig.json SearchQuery",
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
+    "ajv": "^6.7.0",
     "elasticsearch": "^15.3.0",
     "immutable": "^4.0.0-rc.12",
     "ioredis": "^4.5.1",
@@ -30,6 +32,7 @@
     "@types/mongodb": "^3.1.19",
     "@types/needle": "^2.0.3",
     "@types/node": "^10.12.18",
-    "typescript": "^3.2.4"
+    "typescript": "^3.2.4",
+    "typescript-json-schema": "^0.34.0"
   }
 }

@@ -1,4 +1,4 @@
-import { RangeQuery } from '../../../../common/search-engine/query';
+import { DateRounding, RangeQuery, RangeQueryValue } from '../../../../common/search-engine/query';
 import { ConvertHandler, ConvertResult } from '../convert-handler';
 
 type ElasticsearchRangeQueryValue = number | string;
@@ -13,6 +13,16 @@ type ElasticsearchRangeQuery = {
       format?: string
     }
   }
+};
+
+const DATE_ROUNDING_MAP = {
+  [DateRounding.Seconds]: 's',
+  [DateRounding.Minutes]: 'm',
+  [DateRounding.Hours]: 'h',
+  [DateRounding.Days]: 'd',
+  [DateRounding.Weeks]: 'w',
+  [DateRounding.Months]: 'M',
+  [DateRounding.Years]: 'y'
 };
 
 export class RangeQueryConvertHandler implements ConvertHandler {
@@ -37,12 +47,16 @@ export class RangeQueryConvertHandler implements ConvertHandler {
     return { success: true, result: queryObject };
   }
 
-  private convertValue(value: string | number | Date | undefined): ElasticsearchRangeQueryValue | undefined {
-    if (value instanceof Date) {
-      const milliseconds = Math.floor(value.valueOf() / 1000);
-      return milliseconds;
+  private convertValue(value: RangeQueryValue | undefined): ElasticsearchRangeQueryValue | undefined {
+    if (value == undefined) {
+      return undefined;
     }
 
-    return value;
+    if (value.dateRounding != undefined) {
+      const roundSymbol = DATE_ROUNDING_MAP[value.dateRounding];
+      return `${value.value}/${roundSymbol}`;
+    }
+
+    return value.value;
   }
 }

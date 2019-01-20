@@ -1,16 +1,10 @@
-export type Aggregations = 'min' | 'max' | 'sum' | 'average' | 'median' | 'length';
-
-export type Orders = 'ascending' | 'descending';
-
-export type Operators = 'and' | 'or';
-
 export const enum Aggregation {
-  'Min' = 'min',
-  'Max' = 'max',
-  'Sum' = 'sum',
-  'Average' = 'average',
-  'Median' = 'median',
-  'Length' = 'length'
+  Min = 'min',
+  Max = 'max',
+  Sum = 'sum',
+  Average = 'average',
+  Median = 'median',
+  Length = 'length'
 }
 
 export const enum Order {
@@ -21,6 +15,16 @@ export const enum Order {
 export const enum Operator {
   And = 'and',
   Or = 'or'
+}
+
+export const enum DateRounding {
+  Seconds = 'seconds',
+  Minutes = 'minutes',
+  Hours = 'hours',
+  Days = 'days',
+  Weeks = 'weeks',
+  Months = 'months',
+  Years = 'years'
 }
 
 export type Sort = {
@@ -64,7 +68,10 @@ export type BoolQuery = {
   }
 };
 
-export type RangeQueryValue = number | string | Date;
+export type RangeQueryValue = {
+  value: number,
+  dateRounding?: DateRounding
+};
 
 export type RangeQuery = {
   range: {
@@ -80,7 +87,7 @@ export type TextQuery = {
   text: {
     fields: string[];
     text: string;
-    operator: Operators;
+    operator: Operator;
   }
 };
 

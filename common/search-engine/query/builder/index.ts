@@ -5,4 +5,3 @@ export * from './range';
 export * from './regex';
 export * from './term';
 export * from './text';
-export * from './time-value';
