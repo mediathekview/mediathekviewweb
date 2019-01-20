@@ -23,7 +23,7 @@ export class TextQueryConvertHandler implements ConvertHandler {
     const canHandle = query.hasOwnProperty('text');
 
     if (!canHandle) {
-      return false;
+      return { success: false };
     }
 
     let queryObject: object;
@@ -36,7 +36,7 @@ export class TextQueryConvertHandler implements ConvertHandler {
       throw new Error('no fields specified');
     }
 
-    return queryObject;
+    return { success: true, result: queryObject };
   }
 
   private convertToMatch(field: string, text: string, operator: ElasticsearchMatchOperator): ElasticsearchMatchQuery {

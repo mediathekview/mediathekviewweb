@@ -13,16 +13,16 @@ export class IDsQueryConvertHandler implements ConvertHandler {
     const canHandle = ('ids' in query);
 
     if (!canHandle) {
-      return false;
+      return { success: false };
     }
 
-    const queryObj: ElasticsearchIDsQuery = {
+    const queryObject: ElasticsearchIDsQuery = {
       ids: {
         type,
         values: query.ids
       }
     };
 
-    return queryObj;
+    return { success: true, result: queryObject };
   }
 }

@@ -25,7 +25,7 @@ export class BoolQueryConvertHandler implements ConvertHandler {
       return { success: false };
     }
 
-    const queryObj: ElasticsearchBooleanQuery = {
+    const queryObject: ElasticsearchBooleanQuery = {
       bool: {
         must: this.convertArray(query.bool.must, index, type),
         should: this.convertArray(query.bool.should, index, type),
@@ -34,7 +34,7 @@ export class BoolQueryConvertHandler implements ConvertHandler {
       }
     };
 
-    return { success: true, result: queryObj };
+    return { success: true, result: queryObject };
   }
 
   private convertArray(queries: QueryBody[] | undefined, index: string, type: string): object[] | undefined {

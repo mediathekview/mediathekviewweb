@@ -3,21 +3,20 @@ import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
 import { createErrorResponse } from '../common/api/rest';
-import '../common/extensions/math';
 import { SearchQuery } from '../common/search-engine/query';
-import { Timer } from '../common/utils';
+import { precisionRound, Timer } from '../common/utils';
 import { StreamIterable } from '../utils';
 import { MediathekViewWebApi } from './api';
 import { SearchQueryValidator } from './validator/search-query';
 
 type RequestHandler = (request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse) => void;
 
-const PREFIX = '/api/v2/'
+const PREFIX = '/api/v2/';
 
 export class MediathekViewWebRestApi {
   private readonly api: MediathekViewWebApi;
-  private readonly koa: Koa;
-  private readonly router: KoaRouter;
+  private readonly koa: Koa<void, void>;
+  private readonly router: KoaRouter<void, void>;
   private readonly searchQueryValidator: SearchQueryValidator;
   private readonly requestHandler: RequestHandler;
 
@@ -48,11 +47,11 @@ export class MediathekViewWebRestApi {
     this.initializeRoutes();
   }
 
-  private initializeRoutes() {
-    this.register('/search', (context) => this.handleSearch(context));
+  private initializeRoutes(): void {
+    this.register('/search', async (context) => await this.handleSearch(context));
   }
 
-  private register(path: string, handler: (context: Koa.Context) => void) {
+  private register(path: string, handler: (context: Koa.Context) => Promise<void>): void {
     this.router.post(path, async (context, next) => {
       await handler(context);
       return next();
@@ -75,7 +74,7 @@ export class MediathekViewWebRestApi {
 
     const validation = this.searchQueryValidator.validate(body);
 
-    if (validation.valid) {
+    if (validation.valid == true) {
       response.body = await this.api.search(body as SearchQuery);
     } else {
       response.status = 400;
@@ -86,7 +85,7 @@ export class MediathekViewWebRestApi {
 
 async function readJsonBody(request: Koa.Request, maxLength: number = 10e6): Promise<unknown> {
   const body = await readBody(request, maxLength);
-  const json = JSON.parse(body);
+  const json = JSON.parse(body) as unknown;
   return json;
 }
 
@@ -98,7 +97,7 @@ async function readBody(request: Koa.Request, maxLength: number): Promise<string
   let totalLength: number = 0;
   const chunks: Buffer[] = [];
 
-  for await (const chunk of requestStream) {
+  for await (const chunk of requestStream) { // tslint:disable-line: await-promise
     chunks.push(chunk);
     totalLength += chunk.length;
 
@@ -114,19 +113,19 @@ async function readBody(request: Koa.Request, maxLength: number): Promise<string
   return body;
 }
 
-function corsMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<any> {
+async function corsMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<any> {
   context.response.set({
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': '*',
     'Access-Control-Allow-Headers': context.request.get('Access-Control-Request-Headers')
   });
 
-  return next();
+  return await next();
 }
 
 async function responseTimeMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<void> {
-  const milliseconds = await Timer.measure(next);
-  const roundedMilliseconds = Math.precisionRound(milliseconds, 2);
+  const milliseconds = await Timer.measureAsync(next);
+  const roundedMilliseconds = precisionRound(milliseconds, 2);
 
   context.response.set('X-Response-Time', `${roundedMilliseconds}ms`);
 }

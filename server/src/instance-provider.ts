@@ -8,6 +8,7 @@ import { LockProvider } from './common/lock';
 import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
+import { timeout } from './common/utils';
 import { config } from './config';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
@@ -30,9 +31,8 @@ import { NonWorkingAggregatedEntryRepository } from './repository/non-working-ag
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
-import { ElasticsearchLogAdapterFactory } from './utils/elasticsearch-log-adapter-factory';
-import { MongoLogAdapterFactory } from './utils/mongo-log-adapter-factory';
-import { immediate, timeout } from './common/utils';
+import { getElasticsearchLogAdapter } from './utils/elasticsearch-log-adapter-factory';
+import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -60,32 +60,18 @@ const ELASTICSEARCH_LOG = '[ELASTICSEARCH]';
 const REDIS_LOG = '[REDIS]';
 const MONGO_LOG = '[MONGO]';
 
-class InstanceProviderRedisProvider implements RedisProvider {
-  private readonly providerFunction: (scope: string) => Redis;
-
-  constructor(providerFunction: (scope: string) => Redis) {
-    this.providerFunction = providerFunction;
-  }
-
-  get(scope: string): Redis {
-    return this.providerFunction(scope);
-  }
+function getRedisProvider(providerFunction: (scope: string) => Redis): RedisProvider {
+  return {
+    get: providerFunction
+  };
 }
 
 export class InstanceProvider {
-  private static instances: StringMap = {};
-  private static loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
-  private static disposer: AsyncDisposer = new AsyncDisposer();
+  private static readonly instances: StringMap = {};
+  private static readonly loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
+  private static readonly disposer: AsyncDisposer = new AsyncDisposer();
 
-  static async initialize(): Promise<void> {
-    await this.connectToDatabases();
-  }
-
-  static async disposeInstances(): Promise<void> {
-    await this.disposer.dispose();
-  }
-
-  private static async connectToDatabases() {
+  private static async connectToDatabases(): Promise<void> {
     const logger = this.coreLogger();
     const redis = InstanceProvider.redis();
     const mongo = InstanceProvider.mongo();
@@ -96,7 +82,7 @@ export class InstanceProvider {
     await this.connect('elasticsearch', async () => await await elasticsearch.ping({ requestTimeout: 250 }), logger);
   }
 
-  private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger) {
+  private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger): Promise<void> {
     let success = false;
     while (!success && !this.disposer.disposing) {
       try {
@@ -110,6 +96,41 @@ export class InstanceProvider {
         await timeout(1000);
       }
     }
+  }
+
+  private static newRedis(scope: string, lazyConnect: boolean): Redis {
+    const logger = LoggerFactoryProvider.factory.create(`${REDIS_LOG} [${scope}]`);
+    const redis = new RedisClient({
+      lazyConnect,
+      enableReadyCheck: true,
+      maxRetriesPerRequest: undefined,
+      ...config.redis
+    });
+
+    redis
+      .on('connect', () => logger.verbose('connecting'))
+      .on('ready', () => logger.verbose('ready'))
+      .on('close', () => logger.verbose('connection closing'))
+      .on('reconnecting', (milliseconds) => logger.verbose(`reconnecting in ${milliseconds} ms`))
+      .on('end', () => logger.verbose('connection end'))
+      .on('error', (error: Error) => logger.error(error, false));
+
+    this.disposer.addDisposeTasks(async () => {
+      const endPromise = new Promise<void>((resolve) => redis.once('end', resolve));
+
+      await redis.quit();
+      await endPromise;
+    });
+
+    return redis;
+  }
+
+  static async initialize(): Promise<void> {
+    await this.connectToDatabases();
+  }
+
+  static async disposeInstances(): Promise<void> {
+    await this.disposer.dispose();
   }
 
   static mediathekViewWebApi(): MediathekViewWebApi {
@@ -145,51 +166,24 @@ export class InstanceProvider {
   }
 
   static redisProvider(): RedisProvider {
-    return this.singleton(InstanceProviderRedisProvider, () => new InstanceProviderRedisProvider((scope) => this.newRedis(scope, false)));
+    return this.singleton(getRedisProvider, () => getRedisProvider((scope) => this.newRedis(scope, false)));
   }
 
   static redis(): Redis {
     return this.singleton(RedisClient, () => this.newRedis('MAIN', true));
   }
 
-  private static newRedis(scope: string, lazyConnect: boolean): Redis {
-    const logger = LoggerFactoryProvider.factory.create(`${REDIS_LOG} [${scope}]`);
-    const redis = new RedisClient({
-      lazyConnect: lazyConnect,
-      enableReadyCheck: true,
-      maxRetriesPerRequest: null,
-      ...config.redis
-    });
-
-    redis
-      .on('connect', () => logger.verbose('connecting'))
-      .on('ready', () => logger.verbose('ready'))
-      .on('close', () => logger.verbose('connection closing'))
-      .on('reconnecting', (milliseconds) => logger.verbose(`reconnecting in ${milliseconds} ms`))
-      .on('end', () => logger.verbose(`connection end`))
-      .on('error', (error: Error) => logger.error(error, false));
-
-    this.disposer.addDisposeTasks(async () => {
-      const endPromise = new Promise<void>((resolve) => redis.once('end', resolve));
-
-      await redis.quit();
-      await endPromise;
-    });
-
-    return redis;
-  }
-
   static elasticsearch(): ElasticsearchClient {
     return this.singleton(ElasticsearchClient, () => {
       const logger = LoggerFactoryProvider.factory.create(ELASTICSEARCH_LOG);
-      const logAdapter = ElasticsearchLogAdapterFactory.getLogAdapter(logger);
+      const logAdapter = getElasticsearchLogAdapter(logger);
 
       const elasticsearchClient = new ElasticsearchClient({
         host: `${config.elasticsearch.host}:${config.elasticsearch.port}`,
         log: logAdapter
       });
 
-      this.disposer.addDisposeTasks(async () => await elasticsearchClient.close());
+      this.disposer.addDisposeTasks(() => elasticsearchClient.close());
 
       return elasticsearchClient;
     });
@@ -198,7 +192,7 @@ export class InstanceProvider {
   static mongo(): Mongo.MongoClient {
     return this.singleton(Mongo.MongoClient, () => {
       const logger = LoggerFactoryProvider.factory.create(MONGO_LOG);
-      const logFunction = MongoLogAdapterFactory.getLogFunction(logger);
+      const logFunction = getMongoLogAdapter(logger);
 
       Mongo.Logger.setCurrentLogger(logFunction);
 

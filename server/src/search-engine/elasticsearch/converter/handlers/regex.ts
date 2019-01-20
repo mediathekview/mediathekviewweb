@@ -8,7 +8,7 @@ export class RegexQueryConvertHandler implements ConvertHandler {
     const canHandle = ('regex' in query);
 
     if (!canHandle) {
-      return false;
+      return { success: false };
     }
 
     const queryObject: ElasticsearchRegexQuery = {
@@ -17,6 +17,6 @@ export class RegexQueryConvertHandler implements ConvertHandler {
       }
     };
 
-    return queryObject;
+    return { success: true, result: queryObject };
   }
 }

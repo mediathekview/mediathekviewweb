@@ -10,11 +10,11 @@ export type DisposeDeferrer = {
 };
 
 export class AsyncDisposer implements AsyncDisposable {
+  private readonly _disposingPromise: DeferredPromise;
   private readonly disposedPromise: DeferredPromise;
   private readonly disposeDeferrers: Promise<void>[];
   private readonly disposeTasks: DisposeTask[];
 
-  private _disposingPromise: DeferredPromise;
   private _disposing: boolean;
   private _disposed: boolean;
 
@@ -62,13 +62,14 @@ export class AsyncDisposer implements AsyncDisposable {
     }
   }
 
-  addDisposeTasks(...tasks: DisposeTask[]) {
+  addDisposeTasks(...tasks: DisposeTask[]): void {
     this.disposeTasks.push(...tasks);
   }
 
   async dispose(): Promise<void> {
     if (this.disposing) {
-      return await this.disposedPromise;
+      await this.disposedPromise;
+      return;
     }
 
     this._disposing = true;
@@ -82,17 +83,21 @@ export class AsyncDisposer implements AsyncDisposable {
           await disposeDeferrer;
         }
         catch (error) {
-          errors.push(error);
+          errors.push(error as Error);
         }
       });
 
     await AsyncEnumerable.from(this.disposeTasks)
       .parallelForEach(10, async (disposeTask) => {
         try {
-          await disposeTask();
+          const returnValue = disposeTask();
+
+          if (returnValue instanceof Promise) {
+            await returnValue;
+          }
         }
         catch (error) {
-          errors.push(error);
+          errors.push(error as Error);
         }
       });
 

@@ -1,4 +1,3 @@
-import '../../../extensions/set';
 import { DeferredPromise } from '../../../promise/deferred-promise';
 
 export class AwaitableSet<T> implements Set<T> {
@@ -35,44 +34,35 @@ export class AwaitableSet<T> implements Set<T> {
 
   add(value: T): this {
     this.backingSet.add(value);
-    this._added.resolve(value).reset();
+    this._added.resolve(value);
+    this._added.reset();
 
     return this;
   }
 
   clear(): void {
     this.backingSet.clear();
-    this._cleared.resolve().reset();
+    this._cleared.resolve()
+    this._cleared.reset();
   }
 
   delete(value: T): boolean {
     const success = this.backingSet.delete(value);
 
     if (success) {
-      this._deleted.resolve(value).reset();
+      this._deleted.resolve(value);
+      this._deleted.reset();
     }
 
     return success;
   }
 
   forEach(callbackfn: (value: T, value2: T, set: Set<T>) => void, thisArg?: any): void {
-    return this.backingSet.forEach(callbackfn, thisArg);
+    this.backingSet.forEach(callbackfn, thisArg);
   }
 
   has(value: T): boolean {
     return this.backingSet.has(value);
-  }
-
-  intersect(...sets: Set<T>[]): Set<T> {
-    return this.backingSet.intersect(...sets);
-  }
-
-  difference(...sets: Set<T>[]): Set<T> {
-    return this.backingSet.difference(...sets);
-  }
-
-  union(...sets: Set<T>[]): Set<T> {
-    return this.backingSet.union(...sets);
   }
 
   entries(): IterableIterator<[T, T]> {

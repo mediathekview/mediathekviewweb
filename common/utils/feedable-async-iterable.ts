@@ -35,19 +35,19 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
       throw new Error('closed');
     }
 
-    this.buffer.append({ item: item });
+    this.buffer.append({ item });
   }
 
-  end() {
+  end(): void {
     this._closed = true;
   }
 
-  throw(error: Error) {
+  throw(error: Error): void {
     if (this.closed) {
       throw new Error('closed');
     }
 
-    this.buffer.append({ error: error });
+    this.buffer.append({ error });
     this.end();
   }
 
@@ -66,10 +66,12 @@ export class FeedableAsyncIterable<T> implements AsyncIterable<T> {
         }
 
         yield item as T;
-        this._read.resolve().reset();
+        this._read.resolve();
+        this._read.reset();
 
         if (this.buffer.size == 0) {
-          this._empty.resolve().reset();
+          this._empty.resolve();
+          this._empty.reset();
         }
       }
     }

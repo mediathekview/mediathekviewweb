@@ -1,6 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 import { bufferCount, filter, map } from 'rxjs/operators';
-import '../extensions/math';
+import { average } from './math';
 import { timeout } from './timing';
 
 export enum AggregationMode {
@@ -18,14 +18,11 @@ export class PeriodicSampler {
   private readonly sampleFunction: SampleFunction;
   private readonly subject: Subject<number>;
 
-
   private run: boolean;
   private stopped: Promise<void>;
 
   sampleInterval: number;
 
-  constructor(sampleFunction: SampleFunction);
-  constructor(sampleFunction: SampleFunction, sampleInterval: number);
   constructor(sampleFunction: SampleFunction, sampleInterval: number = 100) {
     this.sampleFunction = sampleFunction;
     this.sampleInterval = sampleInterval;
@@ -34,7 +31,7 @@ export class PeriodicSampler {
     this.subject = new Subject();
   }
 
-  start() {
+  start(): void {
     if (this.run) {
       throw new Error('already started');
     }
@@ -48,10 +45,6 @@ export class PeriodicSampler {
     await this.stopped;
   }
 
-  watch(): Observable<number>;
-  watch(threshold: number): Observable<number>;
-  watch(threshold: number, samples: number): Observable<number>;
-  watch(threshold: number, samples: number, aggregation: AggregationMode): Observable<number>;
   watch(threshold: number = 0, samples: number = 1, aggregation: AggregationMode = AggregationMode.Maximum): Observable<number> {
     const observable = this.subject.pipe(
       bufferCount(samples),
@@ -62,7 +55,7 @@ export class PeriodicSampler {
     return observable;
   }
 
-  private async runSampleLoop() {
+  private async runSampleLoop(): Promise<void> {
     while (this.run) {
       const delay = await this.sampleFunction();
       this.subject.next(delay);
@@ -80,20 +73,20 @@ export class PeriodicSampler {
         return Math.max(...values);
 
       case AggregationMode.Mean:
-        return Math.average(...values);
+        return average(...values);
 
       case AggregationMode.Median:
-        values = values.sort();
+        values.sort((a, b) => a - b);
         const median = Math.round(values.length / 2);
         return values[median];
 
       case AggregationMode.FirstQuartile:
-        values = values.sort();
+        values.sort((a, b) => a - b);
         const firstQuartile = Math.round(values.length / 4 * 1);
         return values[firstQuartile];
 
       case AggregationMode.ThirdQuartile:
-        values = values.sort();
+        values.sort((a, b) => a - b);
         const thirdQuartile = Math.round(values.length / 4 * 3);
         return values[thirdQuartile];
 

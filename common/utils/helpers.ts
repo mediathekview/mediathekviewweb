@@ -127,12 +127,20 @@ export function toError(obj: any): Error {
   }
 
   const error = new Error(message);
-  (error as any)['data'] = obj;
+  (error as any).data = obj;
 
   return error;
 }
 
 export function formatError(error: Error, includeStack: boolean): string {
-  const stackMessage = (includeStack && (error.stack != null)) ? `\n${error.stack}` : '';
+  const stackMessage = (includeStack && (error.stack != undefined)) ? `\n${error.stack}` : '';
   return `${error.name}: ${error.message}${stackMessage}`;
+}
+
+export function compareByValue<T>(a: T, b: T): number {
+  return (a > b) ? 1 : ((b > a) ? -1 : 0);
+}
+
+export function compareByValueDescending<T>(a: T, b: T): number {
+  return (a > b) ? -1 : ((b > a) ? 1 : 0);
 }

@@ -1,16 +1,16 @@
-import '../../extensions/date';
+import { isValidDate } from "../../utils/date";
 
 const PARSE_REGEX = /^(\d{1,2})[\.\-\/]?(?:[\.\-\/](\d{1,2})[\.\-\/]?(?:[\.\-\/](\d{2}|\d{4}))?)?$/;
 
 export class DateParser {
-  parse(text: string): Date | null {
+  parse(text: string): Date | undefined {
     const match = text.match(PARSE_REGEX);
 
-    if (match == null) {
-      return null;
+    if (match === null) {
+      return undefined;
     }
 
-    let result: Date | null = null;
+    let result: Date | undefined;
 
     const now = new Date();
     let [, dayString, monthString, yearString] = match; // tslint:disable-line: prefer-const
@@ -33,7 +33,7 @@ export class DateParser {
       year = Number.parseInt(yearString);
     }
 
-    const isValid = Date.isValid(year, month, day);
+    const isValid = isValidDate(year, month, day);
 
     if (isValid) {
       result = new Date(year, month, day);

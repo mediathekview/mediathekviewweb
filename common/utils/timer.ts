@@ -30,11 +30,14 @@ export class Timer {
   private elapsedNanoseconds: number;
   private begin?: any;
 
-  static measure(func: () => void): number;
-  static measure(func: () => Promise<void>): Promise<number>;
-  static measure(func: () => void | Promise<void>): number | Promise<number> {
+  static measure(func: () => void): number {
     const timer = new Timer();
     return timer.measure(func);
+  }
+
+  static async measureAsync(func: () => Promise<void>): Promise<number> {
+    const timer = new Timer();
+    return await timer.measureAsync(func);
   }
 
   constructor(start: boolean = false) {
@@ -86,18 +89,18 @@ export class Timer {
     return this.nanoseconds / NS_PER_SEC;
   }
 
-  measure(func: () => void): number;
-  measure(func: () => Promise<void>): Promise<number>;
-  measure(func: () => void | Promise<void>): number | Promise<number> {
+  measure(func: () => void): number {
     this.restart();
+    func();
 
-    const voidOrPromise = func();
+    return this.milliseconds;
+  }
 
-    if (voidOrPromise instanceof Promise) {
-      return voidOrPromise.then(() => this.milliseconds);
-    } else {
-      return this.milliseconds;
-    }
+  async measureAsync(func: () => Promise<void>): Promise<number> {
+    this.restart();
+    await func();
+
+    return this.milliseconds;
   }
 
   private read(): number {

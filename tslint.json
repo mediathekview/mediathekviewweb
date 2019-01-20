@@ -61,6 +61,8 @@
     "radix": false,
     "no-shadowed-variable": false,
     "array-type": [true, "array"],
-    "align": [true, "elements", "members", "parameters", "statements"]
+    "align": [true, "elements", "members", "parameters", "statements"],
+    "newline-per-chained-call": false,
+    "no-inferrable-types": false
   }
 }

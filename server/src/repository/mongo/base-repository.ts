@@ -16,10 +16,10 @@ export class MongoBaseRepository<T extends Entity> {
 
   async save(entity: TWithPartialId<T>): Promise<T> {
     const savedEntities = await this.saveMany([entity]);
-    return SyncEnumerable.from(savedEntities).single(); // tslint:disable-line: newline-per-chained-call
+    return SyncEnumerable.from(savedEntities).single();
   }
 
-  async saveMany(entities: Array<TWithPartialId<T>>): Promise<T[]> {
+  async saveMany(entities: TWithPartialId<T>[]): Promise<T[]> {
     const operations = entities.map(toReplaceOneOperation);
     const bulkWriteResult = await this.collection.bulkWrite(operations);
     const upsertedIds = bulkWriteResult.upsertedIds as UpsertedIds;

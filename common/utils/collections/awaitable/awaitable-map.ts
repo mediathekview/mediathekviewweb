@@ -1,4 +1,5 @@
 import { DeferredPromise } from '../../../promise/deferred-promise';
+import { differenceMaps, intersectMaps, unionMaps } from '../../map';
 
 export class AwaitableMap<K, V> implements Map<K, V> {
   private readonly backingMap: Map<K, V>;
@@ -24,19 +25,7 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     return this.backingMap.size;
   }
 
-  constructor();
-  constructor(referenceMap: Map<K, V>);
-  constructor(map = new Map<K, V>()) {
-    this.backingMap = map;
-
-    this._setted = new DeferredPromise();
-    this._cleared = new DeferredPromise();
-    this._deleted = new DeferredPromise();
-  }
-
-  static from<K, V>(map: Map<K, V>): AwaitableMap<K, V>;
-  static from<K, V>(map: Map<K, V>, clone: boolean): AwaitableMap<K, V>;
-  static from<K, V>(map: Map<K, V>, clone = true): AwaitableMap<K, V> {
+  static from<K, V>(map: Map<K, V>, clone: boolean = true): AwaitableMap<K, V> {
     if (!clone) {
       return new AwaitableMap(map);
     }
@@ -48,6 +37,14 @@ export class AwaitableMap<K, V> implements Map<K, V> {
     }
 
     return awaitableMap;
+  }
+
+  constructor(backingMap: Map<K, V> = new Map<K, V>()) {
+    this.backingMap = backingMap;
+
+    this._setted = new DeferredPromise();
+    this._cleared = new DeferredPromise();
+    this._deleted = new DeferredPromise();
   }
 
   [Symbol.iterator](): IterableIterator<[K, V]> {
@@ -68,21 +65,23 @@ export class AwaitableMap<K, V> implements Map<K, V> {
 
   clear(): void {
     this.backingMap.clear();
-    this._cleared.resolve().reset();
+    this._cleared.resolve();
+    this._cleared.reset();
   }
 
   delete(key: K): boolean {
     const success = this.backingMap.delete(key);
 
     if (success) {
-      this._deleted.resolve(key).reset();
+      this._deleted.resolve(key);
+      this._deleted.reset();
     }
 
     return success;
   }
 
   forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void {
-    return this.backingMap.forEach(callbackfn, thisArg);
+    this.backingMap.forEach(callbackfn, thisArg);
   }
 
   get(key: K): V | undefined {
@@ -96,23 +95,24 @@ export class AwaitableMap<K, V> implements Map<K, V> {
   set(key: K, value: V): this {
     this.backingMap.set(key, value);
 
-    this._setted.resolve([key, value]).reset();
+    this._setted.resolve([key, value]);
+    this._setted.reset();
 
     return this;
   }
 
   intersect(...maps: Map<K, V>[]): Map<K, V> {
-    const intersection = this.backingMap.intersect(...maps);
+    const intersection = intersectMaps(this.backingMap, ...maps);
     return AwaitableMap.from(intersection, false);
   }
 
   difference(...maps: Map<K, V>[]): Map<K, V> {
-    const difference = this.backingMap.difference(...maps);
+    const difference = differenceMaps(this.backingMap, ...maps);
     return AwaitableMap.from(difference, false);
   }
 
   union(...maps: Map<K, V>[]): Map<K, V> {
-    const union = this.backingMap.union(...maps);
+    const union = unionMaps(this.backingMap, ...maps);
     return AwaitableMap.from(union, false);
   }
 }

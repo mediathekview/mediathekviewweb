@@ -8,7 +8,7 @@ export class TermQueryConvertHandler implements ConvertHandler {
     const canHandle = ('term' in query);
 
     if (!canHandle) {
-      return false;
+      return { success: false };
     }
 
     const queryObject: ElasticsearchTermQuery = {
@@ -17,6 +17,6 @@ export class TermQueryConvertHandler implements ConvertHandler {
       }
     };
 
-    return queryObject;
+    return { success: true, result: queryObject };
   }
 }

@@ -4,13 +4,12 @@ import { Logger } from '../common/logger';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
 import { formatDuration, timeout } from '../common/utils';
-import { PeriodicReporter } from '../common/utils/periodic-reporter';
+import { MovingMetric } from '../common/utils/moving-metric';
 import { Keys } from '../keys';
-import { ServiceBase } from '../service-base';
 import { Queue, QueueProvider } from '../queue';
 import { AggregatedEntryRepository } from '../repository';
 import { Service } from '../service';
-import { MovingMetric } from '../common/utils/moving-metric';
+import { ServiceBase } from '../service-base';
 
 const BATCH_SIZE = 100;
 
@@ -52,7 +51,7 @@ export class EntriesIndexer extends ServiceBase implements Service {
       const interval = this.movingMetric.actualInterval();
       const rate = this.movingMetric.rate();
 
-      this.logger.info(`indexed ${count} entries in last ${formatDuration(interval, 0)} at `);
+      this.logger.info(`indexed ${count} entries in last ${formatDuration(interval, 0)} at ${rate} entries/s`);
     }, MOVING_METRIC_INTERVAL);
 
     this.disposer.addDisposeTasks(async () => clearInterval(this.metricReportTimer));
@@ -70,20 +69,20 @@ export class EntriesIndexer extends ServiceBase implements Service {
           await this.entriesToBeIndexedQueue.acknowledge(...batch);
         }
         catch (error) {
-          this.logger.error(error);
+          this.logger.error(error as Error);
           await timeout(2500);
         }
       });
   }
 
-  protected async _stop(): Promise<void> { }
+  protected async _stop(): Promise<void> { /* nothing */ }
 
-  private async indexEntries(ids: string[]) {
-    const entries = await this.aggregatedEntryRepository.loadMany(ids);
+  private async indexEntries(ids: string[]): Promise<void> {
+    const entries = this.aggregatedEntryRepository.loadMany(ids);
     const entriesArray = await AsyncEnumerable.from(entries).toArray();
     const searchEngineItems = entriesArray.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);
-    this.reporter.increase(ids.length);
+    this.movingMetric.add(ids.length);
   }
 }

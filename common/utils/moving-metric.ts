@@ -1,3 +1,4 @@
+import { compareByValue } from './helpers';
 import { Timer } from './timer';
 
 type Sample = [number, Timer];
@@ -30,7 +31,7 @@ export class MovingMetric {
   median(): number {
     this.removeOld();
 
-    const sortedSamples = this.samples.sort(([a], [b]) => a - b);
+    const sortedSamples = this.sortedByValue();
     const index = sortedSamples.length / 2;
 
     if (index % 1 == 0) {
@@ -71,7 +72,7 @@ export class MovingMetric {
   quantile(scalar: number): number {
     this.removeOld();
 
-    const sortedSamples = this.samples.sort(([a], [b]) => a - b);
+    const sortedSamples = this.sortedByValue();
     const index = Math.round((sortedSamples.length - 1) * scalar);
 
     if (Number.isInteger(index)) {
@@ -104,6 +105,10 @@ export class MovingMetric {
     const [, timer] = oldestSample;
 
     return timer.seconds;
+  }
+
+  private sortedByValue(): Sample[] {
+    return [...this.samples].sort(([a], [b]) => a - b);
   }
 
   private removeOld(): void {

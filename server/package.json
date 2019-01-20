@@ -12,6 +12,7 @@
   "license": "GPLv3",
   "dependencies": {
     "elasticsearch": "^15.3.0",
+    "immutable": "^4.0.0-rc.12",
     "ioredis": "^4.5.1",
     "koa": "^2.6.2",
     "koa-router": "^7.4.0",

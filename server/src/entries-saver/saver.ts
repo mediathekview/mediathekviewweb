@@ -1,15 +1,14 @@
 import { AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
-import '../common/extensions/map';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
 import { DeferredPromise, formatDuration, timeout } from '../common/utils';
 import { PeriodicReporter } from '../common/utils/periodic-reporter';
 import { Keys } from '../keys';
-import { ServiceBase } from '../service-base';
 import { Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
 import { Service } from '../service';
+import { ServiceBase } from '../service-base';
 
 const BATCH_SIZE = 250;
 const BUFFER_SIZE = 3;

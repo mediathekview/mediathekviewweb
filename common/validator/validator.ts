@@ -1,4 +1,4 @@
-import '../extensions/set';
+import { differenceSets, intersectSets, unionSets } from '../utils/set';
 import { ObjectValidationResultBuilder } from './object-validation-result-builder';
 
 export type PropertyValidationError = {
@@ -32,7 +32,7 @@ export abstract class ObjectValidator<T extends object = any> {
   validate(object: unknown): ObjectValidationResult {
     const resultBuilder = new ObjectValidationResultBuilder();
 
-    if (object == null) {
+    if (object == undefined) {
       object = {};
     }
 
@@ -42,9 +42,10 @@ export abstract class ObjectValidator<T extends object = any> {
     const required = new Set(this.required);
     const optional = new Set(this.optional);
 
-    const missingProperties = required.difference(properties);
-    const unknownProperties = properties.difference(required, optional);
-    const knownProperties = required.union(optional).intersect(properties);
+    const missingProperties = differenceSets(required, properties);
+    const unknownProperties = differenceSets(properties, required, optional);
+    const validProperties = unionSets(required, optional);
+    const knownProperties = intersectSets(validProperties, properties);
 
     if (missingProperties.size > 0) {
       resultBuilder.addMissing(...missingProperties);
@@ -58,7 +59,7 @@ export abstract class ObjectValidator<T extends object = any> {
       const value = (object as any)[property];
       const propertyValidation = this.propertyValidators[property as keyof T](value);
 
-      if (propertyValidation != null) {
+      if (propertyValidation != undefined) {
         resultBuilder.setProperty(property, propertyValidation);
       }
     }

@@ -20,10 +20,10 @@ export class RangeQueryConvertHandler implements ConvertHandler {
     const canHandle = ('range' in query);
 
     if (!canHandle) {
-      return false;
+      return { success: false };
     }
 
-    const queryObj: ElasticsearchRangeQuery = {
+    const queryObject: ElasticsearchRangeQuery = {
       range: {
         [query.range.field]: {
           lt: this.convertValue(query.range.lt),
@@ -34,7 +34,7 @@ export class RangeQueryConvertHandler implements ConvertHandler {
       }
     };
 
-    return queryObj;
+    return { success: true, result: queryObject };
   }
 
   private convertValue(value: string | number | Date | undefined): ElasticsearchRangeQueryValue | undefined {

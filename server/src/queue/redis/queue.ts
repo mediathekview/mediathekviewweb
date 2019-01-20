@@ -207,7 +207,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
         const retryEntry: SourceEntry<StreamEntryType> = {
           data: {
             retries: (parseInt(retries) + 1).toString(),
-            enqueueTimestamp: currentTimestamp().toString(), // tslint:disable-line: newline-per-chained-call
+            enqueueTimestamp: currentTimestamp().toString(),
             data
           }
         };

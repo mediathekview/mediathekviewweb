@@ -41,29 +41,30 @@ export class AwaitableList<T> implements Iterable<T> {
 
   append(...items: T[]): number {
     const result = this.backingArray.push(...items);
-    this._added.resolve(items).reset();
+    this._added.resolve(items);
+    this._added.reset();
 
     return result;
   }
 
   prepend(...items: T[]): number {
     const result = this.backingArray.unshift(...items);
-    this._added.resolve(items).reset();
+    this._added.resolve(items);
+    this._added.reset();
 
     return result;
   }
 
-  insert(index: number, ...items: T[]) {
+  insert(index: number, ...items: T[]): void {
     if (index >= this.size || index < 0) {
       throw new Error('index out of range');
     }
 
     this.backingArray.splice(index, 0, ...items);
-    this._added.resolve(items).reset();
+    this._added.resolve(items);
+    this._added.reset();
   }
 
-  remove(index: number): T[];
-  remove(index: number, count: number): T[];
   remove(index: number, count: number = 1): T[] {
     if (index >= this.size || index < 0) {
       throw new Error('index out of range');
@@ -74,7 +75,8 @@ export class AwaitableList<T> implements Iterable<T> {
     }
 
     const removedItems = this.backingArray.splice(index, count);
-    this._removed.resolve(removedItems).reset();
+    this._removed.resolve(removedItems);
+    this._removed.reset();
 
     return removedItems;
   }
@@ -85,7 +87,8 @@ export class AwaitableList<T> implements Iterable<T> {
     }
 
     const result = this.backingArray.pop() as T;
-    this._removed.resolve(result).reset();
+    this._removed.resolve(result);
+    this._removed.reset();
 
     return result;
   }
@@ -96,14 +99,16 @@ export class AwaitableList<T> implements Iterable<T> {
     }
 
     const result = this.backingArray.shift() as T;
-    this._removed.resolve(result).reset();
+    this._removed.resolve(result);
+    this._removed.reset();
 
     return result;
   }
 
-  clear() {
+  clear(): void {
     this.backingArray = [];
-    this._cleared.resolve().reset();
+    this._cleared.resolve();
+    this._cleared.reset();
   }
 
   *[Symbol.iterator](): IterableIterator<T> {

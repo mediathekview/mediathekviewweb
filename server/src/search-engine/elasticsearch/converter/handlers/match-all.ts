@@ -8,13 +8,13 @@ export class MatchAllQueryConvertHandler implements ConvertHandler {
     const canHandle = ('matchAll' in query);
 
     if (!canHandle) {
-      return false;
+      return { success: false };
     }
 
     const queryObject: ElasticsearchMatchAllQuery = {
       match_all: {}
     };
 
-    return queryObject;
+    return { success: true, result: queryObject };
   }
 }

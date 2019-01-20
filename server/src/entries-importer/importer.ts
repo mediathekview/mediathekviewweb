@@ -1,6 +1,5 @@
 import { AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
-import '../common/extensions/map';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
 import { formatDuration, timeout } from '../common/utils';
