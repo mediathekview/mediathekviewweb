@@ -7,7 +7,7 @@ import { FilmlistRepository } from './repository';
 const FILENAME_DATE_REGEX = /^(\d+)-(\d+)-(\d+)-filme\.xz$/;
 
 export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepository {
-  private listing: Listing;
+  private readonly listing: Listing;
 
   constructor(url: string) {
     this.listing = new NginxListing(url);
@@ -49,7 +49,7 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
   private parseFilenameDate(name: string): Date {
     const match = name.match(FILENAME_DATE_REGEX);
 
-    if (match == null) {
+    if (match === null) {
       throw new Error('failed matching date on filename');
     }
 

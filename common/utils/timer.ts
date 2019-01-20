@@ -28,7 +28,7 @@ else {
 
 export class Timer {
   private elapsedNanoseconds: number;
-  private begin: any | null;
+  private begin?: any;
 
   static measure(func: () => void): number;
   static measure(func: () => Promise<void>): Promise<number>;
@@ -37,38 +37,35 @@ export class Timer {
     return timer.measure(func);
   }
 
-  constructor();
-  constructor(start: boolean);
   constructor(start: boolean = false) {
     this.elapsedNanoseconds = 0;
-    this.begin = null;
 
     if (start) {
       this.start();
     }
   }
 
-  start() {
-    if (this.begin == null) {
+  start(): void {
+    if (this.begin == undefined) {
       this.begin = getBegin();
     }
   }
 
-  stop() {
-    if (this.begin != null) {
+  stop(): void {
+    if (this.begin != undefined) {
       const nanoseconds = this.read();
       this.elapsedNanoseconds += nanoseconds;
-      this.begin = null;
+      this.begin = undefined;
     }
   }
 
-  restart() {
+  restart(): void {
     this.reset();
     this.start();
   }
 
-  reset() {
-    this.begin = null;
+  reset(): void {
+    this.begin = undefined;
     this.elapsedNanoseconds = 0;
   }
 
@@ -104,7 +101,7 @@ export class Timer {
   }
 
   private read(): number {
-    if (this.begin == null) {
+    if (this.begin == undefined) {
       return 0;
     }
 

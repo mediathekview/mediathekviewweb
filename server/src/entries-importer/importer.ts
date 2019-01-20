@@ -33,6 +33,10 @@ export class EntriesImporter extends ServiceBase implements Service {
     this.disposer.addDisposeTasks(async () => await this.entriesToBeSavedQueue.dispose());
   }
 
+  registerSources(...sources: EntrySource[]): void {
+    this.sources.push(...sources);
+  }
+
   protected async _dispose(): Promise<void> {
     await this.disposer.dispose();
   }
@@ -41,7 +45,6 @@ export class EntriesImporter extends ServiceBase implements Service {
     await this.entriesToBeSavedQueue.initialize();
 
     this.reporter.report.subscribe((count) => this.logger.info(`imported ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
-    this.reporter.run();
 
     this.disposer.addDisposeTasks(async () => await this.reporter.stop());
   }
@@ -51,14 +54,14 @@ export class EntriesImporter extends ServiceBase implements Service {
       throw new Error('no source available');
     }
 
-    const promises = this.sources.map((source) => this.import(source));
+    const promises = this.sources.map((source) => this.import(source)); // tslint:disable-line: promise-function-async
+
+    this.reporter.run();
     await Promise.all(promises);
   }
 
-  protected async _stop(): Promise<void> { }
-
-  registerSources(...sources: EntrySource[]) {
-    this.sources.push(...sources);
+  protected async _stop(): Promise<void> {
+    throw new Error('not supported');
   }
 
   private async import(source: EntrySource): Promise<void> {

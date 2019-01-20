@@ -4,15 +4,15 @@ import { cancelableTimeout } from './timing';
 
 export class PeriodicReporter {
   private readonly reportSubject: Subject<number>;
+  private readonly interval: number;
+  private readonly ignoreZero: boolean;
+  private readonly resetAfterReport: boolean;
+  private readonly stopPromise: DeferredPromise;
+  private readonly stopped: DeferredPromise;
 
-  private interval: number;
-  private ignoreZero: boolean;
-  private resetAfterReport: boolean;
   private running: boolean;
   private counter: number;
   private stopRequested: boolean;
-  private stopPromise: DeferredPromise;
-  private stopped: DeferredPromise;
 
   get report(): Observable<number> {
     return this.reportSubject.asObservable();
@@ -29,31 +29,34 @@ export class PeriodicReporter {
     this.reportSubject = new Subject();
   }
 
-  increase(count: number) {
+  increase(count: number): void {
     this.counter += count;
   }
 
-  async run() {
+  run(): void {
     if (this.running) {
       throw new Error('already started');
     }
 
-    this.counter = 0;
     this.running = true;
-    this.stopRequested = false;
-    this.stopPromise.reset();
-    this.stopped.reset();
 
-    while (!this.stopRequested) {
-      await cancelableTimeout(this.stopPromise, this.interval);
+    const promise = (async () => {
+      this.counter = 0;
+      this.stopRequested = false;
+      this.stopPromise.reset();
+      this.stopped.reset();
 
-      if (!this.stopRequested && (!this.ignoreZero || (this.counter > 0))) {
-        this.emitReport(this.resetAfterReport);
+      while (!this.stopRequested) {
+        await cancelableTimeout(this.stopPromise, this.interval);
+
+        if (!this.stopRequested && (!this.ignoreZero || (this.counter > 0))) {
+          this.emitReport(this.resetAfterReport);
+        }
       }
-    }
 
-    this.running = false;
-    this.stopped.resolve();
+      this.running = false;
+      this.stopped.resolve();
+    })();
   }
 
   async stop(): Promise<void> {
@@ -66,7 +69,7 @@ export class PeriodicReporter {
     await this.stopped;
   }
 
-  private emitReport(resetAfterReport: boolean) {
+  private emitReport(resetAfterReport: boolean): void {
     this.reportSubject.next(this.counter);
 
     if (resetAfterReport) {

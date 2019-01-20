@@ -15,12 +15,12 @@
           "private-static-field",
           "protected-static-field",
           "public-static-field",
-          "private-static-method",
-          "protected-static-method",
-          "public-static-method",
           "private-instance-field",
           "protected-instance-field",
           "public-instance-field",
+          "private-static-method",
+          "protected-static-method",
+          "public-static-method",
           "public-constructor",
           "protected-constructor",
           "private-constructor",
@@ -60,6 +60,7 @@
     "switch-final-break": [true, "always"],
     "radix": false,
     "no-shadowed-variable": false,
-    "array-type": [true, "array"]
+    "array-type": [true, "array"],
+    "align": [true, "elements", "members", "parameters", "statements"]
   }
 }

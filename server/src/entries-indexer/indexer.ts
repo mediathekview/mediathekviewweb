@@ -10,10 +10,11 @@ import { ServiceBase } from '../service-base';
 import { Queue, QueueProvider } from '../queue';
 import { AggregatedEntryRepository } from '../repository';
 import { Service } from '../service';
+import { MovingMetric } from '../common/utils/moving-metric';
 
 const BATCH_SIZE = 100;
 
-const REPORT_INTERVAL = 10000;
+const MOVING_METRIC_INTERVAL = 10000;
 
 export class EntriesIndexer extends ServiceBase implements Service {
   private readonly disposer: AsyncDisposer;
@@ -21,7 +22,9 @@ export class EntriesIndexer extends ServiceBase implements Service {
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
   private readonly entriesToBeIndexedQueue: Queue<string>;
   private readonly logger: Logger;
-  private readonly reporter: PeriodicReporter;
+  private readonly movingMetric: MovingMetric;
+
+  private metricReportTimer: NodeJS.Timeout;
 
   constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, queueProvider: QueueProvider, logger: Logger) {
     super();
@@ -31,7 +34,7 @@ export class EntriesIndexer extends ServiceBase implements Service {
     this.logger = logger;
 
     this.disposer = new AsyncDisposer();
-    this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
+    this.movingMetric = new MovingMetric(MOVING_METRIC_INTERVAL);
     this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 15000, 3);
 
     this.disposer.addDisposeTasks(async () => await this.entriesToBeIndexedQueue.dispose());
@@ -44,10 +47,15 @@ export class EntriesIndexer extends ServiceBase implements Service {
   protected async _initialize(): Promise<void> {
     await this.entriesToBeIndexedQueue.initialize();
 
-    this.reporter.report.subscribe((count) => this.logger.info(`indexed ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
-    this.reporter.run();
+    this.metricReportTimer = setInterval(() => {
+      const count = this.movingMetric.count();
+      const interval = this.movingMetric.actualInterval();
+      const rate = this.movingMetric.rate();
 
-    this.disposer.addDisposeTasks(async () => await this.reporter.stop());
+      this.logger.info(`indexed ${count} entries in last ${formatDuration(interval, 0)} at `);
+    }, MOVING_METRIC_INTERVAL);
+
+    this.disposer.addDisposeTasks(async () => clearInterval(this.metricReportTimer));
   }
 
   protected async _start(): Promise<void> {
