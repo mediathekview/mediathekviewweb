@@ -1,3 +1,4 @@
+import { StringMap } from '../../../../common/types';
 import { BSONType } from '../bson-type';
 
 type ExistsOperator = { $exists: boolean };

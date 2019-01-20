@@ -1,3 +1,4 @@
+import { StringMap } from '../../../../common/types';
 import { MongoFilter } from './filter';
 
 type AndOperator = { $and: MongoFilter[] };

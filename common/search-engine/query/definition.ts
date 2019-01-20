@@ -1,3 +1,6 @@
+// tslint:disable: no-redundant-jsdoc
+import { Field } from '../../model';
+
 export const enum Aggregation {
   Min = 'min',
   Max = 'max',
@@ -28,30 +31,34 @@ export const enum DateRounding {
 }
 
 export type Sort = {
-  field: string;
+  field: Field;
   order: Order;
   aggregation?: Aggregation;
 };
 
+/** @minProperties 1 */
 export type QueryBody = Partial<TermQuery & IDsQuery & MatchAllQuery & BoolQuery & RangeQuery & TextQuery & RegexQuery>;
 
 export type SearchQuery = {
   body: QueryBody;
   sort?: Sort[];
+  /** @type integer */
   skip?: number;
+  /** @type integer */
   limit?: number;
 };
 
-export type TermQueryValue = string | number | boolean | Date;
+export type TermQueryValue = string | number | boolean;
 
 export type TermQuery = {
   term: {
-    field: string;
+    field: Field;
     value: TermQueryValue;
   }
 };
 
 export type IDsQuery = {
+  /** @minItems 1 */
   ids: string[];
 };
 
@@ -59,7 +66,11 @@ export type MatchAllQuery = {
   matchAll: {}
 };
 
+/**
+ * @minProperties 1
+ */
 export type BoolQuery = {
+  /** @minProperties 1 */
   bool: {
     must?: QueryBody[],
     should?: QueryBody[],
@@ -74,8 +85,9 @@ export type RangeQueryValue = {
 };
 
 export type RangeQuery = {
+  /** @minProperties 2 */
   range: {
-    field: string;
+    field: Field;
     lt?: RangeQueryValue;
     lte?: RangeQueryValue;
     gt?: RangeQueryValue;
@@ -85,7 +97,8 @@ export type RangeQuery = {
 
 export type TextQuery = {
   text: {
-    fields: string[];
+    /** @minItems 1 */
+    fields: Field[];
     text: string;
     operator: Operator;
   }
@@ -93,7 +106,7 @@ export type TextQuery = {
 
 export type RegexQuery = {
   regex: {
-    field: string;
+    field: Field;
     expression: string;
   }
 };

@@ -1,3 +1,5 @@
+import { StringMap } from '../../../../common/types';
+
 type FieldOperatorValue<T> = StringMap<T>;
 
 type CurrentDateOperator = { $currentDate: FieldOperatorValue<boolean | 'date' | 'timestamp'> };

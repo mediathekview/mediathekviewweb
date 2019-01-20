@@ -1,5 +1,6 @@
 import { Redis } from 'ioredis';
 import { SyncEnumerable } from '../../common/enumerable';
+import { StringMap } from '../../common/types';
 import { Nullable } from '../../common/utils';
 import { Consumer } from './consumer';
 import { ConsumerGroup } from './consumer-group';

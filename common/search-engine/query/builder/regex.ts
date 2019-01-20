@@ -1,24 +1,21 @@
+import { Field } from '../../../model';
 import { RegexQuery } from '../definition';
 import { QueryBuilder } from './builder';
 
 export class RegexQueryBuilder extends QueryBuilder {
-  private _field: string | null;
-  private _expression: string | null;
+  private _field?: Field;
+  private _expression?: string;
 
   constructor() {
     super();
-
-    this._field = null;
-    this._expression = null;
   }
 
-  field(field: string): RegexQueryBuilder {
+  field(field: Field): RegexQueryBuilder {
     if (field.length == 0) {
       throw new Error('no field specified');
     }
 
     this._field = field;
-
     return this;
   }
 
@@ -28,10 +25,10 @@ export class RegexQueryBuilder extends QueryBuilder {
   }
 
   build(): RegexQuery {
-    if (this._field == null) {
+    if (this._field == undefined) {
       throw new Error('no field specified');
     }
-    if (this._expression == null) {
+    if (this._expression == undefined) {
       throw new Error('no expression specified');
     }
 

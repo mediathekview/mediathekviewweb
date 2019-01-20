@@ -8,12 +8,13 @@ import { LockProvider } from './common/lock';
 import { Logger, LoggerFactory } from './common/logger';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
+import { StringMap } from './common/types';
 import { timeout } from './common/utils';
 import { config } from './config';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
-import { ElasticsearchMapping, ElasticsearchSettings, TextTypeFields } from './elasticsearch-definitions';
+import { ElasticsearchMapping, ElasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
 import { EntriesImporter } from './entries-importer/importer';
 import { EntriesIndexer } from './entries-indexer/indexer';
 import { EntriesSaver } from './entries-saver/saver';
@@ -77,9 +78,9 @@ export class InstanceProvider {
     const mongo = InstanceProvider.mongo();
     const elasticsearch = InstanceProvider.elasticsearch();
 
-    await this.connect('redis', async () => await redis.connect(), logger);
+    await this.connect('redis', async () => await redis.connect() as Promise<void>, logger);
     await this.connect('mongo', async () => await mongo.connect(), logger);
-    await this.connect('elasticsearch', async () => await await elasticsearch.ping({ requestTimeout: 250 }), logger);
+    await this.connect('elasticsearch', async () => await elasticsearch.ping({ requestTimeout: 250 }) as Promise<void>, logger);
   }
 
   private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger): Promise<void> {
@@ -305,7 +306,7 @@ export class InstanceProvider {
 
   static elasticsearchConverter(): Converter {
     return this.singleton(Converter, () => {
-      const keywordRewrites = new Set(TextTypeFields);
+      const keywordRewrites = new Set(textTypeFields);
       const sortConverter = new ConvertHandlers.SortConverter(keywordRewrites);
       const converter = new Converter(sortConverter);
 

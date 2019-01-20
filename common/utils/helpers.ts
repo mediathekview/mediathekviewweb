@@ -1,3 +1,5 @@
+import { StringMap } from '../types';
+
 export function getGetter<T, U extends keyof T>(obj: T, property: keyof T, bind: boolean): () => T[U] {
   if (!(property in obj)) {
     throw new Error(`property ${property} does not exist`);
@@ -35,8 +37,7 @@ export function currentTimestamp(): number {
 export function cloneOwnProperties(obj: any): any {
   const type = typeof obj;
 
-  if (type == 'string' || type == 'number' || type == 'boolean' || type == 'undefined' || type == 'function'
-    || obj == null || obj instanceof Date || obj instanceof RegExp) {
+  if (type == 'string' || type == 'number' || type == 'boolean' || type == 'undefined' || type == 'function' || obj == undefined || obj instanceof Date || obj instanceof RegExp) {
     return obj;
   }
 

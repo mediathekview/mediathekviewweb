@@ -1,5 +1,6 @@
 import * as Redis from 'ioredis';
 import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
+import { Undefinable } from '../../common/types';
 import { Nullable } from '../../common/utils';
 import { AnyIterable } from '../../common/utils/any-iterable-iterator';
 import { DataType } from '../data-type';

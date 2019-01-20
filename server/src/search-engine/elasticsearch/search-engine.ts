@@ -3,6 +3,7 @@ import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/search-engine';
 import { SearchQuery } from '../../common/search-engine/query';
+import { StringMap } from '../../common/types';
 import { Converter } from './converter';
 
 type ElasticsearchBulkResponse = {

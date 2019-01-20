@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
-
 import { Entity, EntityWithPartialId } from '../../common/model';
+import { Omit, PartialProperty } from '../../common/types';
 import { objectIdOrStringToString, stringToObjectIdOrString } from './utils';
 
 export type MongoDocument<T extends Entity> = Omit<T, 'id'> & {

@@ -1,10 +1,10 @@
 import { ObjectID } from 'mongodb';
-
+import { StringMap } from '../../../../common/types';
 import { ArrayOperator } from './array-operator';
 import { BitOperator } from './bit-operator';
 import { ComparisonOperator } from './comparison-operator';
 import { ElementOperator } from './element-operator';
-import { EvaluationOperator, WhereEvaluation } from './evaluation-operator';
+import { EvaluationOperator } from './evaluation-operator';
 import { LogicalOperator } from './logical-operator';
 
 type EqualType = undefined | null | string | number | Date | ObjectID | RegExp;

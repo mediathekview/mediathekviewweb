@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { NumberMap } from '../../common/types';
 
 export type UpsertedIds = NumberMap<{ _id: ObjectId }>;
 

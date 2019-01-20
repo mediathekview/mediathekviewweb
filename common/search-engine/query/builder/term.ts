@@ -1,18 +1,16 @@
+import { Field } from '../../../model';
 import { TermQuery, TermQueryValue } from '../definition';
 import { QueryBuilder } from './builder';
 
 export class TermQueryBuilder extends QueryBuilder {
-  private _field: string | null;
-  private _value: TermQueryValue | null;
+  private _field?: Field;
+  private _value?: TermQueryValue;
 
   constructor() {
     super();
-
-    this._field = null;
-    this._value = null;
   }
 
-  field(field: string): TermQueryBuilder {
+  field(field: Field): TermQueryBuilder {
     this._field = field;
     return this;
   }
@@ -23,11 +21,11 @@ export class TermQueryBuilder extends QueryBuilder {
   }
 
   build(): TermQuery {
-    if (this._field == null) {
+    if (this._field == undefined) {
       throw new Error('field not set');
     }
 
-    if (this._value == null) {
+    if (this._value == undefined) {
       throw new Error('value not set');
     }
 

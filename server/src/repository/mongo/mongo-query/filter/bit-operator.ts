@@ -1,3 +1,4 @@
+import { StringMap } from '../../../../common/types';
 import { BitOperatorValue } from '../value-types';
 
 type BitsAllClearOperator = { $bitsAllClear: BitOperatorValue };

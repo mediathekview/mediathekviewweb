@@ -1,3 +1,4 @@
+import { PropertyOf, TypeOf } from '../../types';
 import { BoolQuery, IDsQuery, MatchAllQuery, RangeQuery, RegexQuery, TermQuery, TextQuery } from './definition';
 
 export type IDsQueryBody = TypeOf<IDsQuery, 'ids'>;

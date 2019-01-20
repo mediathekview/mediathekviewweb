@@ -1,3 +1,5 @@
+import { PartialProperty } from '../types';
+
 export type Entity = {
   id: string;
 };

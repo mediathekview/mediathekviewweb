@@ -1,3 +1,4 @@
+import { StringMap } from '../types';
 import { Entity, EntityWithPartialId } from './entity';
 import { Quality } from './entry';
 

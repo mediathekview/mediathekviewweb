@@ -1,3 +1,5 @@
+import { StringMap } from "../common/types";
+
 export const ElasticsearchMapping = {
   properties: {
     channel: {
@@ -144,11 +146,9 @@ export const ElasticsearchMapping = {
   }
 }
 
-const textTypeFields = Object.getOwnPropertyNames(ElasticsearchMapping.properties)
+export const textTypeFields = Object.getOwnPropertyNames(ElasticsearchMapping.properties)
   .filter((property) => {
     const type = (ElasticsearchMapping.properties as StringMap)[property].type;
     const isTextType = type == 'text';
     return isTextType;
   });
-
-export const TextTypeFields = textTypeFields;

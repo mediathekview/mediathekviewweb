@@ -1,3 +1,5 @@
+import { StringMap } from '../../../../common/types';
+
 type EqualsOperator = { $eq: any };
 type NotEqualsOperator = { $ne: any };
 type GreaterOperator = { $gt: any };

@@ -1,5 +1,6 @@
 import * as Redis from 'ioredis';
 import { AsyncEnumerable } from '../../common/enumerable';
+import { Undefinable } from '../../common/types';
 import { AnyIterable, Nullable } from '../../common/utils';
 import { DataType } from '../data-type';
 import { Set } from '../set';
@@ -9,9 +10,8 @@ import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction 
 export class RedisSet<T> implements Set<T> {
   private readonly redis: Redis.Redis;
   private readonly key: string;
-
-  private serialize: SerializeFunction<T>;
-  private deserialize: DeserializeFunction<T>;
+  private readonly serialize: SerializeFunction<T>;
+  private readonly deserialize: DeserializeFunction<T>;
 
   constructor(redis: Redis.Redis, key: string, dataType: DataType) {
     this.key = key;

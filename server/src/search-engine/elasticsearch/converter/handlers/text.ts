@@ -1,4 +1,5 @@
 import { TextQuery } from '../../../../common/search-engine/query';
+import { StringMap } from '../../../../common/types';
 import { ConvertHandler, ConvertResult } from '../convert-handler';
 
 type ElasticsearchMatchOperator = 'and' | 'or';

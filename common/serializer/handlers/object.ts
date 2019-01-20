@@ -1,3 +1,4 @@
+import { StringMap } from '../../types';
 import { SerializeHandler } from '../serialize-handler';
 import { SerializedElement } from '../serialized-element';
 import { Serializer } from '../serializer';
@@ -27,7 +28,7 @@ export class ObjectSerializeHandler implements SerializeHandler {
 
     return {
       type: TYPE,
-      data: data
+      data
     };
   }
 

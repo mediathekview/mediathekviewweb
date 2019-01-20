@@ -1,3 +1,4 @@
+import { StringMap } from '../../../../common/types';
 import { Divisor, Remainder } from '../value-types';
 
 type ModOperator = { $mod: [Divisor, Remainder] };

@@ -1,6 +1,7 @@
 import * as Mongo from 'mongodb';
 import { SyncEnumerable } from '../../common/enumerable';
 import { Entity } from '../../common/model';
+import { PartialProperty } from '../../common/types';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter, TypedMongoFilter } from './mongo-query';
 import { objectIdOrStringToString, UpsertedIds } from './utils';

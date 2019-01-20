@@ -1,4 +1,5 @@
 import { RegexQuery } from '../../../../common/search-engine/query';
+import { StringMap } from '../../../../common/types';
 import { ConvertHandler, ConvertResult } from '../convert-handler';
 
 type ElasticsearchRegexQuery = { regexp: StringMap<string> };

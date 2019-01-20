@@ -1,8 +1,9 @@
+import { Field } from '../../../model';
 import { RangeQuery } from '../definition';
 import { QueryBuilder } from './builder';
 
 export class RangeQueryBuilder extends QueryBuilder {
-  private _field?: string;
+  private _field?: Field;
   private _lt?: number;
   private _lte?: number;
   private _gt?: number;
@@ -42,7 +43,7 @@ export class RangeQueryBuilder extends QueryBuilder {
     return queryObj;
   }
 
-  field(field: string): RangeQueryBuilder {
+  field(field: Field): RangeQueryBuilder {
     this._field = field;
     return this;
   }

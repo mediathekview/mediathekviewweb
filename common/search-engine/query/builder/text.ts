@@ -1,20 +1,20 @@
+import { Field } from '../../../model';
 import { Operator, TextQuery } from '../definition';
 import { QueryBuilder } from './builder';
 
 export class TextQueryBuilder extends QueryBuilder {
-  private _fields: string[];
-  private _text: string | null;
+  private _fields: Field[];
+  private _text?: string;
   private _operator: Operator;
 
   constructor() {
     super();
 
     this._fields = [];
-    this._text = null;
     this._operator = Operator.And;
   }
 
-  fields(...fields: string[]): TextQueryBuilder {
+  fields(...fields: Field[]): TextQueryBuilder {
     this._fields = fields;
     return this;
   }
@@ -38,7 +38,7 @@ export class TextQueryBuilder extends QueryBuilder {
     if (this._fields.length == 0) {
       throw new Error('no fields specified');
     }
-    if (this._text == null) {
+    if (this._text == undefined) {
       throw new Error('no text specified');
     }
 
