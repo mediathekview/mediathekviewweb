@@ -3,7 +3,7 @@ import { AsyncDisposable, AsyncDisposer } from '../../common/disposable';
 import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { Serializer } from '../../common/serializer';
-import { currentTimestamp, timeout } from '../../common/utils';
+import { cancelableTimeout, currentTimestamp } from '../../common/utils';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { RedisProvider } from '../../redis/provider';
 import { Entry, RedisStream, SourceEntry } from '../../redis/stream';
@@ -15,6 +15,9 @@ type RedisJob<DataType> = Job<DataType>;
 
 const BLOCK_DURATION = 2500;
 const MINIMUM_CONSUMER_IDLE_TIME_BEFORE_DELETION = 10000;
+
+let started = 0;
+let stopped = 0;
 
 export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   private readonly disposer: AsyncDisposer;
@@ -105,10 +108,15 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
     for await (const batch of batchConsumer) {
       yield* batch;
+
+      if (this.disposer.disposing) {
+        break;
+      }
     }
   }
 
   async *getBatchConsumer(batchSize: number): AsyncIterableIterator<Job<DataType>[]> {
+    console.log('started', this.key, ++started)
     const disposeDeferrer = this.disposer.getDeferrer();
 
     try {
@@ -116,7 +124,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       const consumer = this.getConsumerName();
       const lock = this.lockProvider.get(consumer);
 
-      const lockController = await lock.acquire();
+      const lockController = await lock.acquire(1000);
 
       if (!lockController) {
         throw new Error('failed acquiring lock');
@@ -124,19 +132,23 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
 
       try {
         while (!this.disposer.disposing) {
-          let entries: Entry<StreamEntryType>[] | null = null;
+          let entries: Entry<StreamEntryType>[] | undefined;
 
-          while (entries == null) {
+          while (entries == undefined && !this.disposer.disposing) {
             try {
               entries = await consumerStream.readGroup({ id: '>', group: this.groupName, consumer, block: BLOCK_DURATION, count: batchSize });
             }
             catch (error) {
-              this.logger.error(error);
-              await timeout(2500);
+              this.logger.error(error as Error);
+              await cancelableTimeout(2500, this.disposer.disposingPromise);
             }
           }
 
-          const jobs: Job<DataType>[] = entries
+          if (this.disposer.disposing) {
+            break;
+          }
+
+          const jobs: Job<DataType>[] = (entries as Entry<StreamEntryType>[])
             .map(({ id, data: { data: serializedData } }) => ({ id, serializedData }))
             .map(({ id, serializedData }) => ({ id, data: Serializer.deserialize(serializedData) }));
 
@@ -156,6 +168,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     }
     finally {
       disposeDeferrer.yield();
+      console.log('stopped', this.key, ++stopped)
     }
   }
 
@@ -181,10 +194,16 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       for (const consumer of consumersToDelete) {
         const lock = this.lockProvider.get(consumer.name);
 
-        await lock.acquire(0, async () => {
+        console.log('DELETE LOCK')
+        await lock.acquire(100, async () => {
           await this.stream.deleteConsumer(this.groupName, consumer.name);
           this.logger.debug(`deleted consumer ${consumer.name} from ${this.streamName}`);
         });
+        console.log('DELETE LOCK END')
+
+        if (this.disposer.disposing) {
+          break;
+        }
       }
     });
   }

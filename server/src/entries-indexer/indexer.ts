@@ -54,7 +54,7 @@ export class EntriesIndexer extends ServiceBase implements Service {
       this.logger.info(`indexed ${count} entries in last ${formatDuration(interval, 0)} at ${rate} entries/s`);
     }, MOVING_METRIC_INTERVAL);
 
-    this.disposer.addDisposeTasks(async () => clearInterval(this.metricReportTimer));
+    this.disposer.addDisposeTasks(() => clearInterval(this.metricReportTimer));
   }
 
   protected async _start(): Promise<void> {
@@ -73,6 +73,8 @@ export class EntriesIndexer extends ServiceBase implements Service {
           await timeout(2500);
         }
       });
+
+    console.log('END INDEXER')
   }
 
   protected async _stop(): Promise<void> { /* nothing */ }

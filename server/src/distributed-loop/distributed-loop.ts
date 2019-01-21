@@ -11,8 +11,6 @@ export class DistributedLoop {
   private readonly logger: Logger;
   private readonly stopOnError: boolean;
 
-  constructor(key: string, lockProvider: LockProvider, logger: Logger)
-  constructor(key: string, lockProvider: LockProvider, logger: Logger, stopOnError: boolean)
   constructor(key: string, lockProvider: LockProvider, logger: Logger, stopOnError: boolean = true) {
     this.key = `loop:${key}`;
     this.lockProvider = lockProvider;
@@ -23,7 +21,7 @@ export class DistributedLoop {
   run(func: LoopFunction, interval: number, accuracy: number): LoopController {
     const stopped = new DeferredPromise();
     const stopPromise = new DeferredPromise();
-    let loopError: Error | null = null;
+    let loopError: Error | undefined;
 
     let stop = false;
 
@@ -38,10 +36,11 @@ export class DistributedLoop {
 
     const controller: LoopController = {
       stop: stopFunction,
-      stopped: stopped,
+      stopped,
       error: loopError
     };
 
+    // tslint:disable-next-line: no-floating-promises
     (async () => {
       const lock = this.lockProvider.get(this.key);
       const timer = new Timer();
@@ -56,19 +55,19 @@ export class DistributedLoop {
 
               const timeLeft = interval - timer.milliseconds;
               const timeoutDuration = timeLeft - (accuracy / 2);
-              await cancelableTimeout(stopPromise, timeoutDuration);
+              await cancelableTimeout(timeoutDuration, stopPromise);
             });
 
-            await cancelableTimeout(stopPromise, accuracy);
+            await cancelableTimeout(accuracy, stopPromise);
           }
           catch (error) {
             if (this.stopOnError) {
-              loopError = error;
+              loopError = error as Error;
               return;
             }
             else {
-              this.logger.error(error);
-              await cancelableTimeout(stopPromise, accuracy);
+              this.logger.error(error as Error);
+              await cancelableTimeout(accuracy, stopPromise);
             }
           }
         }

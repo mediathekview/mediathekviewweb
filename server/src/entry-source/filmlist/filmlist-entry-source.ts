@@ -64,7 +64,7 @@ export class FilmlistEntrySource implements EntrySource {
           this.logger.error(error as Error);
         }
         finally {
-          if (!hasError) {
+          if (!hasError && !canceled) {
             await this.importedFilmlistDates.add(filmlist.date);
             await this.importQueue.acknowledge(job);
           }

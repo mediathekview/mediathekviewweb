@@ -60,7 +60,7 @@ export class EntriesImporter extends ServiceBase implements Service {
   }
 
   protected async _stop(): Promise<void> {
-    throw new Error('not supported');
+    /* nothing */
   }
 
   private async import(source: EntrySource): Promise<void> {

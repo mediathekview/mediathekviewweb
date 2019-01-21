@@ -19,22 +19,9 @@ export class RedisLock implements Lock {
     this.key = key;
   }
 
-  async acquire(): Promise<LockController | false>;
-  async acquire(timeout: number): Promise<LockController | false>;
-  async acquire(func: LockedFunction): Promise<LockController | false>;
-  async acquire(timeout: number, func: LockedFunction): Promise<LockController | false>;
-  async acquire(funcOrTimeout?: number | LockedFunction, func?: LockedFunction): Promise<LockController | false> {
+  async acquire(timeout: number, func?: LockedFunction): Promise<LockController | false> {
     const id = uniqueId();
-
-    let acquireTimeout = 1000;
-
-    if (typeof funcOrTimeout == 'number') {
-      acquireTimeout = funcOrTimeout;
-    } else {
-      func = funcOrTimeout;
-    }
-
-    const newExpireTimestamp = await this._acquire(id, acquireTimeout);
+    const newExpireTimestamp = await this._acquire(id, timeout);
 
     if (newExpireTimestamp == -1) {
       return false;
@@ -80,7 +67,7 @@ export class RedisLock implements Lock {
 
         const millisecondsLeft = (expireTimestamp - currentTimestamp());
         const delay = Math.max(millisecondsLeft * 0.5, RETRY_DELAY);
-        await cancelableTimeout(stopPromise, delay);
+        await cancelableTimeout(delay, stopPromise);
       }
 
       stoppedPromise.resolve();

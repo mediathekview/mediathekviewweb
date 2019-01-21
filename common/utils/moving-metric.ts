@@ -1,4 +1,3 @@
-import { compareByValue } from './helpers';
 import { Timer } from './timer';
 
 type Sample = [number, Timer];
@@ -21,15 +20,30 @@ export class MovingMetric {
 
   sum(): number {
     this.removeOld();
+
+    if (this.samples.length == 0) {
+      return NaN;
+    }
+
     return this.samples.reduce((sum, [value]) => sum + value, 0);
   }
 
   average(): number {
+    this.removeOld();
+
+    if (this.samples.length == 0) {
+      return NaN;
+    }
+
     return this.sum() / this.samples.length;
   }
 
   median(): number {
     this.removeOld();
+
+    if (this.samples.length == 0) {
+      return NaN;
+    }
 
     const sortedSamples = this.sortedByValue();
     const index = sortedSamples.length / 2;
@@ -72,6 +86,10 @@ export class MovingMetric {
   quantile(scalar: number): number {
     this.removeOld();
 
+    if (this.samples.length == 0) {
+      return NaN;
+    }
+
     const sortedSamples = this.sortedByValue();
     const index = Math.round((sortedSamples.length - 1) * scalar);
 
@@ -91,6 +109,12 @@ export class MovingMetric {
   }
 
   rate(): number {
+    this.removeOld();
+
+    if (this.samples.length == 0) {
+      return NaN;
+    }
+
     const sum = this.sum();
     const interval = this.actualInterval();
     const rate = sum / interval;
@@ -100,6 +124,10 @@ export class MovingMetric {
 
   actualInterval(): number {
     this.removeOld();
+
+    if (this.samples.length == 0) {
+      return NaN;
+    }
 
     const oldestSample = this.samples[0];
     const [, timer] = oldestSample;

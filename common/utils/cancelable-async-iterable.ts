@@ -25,12 +25,14 @@ export class CancelableAsyncIterable<T> implements AsyncIterable<T> {
         hasError = true;
       });
 
+    // tslint:disable: no-non-null-assertion promise-function-async no-object-literal-type-assertion
     const cancelabledIterator: AsyncIterator<T> = {
-      return: (value?: any) => iterator.return!(value), // tslint:disable-line: no-non-null-assertion promise-function-async
-      throw: (e?: any) => iterator.throw!(e), // tslint:disable-line: no-non-null-assertion promise-function-async
+      return: (value?: any) => iterator.return!(value),
+      throw: (e?: any) => iterator.throw!(e),
       next: async (value?: any) => {
         if (stop) {
-          return { done: true, value: undefined as any };
+          await iterator.return!();
+          return { done: true } as IteratorResult<T>;
         }
 
         if (hasError) {
@@ -42,7 +44,8 @@ export class CancelableAsyncIterable<T> implements AsyncIterable<T> {
 
         if (result.canceled) {
           stop = true;
-          return { done: true } as IteratorResult<T>; // tslint:disable-line: no-object-literal-type-assertion
+          await iterator.return!();
+          return { done: true } as IteratorResult<T>;
         }
 
         return result.value;

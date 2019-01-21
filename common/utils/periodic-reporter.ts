@@ -47,7 +47,7 @@ export class PeriodicReporter {
       this.stopped.reset();
 
       while (!this.stopRequested) {
-        await cancelableTimeout(this.stopPromise, this.interval);
+        await cancelableTimeout(this.interval, this.stopPromise);
 
         if (!this.stopRequested && (!this.ignoreZero || (this.counter > 0))) {
           this.emitReport(this.resetAfterReport);

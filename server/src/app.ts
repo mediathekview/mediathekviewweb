@@ -144,7 +144,7 @@ async function init() {
 async function closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeout: number): Promise<void> {
   const timer = new Timer(true);
 
-  const closePromise = new Promise<void>((resolve, _reject) => server.close(() => resolve()));
+  const closePromise = new Promise<void>((resolve, _reject) => server.close(resolve));
 
   while (true) {
     const connections = await getConnections(server);
@@ -161,18 +161,18 @@ async function closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeou
 
     if (connections > 0) {
       logger.info(`waiting for ${connections} to end`);
-      await cancelableTimeout(closePromise, 1000, true);
+      await cancelableTimeout(1000, closePromise);
     }
   }
 }
 
-function destroySockets(sockets: Iterable<Net.Socket>) {
+function destroySockets(sockets: Iterable<Net.Socket>): void {
   for (const socket of sockets) {
     socket.destroy();
   }
 }
 
-function trackConnectedSockets(server: Net.Server, sockets: Set<Net.Socket>) {
+function trackConnectedSockets(server: Net.Server, sockets: Set<Net.Socket>): void {
   server.on('connection', (socket) => {
     sockets.add(socket);
 
@@ -185,8 +185,9 @@ function trackConnectedSockets(server: Net.Server, sockets: Set<Net.Socket>) {
 async function getConnections(server: Http.Server): Promise<number> {
   return new Promise<number>((resolve, reject) => {
     server.getConnections((error, count) => {
-      if (error != null) {
-        return reject(error);
+      if (error != undefined) {
+        reject(error);
+        return;
       }
 
       resolve(count);

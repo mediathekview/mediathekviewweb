@@ -12,12 +12,7 @@ import { SyncEnumerable } from './sync-enumerable';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   private readonly source: AnyIterable<T>;
-  private asyncIterator: AsyncIterator<T> | null;
-
-  constructor(iterable: AnyIterable<T>) {
-    this.source = iterable;
-    this.asyncIterator = null;
-  }
+  private asyncIterator?: AsyncIterator<T>;
 
   static from<T>(iterable: AnyIterable<T>): AsyncEnumerable<T> {
     return new AsyncEnumerable(iterable);
@@ -26,6 +21,10 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   static fromRange(fromInclusive: number, toInclusive: number): AsyncEnumerable<number> {
     const rangeIterable = range(fromInclusive, toInclusive);
     return new AsyncEnumerable(rangeIterable);
+  }
+
+  constructor(iterable: AnyIterable<T>) {
+    this.source = iterable;
   }
 
   cast<TNew extends T>(): AsyncEnumerable<TNew> {
@@ -96,8 +95,6 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(iterator);
   }
 
-  throttle(delay: number): AsyncEnumerable<T>;
-  throttle(throttleFunction: ThrottleFunction): AsyncEnumerable<T>;
   throttle(delayOrThrottleFunction: number | ThrottleFunction): AsyncEnumerable<T> {
     const result = throttle(this.source, delayOrThrottleFunction);
     return new AsyncEnumerable(result);
@@ -126,8 +123,6 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     await drain(this.source);
   }
 
-  multiplex(count: number): AsyncEnumerable<T>[];
-  multiplex(count: number, bufferSize: number): AsyncEnumerable<T>[];
   multiplex(count: number, bufferSize: number = 0): AsyncEnumerable<T>[] {
     const iterables = multiplex(this.source, count, bufferSize);
     const enumerables = iterables.map((iterable) => new AsyncEnumerable(iterable));
@@ -179,7 +174,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   }
 
   async next(value?: any): Promise<IteratorResult<T>> {
-    if (this.asyncIterator == null) {
+    if (this.asyncIterator == undefined) {
       this.asyncIterator = this.toIterator();
     }
 
