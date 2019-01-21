@@ -1,12 +1,12 @@
+import { AsyncDisposer } from '../../common/disposable';
 import { Logger } from '../../common/logger';
 import { Entry } from '../../common/model';
+import { CancelableAsyncIterable } from '../../common/utils/cancelable-async-iterable';
 import { DatastoreFactory, DataType, Set } from '../../datastore';
 import { Keys } from '../../keys';
 import { Queue, QueueProvider } from '../../queue';
 import { EntrySource } from '../entry-source';
 import { Filmlist } from './filmlist';
-import { AsyncDisposer } from '../../common/disposable';
-import { CancelableAsyncIterable } from '../../common/utils/cancelable-async-iterable';
 
 export class FilmlistEntrySource implements EntrySource {
   private readonly disposer: AsyncDisposer;
@@ -46,13 +46,22 @@ export class FilmlistEntrySource implements EntrySource {
         this.logger.info(`processing filmlist from ${filmlist.date}`);
 
         let hasError = false;
+        let canceled = false;
         try {
           const cancelableFilmlist = new CancelableAsyncIterable(filmlist, this.disposer.disposingPromise);
-          yield* cancelableFilmlist;
+
+          for await (const entry of cancelableFilmlist) { // tslint:disable-line: await-promise
+            yield entry;
+
+            if (this.disposer.disposing) {
+              canceled = true;
+              break;
+            }
+          }
         }
         catch (error) {
           hasError = true;
-          this.logger.error(error);
+          this.logger.error(error as Error);
         }
         finally {
           if (!hasError) {
