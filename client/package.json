@@ -18,7 +18,7 @@
     "jquery": "^3.3.1",
     "js-cookie": "^2.2.0",
     "lodash": "^4.17.11",
-    "moment": "^2.23.0",
+    "moment": "^2.24.0",
     "socket.io-client": "^2.2.0",
     "video.js": "^7.4.1"
   },
