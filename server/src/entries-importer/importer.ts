@@ -45,7 +45,9 @@ export class EntriesImporter extends ServiceBase implements Service {
 
     this.reporter.report.subscribe((count) => this.logger.info(`imported ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
 
-    this.disposer.addDisposeTasks(async () => await this.reporter.stop());
+    this.disposer.addDisposeTasks(async () => {
+      await this.reporter.stop();
+    });
   }
 
   protected async _start(): Promise<void> {
@@ -80,7 +82,7 @@ export class EntriesImporter extends ServiceBase implements Service {
             success = true;
           }
           catch (error) {
-            this.logger.error(error);
+            this.logger.error(error as Error);
 
             if (!this.stopRequested) {
               await timeout(1000);

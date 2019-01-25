@@ -61,20 +61,22 @@ export class MovingMetric {
   }
 
   minimum(): number {
+    this.removeOld();
+
     if (this.samples.length == 0) {
       return NaN;
     }
 
-    this.removeOld();
     return this.samples.reduce((minimum, [value]) => Math.min(minimum, value), Number.MAX_VALUE);
   }
 
   maximum(): number {
+    this.removeOld();
+
     if (this.samples.length == 0) {
       return NaN;
     }
 
-    this.removeOld();
     return this.samples.reduce((maximum, [value]) => Math.max(maximum, value), Number.MIN_VALUE);
   }
 
@@ -117,7 +119,8 @@ export class MovingMetric {
 
     const sum = this.sum();
     const interval = this.actualInterval();
-    const rate = sum / interval;
+    const seconds = interval / 1000;
+    const rate = sum / seconds;
 
     return rate;
   }
@@ -129,10 +132,10 @@ export class MovingMetric {
       return NaN;
     }
 
-    const oldestSample = this.samples[0];
-    const [, timer] = oldestSample;
+    const [, oldestTimer] = this.samples[0];
+    const [, latestTimer] = this.samples[this.samples.length - 1];
 
-    return timer.seconds;
+    return oldestTimer.milliseconds - latestTimer.milliseconds;
   }
 
   private sortedByValue(): Sample[] {

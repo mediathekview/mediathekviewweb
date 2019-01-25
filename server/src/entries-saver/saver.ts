@@ -23,8 +23,7 @@ export class EntriesSaver extends ServiceBase implements Service {
   private readonly logger: Logger;
   private readonly reporter: PeriodicReporter;
   private readonly disposer: AsyncDisposer;
-
-  private stopped: DeferredPromise;
+  private readonly stopped: DeferredPromise;
 
   constructor(entryRepository: EntryRepository, queueProvider: QueueProvider, logger: Logger) {
     super();
@@ -71,7 +70,7 @@ export class EntriesSaver extends ServiceBase implements Service {
           await this.entriesToBeSavedQueue.acknowledge(...batch);
         }
         catch (error) {
-          this.logger.error(error);
+          this.logger.error(error as Error);
           await timeout(2500);
         }
       });

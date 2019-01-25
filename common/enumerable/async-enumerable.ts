@@ -1,13 +1,13 @@
 import {
   anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable, drain, filterAsync,
   forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable,
-  iterableToAsyncIterator, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction, ParallelizablePredicate,
-  range, reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator, toSync, whileAsync
+  iterableToAsyncIterator, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction, ParallelizablePredicate, range,
+  reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator, toSync, whileAsync
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable-iterator';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
 import { parallelFilter, parallelForEach, parallelGroup, parallelIntercept, parallelMap } from '../utils/async-iterable-helpers/parallel';
-import { CancelableAsyncIterable } from '../utils/cancelable-async-iterable';
+import { CancelableAsyncIterableIterator } from '../utils/cancelable-async-iterable';
 import { SyncEnumerable } from './sync-enumerable';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
@@ -41,7 +41,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   }
 
   cancelable(cancelationPromise: Promise<void>): AsyncEnumerable<T> {
-    const cancelabled = new CancelableAsyncIterable(this.source, cancelationPromise);
+    const cancelabled = CancelableAsyncIterableIterator(this.source, cancelationPromise);
     return new AsyncEnumerable(cancelabled);
   }
 

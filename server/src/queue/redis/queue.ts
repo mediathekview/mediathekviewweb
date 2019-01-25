@@ -14,10 +14,7 @@ type StreamEntryType = { retries: string, enqueueTimestamp: string, data: string
 type RedisJob<DataType> = Job<DataType>;
 
 const BLOCK_DURATION = 2500;
-const MINIMUM_CONSUMER_IDLE_TIME_BEFORE_DELETION = 10000;
-
-let started = 0;
-let stopped = 0;
+const MINIMUM_CONSUMER_IDLE_TIME_BEFORE_DELETION = 600000;
 
 export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   private readonly disposer: AsyncDisposer;
@@ -116,7 +113,6 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   }
 
   async *getBatchConsumer(batchSize: number): AsyncIterableIterator<Job<DataType>[]> {
-    console.log('started', this.key, ++started)
     const disposeDeferrer = this.disposer.getDeferrer();
 
     try {
@@ -168,7 +164,6 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     }
     finally {
       disposeDeferrer.yield();
-      console.log('stopped', this.key, ++stopped)
     }
   }
 
@@ -194,12 +189,10 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       for (const consumer of consumersToDelete) {
         const lock = this.lockProvider.get(consumer.name);
 
-        console.log('DELETE LOCK')
         await lock.acquire(100, async () => {
           await this.stream.deleteConsumer(this.groupName, consumer.name);
           this.logger.debug(`deleted consumer ${consumer.name} from ${this.streamName}`);
         });
-        console.log('DELETE LOCK END')
 
         if (this.disposer.disposing) {
           break;

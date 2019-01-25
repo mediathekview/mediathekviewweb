@@ -47,11 +47,13 @@ export class EntriesIndexer extends ServiceBase implements Service {
     await this.entriesToBeIndexedQueue.initialize();
 
     this.metricReportTimer = setInterval(() => {
-      const count = this.movingMetric.count();
+      const count = this.movingMetric.sum();
       const interval = this.movingMetric.actualInterval();
       const rate = this.movingMetric.rate();
 
-      this.logger.info(`indexed ${count} entries in last ${formatDuration(interval, 0)} at ${rate} entries/s`);
+      if (count > 0) {
+        this.logger.info(`indexed ${count} entries in last ${formatDuration(interval, 0)} at ${Math.round(rate)} entries/s`);
+      }
     }, MOVING_METRIC_INTERVAL);
 
     this.disposer.addDisposeTasks(() => clearInterval(this.metricReportTimer));
@@ -73,8 +75,6 @@ export class EntriesIndexer extends ServiceBase implements Service {
           await timeout(2500);
         }
       });
-
-    console.log('END INDEXER')
   }
 
   protected async _stop(): Promise<void> { /* nothing */ }

@@ -17,10 +17,9 @@ export class StreamIterable<T> implements AsyncIterable<T> {
   }
 
   async *[Symbol.asyncIterator](): AsyncIterator<T> {
-    this.stream
-      .on('readable', () => this.handleReadable())
-      .on('end', () => this.handleEnd())
-      .on('error', (error: Error) => this.readable.reject(error));
+    this.stream.on('readable', () => this.handleReadable());
+    this.stream.on('end', () => this.handleEnd());
+    this.stream.on('error', (error) => this.handleError(error));
 
     while (!this.end) {
       await this.readable;
@@ -50,5 +49,13 @@ export class StreamIterable<T> implements AsyncIterable<T> {
     if (this.readable.pending) {
       this.readable.resolve();
     }
+  }
+
+  private handleError(error: Error): void {
+    if (this.readable.settled) {
+      this.readable.reset();
+    }
+
+    this.readable.reject(error);
   }
 }

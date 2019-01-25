@@ -41,7 +41,7 @@ async function initializeServices(services: MicroService[]) {
   await Promise.all(promises);
 }
 
-async function startServices(services: MicroService[]) {
+async function startServices(services: MicroService[]): Promise<void> {
   const promises = services.map((service) => {
     logger.verbose(`starting service ${service.name}`);
 
@@ -53,14 +53,11 @@ async function startServices(services: MicroService[]) {
   await Promise.race(promises);
 }
 
-async function disposeServices(services: MicroService[]) {
-  const promises = services.map((service) => {
+async function disposeServices(services: MicroService[]): Promise<void> {
+  const promises = services.map(async (service) => {
     logger.verbose(`stopping service ${service.name}`);
-
-    const promise = service.dispose();
-    promise.then(() => logger.verbose(`stopped service ${service.name}`));
-
-    return promise;
+    await service.dispose();
+    logger.verbose(`stopped service ${service.name}`);
   });
 
   await Promise.all(promises);

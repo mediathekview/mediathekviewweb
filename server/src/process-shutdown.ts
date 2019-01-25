@@ -11,10 +11,11 @@ const shutdownSubject = new Subject<void>();
 
 export const shutdown = shutdownSubject.asObservable();
 export const shutdownPromise = new DeferredPromise();
+export const forceShutdownPromise = new DeferredPromise();
 
 let requested = false;
 
-export function requestShutdown() {
+export function requestShutdown(): void {
   if (requested) {
     return;
   }
@@ -26,18 +27,20 @@ export function requestShutdown() {
 
   const timeout = setTimeout(() => {
     console.warn('forcefully quitting after 20 seconds...');
-    process.exit(1);
+    forceShutdownPromise.resolve();
+    setTimeout(() => process.exit(1), 1);
   }, 20000);
 
   timeout.unref();
 }
 
-export function forceShutdown() {
+export function forceShutdown(): void {
   console.error('forcefully quitting');
-  process.exit(2);
+  forceShutdownPromise.resolve();
+  setTimeout(() => process.exit(2), 1);
 }
 
-export function initializeSignals() {
+export function initializeSignals(): void {
   let signalCounter = 0;
 
   for (const event of QUIT_EVENTS) {
@@ -48,7 +51,7 @@ export function initializeSignals() {
   }
 
   for (const signal of QUIT_SIGNALS) {
-    process.on(signal as Signal, (signal) => {
+    process.on(signal, (signal) => {
       console.info(`${signal} received, quitting.`);
       requestShutdown();
 
