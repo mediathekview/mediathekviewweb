@@ -3,7 +3,7 @@ export type CancelablePromiseResult<T> =
   | { canceled: false, value: T };
 
 // tslint:disable-next-line: promise-function-async
-export function cancelablePromise<T>(promise: Promise<T>, cancelationPromise: Promise<void>): Promise<CancelablePromiseResult<T>> {
+export function cancelablePromise<T>(promise: Promise<T>, cancelationPromise: PromiseLike<void>): Promise<CancelablePromiseResult<T>> {
   return new Promise<CancelablePromiseResult<T>>((resolve, reject) => {
     let pending = true;
 
@@ -26,7 +26,6 @@ export function cancelablePromise<T>(promise: Promise<T>, cancelationPromise: Pr
       .catch(pendingReject);
 
     cancelationPromise
-      .then(() => pendingResolve({ canceled: true }))
-      .catch(pendingReject);
+      .then(() => pendingResolve({ canceled: true }));
   });
 }

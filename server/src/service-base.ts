@@ -1,29 +1,16 @@
-import { DeferredPromise } from './common/utils';
-import { Service } from './service';
-
-export enum ServiceState {
-  Uninitialized,
-  Initializing,
-  Running,
-  Stopping,
-  Stopped,
-  Disposing,
-  Disposed,
-  Erroneous
-}
+import { CancellationToken } from './common/utils/cancellation-token';
+import { Service, ServiceMetric, ServiceState } from './service';
 
 export abstract class ServiceBase implements Service {
-  private readonly _stopRequestedPromise: DeferredPromise;
+  private readonly _cancellationToken: CancellationToken;
 
-  private _stopRequested: boolean;
+  private runPromise: Promise<void>;
   private state: ServiceState;
 
-  protected get stopRequested(): boolean {
-    return this._stopRequested;
-  }
+  abstract metrics: ReadonlyArray<ServiceMetric>;
 
-  protected get stopRequestedPromise(): Promise<void> {
-    return this._stopRequestedPromise;
+  protected get cancellationToken(): CancellationToken {
+    return this._cancellationToken;
   }
 
   private get stateString(): string {
@@ -31,61 +18,21 @@ export abstract class ServiceBase implements Service {
   }
 
   constructor() {
-    this.state = ServiceState.Uninitialized;
-    this._stopRequested = false;
-    this._stopRequestedPromise = new DeferredPromise();
-  }
-
-  async dispose(): Promise<void> {
-    if (this.state == ServiceState.Disposing || this.state == ServiceState.Disposed) {
-      throw new Error(`cannot dispose service, it is ${this.stateString}`);
-    }
-
-    if (this.state == ServiceState.Running) {
-      await this.stop();
-    }
-
-    try {
-      this.state = ServiceState.Disposing;
-      await this._dispose();
-      this.state = ServiceState.Disposed;
-    }
-    catch (error) {
-      this.state = ServiceState.Erroneous;
-      throw error;
-    }
-  }
-
-  async initialize(): Promise<void> {
-    if (this.state != ServiceState.Uninitialized) {
-      throw new Error(`cannot initialize service, it is ${this.stateString}`);
-    }
-
-    try {
-      this.state = ServiceState.Initializing;
-      await this._initialize();
-      this.state = ServiceState.Stopped;
-    }
-    catch (error) {
-      this.state = ServiceState.Erroneous;
-      throw error;
-    }
+    this.state = ServiceState.Stopped;
+    this._cancellationToken = new CancellationToken();
   }
 
   async start(): Promise<void> {
     if (this.state != ServiceState.Stopped) {
-      throw new Error(`cannot run service, it is ${this.stateString}`);
+      throw new Error(`cannot start service, it is ${this.stateString}`);
     }
 
+    this.cancellationToken.reset();
+
     try {
-      this._stopRequested = false;
-
-      if (this._stopRequestedPromise.resolved) {
-        this._stopRequestedPromise.reset();
-      }
-
       this.state = ServiceState.Running;
-      await this._start();
+      this.runPromise = this.run();
+      await this.runPromise;
       this.state = ServiceState.Stopped;
     }
     catch (error) {
@@ -99,22 +46,9 @@ export abstract class ServiceBase implements Service {
       throw new Error(`cannot stop service, it is ${this.stateString}`);
     }
 
-    try {
-      this._stopRequested = true;
-      this._stopRequestedPromise.resolve();
-
-      this.state = ServiceState.Stopping;
-      await this._stop();
-      this.state = ServiceState.Stopped;
-    }
-    catch (error) {
-      this.state = ServiceState.Erroneous;
-      throw error;
-    }
+    this.cancellationToken.set();
+    await this.runPromise;
   }
 
-  protected abstract _dispose(): Promise<void>;
-  protected abstract _initialize(): Promise<void>;
-  protected abstract _start(): Promise<void>;
-  protected abstract _stop(): Promise<void>;
+  protected abstract run(): Promise<void>;
 }

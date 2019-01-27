@@ -2,13 +2,14 @@ import {
   anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable, drain, filterAsync,
   forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable,
   iterableToAsyncIterator, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction, ParallelizablePredicate, range,
-  reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator, toSync, whileAsync
+  reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator, toSync, whileAsync, AsyncRetryPredicate
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable-iterator';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
 import { parallelFilter, parallelForEach, parallelGroup, parallelIntercept, parallelMap } from '../utils/async-iterable-helpers/parallel';
 import { CancelableAsyncIterableIterator } from '../utils/cancelable-async-iterable';
 import { SyncEnumerable } from './sync-enumerable';
+import { retryAsync } from '../utils/async-iterable-helpers/retry';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   private readonly source: AnyIterable<T>;
@@ -40,7 +41,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
     return new AsyncEnumerable(whiled);
   }
 
-  cancelable(cancelationPromise: Promise<void>): AsyncEnumerable<T> {
+  cancelable(cancelationPromise: PromiseLike<void>): AsyncEnumerable<T> {
     const cancelabled = CancelableAsyncIterableIterator(this.source, cancelationPromise);
     return new AsyncEnumerable(cancelabled);
   }
@@ -60,6 +61,11 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   async reduce<U>(reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
     const result = await reduceAsync(this.source, reducer, initialValue);
     return result;
+  }
+
+  retry(throwOnRetryFalse: boolean, predicate: AsyncRetryPredicate<T>): AsyncEnumerable<T> {
+    const result = retryAsync(this.source, throwOnRetryFalse, predicate);
+    return new AsyncEnumerable(result);
   }
 
   single(): Promise<T>;

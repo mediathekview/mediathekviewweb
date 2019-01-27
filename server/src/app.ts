@@ -7,72 +7,66 @@ import { AggregationMode, cancelableTimeout, formatDuration, PeriodicSampler, Ti
 import { config } from './config';
 import { Filmlist } from './entry-source/filmlist/filmlist';
 import { InstanceProvider } from './instance-provider';
-import { FilmlistManagerService, ImporterService, IndexerService, SaverService } from './micro-service';
-import { initializeSignals, requestShutdown, shutdown, shutdownPromise } from './process-shutdown';
-import { MicroService, Service } from './service';
+import { initializeSignals, requestShutdown, shutdownToken } from './process-shutdown';
+import { Service } from './service';
+
+type MicroService = {
+  name: string;
+  service: Service;
+};
 
 const logger = InstanceProvider.coreLogger();
 
-let shutdownStarted = false;
-shutdownPromise.then(() => shutdownStarted = true);
 initializeSignals();
 Serializer.registerPrototype(Filmlist);
 
+// tslint:disable-next-line: no-floating-promises
 (async () => {
   try {
     await init();
   }
   catch (error) {
-    logger.error(error);
+    logger.error(error as Error);
     requestShutdown();
   }
 })();
 
-async function initializeServices(services: MicroService[]) {
-  const promises = services.map((service) => {
-    logger.verbose(`initializing service ${service.name}`);
-
-    const promise = service.initialize();
-    promise.then(() => logger.verbose(`initialized service ${service.name}`));
-
-    return promise;
-  });
-
-  await Promise.all(promises);
-}
-
 async function startServices(services: MicroService[]): Promise<void> {
-  const promises = services.map((service) => {
-    logger.verbose(`starting service ${service.name}`);
-
-    const promise = service.start();
-
-    return promise;
+  const promises = services.map(async ({ name, service }) => {
+    logger.verbose(`starting service ${name}`);
+    await service.start();
   });
 
   await Promise.race(promises);
 }
 
-async function disposeServices(services: MicroService[]): Promise<void> {
-  const promises = services.map(async (service) => {
-    logger.verbose(`stopping service ${service.name}`);
-    await service.dispose();
-    logger.verbose(`stopped service ${service.name}`);
+async function stopServices(services: MicroService[]): Promise<void> {
+  const promises = services.map(async ({ name, service }) => {
+    logger.verbose(`stopping service ${name}`);
+    await service.stop();
+    logger.verbose(`stopped service ${name}`);
   });
 
   await Promise.all(promises);
 }
 
 function getMicroServices(): MicroService[] {
-  const filmlistManagerService = new FilmlistManagerService();
-  const importerService = new ImporterService();
-  const saverService = new SaverService();
-  const indexerService = new IndexerService();
+  const filmlistManager = InstanceProvider.filmlistManager();
+  const importer = InstanceProvider.entriesImporter();
+  const saver = InstanceProvider.entriesSaver();
+  const indexer = InstanceProvider.entriesIndexer();
 
-  return [filmlistManagerService, importerService, saverService, indexerService];
+  const microServices: MicroService[] = [
+    { name: 'FilmlistManager', service: filmlistManager },
+    { name: 'Importer', service: importer },
+    { name: 'Saver', service: saver },
+    { name: 'Indexer', service: indexer }
+  ];
+
+  return microServices;
 }
 
-async function initializeApi(server: Http.Server): Promise<void> {
+function initializeApi(server: Http.Server): void {
   const api = InstanceProvider.mediathekViewWebApi();
   const restApi = new MediathekViewWebRestApi(api);
 
@@ -81,15 +75,15 @@ async function initializeApi(server: Http.Server): Promise<void> {
   });
 }
 
-async function init() {
+async function init(): Promise<void> {
   initEventLoopWatcher(logger);
 
   await Promise.race([
     InstanceProvider.initialize(),
-    shutdownPromise
+    shutdownToken
   ]);
 
-  if (shutdownStarted) {
+  if (shutdownToken.isSet) {
     await InstanceProvider.disposeInstances();
     return;
   }
@@ -104,7 +98,7 @@ async function init() {
   await searchEngine.initialize();
   initializeApi(server);
 
-  if (shutdownStarted) {
+  if (shutdownToken.isSet) {
     await InstanceProvider.disposeInstances();
     return;
   }
@@ -112,14 +106,12 @@ async function init() {
   logger.info(`listen on port ${config.api.port}`)
   server.listen(config.api.port);
 
-  logger.info('initializing services');
-  await initializeServices(services);
-
-  if (!shutdownStarted) {
+  if (!shutdownToken.isSet) {
     logger.info('starting services');
+
     await Promise.race([
       startServices(services),
-      shutdownPromise
+      shutdownToken
     ]);
   }
 
@@ -127,7 +119,7 @@ async function init() {
   const serverClosePromise = closeServer(server, sockets, 3000);
 
   logger.info('stopping services');
-  await disposeServices(services);
+  await stopServices(services);
 
   logger.info('waiting for http server to be closed');
   await serverClosePromise;
@@ -204,7 +196,7 @@ async function measureEventLoopDelay(): Promise<number> {
   });
 }
 
-async function initEventLoopWatcher(logger: Logger) {
+function initEventLoopWatcher(logger: Logger): void {
   const sampler = new PeriodicSampler(measureEventLoopDelay, 50);
 
   sampler
@@ -213,6 +205,5 @@ async function initEventLoopWatcher(logger: Logger) {
 
   sampler.start();
 
-  shutdown.subscribe(() => sampler.stop());
+  shutdownToken.then(async () => await sampler.stop());
 }
-

@@ -1,22 +1,22 @@
-import { forceShutdownPromise } from '../../process-shutdown';
 import { AsyncEnumerable } from '../enumerable';
 import { DeferredPromise } from '../utils';
 import { MultiError } from '../utils/multi-error';
-import { differenceSets } from '../utils/set';
 import { AsyncDisposable } from './disposable';
 
-export type DisposeTask = () => any | Promise<any>;
+const deferrerPromiseSymbol: unique symbol = Symbol('DeferrerPromise');
 
-export type DisposeDeferrer = {
+export type Task = () => any | Promise<any>;
+
+export type Deferrer = {
+  [deferrerPromiseSymbol]: DeferredPromise;
   yield(): void;
 };
 
 export class AsyncDisposer implements AsyncDisposable {
   private readonly _disposingPromise: DeferredPromise;
   private readonly disposedPromise: DeferredPromise;
-  private readonly deferrers: Set<Promise<void>>;
-  private readonly tasks: Set<DisposeTask>;
-  private readonly finishedTasks: Set<DisposeTask>;
+  private readonly deferrers: Set<Deferrer>;
+  private readonly tasks: Set<Task>;
 
   private _disposing: boolean;
   private _disposed: boolean;
@@ -37,51 +37,40 @@ export class AsyncDisposer implements AsyncDisposable {
     this.disposedPromise = new DeferredPromise();
     this.deferrers = new Set();
     this.tasks = new Set();
-    this.finishedTasks = new Set();
 
     this._disposingPromise = new DeferredPromise();
     this._disposing = false;
     this._disposed = false;
-
-    // tslint:disable-next-line: no-floating-promises
-    forceShutdownPromise.then(() => {
-      if (!this.disposing) {
-        console.log('deferrers', this.deferrers.size);
-
-        const unfinishedTasks = differenceSets(this.tasks, this.finishedTasks);
-        for (const task of unfinishedTasks) {
-          console.log(task.toString());
-        }
-      }
-    });
   }
 
-  getDeferrer(): DisposeDeferrer {
+  getDeferrer(): Deferrer {
     const deferredPromise = new DeferredPromise();
-    this.deferrers.add(deferredPromise);
 
-    const deferrer: DisposeDeferrer = {
+    const deferrer: Deferrer = {
+      [deferrerPromiseSymbol]: deferredPromise,
       yield: () => {
         deferredPromise.resolve();
-        this.deferrers.delete(deferredPromise);
+        this.deferrers.delete(deferrer);
       }
     };
+
+    this.deferrers.add(deferrer);
 
     return deferrer;
   }
 
-  async defer<T>(deferrer: () => Promise<T>): Promise<T> {
-    const disposeDeferrer = this.getDeferrer();
+  async defer<T>(func: () => Promise<T>): Promise<T> {
+    const deferrer = this.getDeferrer();
 
     try {
-      return await deferrer();
+      return await func();
     }
     finally {
-      disposeDeferrer.yield();
+      deferrer.yield();
     }
   }
 
-  addDisposeTasks(...tasks: DisposeTask[]): void {
+  addDisposeTasks(...tasks: Task[]): void {
     for (const task of tasks) {
       this.tasks.add(task);
     }
@@ -98,15 +87,14 @@ export class AsyncDisposer implements AsyncDisposable {
 
     const errors: Error[] = [];
 
-    await AsyncEnumerable.from(this.deferrers)
-      .parallelForEach(10, async (deferrer) => {
-        try {
-          await deferrer;
-        }
-        catch (error) {
-          errors.push(error as Error);
-        }
-      });
+    for (const deferrer of this.deferrers) {
+      try {
+        await deferrer[deferrerPromiseSymbol];
+      }
+      catch (error) {
+        errors.push(error as Error);
+      }
+    }
 
     await AsyncEnumerable.from(this.tasks)
       .parallelForEach(10, async (task) => {
@@ -119,9 +107,6 @@ export class AsyncDisposer implements AsyncDisposable {
         }
         catch (error) {
           errors.push(error as Error);
-        }
-        finally {
-          this.finishedTasks.add(task);
         }
       });
 

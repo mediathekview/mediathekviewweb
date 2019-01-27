@@ -1,5 +1,4 @@
-import { Subject } from 'rxjs';
-import { DeferredPromise } from './common/utils';
+import { CancellationToken } from './common/utils/cancellation-token';
 
 type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
 type QuitEvent = 'uncaughtException' | 'multipleResolves' | 'unhandledRejection' | 'rejectionHandled';
@@ -7,11 +6,7 @@ type QuitEvent = 'uncaughtException' | 'multipleResolves' | 'unhandledRejection'
 const QUIT_SIGNALS: Signal[] = ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGBREAK'];
 const QUIT_EVENTS: QuitEvent[] = ['uncaughtException' /* , 'multipleResolves' */, 'unhandledRejection', 'rejectionHandled'];
 
-const shutdownSubject = new Subject<void>();
-
-export const shutdown = shutdownSubject.asObservable();
-export const shutdownPromise = new DeferredPromise();
-export const forceShutdownPromise = new DeferredPromise();
+export const shutdownToken = new CancellationToken();
 
 let requested = false;
 
@@ -21,13 +16,10 @@ export function requestShutdown(): void {
   }
 
   requested = true;
-  shutdownSubject.next();
-  shutdownSubject.complete();
-  shutdownPromise.resolve();
+  shutdownToken.set();
 
   const timeout = setTimeout(() => {
     console.warn('forcefully quitting after 20 seconds...');
-    forceShutdownPromise.resolve();
     setTimeout(() => process.exit(1), 1);
   }, 20000);
 
@@ -36,7 +28,6 @@ export function requestShutdown(): void {
 
 export function forceShutdown(): void {
   console.error('forcefully quitting');
-  forceShutdownPromise.resolve();
   setTimeout(() => process.exit(2), 1);
 }
 

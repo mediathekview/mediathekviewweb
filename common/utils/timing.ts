@@ -15,7 +15,7 @@ export async function timeout(milliseconds: number = 0): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 }
 
-export async function cancelableTimeout(milliseconds: number = 0, cancelPromise: Promise<void>): Promise<boolean> {
+export async function cancelableTimeout(milliseconds: number = 0, cancelPromise: PromiseLike<void>): Promise<boolean> {
   return await new Promise<boolean>(async (resolve) => {
     let pending = true;
 

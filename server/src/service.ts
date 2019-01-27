@@ -1,11 +1,19 @@
-import { AsyncDisposable } from './common/disposable';
+import { Observable } from 'rxjs';
 
-export interface Service extends AsyncDisposable {
-  initialize(): Promise<void>;
-  start(): Promise<void>;
-  stop(): Promise<void>;
+export type ServiceMetric = {
+  name: string;
+  values: Observable<number>;
+};
+
+export enum ServiceState {
+  Running,
+  Stopping,
+  Stopped,
+  Erroneous
 }
 
-export interface MicroService extends Service {
-  readonly name: string;
+export interface Service {
+  metrics: ReadonlyArray<ServiceMetric>;
+  start(): Promise<void>;
+  stop(): Promise<void>;
 }

@@ -3,17 +3,16 @@ import { isAsyncIterable } from './is-async-iterable';
 import { AsyncReducer } from './types';
 
 export function reduceAsync<T>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, T>): Promise<T>;
-export function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue: U): Promise<U>;
 export function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U>;
-export function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
+export function reduceAsync<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> { // tslint:disable-line: promise-function-async
   if (isAsyncIterable(iterable)) {
-    return async(iterable, reducer, initialValue);
+    return asyncReduce(iterable, reducer, initialValue);
   } else {
-    return sync(iterable, reducer, initialValue);
+    return syncReduce(iterable, reducer, initialValue);
   }
 }
 
-async function sync<T, U>(iterable: Iterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
+async function syncReduce<T, U>(iterable: Iterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
   let accumulator: T | U | undefined = initialValue;
   let index = 0;
 
@@ -35,7 +34,7 @@ async function sync<T, U>(iterable: Iterable<T>, reducer: AsyncReducer<T, U>, in
   return accumulator as U;
 }
 
-async function async<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
+async function asyncReduce<T, U>(iterable: AnyIterable<T>, reducer: AsyncReducer<T, U>, initialValue?: U): Promise<U> {
   let accumulator: T | U | undefined = initialValue;
   let index = 0;
 

@@ -1,73 +1,60 @@
+import { Subject } from 'rxjs';
 import { AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
-import { DeferredPromise, formatDuration, timeout } from '../common/utils';
-import { PeriodicReporter } from '../common/utils/periodic-reporter';
+import { timeout } from '../common/utils';
+import { CancelableAsyncIterableIterator } from '../common/utils/cancelable-async-iterable';
 import { Keys } from '../keys';
-import { Queue, QueueProvider } from '../queue';
+import { Job, Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
-import { Service } from '../service';
+import { Service, ServiceMetric } from '../service';
 import { ServiceBase } from '../service-base';
 
 const BATCH_SIZE = 250;
 const BUFFER_SIZE = 3;
 const CONCURRENCY = 3;
 
-const REPORT_INTERVAL = 10000;
-
 export class EntriesSaver extends ServiceBase implements Service {
   private readonly entryRepository: EntryRepository;
-  private readonly entriesToBeSavedQueue: Queue<Entry>;
-  private readonly entriesToBeIndexedQueue: Queue<string>;
+  private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
-  private readonly reporter: PeriodicReporter;
-  private readonly disposer: AsyncDisposer;
-  private readonly stopped: DeferredPromise;
+  private readonly savedSubject: Subject<number>;
+
+  readonly metrics: ServiceMetric[];
 
   constructor(entryRepository: EntryRepository, queueProvider: QueueProvider, logger: Logger) {
     super();
 
     this.entryRepository = entryRepository;
+    this.queueProvider = queueProvider;
     this.logger = logger;
 
-    this.disposer = new AsyncDisposer();
-    this.reporter = new PeriodicReporter(REPORT_INTERVAL, true, true);
-
-    this.entriesToBeSavedQueue = queueProvider.get(Keys.EntriesToBeSaved, 30000, 3);
-    this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 30000, 3);
-
-    this.disposer.addDisposeTasks(async () => await this.entriesToBeSavedQueue.dispose());
-    this.disposer.addDisposeTasks(async () => await this.entriesToBeIndexedQueue.dispose());
-
-    this.stopped = new DeferredPromise();
+    this.savedSubject = new Subject();
+    this.metrics = [{ name: 'saved', values: this.savedSubject.asObservable() }];
   }
 
-  protected async _initialize(): Promise<void> {
-    await this.entriesToBeSavedQueue.initialize();
-    await this.entriesToBeIndexedQueue.initialize();
+  protected async run(): Promise<void> {
+    const disposer = new AsyncDisposer();
 
-    this.reporter.report.subscribe((count) => this.logger.info(`saved ${count} entries in last ${formatDuration(REPORT_INTERVAL, 0)}`));
-    this.reporter.run();
+    const entriesToBeSavedQueue = this.queueProvider.get<Entry>(Keys.EntriesToBeSaved, 30000, 3);
+    const entriesToBeIndexedQueue = this.queueProvider.get<string>(Keys.EntriesToBeIndexed, 30000, 3);
 
-    this.disposer.addDisposeTasks(async () => await this.reporter.stop());
-  }
+    await this.initializeQueues(disposer, entriesToBeSavedQueue, entriesToBeIndexedQueue);
 
-  protected async _dispose(): Promise<void> {
-    await this.disposer.dispose();
-  }
+    const consumer = entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, false);
+    const cancelableConsumer = CancelableAsyncIterableIterator(consumer, this.cancellationToken);
 
-  protected async _start(): Promise<void> {
-    const consumer = this.entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, false);
+    this.cancellationToken.then(async () => await disposer.dispose());
 
-    await AsyncEnumerable.from(consumer)
-      .cancelable(this.stopRequestedPromise)
+    await AsyncEnumerable.from(cancelableConsumer)
+      .cancelable(this.cancellationToken)
       .buffer(BUFFER_SIZE)
       .parallelForEach(CONCURRENCY, async (batch) => {
         try {
-          const entries = batch.map((job) => job.data);
-          await this.saveEntries(entries);
-          await this.entriesToBeSavedQueue.acknowledge(...batch);
+          await this.saveBatch(batch, entriesToBeIndexedQueue);
+          await entriesToBeSavedQueue.acknowledge(...batch);
+          this.savedSubject.next(batch.length);
         }
         catch (error) {
           this.logger.error(error as Error);
@@ -75,18 +62,21 @@ export class EntriesSaver extends ServiceBase implements Service {
         }
       });
 
-    this.stopped.resolve();
+    await disposer.dispose();
   }
 
-  protected async _stop(): Promise<void> {
-    await this.stopped;
-  }
-
-  private async saveEntries(entries: Entry[]): Promise<void> {
+  private async saveBatch(batch: Job<Entry>[], entriesToBeIndexedQueue: Queue<string>): Promise<void> {
+    const entries = batch.map((job) => job.data);
     const ids = entries.map((entry) => entry.id);
-    await this.entryRepository.saveMany(entries);
-    await this.entriesToBeIndexedQueue.enqueueMany(ids);
 
-    this.reporter.increase(entries.length);
+    await this.entryRepository.saveMany(entries);
+    await entriesToBeIndexedQueue.enqueueMany(ids);
+  }
+
+  private async initializeQueues(disposer: AsyncDisposer, ...queues: Queue<any>[]): Promise<void> {
+    for (const queue of queues) {
+      await queue.initialize();
+      disposer.addDisposeTasks(async () => await queue.dispose());
+    }
   }
 }

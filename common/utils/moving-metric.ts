@@ -133,9 +133,7 @@ export class MovingMetric {
     }
 
     const [, oldestTimer] = this.samples[0];
-    const [, latestTimer] = this.samples[this.samples.length - 1];
-
-    return oldestTimer.milliseconds - latestTimer.milliseconds;
+    return oldestTimer.milliseconds;
   }
 
   private sortedByValue(): Sample[] {

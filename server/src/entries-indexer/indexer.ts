@@ -1,83 +1,68 @@
+import { Subject } from 'rxjs';
 import { AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable';
 import { Logger } from '../common/logger';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
-import { formatDuration, timeout } from '../common/utils';
-import { MovingMetric } from '../common/utils/moving-metric';
+import { timeout } from '../common/utils';
 import { Keys } from '../keys';
-import { Queue, QueueProvider } from '../queue';
+import { Job, Queue, QueueProvider } from '../queue';
 import { AggregatedEntryRepository } from '../repository';
-import { Service } from '../service';
+import { Service, ServiceMetric } from '../service';
 import { ServiceBase } from '../service-base';
 
 const BATCH_SIZE = 100;
 
-const MOVING_METRIC_INTERVAL = 10000;
-
 export class EntriesIndexer extends ServiceBase implements Service {
-  private readonly disposer: AsyncDisposer;
   private readonly aggregatedEntryRepository: AggregatedEntryRepository;
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
-  private readonly entriesToBeIndexedQueue: Queue<string>;
+  private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
-  private readonly movingMetric: MovingMetric;
+  private readonly indexedSubject: Subject<number>;
 
-  private metricReportTimer: NodeJS.Timeout;
+  readonly metrics: ServiceMetric[];
 
   constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, queueProvider: QueueProvider, logger: Logger) {
     super();
 
     this.aggregatedEntryRepository = indexedEntryRepository;
     this.searchEngine = searchEngine;
+    this.queueProvider = queueProvider;
     this.logger = logger;
 
-    this.disposer = new AsyncDisposer();
-    this.movingMetric = new MovingMetric(MOVING_METRIC_INTERVAL);
-    this.entriesToBeIndexedQueue = queueProvider.get(Keys.EntriesToBeIndexed, 15000, 3);
-
-    this.disposer.addDisposeTasks(async () => await this.entriesToBeIndexedQueue.dispose());
+    this.indexedSubject = new Subject();
+    this.metrics = [{ name: 'indexed', values: this.indexedSubject.asObservable() }];
   }
 
-  protected async _dispose(): Promise<void> {
-    await this.disposer.dispose();
-  }
+  protected async run(): Promise<void> {
+    const disposer = new AsyncDisposer();
+    const entriesToBeIndexedQueue = this.queueProvider.get<string>(Keys.EntriesToBeIndexed, 15000, 3);
 
-  protected async _initialize(): Promise<void> {
-    await this.entriesToBeIndexedQueue.initialize();
+    await this.initializeQueues(disposer, entriesToBeIndexedQueue);
 
-    this.metricReportTimer = setInterval(() => {
-      const count = this.movingMetric.sum();
-      const interval = this.movingMetric.actualInterval();
-      const rate = this.movingMetric.rate();
-
-      if (count > 0) {
-        this.logger.info(`indexed ${count} entries in last ${formatDuration(interval, 0)} at ${Math.round(rate)} entries/s`);
-      }
-    }, MOVING_METRIC_INTERVAL);
-
-    this.disposer.addDisposeTasks(() => clearInterval(this.metricReportTimer));
-  }
-
-  protected async _start(): Promise<void> {
-    const consumer = this.entriesToBeIndexedQueue.getBatchConsumer(BATCH_SIZE, true);
+    const consumer = entriesToBeIndexedQueue.getBatchConsumer(BATCH_SIZE, true);
 
     await AsyncEnumerable.from(consumer)
-      .cancelable(this.stopRequestedPromise)
+      .cancelable(this.cancellationToken)
       .forEach(async (batch) => {
         try {
-          const ids = batch.map((job) => job.data);
-          await this.indexEntries(ids);
-          await this.entriesToBeIndexedQueue.acknowledge(...batch);
+          await this.indexBatch(batch);
+          await entriesToBeIndexedQueue.acknowledge(...batch);
+          this.indexedSubject.next(batch.length);
         }
         catch (error) {
           this.logger.error(error as Error);
           await timeout(2500);
         }
       });
+
+    await disposer.dispose();
   }
 
-  protected async _stop(): Promise<void> { /* nothing */ }
+  private async indexBatch(batch: Job<string>[]): Promise<void> {
+    const ids = batch.map((job) => job.data);
+    await this.indexEntries(ids);
+  }
 
   private async indexEntries(ids: string[]): Promise<void> {
     const entries = this.aggregatedEntryRepository.loadMany(ids);
@@ -85,6 +70,12 @@ export class EntriesIndexer extends ServiceBase implements Service {
     const searchEngineItems = entriesArray.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);
-    this.movingMetric.add(ids.length);
+  }
+
+  private async initializeQueues(disposer: AsyncDisposer, ...queues: Queue<any>[]): Promise<void> {
+    for (const queue of queues) {
+      await queue.initialize();
+      disposer.addDisposeTasks(async () => await queue.dispose());
+    }
   }
 }

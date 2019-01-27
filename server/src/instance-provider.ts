@@ -270,8 +270,9 @@ export class InstanceProvider {
     return this.singleton(EntriesImporter, () => {
       const queueProvider = this.queueProvider();
       const logger = LoggerFactoryProvider.factory.create(ENTRIES_IMPORTER_LOG);
+      const source = InstanceProvider.filmlistEntrySource();
 
-      return new EntriesImporter(queueProvider, logger);
+      return new EntriesImporter(queueProvider, logger, [source]);
     });
   }
 

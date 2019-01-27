@@ -61,7 +61,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     });
 
     if (!lockController) {
-      throw new Error('could not acquire lock for initialization')
+      throw new Error('could not acquire lock for initialization');
     }
 
     const retryLoopController = this.retryLoop.run(async (_controller) => await this.retryPendingEntries(), this.retryAfter, this.retryAfter / 2);

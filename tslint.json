@@ -45,7 +45,7 @@
     "strict-type-predicates": false,
     "triple-equals": false,
     "max-line-length": false,
-    "await-promise": [true, "DeferredPromise"],
+    "await-promise": [true, "DeferredPromise", "PromiseLike"],
     "no-floating-promises": [true, "DeferredPromise"],
     "interface-name": [true, "never-prefix"],
     "one-line": [true, "check-open-brace", "check-whitespace"],
