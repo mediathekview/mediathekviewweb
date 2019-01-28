@@ -25,10 +25,9 @@ export class FilmlistEntrySource implements EntrySource {
 
     await importQueue.initialize();
 
-    const consumer = importQueue.getConsumer(false);
-    const cancelableConsumer = CancelableAsyncIterableIterator(consumer, cancellationToken);
+    const consumer = importQueue.getConsumer(cancellationToken);
 
-    for await (const job of cancelableConsumer) {
+    for await (const job of consumer) {
       const { data: filmlist } = job;
 
       try {

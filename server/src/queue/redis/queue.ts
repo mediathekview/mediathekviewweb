@@ -4,6 +4,7 @@ import { LockProvider } from '../../common/lock';
 import { Logger } from '../../common/logger';
 import { Serializer } from '../../common/serializer';
 import { cancelableTimeout, currentTimestamp } from '../../common/utils';
+import { CancellationToken } from '../../common/utils/cancellation-token';
 import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { RedisProvider } from '../../redis/provider';
 import { Entry, RedisStream, SourceEntry } from '../../redis/stream';
@@ -100,25 +101,25 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     await this.stream.acknowledgeDeleteTransaction(this.groupName, ids);
   }
 
-  async *getConsumer(): AsyncIterableIterator<Job<DataType>> {
-    const batchConsumer = this.getBatchConsumer(1);
+  async *getConsumer(cancellationToken: CancellationToken): AsyncIterableIterator<Job<DataType>> {
+    const batchConsumer = this.getBatchConsumer(1, cancellationToken);
 
     for await (const batch of batchConsumer) {
-      yield* batch;
-
-      if (this.disposer.disposing) {
+      if (cancellationToken.isSet || this.disposer.disposing) {
         break;
       }
+
+      yield* batch;
     }
   }
 
-  async *getBatchConsumer(batchSize: number): AsyncIterableIterator<Job<DataType>[]> {
+  async *getBatchConsumer(batchSize: number, cancellationToken: CancellationToken): AsyncIterableIterator<Job<DataType>[]> {
     const disposeDeferrer = this.disposer.getDeferrer();
 
     try {
       const consumerStream = this.getConsumerStream();
       const consumer = this.getConsumerName();
-      const lock = this.lockProvider.get(consumer);
+      const lock = this.lockProvider.get(`queue:${this.key}:${consumer}`);
 
       const lockController = await lock.acquire(1000);
 
@@ -127,10 +128,10 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
       }
 
       try {
-        while (!this.disposer.disposing) {
+        while (!cancellationToken.isSet && !this.disposer.disposing) {
           let entries: Entry<StreamEntryType>[] | undefined;
 
-          while (entries == undefined && !this.disposer.disposing) {
+          while (entries == undefined && !cancellationToken.isSet && !this.disposer.disposing) {
             try {
               entries = await consumerStream.readGroup({ id: '>', group: this.groupName, consumer, block: BLOCK_DURATION, count: batchSize });
             }
@@ -140,7 +141,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
             }
           }
 
-          if (this.disposer.disposing) {
+          if (cancellationToken.isSet || this.disposer.disposing) {
             break;
           }
 

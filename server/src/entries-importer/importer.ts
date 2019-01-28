@@ -51,7 +51,6 @@ export class EntriesImporter extends ServiceBase implements Service {
     const entries = source.getEntries(this.cancellationToken);
 
     await AsyncEnumerable.from(entries)
-      .cancelable(this.cancellationToken)
       .retry(false, async (error) => {
         this.logger.error(error);
         await cancelableTimeout(1000, this.cancellationToken);

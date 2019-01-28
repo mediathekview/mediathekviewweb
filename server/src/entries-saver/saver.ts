@@ -42,13 +42,12 @@ export class EntriesSaver extends ServiceBase implements Service {
 
     await this.initializeQueues(disposer, entriesToBeSavedQueue, entriesToBeIndexedQueue);
 
-    const consumer = entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, false);
-    const cancelableConsumer = CancelableAsyncIterableIterator(consumer, this.cancellationToken);
+    const consumer = entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, this.cancellationToken);
 
+    // tslint:disable-next-line: no-floating-promises
     this.cancellationToken.then(async () => await disposer.dispose());
 
-    await AsyncEnumerable.from(cancelableConsumer)
-      .cancelable(this.cancellationToken)
+    await AsyncEnumerable.from(consumer)
       .buffer(BUFFER_SIZE)
       .parallelForEach(CONCURRENCY, async (batch) => {
         try {
