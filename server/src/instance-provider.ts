@@ -3,9 +3,11 @@ import * as RedisClient from 'ioredis';
 import { Redis } from 'ioredis';
 import * as Mongo from 'mongodb';
 import { MediathekViewWebApi } from './api/api';
+import { MediathekViewWebRestApi } from './api/rest-api';
 import { AsyncDisposer } from './common/disposable';
 import { LockProvider } from './common/lock';
-import { Logger, LoggerFactory } from './common/logger';
+import { Logger, LogLevel } from './common/logger';
+import { ConsoleLogger } from './common/logger/console';
 import { AggregatedEntry } from './common/model';
 import { SearchEngine } from './common/search-engine';
 import { StringMap } from './common/types';
@@ -22,7 +24,6 @@ import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-sour
 import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
 import { RedisLockProvider } from './lock/redis';
-import { LoggerFactoryProvider } from './logger-factory-provider';
 import { QueueProvider } from './queue';
 import { RedisQueueProvider } from './queue/redis';
 import { RedisProvider } from './redis/provider';
@@ -69,8 +70,8 @@ function getRedisProvider(providerFunction: (scope: string) => Redis): RedisProv
 
 export class InstanceProvider {
   private static readonly instances: StringMap = {};
-  private static readonly loggerFactory: LoggerFactory = LoggerFactoryProvider.factory;
   private static readonly disposer: AsyncDisposer = new AsyncDisposer();
+  private static readonly logger: Logger = new ConsoleLogger(LogLevel.Trace);
 
   private static async connectToDatabases(): Promise<void> {
     const logger = this.coreLogger();
@@ -100,7 +101,7 @@ export class InstanceProvider {
   }
 
   private static newRedis(scope: string, lazyConnect: boolean): Redis {
-    const logger = LoggerFactoryProvider.factory.create(`${REDIS_LOG} [${scope}]`);
+    const logger = this.logger.prefix(`${REDIS_LOG} [${scope}] `);
     const redis = new RedisClient({
       lazyConnect,
       enableReadyCheck: true,
@@ -126,6 +127,14 @@ export class InstanceProvider {
     return redis;
   }
 
+  private static singleton<T>(type: any, builder: () => T): T {
+    if (this.instances[type] == undefined) {
+      this.instances[type] = builder();
+    }
+
+    return this.instances[type] as T;
+  }
+
   static async initialize(): Promise<void> {
     await this.connectToDatabases();
   }
@@ -141,11 +150,20 @@ export class InstanceProvider {
     });
   }
 
+  static mediathekViewWebRestApi(): MediathekViewWebRestApi {
+    return this.singleton(MediathekViewWebRestApi, () => {
+      const api = this.mediathekViewWebApi();
+      const logger = this.logger.prefix('[REST] ');
+
+      return new MediathekViewWebRestApi(api, logger);
+    });
+  }
+
   static entriesSaver(): EntriesSaver {
     return this.singleton(EntriesSaver, () => {
       const entryRepository = InstanceProvider.entryRepository();
       const queueProvider = InstanceProvider.queueProvider();
-      const logger = LoggerFactoryProvider.factory.create(ENTRIES_SAVER_LOG);
+      const logger = this.logger.prefix(`${ENTRIES_SAVER_LOG} `);
 
       return new EntriesSaver(entryRepository, queueProvider, logger);
     });
@@ -156,14 +174,17 @@ export class InstanceProvider {
       const aggregatedEntryRepository = InstanceProvider.aggregatedEntryRepository();
       const searchEngine = InstanceProvider.entrySearchEngine();
       const queueProvider = InstanceProvider.queueProvider();
-      const logger = LoggerFactoryProvider.factory.create(ENTRIES_INDEXER_LOG);
+      const logger = this.logger.prefix(`${ENTRIES_INDEXER_LOG} `);
 
       return new EntriesIndexer(aggregatedEntryRepository, searchEngine, queueProvider, logger);
     });
   }
 
   static coreLogger(): Logger {
-    return this.singleton('appLogger', () => this.loggerFactory.create(CORE_LOG));
+    return this.singleton('appLogger', () => {
+      const logger = this.logger.prefix(`${CORE_LOG} `);
+      return logger;
+    });
   }
 
   static redisProvider(): RedisProvider {
@@ -176,7 +197,7 @@ export class InstanceProvider {
 
   static elasticsearch(): ElasticsearchClient {
     return this.singleton(ElasticsearchClient, () => {
-      const logger = LoggerFactoryProvider.factory.create(ELASTICSEARCH_LOG);
+      const logger = this.logger.prefix(`${ELASTICSEARCH_LOG} `);
       const logAdapter = getElasticsearchLogAdapter(logger);
 
       const elasticsearchClient = new ElasticsearchClient({
@@ -192,7 +213,7 @@ export class InstanceProvider {
 
   static mongo(): Mongo.MongoClient {
     return this.singleton(Mongo.MongoClient, () => {
-      const logger = LoggerFactoryProvider.factory.create(MONGO_LOG);
+      const logger = this.logger.prefix(`${MONGO_LOG} `);
       const logFunction = getMongoLogAdapter(logger);
 
       Mongo.Logger.setCurrentLogger(logFunction);
@@ -235,7 +256,7 @@ export class InstanceProvider {
   static lockProvider(): LockProvider {
     return this.singleton(RedisLockProvider, () => {
       const redis = this.redis();
-      const logger = LoggerFactoryProvider.factory.create(LOCK_LOG);
+      const logger = this.logger.prefix(`${LOCK_LOG} `);
 
       return new RedisLockProvider(redis, logger);
     });
@@ -248,7 +269,7 @@ export class InstanceProvider {
   static distributedLoopProvider(): DistributedLoopProvider {
     return this.singleton(DistributedLoopProvider, () => {
       const lockProvider = this.lockProvider();
-      const logger = LoggerFactoryProvider.factory.create(DISTRIBUTED_LOOP_LOG);
+      const logger = this.logger.prefix(`${DISTRIBUTED_LOOP_LOG} `);
 
       return new DistributedLoopProvider(lockProvider, logger);
     });
@@ -260,7 +281,7 @@ export class InstanceProvider {
       const redisProvider = this.redisProvider();
       const lockProvider = this.lockProvider();
       const distributedLoopProvider = this.distributedLoopProvider();
-      const queue = new RedisQueueProvider(redis, redisProvider, lockProvider, distributedLoopProvider, this.loggerFactory, QUEUE_LOG);
+      const queue = new RedisQueueProvider(redis, redisProvider, lockProvider, distributedLoopProvider, this.logger, QUEUE_LOG);
 
       return queue;
     });
@@ -269,7 +290,7 @@ export class InstanceProvider {
   static entriesImporter(): EntriesImporter {
     return this.singleton(EntriesImporter, () => {
       const queueProvider = this.queueProvider();
-      const logger = LoggerFactoryProvider.factory.create(ENTRIES_IMPORTER_LOG);
+      const logger = this.logger.prefix(`${ENTRIES_IMPORTER_LOG} `);
       const source = InstanceProvider.filmlistEntrySource();
 
       return new EntriesImporter(queueProvider, logger, [source]);
@@ -295,7 +316,7 @@ export class InstanceProvider {
       const elasticsearch = this.elasticsearch();
       const converter = this.elasticsearchConverter();
       const lockProvider = this.lockProvider();
-      const logger = LoggerFactoryProvider.factory.create(SEARCH_ENGINE_LOG);
+      const logger = this.logger.prefix(`${SEARCH_ENGINE_LOG} `);
 
       const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
 
@@ -329,7 +350,7 @@ export class InstanceProvider {
     return this.singleton(FilmlistEntrySource, () => {
       const datastoreFactory = this.datastoreFactory();
       const queueProvider = this.queueProvider();
-      const logger = this.loggerFactory.create(FILMLIST_ENTRY_SOURCE);
+      const logger = this.logger.prefix(`${FILMLIST_ENTRY_SOURCE} `);
 
       return new FilmlistEntrySource(datastoreFactory, queueProvider, logger);
     });
@@ -341,17 +362,9 @@ export class InstanceProvider {
       const filmlistRepository = this.filmlistRepository();
       const distributedLoopProvider = this.distributedLoopProvider();
       const queueProvider = this.queueProvider();
-      const logger = this.loggerFactory.create(FILMLIST_MANAGER_LOG);
+      const logger = this.logger.prefix(`${FILMLIST_MANAGER_LOG} `);
 
       return new FilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider, logger);
     });
-  }
-
-  private static singleton<T>(type: any, builder: () => T): T {
-    if (this.instances[type] == undefined) {
-      this.instances[type] = builder();
-    }
-
-    return this.instances[type];
   }
 }

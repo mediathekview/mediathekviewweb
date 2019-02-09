@@ -1,3 +1,5 @@
+// tslint:disable: no-console
+
 import { CancellationToken } from './common/utils/cancellation-token';
 
 type Signal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGBREAK';
@@ -9,6 +11,14 @@ const QUIT_EVENTS: QuitEvent[] = ['uncaughtException' /* , 'multipleResolves' */
 export const shutdownToken = new CancellationToken();
 
 let requested = false;
+
+let quitReason: any[];
+
+process.on('beforeExit', () => {
+  if (quitReason != undefined) {
+    console.info('quit reason', ...(Array.isArray(quitReason) ? quitReason : [quitReason]));
+  }
+});
 
 export function requestShutdown(): void {
   if (requested) {
@@ -37,6 +47,7 @@ export function initializeSignals(): void {
   for (const event of QUIT_EVENTS) {
     process.on(event as any, (...args: any[]) => {
       console.error(event, ...args);
+      quitReason = args;
       requestShutdown();
     });
   }

@@ -66,9 +66,8 @@ function getMicroServices(): MicroService[] {
   return microServices;
 }
 
-function initializeApi(server: Http.Server): void {
-  const api = InstanceProvider.mediathekViewWebApi();
-  const restApi = new MediathekViewWebRestApi(api);
+function attachRestApi(server: Http.Server): void {
+  const restApi = InstanceProvider.mediathekViewWebRestApi();
 
   server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
     restApi.handleRequest(request, response);
@@ -96,7 +95,7 @@ async function init(): Promise<void> {
   trackConnectedSockets(server, sockets);
 
   await searchEngine.initialize();
-  initializeApi(server);
+  attachRestApi(server);
 
   if (shutdownToken.isSet) {
     await InstanceProvider.disposeInstances();

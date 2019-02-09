@@ -4,7 +4,6 @@ import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
 import { timeout } from '../common/utils';
-import { CancelableAsyncIterableIterator } from '../common/utils/cancelable-async-iterable';
 import { Keys } from '../keys';
 import { Job, Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
@@ -13,7 +12,6 @@ import { ServiceBase } from '../service-base';
 
 const BATCH_SIZE = 250;
 const BUFFER_SIZE = 3;
-const CONCURRENCY = 3;
 
 export class EntriesSaver extends ServiceBase implements Service {
   private readonly entryRepository: EntryRepository;
@@ -44,12 +42,9 @@ export class EntriesSaver extends ServiceBase implements Service {
 
     const consumer = entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, this.cancellationToken);
 
-    // tslint:disable-next-line: no-floating-promises
-    this.cancellationToken.then(async () => await disposer.dispose());
-
     await AsyncEnumerable.from(consumer)
       .buffer(BUFFER_SIZE)
-      .parallelForEach(CONCURRENCY, async (batch) => {
+      .forEach(async (batch) => {
         try {
           await this.saveBatch(batch, entriesToBeIndexedQueue);
           await entriesToBeSavedQueue.acknowledge(...batch);

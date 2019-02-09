@@ -3,6 +3,7 @@ import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
 import { createErrorResponse } from '../common/api/rest';
+import { Logger } from '../common/logger';
 import { SearchQuery } from '../common/search-engine/query';
 import { precisionRound, Timer } from '../common/utils';
 import { StreamIterable } from '../utils';
@@ -14,12 +15,14 @@ const PREFIX = '/api/v2/';
 
 export class MediathekViewWebRestApi {
   private readonly api: MediathekViewWebApi;
+  private readonly logger: Logger;
   private readonly koa: Koa<void, void>;
   private readonly router: KoaRouter<void, void>;
   private readonly requestHandler: RequestHandler;
 
-  constructor(api: MediathekViewWebApi) {
+  constructor(api: MediathekViewWebApi, logger: Logger) {
     this.api = api;
+    this.logger = logger;
 
     this.koa = new Koa();
     this.router = new KoaRouter();
@@ -51,7 +54,7 @@ export class MediathekViewWebRestApi {
   private register(path: string, handler: (context: Koa.Context) => Promise<void>): void {
     this.router.post(path, async (context, next) => {
       await handler(context);
-      return next();
+      return await next();
     });
   }
 
@@ -63,7 +66,7 @@ export class MediathekViewWebRestApi {
       body = await readJsonBody(request);
     }
     catch (error) {
-      console.error(error)
+      this.logger.info(`invalid json received from ${context.ip}`);
       response.status = 400;
       response.body = createErrorResponse((error as Error).message);
       return;
@@ -71,9 +74,10 @@ export class MediathekViewWebRestApi {
 
     const validation = { valid: true };
 
-    if (validation.valid == true) {
+    if (validation.valid) {
       response.body = await this.api.search(body as SearchQuery);
     } else {
+      this.logger.info(`invalid search-query received from ${context.ip}`);
       response.status = 400;
       response.body = createErrorResponse('invalid query', validation);
     }

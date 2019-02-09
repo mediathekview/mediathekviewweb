@@ -1,29 +1,28 @@
-/* tslint:disable: no-console */
+/* tslint:disable: no-console no-unbound-method */
 
 import { formatError } from '../../utils';
 import { LogLevel } from '../level';
 import { LogEntry, Logger } from '../logger';
 
 export class ConsoleLogger implements Logger {
-  private readonly prefix: string;
   private readonly level: LogLevel;
+  private readonly logPrefix: string;
 
-  constructor(prefix: string, level: LogLevel) {
-    this.prefix = prefix;
+  constructor(level: LogLevel, prefix?: string) {
     this.level = level;
+    this.logPrefix = (prefix != undefined) ? prefix : '';
   }
 
-  error(error: Error): void;
-  error(error: Error, includeStack: boolean): void;
-  error(entry: LogEntry): void;
-  error(errorOrEntry: Error | LogEntry, includeStack: boolean = true): void {
-    let entry: LogEntry;
+  prefix(prefix: string): Logger {
+    return new ConsoleLogger(this.level, this.logPrefix + prefix);
+  }
 
-    if (errorOrEntry instanceof Error) {
-      entry = formatError(errorOrEntry, includeStack);
-    } else {
-      entry = errorOrEntry;
-    }
+  error(entry: LogEntry): void;
+  error(error: Error, includeStack?: boolean): void;
+  error(errorOrEntry: Error | LogEntry, includeStack: boolean = true): void {
+    const entry = (errorOrEntry instanceof Error)
+      ? formatError(errorOrEntry, includeStack)
+      : errorOrEntry;
 
     this.log(console.error, entry, LogLevel.Error);
   }
@@ -48,12 +47,17 @@ export class ConsoleLogger implements Logger {
     this.log(console.debug, entry, LogLevel.Trace);
   }
 
-  private log(func: (...parameters: any[]) => void, entry: LogEntry, level: LogLevel) {
-    const now = new Date();
-    const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-
-    if (this.level >= level) {
-      func(`${timeString} - ${this.prefix}`, entry);
+  private log(func: (...parameters: any[]) => void, entry: LogEntry, level: LogLevel): void {
+    if (this.level < level) {
+      return;
     }
+
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    const timeString = `${hours}:${minutes}:${seconds}`;
+
+    func(`${timeString} - ${this.logPrefix}${entry}`);
   }
 }
