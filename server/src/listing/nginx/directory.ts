@@ -26,8 +26,6 @@ export class NginxDirectory implements Directory {
     this.date = date;
   }
 
-  getFiles(): AsyncEnumerable<HttpFile>;
-  getFiles(recursive: boolean): AsyncIterable<HttpFile>;
   async *getFiles(recursive: boolean = false): AsyncIterable<HttpFile> {
     if (this.files == undefined) {
       const result = await this.fetch();

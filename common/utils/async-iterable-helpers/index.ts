@@ -1,5 +1,6 @@
 export * from './any';
 export * from './batch';
+export * from './buffer';
 export * from './drain';
 export * from './filter';
 export * from './for-each';

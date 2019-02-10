@@ -1,5 +1,5 @@
 type EnvironmentConfig = {
-  dataDirectory?: string,
+  data_directory?: string,
   elasticsearch_host?: string;
   elasticsearch_port?: string;
 
@@ -11,7 +11,7 @@ type EnvironmentConfig = {
   importer_latestCheckInterval?: string;
   importer_archiveCheckInterval?: string;
   importer_archiveRange?: string;
-}
+};
 
 type Config = {
   dataDirectory: string,
@@ -55,4 +55,4 @@ export const config: Config = {
     archiveCheckInterval: 60 * 1,
     archiveRange: 0
   }
-}
+};

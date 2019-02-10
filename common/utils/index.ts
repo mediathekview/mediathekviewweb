@@ -1,6 +1,5 @@
 export * from './any-iterable-iterator';
 export * from './async-iterable-helpers';
-export * from './buffered-async-iterable';
 export * from '../promise/deferred-promise';
 export * from './feedable-async-iterable';
 export * from './helpers';

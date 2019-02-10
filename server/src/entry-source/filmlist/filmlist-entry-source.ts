@@ -1,6 +1,5 @@
 import { Logger } from '../../common/logger';
 import { Entry } from '../../common/model';
-import { CancelableAsyncIterableIterator } from '../../common/utils/cancelable-async-iterable';
 import { CancellationToken } from '../../common/utils/cancellation-token';
 import { DatastoreFactory, DataType } from '../../datastore';
 import { Keys } from '../../keys';
@@ -51,9 +50,7 @@ export class FilmlistEntrySource implements EntrySource {
   private async *processFilmlist(filmlist: Filmlist, cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
     this.logger.info(`processing filmlist from ${filmlist.date}`);
 
-    const cancelableFilmlist = CancelableAsyncIterableIterator(filmlist, cancellationToken);
-
-    for await (const entry of cancelableFilmlist) { // tslint:disable-line: await-promise
+    for await (const entry of filmlist) { // tslint:disable-line: await-promise
       yield entry;
 
       if (cancellationToken.isSet) {

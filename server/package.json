@@ -4,6 +4,8 @@
   "description": "",
   "scripts": {
     "start": "node ./dist/app.js",
+    "inspect": "node --inspect ./dist/app.js",
+    "inspect-min-memory": "node --inspect --optimize-for-size --memory-reducer --clear-free-memory --use-idle-notification ./dist/app.js",
     "build": "tsc",
     "build-watch": "tsc --watch",
     "build-schema": "typescript-json-schema --include src/common/search-engine/query/definition.ts --out src/schemas/search-query.json --aliasRefs --titles --noExtraProps --required tsconfig.json SearchQuery",
@@ -12,7 +14,7 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "ajv": "^6.8.1",
+    "ajv": "^6.9.1",
     "elasticsearch": "^15.4.1",
     "ioredis": "^4.6.2",
     "koa": "^2.7.0",
@@ -32,6 +34,6 @@
     "@types/needle": "^2.0.4",
     "@types/node": "^10.12.24",
     "typescript": "^3.3.3",
-    "typescript-json-schema": "^0.34.0"
+    "typescript-json-schema": "^0.35.0"
   }
 }

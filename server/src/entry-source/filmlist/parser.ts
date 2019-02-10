@@ -13,7 +13,7 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
   private readonly stream: Readable;
   private readonly streamIterable: StreamIterable<string>;
 
-  private _metadata: FilmlistMetadata | null;
+  private _metadata?: FilmlistMetadata;
   private _metadataPromise: DeferredPromise<FilmlistMetadata>;
   private currentChannel: string;
   private currentTopic: string;
@@ -24,7 +24,6 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
     this.streamIterable = new StreamIterable<string>(this.stream, READ_SIZE);
     this.currentChannel = '';
     this.currentTopic = '';
-    this._metadata = null;
     this._metadataPromise = new DeferredPromise();
   }
 
@@ -34,23 +33,23 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Entry[]> {
     let buffer = '';
-    for await (const chunk of this.streamIterable) {
+    for await (const chunk of this.streamIterable) { // tslint:disable-line: await-promise
       buffer += chunk;
 
-      if (this._metadata == null) {
+      if (this._metadata == undefined) {
         const metadataResult = this.parseMetadata(buffer);
 
-        if (metadataResult != null) {
+        if (metadataResult != undefined) {
           this._metadata = metadataResult.metadata;
           this._metadataPromise.resolve(this._metadata);
           buffer = metadataResult.buffer;
         }
       }
 
-      if (this._metadata != null) {
+      if (this._metadata != undefined) {
         const entriesResult = this.parseEntries(buffer, this._metadata);
 
-        if (entriesResult != null) {
+        if (entriesResult != undefined) {
           buffer = entriesResult.buffer;
           yield entriesResult.entries;
         }
@@ -58,28 +57,28 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
     }
   }
 
-  private parseMetadata(buffer: string): { metadata: FilmlistMetadata, buffer: string } | null {
+  private parseMetadata(buffer: string): { metadata: FilmlistMetadata, buffer: string } | undefined {
     const match = buffer.match(METADATA_REGEX);
 
-    if (match == null) {
-      return null;
+    if (match == undefined) {
+      return undefined;
     }
 
-    buffer = buffer.slice((match.index as number) + match[0].length);
+    const subBuffer = buffer.slice((match.index as number) + match[0].length);
 
     const [, day, month, year, hour, minute, hash] = match;
     const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute)));
     const timestamp = Math.floor(date.valueOf() / 1000);
     const metadata: FilmlistMetadata = { timestamp, hash };
 
-    return { metadata, buffer };
+    return { metadata, buffer: subBuffer };
   }
 
-  private parseEntries(buffer: string, metadata: FilmlistMetadata): { entries: Entry[], buffer: string } | null {
+  private parseEntries(buffer: string, metadata: FilmlistMetadata): { entries: Entry[], buffer: string } | undefined {
     const entries: Entry[] = [];
 
     let match: RegExpMatchArray | null;
-    while ((match = buffer.match(ENTRY_REGEX)) != null) {
+    while ((match = buffer.match(ENTRY_REGEX)) != undefined) {
       buffer = buffer.slice((match.index as number) + match[0].length);
 
       const filmlistEntry = match[1];
@@ -89,16 +88,17 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
     }
 
     if (entries.length == 0) {
-      return null;
+      return undefined;
     }
 
     return { entries, buffer };
   }
 
   private filmlistEntryToEntry(filmlistEntry: string, metadata: FilmlistMetadata): Entry {
-    const parsedFilmlistEntry: string[] = JSON.parse(filmlistEntry);
+    const parsedFilmlistEntry: string[] = JSON.parse(filmlistEntry) as string[];
 
     const [
+      // tslint:disable: variable-name
       channel,
       topic,
       title,
@@ -119,6 +119,7 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
       url_history,
       geo,
       is_new
+      // tslint:enable: variable-name
     ] = parsedFilmlistEntry;
 
     if (channel.length > 0) {

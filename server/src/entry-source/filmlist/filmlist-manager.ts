@@ -48,7 +48,7 @@ export class FilmlistManager extends ServiceBase implements Service {
     await importQueue.initialize();
 
     const loopController = distributedLoop.run(async () => await this.loop(lastLatestCheck, lastArchiveCheck, importQueue, importedFilmlistDates, enqueuedFilmlistDates), 60000, 10000);
-    await this.cancellationToken;
+    await this.cancellationToken; // tslint:disable-line: await-promise
 
     await Promise.all([
       importQueue.dispose(),
@@ -96,7 +96,7 @@ export class FilmlistManager extends ServiceBase implements Service {
     const filmlistsEnumerable = new AsyncEnumerable(filmlists);
 
     await filmlistsEnumerable
-      .cancelable(this.cancellationToken)
+      .while(() => !this.cancellationToken.isSet)
       .filter((filmlist) => (minimumDate == undefined) || filmlist.date >= minimumDate)
       .filter(async (filmlist) => !(await importedFilmlistDates.has(filmlist.date)))
       .filter(async (filmlist) => !(await enqueuedFilmlistDates.has(filmlist.date)))

@@ -1,15 +1,14 @@
 import {
-  anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, batchAsync, BufferedAsyncIterable, drain, filterAsync,
-  forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable,
+  anyAsync, AsyncIteratorFunction, AsyncPredicate, AsyncReducer, AsyncRetryPredicate, batchAsync, bufferAsync, drain,
+  filterAsync, forEachAsync, interceptAsync, interruptEveryAsync, interruptPerSecondAsync, isAsyncIterableIterator, isIterable,
   iterableToAsyncIterator, mapAsync, mapManyAsync, multiplex, ParallelizableIteratorFunction, ParallelizablePredicate, range,
-  reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator, toSync, whileAsync, AsyncRetryPredicate
+  reduceAsync, singleAsync, throttle, ThrottleFunction, toArrayAsync, toAsyncIterableIterator, toSync, whileAsync
 } from '../utils';
 import { AnyIterable } from '../utils/any-iterable-iterator';
 import { groupAsync } from '../utils/async-iterable-helpers/group';
 import { parallelFilter, parallelForEach, parallelGroup, parallelIntercept, parallelMap } from '../utils/async-iterable-helpers/parallel';
-import { CancelableAsyncIterableIterator } from '../utils/cancelable-async-iterable';
-import { SyncEnumerable } from './sync-enumerable';
 import { retryAsync } from '../utils/async-iterable-helpers/retry';
+import { SyncEnumerable } from './sync-enumerable';
 
 export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   private readonly source: AnyIterable<T>;
@@ -39,11 +38,6 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   while(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {
     const whiled = whileAsync(this.source, predicate);
     return new AsyncEnumerable(whiled);
-  }
-
-  cancelable(cancelationPromise: PromiseLike<void>): AsyncEnumerable<T> {
-    const cancelabled = CancelableAsyncIterableIterator(this.source, cancelationPromise);
-    return new AsyncEnumerable(cancelabled);
   }
 
   filter(predicate: AsyncPredicate<T>): AsyncEnumerable<T> {
@@ -82,7 +76,7 @@ export class AsyncEnumerable<T> implements AsyncIterableIterator<T>  {
   }
 
   buffer(size: number): AsyncEnumerable<T> {
-    const result = new BufferedAsyncIterable(this.source, size);
+    const result = bufferAsync(this.source, size);
     return new AsyncEnumerable(result);
   }
 

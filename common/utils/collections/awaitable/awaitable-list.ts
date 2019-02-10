@@ -109,6 +109,8 @@ export class AwaitableList<T> implements Iterable<T> {
     this.backingArray = [];
     this._cleared.resolve();
     this._cleared.reset();
+    this._removed.resolve();
+    this._removed.reset();
   }
 
   *[Symbol.iterator](): IterableIterator<T> {

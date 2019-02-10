@@ -10,6 +10,10 @@ export class Filmlist implements AsyncIterable<Entry[]>, Serializable {
   compressed: boolean;
   date: Date;
 
+  static deserialize(data: Partial<Filmlist>): Filmlist {
+    return new Filmlist(data.fileMetadata as FileMetadata, data.compressed as boolean, data.date as Date);
+  }
+
   constructor(fileMetadata: FileMetadata, compressed: boolean, date: Date) {
     this.fileMetadata = cloneOwnProperties(fileMetadata);
     this.compressed = compressed;
@@ -36,9 +40,5 @@ export class Filmlist implements AsyncIterable<Entry[]>, Serializable {
     }
 
     return metadata;
-  }
-
-  static deserialize(data: Partial<Filmlist>): Filmlist {
-    return new Filmlist(data.fileMetadata as FileMetadata, data.compressed as boolean, data.date as Date);
   }
 }
