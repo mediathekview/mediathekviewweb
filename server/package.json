@@ -25,14 +25,14 @@
     "rxjs": "^6.4.0"
   },
   "devDependencies": {
-    "@types/elasticsearch": "^5.0.30",
+    "@types/elasticsearch": "^5.0.31",
     "@types/ioredis": "^4.0.6",
     "@types/koa": "^2.0.48",
     "@types/koa-router": "^7.0.39",
     "@types/lzma-native": "^4.0.0",
     "@types/mongodb": "^3.1.19",
     "@types/needle": "^2.0.4",
-    "@types/node": "^10.12.24",
+    "@types/node": "^11.9.4",
     "typescript": "^3.3.3",
     "typescript-json-schema": "^0.35.0"
   }
