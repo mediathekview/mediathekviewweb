@@ -1,10 +1,10 @@
 export type StringMap<T = any> = { [key: string]: T };
 export type NumberMap<T = any> = { [key: number]: T };
 export type StringNumberMap<T = any> = { [key: string]: T, [key: number]: T };
-export type Undefinable<T> = T | undefined;
 export type Omit<T, P extends string | number | symbol> = Pick<T, Exclude<keyof T, P>>;
 export type PartialProperty<T, P extends keyof T> = Partial<Pick<T, P>>;
 export type TypeOf<T extends object, P extends keyof T> = T[P];
 export type PropertyOf<T extends object, P extends keyof T> = Property<P, Of<T>>;
 export type Property<P extends keyof T, T extends object> = { [P2 in keyof T[P]]: T[P][P2] };
 export type Of<T> = T;
+export type Writeable<T> = { -readonly [P in keyof T]: T[P] };

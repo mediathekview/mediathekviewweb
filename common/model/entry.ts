@@ -51,23 +51,25 @@ export const enum MediaType {
   Subtitle = 'subtitle'
 }
 
-export interface Media {
+export type Media = Video | Audio | Subtitle;
+
+type MediaBase = {
   type: MediaType;
   url: string;
-  size: number | null;
-}
+  size?: number;
+};
 
-export type Video = Media & {
+export type Video = MediaBase & {
   type: MediaType.Video;
   quality: Quality;
 };
 
-export type Audio = Media & {
+export type Audio = MediaBase & {
   type: MediaType.Audio;
   quality: Quality;
 };
 
-export type Subtitle = Media & {
+export type Subtitle = MediaBase & {
   type: MediaType.Subtitle;
 };
 
@@ -80,36 +82,34 @@ export enum Quality {
   VeryHigh = 5
 }
 
-export class MediaFactory {
-  static createVideo(url: string, size: number | null, quality: Quality): Video {
-    const video: Video = {
-      type: MediaType.Video,
-      url,
-      size,
-      quality
-    };
+export function createVideo(url: string, quality: Quality, size?: number): Video {
+  const video: Video = {
+    type: MediaType.Video,
+    url,
+    size,
+    quality
+  };
 
-    return video;
-  }
+  return video;
+}
 
-  static createAudio(url: string, size: number | null, quality: Quality): Audio {
-    const audio: Audio = {
-      type: MediaType.Audio,
-      url,
-      size,
-      quality
-    };
+export function createAudio(url: string, quality: Quality, size?: number): Audio {
+  const audio: Audio = {
+    type: MediaType.Audio,
+    url,
+    size,
+    quality
+  };
 
-    return audio;
-  }
+  return audio;
+}
 
-  static createSubtitle(url: string, size: number | null): Subtitle {
-    const subtitle: Subtitle = {
-      type: MediaType.Subtitle,
-      url,
-      size
-    };
+export function createSubtitle(url: string, size?: number): Subtitle {
+  const subtitle: Subtitle = {
+    type: MediaType.Subtitle,
+    url,
+    size
+  };
 
-    return subtitle;
-  }
+  return subtitle;
 }

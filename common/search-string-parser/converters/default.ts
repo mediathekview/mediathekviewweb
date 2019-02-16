@@ -7,7 +7,7 @@ import { SegmentConverter, SegmentConverterResultArray, SegmentConverterResultTy
 const FIELDS = [Field.Topic, Field.Title];
 
 export class DefaultSegmentConverter implements SegmentConverter {
-  tryConvert(segment: Segment): SegmentConverterResultArray | null {
+  tryConvert(segment: Segment): SegmentConverterResultArray | undefined {
     const builder = new TextQueryBuilder();
 
     const query = builder
@@ -20,9 +20,9 @@ export class DefaultSegmentConverter implements SegmentConverter {
 
     const result: SegmentConverterResultArray = [{
       fields: FIELDS,
-      type: type,
+      type,
       joinSameFieldsResults: !segment.isQuote,
-      query: query
+      query
     }];
 
     return result;

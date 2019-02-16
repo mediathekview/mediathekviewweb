@@ -1,7 +1,6 @@
 import { AsyncEnumerable } from '../../common/enumerable';
 import { Logger } from '../../common/logger';
 import { AnyIterable, now } from '../../common/utils';
-import { CancellationToken } from '../../common/utils/cancellation-token';
 import { config } from '../../config';
 import { DatastoreFactory, DataType, Key, Set } from '../../datastore';
 import { DistributedLoopProvider } from '../../distributed-loop';

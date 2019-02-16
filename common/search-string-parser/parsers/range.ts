@@ -26,11 +26,11 @@ export class RangeParser {
     this.inclusive = inclusive;
   }
 
-  parse(text: string): Range[] | null {
+  parse(text: string): Range[] | undefined {
     const match = text.match(PARSE_REGEX);
 
-    if (match == null) {
-      return null;
+    if (match == undefined) {
+      return undefined;
     }
 
     const [, rangeTypeString, unquotedValue, quotedValue, unquotedLeft, quotedLeft, unquotedRight, quotedRight] = match;
@@ -47,26 +47,22 @@ export class RangeParser {
     }
     else if (left != undefined && right != undefined) {
       result = this.parseMulti(left, right);
-    } else {
+    }
+    else {
       throw new Error('should not happen');
     }
-
 
     return result;
   }
 
-  private parseSingle(typeString: string, value: string): Range {
+  private parseSingle(typeString: string, text: string): Range {
     const type = RANGE_TYPE_MAP.get(typeString);
 
     if (type == undefined) {
       throw new Error('should not happen');
     }
 
-    const range: Range = {
-      type: type,
-      text: value
-    };
-
+    const range: Range = { type, text };
     return range;
   }
 

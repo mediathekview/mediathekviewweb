@@ -1,4 +1,4 @@
-import { DeferredPromise } from '../promise/deferred-promise';
+import { DeferredPromise } from '../promise';
 
 export class CancellationToken implements PromiseLike<void> {
   private readonly deferredPromise: DeferredPromise;

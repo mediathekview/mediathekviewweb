@@ -1,8 +1,6 @@
-import { Undefinable } from '../common/types';
-
 export interface Key<T> {
   set(value: T): Promise<void>;
-  get(): Promise<Undefinable<T>>;
+  get(): Promise<T | undefined>;
   exists(): Promise<boolean>;
   delete(): Promise<boolean>;
 }

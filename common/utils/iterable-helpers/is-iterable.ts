@@ -2,11 +2,11 @@ import { AnyIterable } from '../any-iterable-iterator';
 
 export function isIterable<T>(anyIterable: AnyIterable<T>): anyIterable is Iterable<T>;
 export function isIterable<T = any>(obj: any): obj is Iterable<T> {
-  if (obj == null || obj == undefined) {
+  if (obj == undefined) {
     return false;
   }
 
-  return typeof obj[Symbol.iterator] === 'function';
+  return typeof obj[Symbol.iterator] == 'function';
 }
 
 export function isIterableIterator<T>(anyIterable: AnyIterable<T>): anyIterable is IterableIterator<T>;

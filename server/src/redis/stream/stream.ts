@@ -1,7 +1,6 @@
 import { Redis } from 'ioredis';
 import { SyncEnumerable } from '../../common/enumerable';
 import { StringMap } from '../../common/types';
-import { Nullable } from '../../common/utils';
 import { Consumer } from './consumer';
 import { ConsumerGroup } from './consumer-group';
 import { Entry } from './entry';
@@ -82,7 +81,7 @@ export class RedisStream<T extends StringMap<string>> {
       transaction.xadd(this.stream, (sourceId != undefined) ? sourceId : '*', ...parameters);
     }
 
-    const results = await transaction.exec() as [Nullable<Error>, string][];
+    const results = await transaction.exec() as [Error | null, string][];
     const ids = results.map(([, id]) => id);
 
     return ids;
@@ -115,7 +114,7 @@ export class RedisStream<T extends StringMap<string>> {
       pipeline.xrange(this.stream, id, id, 'COUNT', '1');
     }
 
-    const result = await pipeline.exec() as [Nullable<Error>, EntriesReturnValue][];
+    const result = await pipeline.exec() as [Error | null, EntriesReturnValue][];
 
     let entries: Entry<T>[] = [];
 
@@ -141,7 +140,7 @@ export class RedisStream<T extends StringMap<string>> {
     transaction.xack(this.stream, group, ...ids);
     transaction.xdel(this.stream, ...ids);
 
-    const result = await transaction.exec() as [[Nullable<Error>, number], [Nullable<Error>, number]];
+    const result = await transaction.exec() as [[Error | null, number], [Error | null, number]];
   }
 
   async acknowledgeDeleteAddTransaction(group: string, acknowledgeDeleteIds: string[], entries: SourceEntry<T>[]): Promise<string[]> {
@@ -164,7 +163,7 @@ export class RedisStream<T extends StringMap<string>> {
       transaction.xadd(this.stream, (id != undefined) ? id : '*', ...parameters);
     }
 
-    const results = await transaction.exec() as [[Nullable<Error>, number], ...[Nullable<Error>, string][]];
+    const results = await transaction.exec() as [[Error | null, number], ...[Error | null, string][]];
     const [acknowledgeResult, deleteResult, ...addResults] = results;
 
     const newIds = addResults.map(([, id]) => id);

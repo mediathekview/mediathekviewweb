@@ -1,6 +1,7 @@
 import { LockProvider } from '../common/lock';
 import { Logger } from '../common/logger';
-import { cancelableTimeout, DeferredPromise, Timer } from '../common/utils';
+import { DeferredPromise } from '../common/promise';
+import { cancelableTimeout, Timer } from '../common/utils';
 import { LoopController } from './controller';
 
 export type LoopFunction = (controller: LoopController) => Promise<void>;

@@ -36,20 +36,20 @@ export class RedisDatastoreFactory implements DatastoreFactory {
     return this.construct(RedisMap, keyOrDataType, dataType) as RedisMap<any>;
   }
 
-  private construct<TInstance>(datastore: RedisDatastoreConstructable<TInstance>, keyOrDataType: string | DataType, dataType: DataType | undefined): TInstance {
-    let key: string;
+  private construct<TInstance>(datastore: RedisDatastoreConstructable<TInstance>, keyOrDataType: string | DataType, dataTypeOrUndefined: DataType | undefined): TInstance {
+    const key = (typeof keyOrDataType == 'string')
+      ? `datastore:${keyOrDataType}`
+      : this.getUniqueKey();
 
-    if (typeof keyOrDataType != 'string') {
-      key = this.getUniqueKey();
-      dataType = keyOrDataType;
-    } else {
-      key = `datastore:${keyOrDataType}`;
-    }
+    const dataType = (typeof keyOrDataType != 'string')
+      ? keyOrDataType
+      : dataTypeOrUndefined as DataType;
 
-    return new datastore(this.redis, key, dataType as DataType);
+    return new datastore(this.redis, key, dataType);
   }
 
   private getUniqueKey(): string {
-    return 'unnamed:' + uniqueId();
+    const id = uniqueId();
+    return `unnamed:${id}`;
   }
 }

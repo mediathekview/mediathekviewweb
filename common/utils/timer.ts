@@ -37,7 +37,7 @@ export class Timer {
 
   static async measureAsync(func: () => Promise<void>): Promise<number> {
     const timer = new Timer();
-    return await timer.measureAsync(func);
+    return timer.measureAsync(func);
   }
 
   constructor(start: boolean = false) {

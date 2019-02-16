@@ -1,5 +1,5 @@
 import { AsyncEnumerable } from '../enumerable';
-import { DeferredPromise } from '../utils';
+import { DeferredPromise } from '../promise';
 import { MultiError } from '../utils/multi-error';
 import { AsyncDisposable } from './disposable';
 

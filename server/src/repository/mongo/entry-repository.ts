@@ -25,7 +25,7 @@ export class MongoEntryRepository implements EntryRepository {
   }
 
   async load(id: string): Promise<Entry | undefined> {
-    return await this.baseRepository.load(id);
+    return this.baseRepository.load(id);
   }
 
   loadMany(ids: string[]): AsyncIterable<Entry> {

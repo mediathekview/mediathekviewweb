@@ -1,6 +1,5 @@
 export * from './any-iterable-iterator';
 export * from './async-iterable-helpers';
-export * from '../promise/deferred-promise';
 export * from './feedable-async-iterable';
 export * from './helpers';
 export * from './iterable-helpers';
@@ -11,5 +10,4 @@ export * from './periodic-sampler';
 export * from './provider-function-iterable';
 export * from './timer';
 export * from './timing';
-export * from './types';
 export * from './z-base32';

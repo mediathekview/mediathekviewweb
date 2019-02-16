@@ -49,7 +49,7 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
   private parseFilenameDate(name: string): Date {
     const match = name.match(FILENAME_DATE_REGEX);
 
-    if (match === null) {
+    if (match == undefined) {
       throw new Error('failed matching date on filename');
     }
 

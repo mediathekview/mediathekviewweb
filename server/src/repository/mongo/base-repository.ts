@@ -63,7 +63,7 @@ export class MongoBaseRepository<T extends Entity> {
     while (true) {
       const document = await cursor.next();
 
-      if (document === null) {
+      if (document == undefined) {
         break;
       }
 

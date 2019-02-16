@@ -1,5 +1,4 @@
 import * as Redis from 'ioredis';
-import { Undefinable } from '../../common/types';
 import { DataType } from '../data-type';
 import { Key } from '../key';
 import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction } from './serializer';
@@ -24,7 +23,7 @@ export class RedisKey<T> implements Key<T> {
     await this.redis.set(this.key, serialized);
   }
 
-  async get(): Promise<Undefinable<T>> {
+  async get(): Promise<T | undefined> {
     const result = await this.redis.get(this.key);
 
     if (result == undefined) {

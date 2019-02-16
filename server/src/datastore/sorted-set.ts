@@ -1,6 +1,3 @@
-import { Undefinable } from '../common/types';
-import { Nullable } from '../common/utils';
-
 export type SortedSetItem<T> = {
   value: T;
   score: number;
@@ -15,10 +12,10 @@ export interface SortedSet<T> {
   add(item: SortedSetItem<T>): Promise<void>;
   addMany(items: SortedSetItem<T>[]): Promise<void>;
 
-  getScore(value: T): Promise<Undefinable<number>>;
-  getScoreMany(values: T[]): Nullable<SortedSetItem<T>>;
-  getRank(value: T): Promise<Undefinable<number>>;
-  getRankReversed(value: T): Promise<Undefinable<number>>;
+  getScore(value: T): Promise<number | undefined>;
+  getScoreMany(values: T[]): SortedSetItem<T> | undefined;
+  getRank(value: T): Promise<number | undefined>;
+  getRankReversed(value: T): Promise<number | undefined>;
   getRankMany(values: T[]): SortedSetRankedItem<T>[];
   getRankManyReversed(values: T[]): SortedSetRankedItem<T>[];
 
@@ -33,9 +30,9 @@ export interface SortedSet<T> {
 
   increaseScore(value: T, increment: number): Promise<void>;
 
-  popMin(): Promise<Undefinable<SortedSetItem<T>>>;
+  popMin(): Promise<SortedSetItem<T> | undefined>;
   popMin(count: number): Promise<SortedSetItem<T>[]>;
-  popMax(): Promise<Undefinable<SortedSetItem<T>>>;
+  popMax(): Promise<SortedSetItem<T> | undefined>;
   popMax(count: number): Promise<SortedSetItem<T>[]>;
 
   popAll(batchCount: number): AsyncIterable<T>;

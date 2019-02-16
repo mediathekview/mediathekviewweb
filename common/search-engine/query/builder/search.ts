@@ -4,16 +4,13 @@ import { QueryBuilder } from './builder';
 import { SortBuilder } from './sort';
 
 export class SearchQueryBuilder {
-  private _body: QueryBody | null;
-  private _sort: Sort[];
-  private _skip: number | null;
-  private _limit: number | null;
+  private _body: QueryBody | undefined;
+  private _sort: Sort[]; // tslint:disable-line: prefer-readonly
+  private _skip: number | undefined;
+  private _limit: number | undefined;
 
   constructor() {
-    this._body = null;
     this._sort = [];
-    this._skip = null;
-    this._limit = null;
   }
 
   body(body: QueryBody | QueryBuilder): this {
@@ -42,7 +39,7 @@ export class SearchQueryBuilder {
   }
 
   build(): SearchQuery {
-    if (this._body == null) {
+    if (this._body == undefined) {
       throw new Error('body not set');
     }
 
@@ -54,11 +51,11 @@ export class SearchQueryBuilder {
       query.sort = this._sort;
     }
 
-    if (this._skip != null) {
+    if (this._skip != undefined) {
       query.skip = this._skip;
     }
 
-    if (this._limit != null) {
+    if (this._limit != undefined) {
       query.limit = this._limit;
     }
 

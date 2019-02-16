@@ -5,12 +5,12 @@ import { Serializer } from '../serializer';
 
 type SerializedObject = SerializedElement<StringMap<SerializedElement>>;
 
-const TYPE = 'object';
+const type = 'object';
 
 export class ObjectSerializeHandler implements SerializeHandler {
   canSerialize(obj: any): boolean {
     const prototype = Object.getPrototypeOf(obj);
-    const result = prototype.constructor.name === 'Object';
+    const result = prototype.constructor.name == 'Object'; // tslint:disable-line: no-unsafe-any
 
     return result;
   }
@@ -26,14 +26,11 @@ export class ObjectSerializeHandler implements SerializeHandler {
       data[property] = serialized;
     }
 
-    return {
-      type: TYPE,
-      data
-    };
+    return { type, data };
   }
 
   canDeserialize(serialized: SerializedObject): boolean {
-    return serialized.type === TYPE;
+    return serialized.type == type;
   }
 
   deserialize(serialized: SerializedObject): any {

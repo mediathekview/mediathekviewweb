@@ -12,11 +12,11 @@ export interface IdleDeadline {
   timeRemaining(): DOMHighResTimeStamp;
 }
 export async function timeout(milliseconds: number = 0): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+  return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 }
 
 export async function cancelableTimeout(milliseconds: number = 0, cancelPromise: PromiseLike<void>): Promise<boolean> {
-  return await new Promise<boolean>(async (resolve) => {
+  return new Promise<boolean>(async (resolve) => {
     let pending = true;
 
     const timer = setTimeout(() => {
@@ -37,17 +37,17 @@ export async function cancelableTimeout(milliseconds: number = 0, cancelPromise:
 }
 
 export async function immediate(): Promise<void> {
-  await new Promise<void>((resolve, _reject) => setImmediate(resolve) as void);
+  return new Promise<void>((resolve, _reject) => setImmediate(resolve) as void);
 }
 
 export async function nextTick(): Promise<void> {
-  await new Promise<void>((resolve, _reject) => process.nextTick(resolve));
+  return new Promise<void>((resolve, _reject) => process.nextTick(resolve));
 }
 
 export async function animationFrame(): Promise<number> {
-  return await new Promise<number>((resolve, _reject) => requestAnimationFrame(resolve));
+  return new Promise<number>((resolve, _reject) => requestAnimationFrame(resolve));
 }
 
 export async function idle(timeout?: number): Promise<IdleDeadline> {
-  return await new Promise<IdleDeadline>((resolve) => requestIdleCallback(resolve, { timeout }));
+  return new Promise<IdleDeadline>((resolve) => requestIdleCallback(resolve, { timeout }));
 }

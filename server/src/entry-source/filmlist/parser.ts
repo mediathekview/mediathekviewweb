@@ -1,7 +1,8 @@
 import * as Crypto from 'crypto';
 import { Readable } from 'stream';
-import { Entry, FilmlistMetadata, MediaFactory, Quality } from '../../common/model';
-import { DeferredPromise, zBase32Encode } from '../../common/utils';
+import { createSubtitle, createVideo, Entry, FilmlistMetadata, Quality } from '../../common/model';
+import { DeferredPromise } from '../../common/promise';
+import { zBase32Encode } from '../../common/utils';
 import { StreamIterable } from '../../utils';
 
 const METADATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
@@ -155,16 +156,27 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
     }
 
     if (url_small.length > 0) {
-      entry.media.push(MediaFactory.createVideo(this.createUrlFromBase(url, url_small), null, Quality.Low));
+      const videoUrl = this.createUrlFromBase(url, url_small);
+      const video = createVideo(videoUrl, Quality.Low);
+
+      entry.media.push(video);
     }
+
     if (url.length > 0) {
-      entry.media.push(MediaFactory.createVideo(url, null, Quality.Medium));
+      const video = createVideo(url, Quality.Medium);
+      entry.media.push(video);
     }
+
     if (url_hd.length > 0) {
-      entry.media.push(MediaFactory.createVideo(this.createUrlFromBase(url, url_hd), null, Quality.High));
+      const videoUrl = this.createUrlFromBase(url, url_hd);
+      const video = createVideo(videoUrl, Quality.High);
+
+      entry.media.push(video);
     }
+
     if (url_subtitle.length > 0) {
-      entry.media.push(MediaFactory.createSubtitle(url_subtitle, null));
+      const subtitle = createSubtitle(url_subtitle);
+      entry.media.push(subtitle);
     }
 
     const urlsString = `${url_small}_${url}_${url_hd}`;

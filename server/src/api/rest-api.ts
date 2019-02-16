@@ -54,7 +54,7 @@ export class MediathekViewWebRestApi {
   private register(path: string, handler: (context: Koa.Context) => Promise<void>): void {
     this.router.post(path, async (context, next) => {
       await handler(context);
-      return await next();
+      return next();
     });
   }
 
@@ -121,7 +121,7 @@ async function corsMiddleware(context: Koa.Context, next: () => Promise<any>): P
     'Access-Control-Allow-Headers': context.request.get('Access-Control-Request-Headers')
   });
 
-  return await next();
+  return next();
 }
 
 async function responseTimeMiddleware(context: Koa.Context, next: () => Promise<any>): Promise<void> {

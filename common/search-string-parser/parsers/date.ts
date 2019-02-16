@@ -1,4 +1,4 @@
-import { isValidDate } from "../../utils/date";
+import { isValidDate } from '../../utils/date';
 
 const PARSE_REGEX = /^(\d{1,2})[\.\-\/]?(?:[\.\-\/](\d{1,2})[\.\-\/]?(?:[\.\-\/](\d{2}|\d{4}))?)?$/;
 
@@ -6,7 +6,7 @@ export class DateParser {
   parse(text: string): Date | undefined {
     const match = text.match(PARSE_REGEX);
 
-    if (match === null) {
+    if (match == undefined) {
       return undefined;
     }
 

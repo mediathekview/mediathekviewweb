@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import { DeferredPromise } from '../common/utils';
+import { DeferredPromise } from '../common/promise';
 
 export class StreamIterable<T> implements AsyncIterable<T> {
   private readonly stream: Readable;
@@ -28,7 +28,7 @@ export class StreamIterable<T> implements AsyncIterable<T> {
       while (true) {
         const chunk = this.stream.read(this.readSize) as T;
 
-        if (chunk === null) {
+        if (chunk == undefined) {
           break;
         }
 

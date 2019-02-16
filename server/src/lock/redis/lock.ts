@@ -1,7 +1,8 @@
 import * as Redis from 'ioredis';
 import { Lock, LockController, LockedFunction } from '../../common/lock';
 import { Logger } from '../../common/logger';
-import { cancelableTimeout, currentTimestamp, DeferredPromise, immediate, timeout, Timer } from '../../common/utils';
+import { DeferredPromise } from '../../common/promise';
+import { cancelableTimeout, currentTimestamp, immediate, timeout, Timer } from '../../common/utils';
 import { uniqueId } from '../../utils';
 import { AcquireResult } from './acquire-result';
 

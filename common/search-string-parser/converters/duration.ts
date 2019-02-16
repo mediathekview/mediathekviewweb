@@ -22,11 +22,11 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
     this.timeParser = new TimeParser();
   }
 
-  protected textToQuery(text: string): QueryBody | null {
+  protected textToQuery(text: string): QueryBody | undefined {
     const ranges = this.rangeParser.parse(text);
 
-    if (ranges == null) {
-      return null;
+    if (ranges == undefined) {
+      return undefined;
     } else if (ranges.length == 1) {
       return this.convertSingle(ranges[0]);
     } else if (ranges.length == 2) {
@@ -36,7 +36,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
     }
   }
 
-  private convertSingle(range: Range): QueryBody | null {
+  private convertSingle(range: Range): QueryBody | undefined {
     let queryBuilder: TermQueryBuilder | RangeQueryBuilder;
 
     switch (range.type) {
@@ -63,7 +63,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
     return query;
   }
 
-  private convertFromTo(from: Range, to: Range): QueryBody | null {
+  private convertFromTo(from: Range, to: Range): QueryBody | undefined {
     const rangeQueryBuilder = new RangeQueryBuilder();
     rangeQueryBuilder.field(FIELD);
 
@@ -74,7 +74,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
     return query;
   }
 
-  private setRange(rangeQueryBuilder: RangeQueryBuilder, range: Range) {
+  private setRange(rangeQueryBuilder: RangeQueryBuilder, range: Range): void {
     const time = this.timeParser.parse(range.text);
 
     switch (range.type) {

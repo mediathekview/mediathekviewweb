@@ -1,5 +1,5 @@
-import { Segment } from './segment';
 import { QueryBody } from '../search-engine/query';
+import { Segment } from './segment';
 
 export enum SegmentConverterResultType {
   Include,
@@ -16,5 +16,5 @@ export type SegmentConverterResult = {
 export type SegmentConverterResultArray = SegmentConverterResult[];
 
 export interface SegmentConverter {
-  tryConvert(segment: Segment): SegmentConverterResultArray | null;
+  tryConvert(segment: Segment): SegmentConverterResultArray | undefined;
 }
