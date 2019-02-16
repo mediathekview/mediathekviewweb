@@ -1,5 +1,5 @@
-import { AppState } from '../reducers';
 import { createSelector } from '@ngrx/store';
+import { AppState } from '../reducers';
 import { SearchState } from '../reducers/search.reducer';
 
 export const selectSearch = (state: AppState) => state.search;

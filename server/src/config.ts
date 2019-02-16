@@ -38,7 +38,7 @@ type Config = {
 export const config: Config = {
   dataDirectory: './data',
   api: {
-    port: 8000
+    port: 8080
   },
   elasticsearch: {
     host: 'localhost',

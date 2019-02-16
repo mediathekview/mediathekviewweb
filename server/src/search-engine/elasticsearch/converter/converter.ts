@@ -51,7 +51,7 @@ export class Converter {
       const converted = handler.tryConvert(queryBody, index, type);
 
       if (converted.success) {
-        return converted;
+        return converted.result;
       }
     }
 

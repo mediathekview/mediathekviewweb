@@ -1,5 +1,5 @@
-<app-search-input (searchStringChange)="searchStringChanged($event)"></app-search-input>
+<mvw-search-input (searchStringChange)="searchStringChanged($event)"></mvw-search-input>
 
-<div *ngIf="(error$ | async) as error">{{ error.message }}</div>
+<!--<div *ngIf="(error$ | async) as error">{{ error.message }}</div>-->
 
-<app-entry-list *ngIf="(result$ | async) as result" [entries]="result.items"></app-entry-list>
+<mvw-entry-list *ngIf="(result$ | async) as result" [entries]="result.items"></mvw-entry-list>

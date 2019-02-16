@@ -1,6 +1,6 @@
 import { SyncEnumerable } from '../enumerable';
 import { QueryBody } from '../search-engine/query';
-import { BoolQueryBuilder } from '../search-engine/query/builder';
+import { BoolQueryBuilder, MatchAllQueryBuilder } from '../search-engine/query/builder';
 import { ChannelSegmentConverter } from './converters/channel';
 import { DefaultSegmentConverter } from './converters/default';
 import { DescriptionSegmentConverter } from './converters/description';
@@ -20,6 +20,8 @@ const CONVERTERS: SegmentConverter[] = [
   new DefaultSegmentConverter()
 ];
 
+const matchAllQueryBuilder = new MatchAllQueryBuilder();
+
 export class SearchStringParser {
   private readonly converters: SegmentConverter[];
   private readonly segmentizer: Segmentizer;
@@ -30,16 +32,22 @@ export class SearchStringParser {
   }
 
   parse(text: string): QueryBody {
-    const segments = this.segmentizer.segmentize(text);
+    const trimmedText = text.trim();
+    const segments = this.segmentizer.segmentize(trimmedText);
 
     const groupedResults = SyncEnumerable.from(segments)
       .filter((segment) => segment.text.length > 0)
       .map((result) => this.convertSegment(result))
-      .filter((result) => result != null)
+      .filter((result) => result != undefined)
       .cast<SegmentConverterResultArray>()
       .mapMany((items) => items)
       .group((result) => this.groupResultSelector(result))
-      .map(([, results]) => results);
+      .map(([, results]) => results)
+      .toArray();
+
+    if (groupedResults.length == 0) {
+      return matchAllQueryBuilder.build();
+    }
 
     const query = this.createQuery(groupedResults);
     return query;
@@ -68,6 +76,9 @@ export class SearchStringParser {
           case SegmentConverterResultType.Exclude:
             innerBoolQueryBuilder.not(result.query);
             break;
+
+          default:
+            throw new Error('unknown SegmentConverterResultType');
         }
       }
 
@@ -78,15 +89,15 @@ export class SearchStringParser {
     return query;
   }
 
-  private convertSegment(segment: Segment): SegmentConverterResultArray | null {
+  private convertSegment(segment: Segment): SegmentConverterResultArray | undefined {
     for (const converter of this.converters) {
       const result = converter.tryConvert(segment);
 
-      if (result != null) {
+      if (result != undefined) {
         return result;
       }
     }
 
-    return null;
+    return undefined;
   }
 }

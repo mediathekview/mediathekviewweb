@@ -1,23 +1,23 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, OnDestroy } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Subscription, Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
-import { Segment, Segmentizer } from 'src/app/common/search-string-parser';
+import { Segment, Segmentizer } from '../../common/search-string-parser';
 
 @Component({
-  selector: 'app-search-input',
+  selector: 'mvw-search-input',
   templateUrl: './search-input.component.html',
   styleUrls: ['./search-input.component.scss']
 })
 export class SearchInputComponent implements OnInit, OnDestroy {
   private readonly segmentizer: Segmentizer;
+  @ViewChild('searchInputElement') private readonly searchInputRef: ElementRef<HTMLInputElement>;
+
   private inputChangeSubscription: Subscription;
+
   readonly searchInput: FormControl;
 
   settingsOpened: boolean = false;
-
-  @ViewChild('searchInputElement')
-  private readonly searchInputRef: ElementRef<HTMLInputElement>;
 
   @Input() searchString: string;
   @Output() searchStringChange: EventEmitter<string>;
@@ -32,7 +32,7 @@ export class SearchInputComponent implements OnInit, OnDestroy {
     this.segmentizer = new Segmentizer();
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.subscribeInputChange();
     this.searchInput.setValue(this.searchString);
 
@@ -41,7 +41,7 @@ export class SearchInputComponent implements OnInit, OnDestroy {
     );
   }
 
-  clear() {
+  clear(): void {
     this.searchInput.setValue('');
     this.searchInputRef.nativeElement.focus();
   }
@@ -50,12 +50,12 @@ export class SearchInputComponent implements OnInit, OnDestroy {
     this.inputChangeSubscription.unsubscribe();
   }
 
-  onSearchStringInputChanged(searchString: string) {
+  onSearchStringInputChanged(searchString: string): void {
     this.searchString = searchString;
     this.searchStringChange.emit(searchString);
   }
 
-  private subscribeInputChange() {
+  private subscribeInputChange(): void {
     this.inputChangeSubscription = this.searchInput.valueChanges
       .pipe(
         map((searchString: string) => searchString.trim()),

@@ -2,11 +2,12 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
-import { createErrorResponse } from '../common/api/rest';
+import { createErrorResponse, createResultResponse } from '../common/api/rest';
 import { Logger } from '../common/logger';
 import { SearchQuery } from '../common/search-engine/query';
 import { precisionRound, Timer } from '../common/utils';
 import { StreamIterable } from '../utils';
+import { validateSearchQuery } from '../validator';
 import { MediathekViewWebApi } from './api';
 
 type RequestHandler = (request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse) => void;
@@ -61,9 +62,9 @@ export class MediathekViewWebRestApi {
   private async handleSearch(context: Koa.Context): Promise<void> {
     const { request, response } = context;
 
-    let body: unknown;
+    let searchQuery: unknown;
     try {
-      body = await readJsonBody(request);
+      searchQuery = await readJsonBody(request);
     }
     catch (error) {
       this.logger.info(`invalid json received from ${context.ip}`);
@@ -72,14 +73,22 @@ export class MediathekViewWebRestApi {
       return;
     }
 
-    const validation = { valid: true };
+    const isValidSearchQuery = validateSearchQuery(searchQuery);
 
-    if (validation.valid) {
-      response.body = await this.api.search(body as SearchQuery);
-    } else {
+    if (isValidSearchQuery) {
+      try {
+        const result = await this.api.search(searchQuery as SearchQuery);
+        response.body = createResultResponse(result);
+      }
+      catch (error) {
+        response.status = 400;
+        response.body = createErrorResponse('invalid query', { name: (error as Error).name, message: (error as Error).message });
+      }
+    }
+    else {
       this.logger.info(`invalid search-query received from ${context.ip}`);
       response.status = 400;
-      response.body = createErrorResponse('invalid query', validation);
+      response.body = createErrorResponse('invalid query', validateSearchQuery.errors);
     }
   }
 }

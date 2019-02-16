@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-dev',
+  selector: 'mvw-dev',
   templateUrl: './dev.component.html',
   styleUrls: ['./dev.component.scss']
 })

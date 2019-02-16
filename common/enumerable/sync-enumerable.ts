@@ -2,12 +2,8 @@ import { any, batch, Comparator, filter, first, forEach, group, intercept, Itera
 
 export class SyncEnumerable<T> implements IterableIterator<T> {
   private readonly source: Iterable<T>;
-  private iterator: Iterator<T> | null;
 
-  constructor(iterable: Iterable<T>) {
-    this.source = iterable;
-    this.iterator = null;
-  }
+  private iterator: Iterator<T> | undefined;
 
   static from<T>(iterable: Iterable<T>): SyncEnumerable<T> {
     return new SyncEnumerable(iterable);
@@ -16,6 +12,11 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
   static fromRange(fromInclusive: number, toInclusive: number): SyncEnumerable<number> {
     const rangeIterable = range(fromInclusive, toInclusive);
     return new SyncEnumerable(rangeIterable);
+  }
+
+  constructor(iterable: Iterable<T>) {
+    this.source = iterable;
+    this.iterator = undefined;
   }
 
   cast<TNew extends T>(): SyncEnumerable<TNew> {
@@ -100,7 +101,7 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
     return array;
   }
 
-  forEach(func: IteratorFunction<T, void>) {
+  forEach(func: IteratorFunction<T, void>): void {
     forEach(this.source, func);
   }
 
@@ -110,7 +111,7 @@ export class SyncEnumerable<T> implements IterableIterator<T> {
   }
 
   next(value?: any): IteratorResult<T> {
-    if (this.iterator == null) {
+    if (this.iterator == undefined) {
       this.iterator = this.toIterator();
     }
 

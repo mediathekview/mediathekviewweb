@@ -10,7 +10,7 @@ export class Segmentizer {
     const matches: RegExpExecArray[] = [];
 
     let match: RegExpExecArray | null;
-    while ((match = regex.exec(search)) != null) {
+    while ((match = regex.exec(search)) != undefined) {
       matches.push(match);
     }
 
@@ -23,8 +23,8 @@ export class Segmentizer {
   parseSegment(segmentString: string, index: number): Segment {
     const match = segmentString.match(SEGMENT_PARSE_REGEX);
 
-    if (match == null) {
-      throw new Error(segmentString + ' - no match, should not happen');
+    if (match == undefined) {
+      throw new Error(`${segmentString} - no match, should not happen`);
     }
 
     const [, invertedString, selectorA, selectorB, quotedText, nonQuotedText] = match;

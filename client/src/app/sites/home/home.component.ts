@@ -1,21 +1,21 @@
 import { Component } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { StringSearch } from 'src/app/actions/search.actions';
-import { EntrySearchResult } from 'src/app/common/model';
-import { AppState } from 'src/app/reducers';
-import { selectSearchError, selectSearchResult } from 'src/app/selectors/search.selector';
+import { StringSearch } from '../../actions/search.actions';
+import { EntrySearchResult } from '../../common/model';
+import { AppState } from '../../reducers';
+import { selectSearchError, selectSearchResult } from '../../selectors/search.selector';
 
 @Component({
-  selector: 'app-home',
+  selector: 'mvw-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
   private readonly store: Store<AppState>;
 
-  readonly result$: Observable<EntrySearchResult | null>;
-  readonly error$: Observable<Error | null>;
+  readonly result$: Observable<EntrySearchResult | undefined>;
+  readonly error$: Observable<Error | undefined>;
 
   constructor(store: Store<AppState>) {
     this.store = store;
@@ -24,7 +24,7 @@ export class HomeComponent {
   }
 
   searchStringChanged(searchString: string): void {
-    const stringSearch = new StringSearch({ searchString, skip: 0, limit: 250, sort: [] });
+    const stringSearch = new StringSearch({ searchString, skip: 0, limit: 100, sort: [] });
     this.store.dispatch(stringSearch);
   }
 }

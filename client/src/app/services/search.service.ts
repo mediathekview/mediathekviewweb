@@ -47,7 +47,7 @@ export class SearchService {
 
 function toResult<T>(response: Response<T>): T {
   if (isErrorResponse(response)) {
-    const errorMessage = JSON.stringify(response.error, null, 2);
+    const errorMessage = JSON.stringify(response.error, undefined, 2);
     throw new Error(errorMessage);
   }
 
