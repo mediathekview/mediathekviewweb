@@ -7,7 +7,8 @@
 
   grid-template-areas:
     "navbar"
-    "content";
+    "content"
+    "footer";
 
   grid-row-gap: 1rem;
 }
@@ -18,5 +19,4 @@ app-navbar {
 
 .container {
   grid-area: content;
-  padding-bottom: 1rem;
 }

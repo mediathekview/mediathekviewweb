@@ -53,3 +53,15 @@ body {
     transition: all 0.5s;
   }
 }
+
+cdk-virtual-scroll-viewport.unset-position>.cdk-virtual-scroll-content-wrapper {
+  position: unset;
+  top: unset;
+  left: unset;
+}
+
+@media (max-width: 500px) {
+  .container.container {
+    margin: 0;
+  }
+}

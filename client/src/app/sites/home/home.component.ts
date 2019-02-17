@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { StringSearch } from '../../actions/search.actions';
@@ -9,7 +9,8 @@ import { selectSearchError, selectSearchResult } from '../../selectors/search.se
 @Component({
   selector: 'mvw-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeComponent {
   private readonly store: Store<AppState>;

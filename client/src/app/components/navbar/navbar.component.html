@@ -3,14 +3,14 @@
     <a class="navbar-item is-size-4">
       MediathekViewWeb
     </a>
-    <div class="navbar-burger burger">
+    <div class="navbar-burger burger" [class.is-active]="burgerOpened" (click)="burgerOpened = !burgerOpened">
       <span></span>
       <span></span>
       <span></span>
     </div>
   </div>
 
-  <div class="navbar-menu container is-fluid">
+  <div class="navbar-menu" [class.is-active]="burgerOpened">
     <div class="navbar-start">
       <div class="tabs">
         <ul>

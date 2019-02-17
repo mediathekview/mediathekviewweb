@@ -1,12 +1,15 @@
-<cdk-virtual-scroll-viewport #viewport itemSize="48" maxBufferPx="600" minBufferPx="300" class="viewport mat-elevation-z2">
+<cdk-virtual-scroll-viewport #viewport [itemSize]="panelCollapsedHeight | async" maxBufferPx="600" minBufferPx="300"
+  class="viewport unset-position mat-elevation-z2">
   <mat-accordion>
     <div *cdkVirtualFor="let entry of entries; templateCacheSize: 0; trackBy: trackEntry;" class="entry">
       <mat-expansion-panel #entryPanel>
-        <mat-expansion-panel-header>
+        <mat-expansion-panel-header [collapsedHeight]="(panelCollapsedHeight | async) + 'px'" [expandedHeight]="(panelExpandedHeight | async) + 'px'">
           <div class="entry-grid">
             <span class="entry-channel">{{ entry.channel }}</span>
+            <span *ngIf="isXs | async" class="entry-channel-topic-divider">-</span>
             <span class="entry-topic">{{ entry.topic }}</span>
             <span class="entry-title">{{ entry.title }}</span>
+            <span class="entry-datetime">{{ (entry.timestamp * 1000) | date:'short' }}</span>
           </div>
         </mat-expansion-panel-header>
 

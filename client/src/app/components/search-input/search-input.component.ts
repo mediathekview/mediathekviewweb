@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
@@ -7,7 +7,8 @@ import { Segment, Segmentizer } from '../../common/search-string-parser';
 @Component({
   selector: 'mvw-search-input',
   templateUrl: './search-input.component.html',
-  styleUrls: ['./search-input.component.scss']
+  styleUrls: ['./search-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SearchInputComponent implements OnInit, OnDestroy {
   private readonly segmentizer: Segmentizer;
