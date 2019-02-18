@@ -6,7 +6,7 @@
     "outDir": "./dist/out-tsc",
     "module": "es2015",
     "moduleResolution": "node",
-    "target": "es2017",
+    "target": "es6",
     "typeRoots": [
       "node_modules/@types"
     ],
