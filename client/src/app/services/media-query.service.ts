@@ -12,7 +12,7 @@ export class MediaQueryService {
   }
 
   get isXs(): Observable<boolean> {
-    return this.query('(max-width: 500px)');
+    return this.query('(max-width: 1087px)');
   }
 
   query(query: string): Observable<boolean> {

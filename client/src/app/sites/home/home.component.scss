@@ -1,3 +1,5 @@
+@import '../../../styles/breakpoints.scss';
+
 :host {
   display: grid;
   width: 100%;
@@ -18,4 +20,10 @@ app-search-input {
 
 app-entry-list {
   grid-area: entry-list;
+}
+
+mvw-search-input {
+  @include small {
+    margin: 0 1rem;
+  }
 }

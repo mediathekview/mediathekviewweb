@@ -1,4 +1,5 @@
 @import '~bulma/bulma';
+@import './breakpoints.scss';
 
 .control.has-icons-right .icon.is-interactive {
   pointer-events: initial;
@@ -6,4 +7,11 @@
 
 html {
   overflow-y: auto;
+}
+
+@include small {
+  .container {
+    width: 100%;
+    max-width: 100%;
+  }
 }

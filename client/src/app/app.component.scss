@@ -1,3 +1,5 @@
+@import '../styles/breakpoints.scss';
+
 :host {
   display: grid;
   width: 100vw;
@@ -9,6 +11,12 @@
     "navbar"
     "content"
     "footer";
+
+  @include small {
+    grid-template-areas:
+      "navbar"
+      "content";
+  }
 
   grid-row-gap: 1rem;
 }

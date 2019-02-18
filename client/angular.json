@@ -34,9 +34,10 @@
               "src/manifest.json"
             ],
             "styles": [
+              "src/styles/bulma.scss",
               "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
-              "src/styles.scss",
-              "src/styles/bulma.scss"
+              "src/styles/material.scss",
+              "src/styles.scss"
             ],
             "scripts": []
           },

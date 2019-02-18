@@ -59,9 +59,3 @@ cdk-virtual-scroll-viewport.unset-position>.cdk-virtual-scroll-content-wrapper {
   top: unset;
   left: unset;
 }
-
-@media (max-width: 500px) {
-  .container.container {
-    margin: 0;
-  }
-}

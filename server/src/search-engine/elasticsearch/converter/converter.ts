@@ -1,6 +1,6 @@
 import { SearchParams } from 'elasticsearch';
 import { QueryBody, SearchQuery } from '../../../common/search-engine/query';
-import { ConvertHandler, ConvertResult } from './convert-handler';
+import { ConvertHandler } from './convert-handler';
 import { SortConverter } from './handlers';
 
 const DEFAULT_LIMIT = 25;

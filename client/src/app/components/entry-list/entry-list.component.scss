@@ -1,6 +1,9 @@
-.viewport {
+@import '../../../styles/breakpoints.scss';
+
+.accordion-container {
   height: 100%;
-  width: 100%;
+  contain: strict;
+  overflow-y: auto;
 }
 
 .mat-accordion .mat-expansion-panel {
@@ -14,17 +17,21 @@
   width: 100%;
   padding: 0.3rem 0;
 
-  grid-column-gap: 0.5rem;
-  grid-template-columns: 15rem auto 1fr auto 20%;
+  grid-column-gap: 1rem;
+  grid-template-columns: 15rem auto 1fr auto auto 0;
   grid-template-areas:
-    "channel title . datetime"
-    "topic title . datetime";
+    "channel title . datetime duration ."
+    "topic   title . datetime duration .";
 
-  @media (max-width: 500px) {
-    grid-template-columns: auto auto 1fr auto;
+  @include small {
+    height: 4.25rem;
+    grid-template-columns: auto minmax(10px, 100%) auto auto 0;
     grid-template-areas:
-      "channel divider topic . datetime"
-      "title title title title title";
+      "topic topic topic topic ."
+      "title title title title ."
+      "channel . datetime duration .";
+    /*  "channel divider topic . datetime ."
+      "title title title title title ."; */
   }
 
   span {
@@ -32,29 +39,61 @@
   }
 }
 
-.entry-channel {
-  grid-area: channel;
-  align-self: flex-end;
-}
+.entry-grid {
+  >span {
+    align-self: center;
 
-.entry-channel-topic-divider {
-  grid-area: divider;
-}
+    &.entry-channel {
+      grid-area: channel;
+      align-self: flex-end;
+      font-size: 0.85rem;
 
-.entry-topic {
-  grid-area: topic;
-  align-self: flex-start;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+      @include small {
+        font-size: 0.8rem;
+      }
+    }
 
-.entry-title {
-  grid-area: title;
-  align-self: center;
-}
+    &.entry-channel-topic-divider {
+      grid-area: divider;
+    }
 
-.entry-datetime {
-  grid-area: datetime;
-  align-self: center;
+    &.entry-topic {
+      grid-area: topic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      align-self: flex-start;
+      font-size: 0.92rem;
+
+      @include small {
+        font-size: 0.85rem;
+      }
+    }
+
+    &.entry-title {
+      line-height: 1;
+      grid-area: title;
+      align-self: center;
+    }
+
+    &.entry-datetime {
+      grid-area: datetime;
+
+      @include small {
+        align-self: flex-end;
+        justify-self: flex-end;
+        font-size: 0.8rem;
+      }
+    }
+
+    &.entry-duration {
+      grid-area: duration;
+
+      @include small {
+        align-self: flex-end;
+        justify-self: flex-end;
+        font-size: 0.8rem;
+      }
+    }
+  }
 }

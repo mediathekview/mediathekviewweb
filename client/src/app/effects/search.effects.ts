@@ -26,7 +26,7 @@ export class SearchEffects {
         const payload: StringSearchPayload = action.payload;
         return this.searchService.searchByString(payload.searchString, payload.skip, payload.limit, ...payload.sort)
           .pipe(
-            map((result) => new SearchSuccess({ ...result, items: [...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items, ...result.items] })),
+            map((result) => new SearchSuccess({ ...result, items: [...result.items] })),
             catchError((error) => of(new SearchError(error)))
           );
       })
