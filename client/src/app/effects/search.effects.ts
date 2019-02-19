@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { SearchActions, SearchActionTypes, SearchError, SearchSuccess, StringSearchPayload } from '../actions/search.actions';
+import { SearchActions, SearchActionTypes, SearchError, SearchSuccess, TextSearchPayload } from '../actions/search.actions';
 import { SearchService } from '../services/search.service';
 
 @Injectable()
@@ -21,10 +21,10 @@ export class SearchEffects {
 
   private getSearchEffect(): Observable<SearchSuccess | SearchError> {
     return this.actions$.pipe(
-      ofType(SearchActionTypes.StringSearch),
+      ofType(SearchActionTypes.TextSearch),
       switchMap((action) => {
-        const payload: StringSearchPayload = action.payload;
-        return this.searchService.searchByString(payload.searchString, payload.skip, payload.limit, ...payload.sort)
+        const payload: TextSearchPayload = action.payload;
+        return this.searchService.textSearch(payload)
           .pipe(
             map((result) => new SearchSuccess({ ...result, items: [...result.items] })),
             catchError((error) => of(new SearchError(error)))

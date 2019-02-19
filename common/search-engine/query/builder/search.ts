@@ -8,6 +8,7 @@ export class SearchQueryBuilder {
   private _sort: Sort[]; // tslint:disable-line: prefer-readonly
   private _skip: number | undefined;
   private _limit: number | undefined;
+  private _cursor: string | undefined;
 
   constructor() {
     this._sort = [];
@@ -38,6 +39,11 @@ export class SearchQueryBuilder {
     return this;
   }
 
+  cursor(value: string): this {
+    this._cursor = value;
+    return this;
+  }
+
   build(): SearchQuery {
     if (this._body == undefined) {
       throw new Error('body not set');
@@ -57,6 +63,10 @@ export class SearchQueryBuilder {
 
     if (this._limit != undefined) {
       query.limit = this._limit;
+    }
+
+    if (this._cursor != undefined) {
+      query.cursor = this._cursor;
     }
 
     return query;

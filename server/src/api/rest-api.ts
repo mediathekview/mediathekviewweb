@@ -2,15 +2,15 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
-import { createErrorResponse, createResultResponse } from '../common/api/rest';
+import { createErrorResponse } from '../common/api/rest';
 import { Logger } from '../common/logger';
-import { SearchQuery } from '../common/search-engine/query';
 import { precisionRound, Timer } from '../common/utils';
 import { StreamIterable } from '../utils';
-import { validateSearchQuery } from '../validator';
+import { validateSearchQuery, validateTextSearchQuery, ValidationFunction } from '../validator';
 import { MediathekViewWebApi } from './api';
 
 type RequestHandler = (request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse) => void;
+type FunctionHandler<Body, Result> = (request: Koa.Request, response: Koa.Response, body: Body) => Promise<Result>;
 
 const PREFIX = '/api/v2/';
 
@@ -49,46 +49,42 @@ export class MediathekViewWebRestApi {
   }
 
   private initializeRoutes(): void {
-    this.register('/search', async (context) => await this.handleSearch(context));
+    this.registerPostRoute('/entries/search', async (context) => await this.handle(context, validateSearchQuery, async (_request, _response, body) => this.api.search(body)));
+    this.registerPostRoute('/entries/search/text', async (context) => await this.handle(context, validateTextSearchQuery, async (_request, _response, body) => this.api.textSearch(body)));
   }
 
-  private register(path: string, handler: (context: Koa.Context) => Promise<void>): void {
+  private registerPostRoute(path: string, handler: (context: Koa.Context) => Promise<void>): void {
     this.router.post(path, async (context, next) => {
       await handler(context);
       return next();
     });
   }
 
-  private async handleSearch(context: Koa.Context): Promise<void> {
+  private async handle<Body, Result>(context: Koa.Context, validator: ValidationFunction<Body>, handler: FunctionHandler<Body, Result>): Promise<void> {
     const { request, response } = context;
 
-    let searchQuery: unknown;
+    let body: unknown;
     try {
-      searchQuery = await readJsonBody(request);
+      body = await readJsonBody(request);
     }
     catch (error) {
-      this.logger.info(`invalid json received from ${context.ip}`);
       response.status = 400;
       response.body = createErrorResponse((error as Error).message);
       return;
     }
 
-    const isValidSearchQuery = validateSearchQuery(searchQuery);
-
-    if (isValidSearchQuery) {
+    if (validator(body)) {
       try {
-        const result = await this.api.search(searchQuery as SearchQuery);
-        response.body = createResultResponse(result);
+        await handler(request, response, body);
       }
       catch (error) {
         response.status = 400;
-        response.body = createErrorResponse('invalid query', { name: (error as Error).name, message: (error as Error).message });
+        response.body = createErrorResponse('server error', { name: (error as Error).name, message: (error as Error).message });
       }
     }
     else {
-      this.logger.info(`invalid search-query received from ${context.ip}`);
       response.status = 400;
-      response.body = createErrorResponse('invalid query', validateSearchQuery.errors);
+      response.body = createErrorResponse('invalid body', validator.errors);
     }
   }
 }

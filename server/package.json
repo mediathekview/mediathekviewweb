@@ -8,7 +8,7 @@
     "inspect-min-memory": "node --inspect --optimize-for-size --memory-reducer --clear-free-memory --use-idle-notification ./dist/app.js",
     "build": "tsc",
     "build-watch": "tsc --watch",
-    "build-schema": "typescript-json-schema --include src/common/search-engine/query/definition.ts --out src/schemas/search-query.json --aliasRefs --titles --noExtraProps --required tsconfig.json SearchQuery",
+    "build-schemas": "sh build-schemas.sh",
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "author": "Patrick Hein",

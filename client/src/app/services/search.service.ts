@@ -4,8 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { isErrorResponse, isResultResponse, Response } from '../common/api/rest';
 import { EntrySearchResult } from '../common/model';
-import { QueryBody, SearchQuery, Sort } from '../common/search-engine/query';
-import { SearchStringParser } from '../common/search-string-parser/parser';
+import { SearchQuery, TextSearchQuery } from '../common/search-engine/query';
 import { toError } from '../common/utils';
 
 @Injectable({
@@ -13,32 +12,21 @@ import { toError } from '../common/utils';
 })
 export class SearchService {
   private readonly httpClient: HttpClient;
-  private readonly searchStringParser: SearchStringParser;
 
-  constructor(httpClient: HttpClient, searchStringParser: SearchStringParser) {
+  constructor(httpClient: HttpClient) {
     this.httpClient = httpClient;
-    this.searchStringParser = searchStringParser;
-  }
-
-  searchByString(searchString: string, skip: number, limit: number, ...sort: Sort[]): Observable<EntrySearchResult> {
-    const body: QueryBody = this.searchStringParser.parse(searchString);
-
-    const query: SearchQuery = {
-      body,
-      sort,
-      skip,
-      limit
-    };
-
-    return this.search(query);
   }
 
   search(query: SearchQuery): Observable<EntrySearchResult> {
-    const url = '/api/v2/search';
-    // const url = 'http://localhost:8080/api/v2/search';
-    // const url = 'https://testing.mediathekviewweb.de/api/v2/search';
+    return this.post('/api/v2/entries/search', query);
+  }
 
-    return this.httpClient.post<Response<EntrySearchResult>>(url, query, { responseType: 'json' })
+  textSearch(query: TextSearchQuery): Observable<EntrySearchResult> {
+    return this.post('/api/v2/entries/search/text', query);
+  }
+
+  private post<T, Data>(url: string, data: Data): Observable<T> {
+    return this.httpClient.post<Response<T>>(url, data, { responseType: 'json' })
       .pipe(
         map(toResult)
       );

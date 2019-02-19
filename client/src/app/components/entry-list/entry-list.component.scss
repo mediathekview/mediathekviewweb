@@ -1,8 +1,8 @@
 @import '../../../styles/breakpoints.scss';
 
 .accordion-container {
-  height: 100%;
-  contain: strict;
+  width: 100%;
+  max-height: calc(100vh - 10rem);
   overflow-y: auto;
 }
 
@@ -16,6 +16,7 @@
   display: grid;
   width: 100%;
   padding: 0.3rem 0;
+  font-size: 0.9rem;
 
   grid-column-gap: 1rem;
   grid-template-columns: 15rem auto 1fr auto auto 0;
@@ -42,14 +43,15 @@
 .entry-grid {
   >span {
     align-self: center;
+    font-size: 1em;
 
     &.entry-channel {
       grid-area: channel;
       align-self: flex-end;
-      font-size: 0.85rem;
+      font-size: 0.85em;
 
       @include small {
-        font-size: 0.8rem;
+        font-size: 0.8em;
       }
     }
 
@@ -63,10 +65,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
       align-self: flex-start;
-      font-size: 0.92rem;
+      font-size: 0.92em;
 
       @include small {
-        font-size: 0.85rem;
+        font-size: 0.85em;
       }
     }
 
@@ -82,7 +84,7 @@
       @include small {
         align-self: flex-end;
         justify-self: flex-end;
-        font-size: 0.8rem;
+        font-size: 0.8em;
       }
     }
 
@@ -92,7 +94,7 @@
       @include small {
         align-self: flex-end;
         justify-self: flex-end;
-        font-size: 0.8rem;
+        font-size: 0.8em;
       }
     }
   }

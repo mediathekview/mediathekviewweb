@@ -1,6 +1,6 @@
 import { Client as ElasticsearchClient } from 'elasticsearch';
 import * as RedisClient from 'ioredis';
-import { Redis } from 'ioredis';
+import { Redis } from 'ioredis'; // tslint:disable-line: no-duplicate-imports
 import * as Mongo from 'mongodb';
 import { MediathekViewWebApi } from './api/api';
 import { MediathekViewWebRestApi } from './api/rest-api';
@@ -16,7 +16,7 @@ import { config } from './config';
 import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
-import { ElasticsearchMapping, ElasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
+import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
 import { EntriesImporter } from './entries-importer/importer';
 import { EntriesIndexer } from './entries-indexer/indexer';
 import { EntriesSaver } from './entries-saver/saver';
@@ -36,6 +36,7 @@ import * as ConvertHandlers from './search-engine/elasticsearch/converter/handle
 import { getElasticsearchLogAdapter } from './utils/elasticsearch-log-adapter-factory';
 import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
 
+
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
 const MONGO_CONNECTION_STRING = 'mongodb://localhost:27017';
@@ -45,8 +46,8 @@ const MONGO_ENTRIES_COLLECTION_NAME = 'entries';
 
 const ELASTICSEARCH_INDEX_NAME = 'mediathekviewweb';
 const ELASTICSEARCH_TYPE_NAME = 'entry';
-const ELASTICSEARCH_INDEX_SETTINGS = ElasticsearchSettings;
-const ELASTICSEARCH_INDEX_MAPPING = ElasticsearchMapping;
+const ELASTICSEARCH_INDEX_SETTINGS = elasticsearchSettings;
+const ELASTICSEARCH_INDEX_MAPPING = elasticsearchMapping;
 
 const CORE_LOG = '[CORE]';
 const FILMLIST_MANAGER_LOG = '[FILMLIST MANAGER]';
@@ -334,7 +335,7 @@ export class InstanceProvider {
 
       converter.registerHandler(
         new ConvertHandlers.TextQueryConvertHandler(),
-        new ConvertHandlers.IDsQueryConvertHandler(),
+        new ConvertHandlers.IdsQueryConvertHandler(),
         new ConvertHandlers.MatchAllQueryConvertHandler(),
         new ConvertHandlers.RegexQueryConvertHandler(),
         new ConvertHandlers.TermQueryConvertHandler(),

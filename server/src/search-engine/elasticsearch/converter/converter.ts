@@ -6,6 +6,14 @@ import { SortConverter } from './handlers';
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 250;
 
+type Cursor = {
+  mode: 'skip';
+  value: number;
+} | {
+  mode: 'sort';
+  value: any[];
+};
+
 export class Converter {
   private readonly handlers: ConvertHandler[];
   private readonly sortConverter: SortConverter;
@@ -20,14 +28,17 @@ export class Converter {
   }
 
   convert(query: SearchQuery, index: string, type: string): SearchParams {
-    if (query.skip == undefined) {
-      query.skip = 0;
+    if ((query.skip != undefined) && (query.cursor != undefined)) {
+      throw new Error('cursor cannot be used with skip in combination');
     }
 
-    if (query.limit == undefined) {
-      query.limit = DEFAULT_LIMIT;
-    } else if (query.limit > MAX_LIMIT) {
-      throw new Error(`Limit of ${query.limit} is above maximum (${MAX_LIMIT})`);
+    const cursor = (query.cursor != undefined) ? this.decodeCursor(query.cursor) : undefined;
+    const from = (cursor != undefined) ? cursor.skip : query.skip;
+    const searchAfter = (cursor != undefined) ? cursor.searchAfter : undefined;
+    const size = (query.limit != undefined) ? query.limit : DEFAULT_LIMIT;
+
+    if (size > MAX_LIMIT) {
+      throw new Error(`Limit of ${query.limit} is above maximum allowed (${MAX_LIMIT})`);
     }
 
     const queryBody = this.convertBody(query.body, index, type);
@@ -35,11 +46,12 @@ export class Converter {
     const elasticQuery: SearchParams = {
       index,
       type,
-      from: query.skip,
-      size: query.limit,
+      from,
+      size,
       body: {
         query: queryBody,
-        sort: this.getSort(query)
+        sort: this.getSort(query),
+        searchAfter
       }
     };
 
@@ -58,11 +70,36 @@ export class Converter {
     throw new Error('not suitable handler for query available');
   }
 
-  private getSort(query: SearchQuery): object | undefined {
-    if (query.sort == undefined || query.sort.length == 0) {
-      return undefined;
-    }
+  private getSort(query: SearchQuery): object {
+    const querySort = (query.sort == undefined) ? [] : query.sort;
+    return querySort.map((sort) => this.sortConverter.convert(sort));
+  }
 
-    return query.sort.map((sort) => this.sortConverter.convert(sort));
+  private decodeCursor(encodedCursor: string): { skip: number | undefined, searchAfter: any[] | undefined } {
+    try {
+      const cursor = JSON.parse(encodedCursor) as Cursor;
+
+      switch (cursor.mode) {
+        case 'skip':
+          if (typeof cursor.value != 'number') {
+            throw 5;
+          }
+
+          return { skip: cursor.value, searchAfter: undefined };
+
+        case 'sort':
+          if (!Array.isArray(cursor.value)) {
+            throw 5;
+          }
+
+          return { skip: undefined, searchAfter: cursor.value };
+
+        default:
+          throw 5;
+      }
+    }
+    catch {
+      throw new Error('invalid cursor');
+    }
   }
 }

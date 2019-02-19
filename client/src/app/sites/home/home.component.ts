@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { StringSearch } from '../../actions/search.actions';
-import { EntrySearchResult } from '../../common/model';
+import { Order, TextSearchQuery } from 'src/app/common/search-engine/query';
+import { TextSearch } from '../../actions/search.actions';
+import { EntrySearchResult, Field } from '../../common/model';
 import { AppState } from '../../reducers';
 import { selectSearchError, selectSearchResult } from '../../selectors/search.selector';
 
@@ -25,7 +26,14 @@ export class HomeComponent {
   }
 
   searchStringChanged(searchString: string): void {
-    const stringSearch = new StringSearch({ searchString, skip: 0, limit: 100, sort: [] });
+    const textSearchQuery: TextSearchQuery = {
+      text: searchString,
+      skip: 0,
+      limit: 25,
+      sort: [{ field: Field.Date, order: Order.Descending }]
+    };
+
+    const stringSearch = new TextSearch(textSearchQuery);
     this.store.dispatch(stringSearch);
   }
 }

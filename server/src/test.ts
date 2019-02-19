@@ -1,5 +1,5 @@
 import * as Ajv from 'ajv';
-import * as SearchQuerySchema from './schemas/search-query.json';
+import { SearchQuerySchema } from './schemas';
 
 const ajv = new Ajv({ allErrors: true });
 const validateSearchQuery = ajv.compile(SearchQuerySchema);

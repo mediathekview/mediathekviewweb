@@ -91,12 +91,14 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   async search(query: SearchQuery): Promise<SearchResult<T>> {
     const elasticsearchQuery = this.converter.convert(query, this.indexName, this.typeName);
 
-    const result = await this.client.search<T>(elasticsearchQuery);
-    const items = result.hits.hits.map((hit) => hit._source);
+    const { hits: { hits, total }, took: milliseconds } = await this.client.search<T>(elasticsearchQuery);
+    const items = hits.map((hit) => hit._source);
+    const cursor = JSON.stringify(hits[hits.length - 1]);
 
     const searchResult: SearchResult<T> = {
-      total: result.hits.total,
-      milliseconds: result.took,
+      total,
+      milliseconds,
+      cursor,
       items
     };
 

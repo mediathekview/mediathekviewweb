@@ -26,7 +26,7 @@ export type AggregatedEntry = Entry & {
 };
 
 export enum Field {
-  ID = 'id',
+  Id = 'id',
   Channel = 'channel',
   Topic = 'topic',
   Title = 'title',

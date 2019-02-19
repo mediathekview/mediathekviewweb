@@ -37,15 +37,23 @@ export type Sort = {
 };
 
 /** @minProperties 1 */
-export type QueryBody = Partial<TermQuery & IDsQuery & MatchAllQuery & BoolQuery & RangeQuery & TextQuery & RegexQuery>;
+export type QueryBody = Partial<TermQuery & IdsQuery & MatchAllQuery & BoolQuery & RangeQuery & TextQuery & RegexQuery>;
 
-export type SearchQuery = {
-  body: QueryBody;
+type QueryOptions = {
   sort?: Sort[];
   /** @type integer */
   skip?: number;
   /** @type integer */
   limit?: number;
+  cursor?: string;
+};
+
+export type SearchQuery = QueryOptions & {
+  body: QueryBody;
+};
+
+export type TextSearchQuery = QueryOptions & {
+  text: string;
 };
 
 export type TermQueryValue = string | number | boolean;
@@ -57,7 +65,7 @@ export type TermQuery = {
   }
 };
 
-export type IDsQuery = {
+export type IdsQuery = {
   /** @minItems 1 */
   ids: string[];
 };

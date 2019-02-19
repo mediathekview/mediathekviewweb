@@ -31,14 +31,14 @@ export type UserActionFilter = Partial<Visit | Download | Play | Pause | Comment
 
 export type UserAction = Entity & {
   actionType: UserActionType,
-  userID: string,
+  userId: string,
   timestamp: number,
   visitId: string,
   pageViewId: string
 };
 
 type EntryAction = UserAction & {
-  entryID: string
+  entryId: string
 };
 
 type PlayPause = EntryAction & {

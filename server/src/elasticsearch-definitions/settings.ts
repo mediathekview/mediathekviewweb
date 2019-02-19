@@ -1,4 +1,4 @@
-export const ElasticsearchSettings = {
+export const elasticsearchSettings = {
   settings: {
     refresh_interval: '3s',
     analysis: {

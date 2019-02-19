@@ -1,26 +1,21 @@
 // tslint:disable: max-classes-per-file
 
 import { EntrySearchResult } from '../common/model';
-import { Sort } from '../common/search-engine/query';
+import { Sort, TextSearchQuery } from '../common/search-engine/query';
 import { PayloadAction } from './payload.action';
 
-export type StringSearchPayload = {
-  searchString: string,
-  skip: number,
-  limit: number,
-  sort: Sort[]
-};
+export type TextSearchPayload = TextSearchQuery;
 
 export enum SearchActionTypes {
-  StringSearch = '[Search] StringSearch',
+  TextSearch = '[Search] TextSearch',
   SearchSuccess = '[Search] Success',
   SearchError = '[Search] Error'
 }
 
-export type SearchActions = StringSearch | SearchSuccess | SearchError;
+export type SearchActions = TextSearch | SearchSuccess | SearchError;
 
-export class StringSearch extends PayloadAction<StringSearchPayload> {
-  readonly type: SearchActionTypes.StringSearch = SearchActionTypes.StringSearch;
+export class TextSearch extends PayloadAction<TextSearchPayload> {
+  readonly type: SearchActionTypes.TextSearch = SearchActionTypes.TextSearch;
 }
 
 export class SearchSuccess extends PayloadAction<EntrySearchResult> {

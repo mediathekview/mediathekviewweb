@@ -1,9 +1,4 @@
-interface ElasticsearchKeys {
-  IndexName: string;
-  TypeName: string;
-}
-
-export const Keys: ElasticsearchKeys = {
+export const elasticsearchKeys = {
   IndexName: 'mediathekviewweb',
   TypeName: 'entry'
 };
