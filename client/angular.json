@@ -12,10 +12,6 @@
         "@schematics/angular:component": {
           "styleext": "scss",
           "changeDetection": "OnPush"
-        },
-        "@ngrx/schematics:component": {
-          "styleext": "scss",
-          "changeDetection": "OnPush"
         }
       },
       "architect": {
@@ -162,8 +158,5 @@
       }
     }
   },
-  "defaultProject": "mediathekviewweb",
-  "cli": {
-    "defaultCollection": "@ngrx/schematics"
-  }
+  "defaultProject": "mediathekviewweb"
 }

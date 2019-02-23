@@ -6,14 +6,6 @@ import { SortConverter } from './handlers';
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 250;
 
-type Cursor = {
-  mode: 'skip';
-  value: number;
-} | {
-  mode: 'sort';
-  value: any[];
-};
-
 export class Converter {
   private readonly handlers: ConvertHandler[];
   private readonly sortConverter: SortConverter;
@@ -29,12 +21,11 @@ export class Converter {
 
   convert(query: SearchQuery, index: string, type: string): SearchParams {
     if ((query.skip != undefined) && (query.cursor != undefined)) {
-      throw new Error('cursor cannot be used with skip in combination');
+      throw new Error('cursor and skip cannot be used at the same time');
     }
 
-    const cursor = (query.cursor != undefined) ? this.decodeCursor(query.cursor) : undefined;
-    const from = (cursor != undefined) ? cursor.skip : query.skip;
-    const searchAfter = (cursor != undefined) ? cursor.searchAfter : undefined;
+    const from = (query.skip != undefined) ? query.skip : undefined;
+    const searchAfter = (query.cursor != undefined) ? JSON.parse(query.cursor) : undefined;
     const size = (query.limit != undefined) ? query.limit : DEFAULT_LIMIT;
 
     if (size > MAX_LIMIT) {
@@ -55,6 +46,7 @@ export class Converter {
       }
     };
 
+    console.log(JSON.stringify(elasticQuery, undefined, 2));
     return elasticQuery;
   }
 
@@ -73,33 +65,5 @@ export class Converter {
   private getSort(query: SearchQuery): object {
     const querySort = (query.sort == undefined) ? [] : query.sort;
     return querySort.map((sort) => this.sortConverter.convert(sort));
-  }
-
-  private decodeCursor(encodedCursor: string): { skip: number | undefined, searchAfter: any[] | undefined } {
-    try {
-      const cursor = JSON.parse(encodedCursor) as Cursor;
-
-      switch (cursor.mode) {
-        case 'skip':
-          if (typeof cursor.value != 'number') {
-            throw 5;
-          }
-
-          return { skip: cursor.value, searchAfter: undefined };
-
-        case 'sort':
-          if (!Array.isArray(cursor.value)) {
-            throw 5;
-          }
-
-          return { skip: undefined, searchAfter: cursor.value };
-
-        default:
-          throw 5;
-      }
-    }
-    catch {
-      throw new Error('invalid cursor');
-    }
   }
 }

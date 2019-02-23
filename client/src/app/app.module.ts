@@ -6,9 +6,6 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { EffectsModule } from '@ngrx/effects';
-import { StoreModule } from '@ngrx/store';
-import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -16,11 +13,9 @@ import { SearchStringParser } from './common/search-string-parser/parser';
 import { EntryListComponent } from './components/entry-list/entry-list.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { SearchInputComponent } from './components/search-input/search-input.component';
-import { SearchEffects } from './effects/search.effects';
 import { AngularCdkModule } from './modules/angular-cdk.module';
 import { AngularMaterialModule } from './modules/angular-material.module';
 import { FontAwesomeIconsModule } from './modules/font-awesome-icons.module';
-import { metaReducers, reducers } from './reducers';
 import { DevComponent } from './sites/dev/dev.component';
 import { HomeComponent } from './sites/home/home.component';
 
@@ -44,10 +39,7 @@ registerLocaleData(german, 'de');
     ReactiveFormsModule,
     AngularMaterialModule,
     FontAwesomeIconsModule,
-    AngularCdkModule,
-    StoreModule.forRoot(reducers, { metaReducers }),
-    !environment.production ? StoreDevtoolsModule.instrument() : [],
-    EffectsModule.forRoot([SearchEffects])
+    AngularCdkModule
   ],
   providers: [
     { provide: LOCALE_ID, useValue: 'de_DE' },

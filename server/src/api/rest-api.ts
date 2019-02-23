@@ -2,7 +2,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
-import { createErrorResponse } from '../common/api/rest';
+import { createErrorResponse, createResultResponse } from '../common/api/rest';
 import { Logger } from '../common/logger';
 import { precisionRound, Timer } from '../common/utils';
 import { StreamIterable } from '../utils';
@@ -10,9 +10,9 @@ import { validateSearchQuery, validateTextSearchQuery, ValidationFunction } from
 import { MediathekViewWebApi } from './api';
 
 type RequestHandler = (request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse) => void;
-type FunctionHandler<Body, Result> = (request: Koa.Request, response: Koa.Response, body: Body) => Promise<Result>;
+type FunctionHandler<TBody, TResult> = (request: Koa.Request, response: Koa.Response, body: TBody) => Promise<TResult>;
 
-const PREFIX = '/api/v2/';
+const PREFIX = '/api/v2';
 
 export class MediathekViewWebRestApi {
   private readonly api: MediathekViewWebApi;
@@ -60,7 +60,7 @@ export class MediathekViewWebRestApi {
     });
   }
 
-  private async handle<Body, Result>(context: Koa.Context, validator: ValidationFunction<Body>, handler: FunctionHandler<Body, Result>): Promise<void> {
+  private async handle<TBody, TResult>(context: Koa.Context, validator: ValidationFunction<TBody>, handler: FunctionHandler<TBody, TResult>): Promise<void> {
     const { request, response } = context;
 
     let body: unknown;
@@ -75,10 +75,11 @@ export class MediathekViewWebRestApi {
 
     if (validator(body)) {
       try {
-        await handler(request, response, body);
+        const result = await handler(request, response, body);
+        response.body = createResultResponse(result);
       }
       catch (error) {
-        response.status = 400;
+        response.status = 500;
         response.body = createErrorResponse('server error', { name: (error as Error).name, message: (error as Error).message });
       }
     }

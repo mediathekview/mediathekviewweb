@@ -1,4 +1,4 @@
-<div class="accordion-container mat-elevation-z2">
+<div #scrollContainer class="accordion-container mat-elevation-z2" cdkScrollable>
   <mat-accordion class="entries-accordion">
     <div *ngFor="let entry of entries; trackBy: trackEntry;" class="entry">
       <mat-expansion-panel #entryPanel>

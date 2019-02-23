@@ -1,11 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { select, Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import { Order, TextSearchQuery } from 'src/app/common/search-engine/query';
-import { TextSearch } from '../../actions/search.actions';
+import { Subject } from 'rxjs';
 import { EntrySearchResult, Field } from '../../common/model';
-import { AppState } from '../../reducers';
-import { selectSearchError, selectSearchResult } from '../../selectors/search.selector';
+import { Order, TextSearchQuery } from '../../common/search-engine/query';
+import { SearchService } from '../../services/search.service';
 
 @Component({
   selector: 'mvw-home',
@@ -14,26 +11,63 @@ import { selectSearchError, selectSearchResult } from '../../selectors/search.se
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeComponent {
-  private readonly store: Store<AppState>;
+  private readonly searchService: SearchService;
 
-  readonly result$: Observable<EntrySearchResult | undefined>;
-  readonly error$: Observable<Error | undefined>;
+  private textSearchQuery: TextSearchQuery;
+  private searchResult: EntrySearchResult;
 
-  constructor(store: Store<AppState>) {
-    this.store = store;
-    this.error$ = store.pipe(select(selectSearchError));
-    this.result$ = store.pipe(select(selectSearchResult));
+  readonly result$: Subject<EntrySearchResult | undefined>;
+  readonly error$: Subject<Error | undefined>;
+
+  constructor(searchService: SearchService) {
+    this.searchService = searchService;
+
+    this.error$ = new Subject();
+    this.result$ = new Subject();
   }
 
-  searchStringChanged(searchString: string): void {
-    const textSearchQuery: TextSearchQuery = {
+  async searchStringChanged(searchString: string): Promise<void> {
+    this.textSearchQuery = {
       text: searchString,
       skip: 0,
       limit: 25,
-      sort: [{ field: Field.Date, order: Order.Descending }]
+      sort: [{ field: Field.Date, order: Order.Descending }],
+      cursor: undefined
     };
 
-    const stringSearch = new TextSearch(textSearchQuery);
-    this.store.dispatch(stringSearch);
+    try {
+      this.searchResult = await this.searchService.textSearch(this.textSearchQuery).toPromise();
+      this.result$.next(this.searchResult);
+      this.error$.next(undefined);
+    }
+    catch (error) {
+      this.result$.next(undefined);
+      this.error$.next(error);
+    }
+  }
+
+  async endReached(): Promise<void> {
+    const fetchNextTextSearchQuery: TextSearchQuery = {
+      ...this.textSearchQuery,
+      skip: undefined,
+      cursor: this.searchResult.cursor
+    };
+
+    try {
+      const result = await this.searchService.textSearch(fetchNextTextSearchQuery).toPromise();
+
+      this.searchResult = {
+        ...result,
+        items: [...this.searchResult.items, ...result.items],
+        cursor: result.cursor,
+      };
+
+      this.result$.next(this.searchResult);
+      this.error$.next(undefined);
+    }
+    catch (error) {
+      this.result$.next(undefined);
+      this.error$.next(error);
+    }
   }
 }
