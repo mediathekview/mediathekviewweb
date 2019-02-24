@@ -79,6 +79,7 @@ export class MediathekViewWebRestApi {
         response.body = createResultResponse(result);
       }
       catch (error) {
+        console.error(error);
         response.status = 500;
         response.body = createErrorResponse('server error', { name: (error as Error).name, message: (error as Error).message });
       }

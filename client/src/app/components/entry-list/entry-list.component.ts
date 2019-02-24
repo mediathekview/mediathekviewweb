@@ -1,9 +1,10 @@
-import { CdkScrollable } from '@angular/cdk/scrolling';
-import { AfterViewInit, ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { DataSource } from '@angular/cdk/table';
+import { ChangeDetectionStrategy, Component, Input, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MediaQueryService } from 'src/app/services/media-query.service';
 import { AggregatedEntry } from '../../common/model';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 const panelCollapsedHeightLarge = 48;
 const panelCollapsedHeightSmall = 96;
@@ -16,13 +17,11 @@ const panelExpandedHeightSmall = 128;
   styleUrls: ['./entry-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntryListComponent implements AfterViewInit {
+export class EntryListComponent implements OnChanges {
   private readonly mediaQueryService: MediaQueryService;
-  @ViewChild('scrollContainer', { read: CdkScrollable }) private readonly scrollable: CdkScrollable;
+  @ViewChild('scrollViewport') scrollViewport: CdkVirtualScrollViewport;
 
-  @Input() entries: AggregatedEntry[];
-
-  @Output() endReached: EventEmitter<void>;
+  @Input() dataSource: DataSource<AggregatedEntry | undefined>;
 
   get panelCollapsedHeight(): Observable<number> {
     return this.mediaQueryService.isXs.pipe(map((isXs) => (isXs ? panelCollapsedHeightSmall : panelCollapsedHeightLarge)));
@@ -38,21 +37,19 @@ export class EntryListComponent implements AfterViewInit {
 
   constructor(mediaQueryService: MediaQueryService) {
     this.mediaQueryService = mediaQueryService;
-
-    this.endReached = new EventEmitter();
   }
 
-  ngAfterViewInit(): void {
-    this.scrollable.elementScrolled().subscribe(() => {
-      const offset = this.scrollable.measureScrollOffset('bottom');
-
-      if (offset < panelCollapsedHeightLarge * 5) {
-        this.endReached.next();
-      }
-    });
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('dataSource' in changes) {
+      this.scrollViewport.scrollToIndex(0, 'auto');
+    }
   }
 
-  trackEntry(_index: number, entry: AggregatedEntry): string {
+  trackEntry(index: number, entry: AggregatedEntry | undefined): string | number {
+    if (entry == undefined) {
+      return index;
+    }
+
     return entry.id;
   }
 }

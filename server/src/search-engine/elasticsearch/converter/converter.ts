@@ -25,7 +25,7 @@ export class Converter {
     }
 
     const from = (query.skip != undefined) ? query.skip : undefined;
-    const searchAfter = (query.cursor != undefined) ? JSON.parse(query.cursor) : undefined;
+    const search_after = (query.cursor != undefined) ? JSON.parse(query.cursor) : undefined; // tslint:disable-line: variable-name
     const size = (query.limit != undefined) ? query.limit : DEFAULT_LIMIT;
 
     if (size > MAX_LIMIT) {
@@ -41,12 +41,11 @@ export class Converter {
       size,
       body: {
         query: queryBody,
-        sort: this.getSort(query),
-        searchAfter
+        search_after,
+        sort: this.getSort(query)
       }
     };
 
-    console.log(JSON.stringify(elasticQuery, undefined, 2));
     return elasticQuery;
   }
 

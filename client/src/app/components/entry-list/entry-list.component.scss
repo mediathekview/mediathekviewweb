@@ -2,8 +2,7 @@
 
 .accordion-container {
   width: 100%;
-  max-height: calc(100vh - 10rem);
-  overflow-y: auto;
+  height: 100%;
 }
 
 .mat-accordion .mat-expansion-panel {

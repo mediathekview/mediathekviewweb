@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MediaQueryService {
-  private readonly mediaQueryLists: Map<string, MediaQueryList>;
+  private readonly queryObservables: Map<string, Observable<boolean>>;
 
   constructor() {
-    this.mediaQueryLists = new Map();
+    this.queryObservables = new Map();
   }
 
   get isXs(): Observable<boolean> {
@@ -16,14 +17,20 @@ export class MediaQueryService {
   }
 
   query(query: string): Observable<boolean> {
-    if (!this.mediaQueryLists.has(query)) {
-      const mediaQueryList = window.matchMedia(query);
-      this.mediaQueryLists.set(query, mediaQueryList);
+    if (!this.queryObservables.has(query)) {
+      const observable = this.getQueryObservable(query);
+      const sharedObservable = observable.pipe(shareReplay(1));
+      this.queryObservables.set(query, sharedObservable);
     }
 
-    const mediaQueryList = this.mediaQueryLists.get(query) as MediaQueryList;
+    const observable = this.queryObservables.get(query) as Observable<boolean>;
+    return observable;
+  }
 
-    return new Observable((subscriber) => {
+  private getQueryObservable(query: string): Observable<boolean> {
+    const observable = new Observable<boolean>((subscriber) => {
+      const mediaQueryList = window.matchMedia(query);
+
       const listener = (event: MediaQueryListEvent) => subscriber.next(event.matches);
       const teardown = () => mediaQueryList.removeEventListener('change', listener);
 
@@ -32,5 +39,7 @@ export class MediaQueryService {
 
       return teardown;
     });
+
+    return observable;
   }
 }

@@ -4,14 +4,14 @@ import { TextQueryBuilder } from '../../search-engine/query/builder';
 import { Segment } from '../segment';
 import { SegmentConverter, SegmentConverterResultArray, SegmentConverterResultType } from '../segment-converter';
 
-const FIELDS = [Field.Topic, Field.Title];
+const fields = [Field.Topic, Field.Title];
 
 export class DefaultSegmentConverter implements SegmentConverter {
   tryConvert(segment: Segment): SegmentConverterResultArray | undefined {
     const builder = new TextQueryBuilder();
 
     const query = builder
-      .fields(...FIELDS)
+      .fields(...fields)
       .text(segment.text)
       .operator(Operator.And)
       .build();
@@ -19,7 +19,7 @@ export class DefaultSegmentConverter implements SegmentConverter {
     const type = segment.inverted ? SegmentConverterResultType.Exclude : SegmentConverterResultType.Include;
 
     const result: SegmentConverterResultArray = [{
-      fields: FIELDS,
+      fields,
       type,
       joinSameFieldsResults: !segment.isQuote,
       query

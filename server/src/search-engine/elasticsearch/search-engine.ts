@@ -93,7 +93,8 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
     const { hits: { hits, total }, took: milliseconds } = await this.client.search<T>(elasticsearchQuery);
     const items = hits.map((hit) => hit._source);
-    const cursor = JSON.stringify(hits[hits.length - 1].sort);
+
+    const cursor = hits.length > 0 ? JSON.stringify(hits[hits.length - 1].sort) : undefined;
 
     const searchResult: SearchResult<T> = {
       total,
