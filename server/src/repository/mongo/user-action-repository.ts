@@ -14,12 +14,12 @@ export class MongoUserActionRepository implements UserActionRepository {
     this.baseRepository = new MongoBaseRepository(collection);
   }
 
-  async save(action: UserActionWithPartialId): Promise<UserAction> {
-    return this.baseRepository.save(action);
+  async insert(action: UserActionWithPartialId): Promise<UserAction> {
+    return this.baseRepository.insert(action);
   }
 
-  async saveMany(actions: UserActionWithPartialId[]): Promise<UserAction[]> {
-    return this.baseRepository.saveMany(actions);
+  async insertMany(actions: UserActionWithPartialId[]): Promise<UserAction[]> {
+    return this.baseRepository.insertMany(actions);
   }
 
   async load(id: string): Promise<UserAction | undefined> {

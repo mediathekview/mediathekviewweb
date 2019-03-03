@@ -34,21 +34,25 @@ export function currentTimestamp(): number {
   return Date.now();
 }
 
-export function cloneOwnProperties(obj: any): any {
-  const type = typeof obj;
+export function clone<T>(object: T, deep: boolean): T {
+  const type = typeof object;
 
-  if (type == 'string' || type == 'number' || type == 'boolean' || type == 'undefined' || type == 'function' || obj == undefined || obj instanceof Date || obj instanceof RegExp) {
-    return obj;
+  if (type == 'string' || type == 'number' || type == 'boolean' || type == 'undefined' || type == 'function' || object == undefined || object instanceof Date || object instanceof RegExp) {
+    return object;
+  }
+
+  if (!deep) {
+    return { ...object };
   }
 
   const result: StringMap = {};
 
-  const properties = Object.getOwnPropertyNames(obj);
+  const properties = Object.getOwnPropertyNames(object);
   for (const property of properties) {
-    result[property] = cloneOwnProperties(obj[property]);
+    result[property] = clone((object as any)[property] as unknown, true);
   }
 
-  return result;
+  return result as T;
 }
 
 export function throttleFunction(func: () => void, interval: number): () => void;

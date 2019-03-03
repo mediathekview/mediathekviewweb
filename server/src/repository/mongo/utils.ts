@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { NumberMap } from '../../common/types';
 
-export type UpsertedIds = NumberMap<{ _id: ObjectId }>;
+export type IdsMap = NumberMap<{ _id: ObjectId }>;
 
 export function objectIdOrStringToString(id: string | ObjectId): string {
   if (typeof id == 'string') {

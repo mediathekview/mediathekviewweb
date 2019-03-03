@@ -4,7 +4,7 @@ import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
 import { timeout } from '../common/utils';
-import { Keys } from '../keys';
+import { keys } from '../keys';
 import { Job, Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
 import { Service, ServiceMetric } from '../service';
@@ -35,8 +35,8 @@ export class EntriesSaver extends ServiceBase implements Service {
   protected async run(): Promise<void> {
     const disposer = new AsyncDisposer();
 
-    const entriesToBeSavedQueue = this.queueProvider.get<Entry>(Keys.EntriesToBeSaved, 30000, 3);
-    const entriesToBeIndexedQueue = this.queueProvider.get<string>(Keys.EntriesToBeIndexed, 30000, 3);
+    const entriesToBeSavedQueue = this.queueProvider.get<Entry>(keys.EntriesToBeSaved, 30000, 3);
+    const entriesToBeIndexedQueue = this.queueProvider.get<string>(keys.EntriesToBeIndexed, 30000, 3);
 
     await this.initializeQueues(disposer, entriesToBeSavedQueue, entriesToBeIndexedQueue);
 

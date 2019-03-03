@@ -1,12 +1,9 @@
 import * as Mongo from 'mongodb';
 import { SyncEnumerable } from '../../common/enumerable';
-import { Entity } from '../../common/model';
-import { PartialProperty } from '../../common/types';
+import { Entity, EntityWithPartialId } from '../../common/model';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter, TypedMongoFilter } from './mongo-query';
-import { objectIdOrStringToString, UpsertedIds } from './utils';
-
-type TWithPartialId<T extends Entity> = PartialProperty<T, 'id'>;
+import { IdsMap, objectIdOrStringToString } from './utils';
 
 export class MongoBaseRepository<T extends Entity> {
   private readonly collection: Mongo.Collection<MongoDocument<T>>;
@@ -15,15 +12,38 @@ export class MongoBaseRepository<T extends Entity> {
     this.collection = collection;
   }
 
-  async save(entity: TWithPartialId<T>): Promise<T> {
-    const savedEntities = await this.saveMany([entity]);
+  async insert(entity: EntityWithPartialId<T>): Promise<T> {
+    const savedEntities = await this.insertMany([entity]);
     return SyncEnumerable.from(savedEntities).single();
   }
 
-  async saveMany(entities: TWithPartialId<T>[]): Promise<T[]> {
-    const operations = entities.map(toReplaceOneOperation);
+  async replace(entity: EntityWithPartialId<T>, upsert: boolean): Promise<T> {
+    const savedEntities = await this.replaceMany([entity], upsert);
+    return SyncEnumerable.from(savedEntities).single();
+  }
+
+  async insertMany(entities: EntityWithPartialId<T>[]): Promise<T[]> {
+    const operations = entities.map(toInsertOneOperation);
     const bulkWriteResult = await this.collection.bulkWrite(operations);
-    const upsertedIds = bulkWriteResult.upsertedIds as UpsertedIds;
+    const insertedIds = bulkWriteResult.insertedIds as IdsMap;
+    const savedEntities = entities.map((entity, index) => {
+      const entityCopy = { ...entity };
+
+      const hasInsertedId = insertedIds.hasOwnProperty(index);
+      if (hasInsertedId) {
+        entityCopy.id = objectIdOrStringToString(insertedIds[index]._id);
+      }
+
+      return entityCopy as T;
+    });
+
+    return savedEntities;
+  }
+
+  async replaceMany(entities: EntityWithPartialId<T>[], upsert: boolean): Promise<T[]> {
+    const operations = entities.map((entity) => toReplaceOneOperation(entity, upsert));
+    const bulkWriteResult = await this.collection.bulkWrite(operations);
+    const upsertedIds = bulkWriteResult.upsertedIds as IdsMap;
     const savedEntities = entities.map((entity, index) => {
       const entityCopy = { ...entity };
 
@@ -49,12 +69,12 @@ export class MongoBaseRepository<T extends Entity> {
     return entity;
   }
 
-  loadManyById(ids: string[]): AsyncIterable<T> {
+  async *loadManyById(ids: string[]): AsyncIterableIterator<T> {
     const filter: MongoFilter = {
       _id: { $in: ids }
     };
 
-    return this.loadManyByFilter(filter);
+    yield* this.loadManyByFilter(filter);
   }
 
   async *loadManyByFilter(filter: MongoFilter): AsyncIterableIterator<T> {
@@ -72,11 +92,18 @@ export class MongoBaseRepository<T extends Entity> {
     }
   }
 
-  async has(id: string): Promise<boolean> {
-    const cursor = this.collection.find({ _id: id });
-    const count = await cursor.count();
+  async countByFilter(filter: Mongo.FilterQuery<MongoDocument<T>>): Promise<number> {
+    return this.collection.countDocuments(filter);
+  }
 
+  async hasByFilter(filter: Mongo.FilterQuery<MongoDocument<T>>): Promise<boolean> {
+    const count = await this.countByFilter(filter);
     return count > 0;
+  }
+
+  async has(id: string): Promise<boolean> {
+    const filter = { _id: id };
+    return this.hasByFilter(filter);
   }
 
   async hasMany(ids: string[]): Promise<string[]> {
@@ -93,7 +120,19 @@ export class MongoBaseRepository<T extends Entity> {
   }
 }
 
-function toReplaceOneOperation<T extends Entity>(entity: TWithPartialId<T>): object {
+function toInsertOneOperation<T extends Entity>(entity: EntityWithPartialId<T>): object {
+  const document = toMongoDocumentWithPartialId(entity);
+
+  const operation = {
+    insertOne: {
+      document
+    }
+  };
+
+  return operation;
+}
+
+function toReplaceOneOperation<T extends Entity>(entity: EntityWithPartialId<T>, upsert: boolean): object {
   const filter: TypedMongoFilter<T> = {};
 
   if (entity.id != undefined) {
@@ -106,7 +145,7 @@ function toReplaceOneOperation<T extends Entity>(entity: TWithPartialId<T>): obj
     replaceOne: {
       filter,
       replacement,
-      upsert: true
+      upsert
     }
   };
 

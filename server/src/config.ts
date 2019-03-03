@@ -53,6 +53,6 @@ export const config: Config = {
   importer: {
     latestCheckInterval: 60 * 1,
     archiveCheckInterval: 60 * 1,
-    archiveRange: 0
+    archiveRange: 5
   }
 };

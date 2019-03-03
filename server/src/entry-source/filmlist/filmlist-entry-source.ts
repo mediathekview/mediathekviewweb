@@ -1,26 +1,25 @@
 import { Logger } from '../../common/logger';
 import { Entry } from '../../common/model';
 import { CancellationToken } from '../../common/utils/cancellation-token';
-import { DatastoreFactory, DataType } from '../../datastore';
-import { Keys } from '../../keys';
+import { keys } from '../../keys';
 import { QueueProvider } from '../../queue';
+import { FilmlistImportRepository } from '../../repository/filmlists-import-repository';
 import { EntrySource } from '../entry-source';
 import { Filmlist } from './filmlist';
 
 export class FilmlistEntrySource implements EntrySource {
-  private readonly datastoreFactory: DatastoreFactory;
+  private readonly filmlistImportRepository: FilmlistImportRepository;
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
 
-  constructor(datastoreFactory: DatastoreFactory, queueProvider: QueueProvider, logger: Logger) {
-    this.datastoreFactory = datastoreFactory;
+  constructor(filmlistImportRepository: FilmlistImportRepository, queueProvider: QueueProvider, logger: Logger) {
+    this.filmlistImportRepository = filmlistImportRepository;
     this.queueProvider = queueProvider;
     this.logger = logger;
   }
 
   async *getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
-    const importQueue = this.queueProvider.get<Filmlist>(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
-    const importedFilmlistDates = this.datastoreFactory.set<Date>(Keys.ImportedFilmlistDates, DataType.Date);
+    const importQueue = this.queueProvider.get<Filmlist>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
 
     await importQueue.initialize();
 
@@ -36,7 +35,7 @@ export class FilmlistEntrySource implements EntrySource {
           break;
         }
 
-        await importedFilmlistDates.add(filmlist.date);
+        await .add(filmlist.date);
         await importQueue.acknowledge(job);
       }
       catch (error) {

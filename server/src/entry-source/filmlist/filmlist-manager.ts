@@ -1,11 +1,13 @@
 import { AsyncEnumerable } from '../../common/enumerable';
 import { Logger } from '../../common/logger';
-import { AnyIterable, now } from '../../common/utils';
+import { AnyIterable, currentTimestamp, now } from '../../common/utils';
 import { config } from '../../config';
-import { DatastoreFactory, DataType, Key, Set } from '../../datastore';
+import { DatastoreFactory, DataType, Key } from '../../datastore';
 import { DistributedLoopProvider } from '../../distributed-loop';
-import { Keys } from '../../keys';
+import { keys } from '../../keys';
+import { FilmlistImportWithPartialId } from '../../model/filmlist-import';
 import { Queue, QueueProvider } from '../../queue';
+import { FilmlistImportRepository } from '../../repository/filmlists-import-repository';
 import { Service, ServiceMetric } from '../../service';
 import { ServiceBase } from '../../service-base';
 import { Filmlist } from './filmlist';
@@ -14,9 +16,11 @@ import { FilmlistRepository } from './repository';
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
+const MAX_AGE_SECONDS = MAX_AGE_DAYS * 24 * 60 * 60;
 
 export class FilmlistManager extends ServiceBase implements Service {
   private readonly datastoreFactory: DatastoreFactory;
+  private readonly filmlistImportRepository: FilmlistImportRepository;
   private readonly filmlistRepository: FilmlistRepository;
   private readonly distributedLoopProvider: DistributedLoopProvider;
   private readonly queueProvider: QueueProvider;
@@ -26,10 +30,11 @@ export class FilmlistManager extends ServiceBase implements Service {
     return [];
   }
 
-  constructor(datastoreFactory: DatastoreFactory, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider, logger: Logger) {
+  constructor(datastoreFactory: DatastoreFactory, filmlistImportRepository: FilmlistImportRepository, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider, logger: Logger) {
     super();
 
     this.datastoreFactory = datastoreFactory;
+    this.filmlistImportRepository = filmlistImportRepository;
     this.filmlistRepository = filmlistRepository;
     this.distributedLoopProvider = distributedLoopProvider;
     this.queueProvider = queueProvider;
@@ -37,16 +42,14 @@ export class FilmlistManager extends ServiceBase implements Service {
   }
 
   protected async run(): Promise<void> {
-    const lastLatestCheck = this.datastoreFactory.key<Date>(Keys.LastLatestCheck, DataType.Date);
-    const lastArchiveCheck = this.datastoreFactory.key<Date>(Keys.LastArchiveCheck, DataType.Date);
-    const enqueuedFilmlistDates = this.datastoreFactory.set<Date>(Keys.EnqueuedFilmlistDates, DataType.Date);
-    const importedFilmlistDates = this.datastoreFactory.set<Date>(Keys.ImportedFilmlistDates, DataType.Date);
-    const importQueue = this.queueProvider.get<Filmlist>(Keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
-    const distributedLoop = this.distributedLoopProvider.get(Keys.FilmlistManagerLoop, true);
+    const lastLatestCheck = this.datastoreFactory.key<Date>(keys.LastLatestCheck, DataType.Date);
+    const lastArchiveCheck = this.datastoreFactory.key<Date>(keys.LastArchiveCheck, DataType.Date);
+    const importQueue = this.queueProvider.get<Filmlist>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
+    const distributedLoop = this.distributedLoopProvider.get(keys.FilmlistManagerLoop, true);
 
     await importQueue.initialize();
 
-    const loopController = distributedLoop.run(async () => await this.loop(lastLatestCheck, lastArchiveCheck, importQueue, importedFilmlistDates, enqueuedFilmlistDates), 60000, 10000);
+    const loopController = distributedLoop.run(async () => await this.loop(lastLatestCheck, lastArchiveCheck, importQueue), 60000, 10000);
     await this.cancellationToken; // tslint:disable-line: await-promise
 
     await Promise.all([
@@ -55,9 +58,9 @@ export class FilmlistManager extends ServiceBase implements Service {
     ]);
   }
 
-  private async loop(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<Filmlist>, importedFilmlistDates: Set<Date>, enqueuedFilmlistDates: Set<Date>): Promise<void> {
-    await this.compareTime(lastLatestCheck, LATEST_CHECK_INTERVAL, async () => await this.checkLatest(importQueue, importedFilmlistDates, enqueuedFilmlistDates));
-    await this.compareTime(lastArchiveCheck, ARCHIVE_CHECK_INTERVAL, async () => await this.checkArchive(importQueue, importedFilmlistDates, enqueuedFilmlistDates));
+  private async loop(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<Filmlist>): Promise<void> {
+    await this.compareTime(lastLatestCheck, LATEST_CHECK_INTERVAL, async () => await this.checkLatest(importQueue));
+    await this.compareTime(lastArchiveCheck, ARCHIVE_CHECK_INTERVAL, async () => await this.checkArchive(importQueue));
   }
 
   private async compareTime(dateKey: Key<Date>, interval: number, func: () => Promise<void>): Promise<void> {
@@ -75,35 +78,41 @@ export class FilmlistManager extends ServiceBase implements Service {
     }
   }
 
-  private async checkLatest(importQueue: Queue<Filmlist>, importedFilmlistDates: Set<Date>, enqueuedFilmlistDates: Set<Date>): Promise<void> {
+  private async checkLatest(importQueue: Queue<Filmlist>): Promise<void> {
     this.logger.verbose('checking for new current-filmlist');
     const filmlist = await this.filmlistRepository.getLatest();
-    await this.enqueueMissingFilmlists([filmlist], undefined, importQueue, importedFilmlistDates, enqueuedFilmlistDates);
+    await this.enqueueMissingFilmlists([filmlist], 0, importQueue);
   }
 
-  private async checkArchive(importQueue: Queue<Filmlist>, importedFilmlistDates: Set<Date>, enqueuedFilmlistDates: Set<Date>): Promise<void> {
+  private async checkArchive(importQueue: Queue<Filmlist>): Promise<void> {
     this.logger.verbose('checking for new archive-filmlist');
 
-    const minimumDate = now();
-    minimumDate.setDate(minimumDate.getDate() - MAX_AGE_DAYS);
+    const minimumTimestamp = currentTimestamp() - MAX_AGE_SECONDS;
 
     const archive = this.filmlistRepository.getArchive();
-    await this.enqueueMissingFilmlists(archive, minimumDate, importQueue, importedFilmlistDates, enqueuedFilmlistDates);
+    await this.enqueueMissingFilmlists(archive, minimumTimestamp, importQueue);
   }
 
-  private async enqueueMissingFilmlists(filmlists: AnyIterable<Filmlist>, minimumDate: Date | undefined, importQueue: Queue<Filmlist>, importedFilmlistDates: Set<Date>, enqueuedFilmlistDates: Set<Date>): Promise<void> {
+  private async enqueueMissingFilmlists(filmlists: AnyIterable<Filmlist>, minimumTimestamp: number, importQueue: Queue<Filmlist>): Promise<void> {
     const filmlistsEnumerable = new AsyncEnumerable(filmlists);
 
     await filmlistsEnumerable
       .while(() => !this.cancellationToken.isSet)
-      .filter((filmlist) => (minimumDate == undefined) || filmlist.date >= minimumDate)
-      .filter(async (filmlist) => !(await importedFilmlistDates.has(filmlist.date)))
-      .filter(async (filmlist) => !(await enqueuedFilmlistDates.has(filmlist.date)))
-      .parallelForEach(3, async (filmlist) => await this.enqueueFilmlist(filmlist, importQueue, enqueuedFilmlistDates));
+      .filter((filmlist) => filmlist.timestamp >= minimumTimestamp)
+      .filter(async (filmlist) => !(await this.filmlistImportRepository.has(filmlist.id)))
+      .parallelForEach(3, async (filmlist) => await this.enqueueFilmlist(filmlist, importQueue));
   }
 
-  private async enqueueFilmlist(filmlist: Filmlist, importQueue: Queue<Filmlist>, enqueuedFilmlistDates: Set<Date>): Promise<void> {
+  private async enqueueFilmlist(filmlist: Filmlist, importQueue: Queue<Filmlist>): Promise<void> {
     await importQueue.enqueue(filmlist);
-    await enqueuedFilmlistDates.add(filmlist.date);
+
+    const filmlistImport: FilmlistImportWithPartialId = {
+      filmlistId: filmlist.id,
+      enqueuedTimestamp: currentTimestamp(),
+      processedTimestamp: null,
+      numberOfEntries: null
+    };
+
+    await this.filmlistImportRepository.insert(filmlistImport);
   }
 }

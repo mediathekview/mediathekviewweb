@@ -33,7 +33,7 @@ export function toMongoDocument<T extends Entity>(entity: T): MongoDocument<T> {
   return document;
 }
 
-export function toMongoDocumentWithPartialId<T extends EntityWithPartialId>(entity: T): MongoDocumentWitPartialId<T> {
+export function toMongoDocumentWithPartialId<T extends EntityWithPartialId<Entity>>(entity: T): MongoDocumentWitPartialId<T> {
   const { id, ...entityRest } = entity;
 
   const document = {

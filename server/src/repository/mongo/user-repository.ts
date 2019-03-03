@@ -13,12 +13,12 @@ export class MongoUserRepository implements UserRepository {
     this.baseRepository = new MongoBaseRepository(collection);
   }
 
-  async save(user: UserWithPartialId): Promise<User> {
-    return this.baseRepository.save(user);
+  async insert(user: UserWithPartialId): Promise<User> {
+    return this.baseRepository.insert(user);
   }
 
-  async saveMany(users: UserWithPartialId[]): Promise<User[]> {
-    return this.baseRepository.saveMany(users);
+  async insertMany(users: UserWithPartialId[]): Promise<User[]> {
+    return this.baseRepository.insertMany(users);
   }
 
   async load(id: string): Promise<User | undefined> {

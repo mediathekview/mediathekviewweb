@@ -28,7 +28,9 @@ import { QueueProvider } from './queue';
 import { RedisQueueProvider } from './queue/redis';
 import { RedisProvider } from './redis/provider';
 import { AggregatedEntryRepository, EntryRepository } from './repository';
+import { FilmlistImportRepository } from './repository/filmlists-import-repository';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
+import { MongoFilmlistImportRepository } from './repository/mongo/filmlist-import-repository';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
@@ -305,6 +307,13 @@ export class InstanceProvider {
     });
   }
 
+  static filmlistImportRepository(): FilmlistImportRepository {
+    return this.singleton(MongoFilmlistImportRepository, () => {
+      const collection = this.entriesCollection();
+      return new MongoFilmlistImportRepository(collection);
+    });
+  }
+
   static aggregatedEntryRepository(): AggregatedEntryRepository {
     return this.singleton(NonWorkingAggregatedEntryRepository, () => {
       const entryRepository = this.entryRepository();
@@ -360,12 +369,13 @@ export class InstanceProvider {
   static filmlistManager(): FilmlistManager {
     return this.singleton(FilmlistManager, () => {
       const datastoreFactory = this.datastoreFactory();
+      const filmlistImportRepository = this.filmlistImportRepository();
       const filmlistRepository = this.filmlistRepository();
       const distributedLoopProvider = this.distributedLoopProvider();
       const queueProvider = this.queueProvider();
       const logger = this.logger.prefix(`${FILMLIST_MANAGER_LOG} `);
 
-      return new FilmlistManager(datastoreFactory, filmlistRepository, distributedLoopProvider, queueProvider, logger);
+      return new FilmlistManager(datastoreFactory, filmlistImportRepository, filmlistRepository, distributedLoopProvider, queueProvider, logger);
     });
   }
 }

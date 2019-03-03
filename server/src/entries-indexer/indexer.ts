@@ -5,7 +5,7 @@ import { Logger } from '../common/logger';
 import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
 import { timeout } from '../common/utils';
-import { Keys } from '../keys';
+import { keys } from '../keys';
 import { Job, Queue, QueueProvider } from '../queue';
 import { AggregatedEntryRepository } from '../repository';
 import { Service, ServiceMetric } from '../service';
@@ -36,7 +36,7 @@ export class EntriesIndexer extends ServiceBase implements Service {
 
   protected async run(): Promise<void> {
     const disposer = new AsyncDisposer();
-    const entriesToBeIndexedQueue = this.queueProvider.get<string>(Keys.EntriesToBeIndexed, 15000, 3);
+    const entriesToBeIndexedQueue = this.queueProvider.get<string>(keys.EntriesToBeIndexed, 15000, 3);
 
     await this.initializeQueues(disposer, entriesToBeIndexedQueue);
 

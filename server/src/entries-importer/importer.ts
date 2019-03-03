@@ -5,7 +5,7 @@ import { Logger } from '../common/logger';
 import { Entry } from '../common/model';
 import { cancelableTimeout } from '../common/utils';
 import { EntrySource } from '../entry-source';
-import { Keys } from '../keys';
+import { keys } from '../keys';
 import { Queue, QueueProvider } from '../queue';
 import { Service, ServiceMetric } from '../service';
 import { ServiceBase } from '../service-base';
@@ -35,7 +35,7 @@ export class EntriesImporter extends ServiceBase implements Service {
     }
 
     const disposer = new AsyncDisposer();
-    const entriesToBeSavedQueue = this.queueProvider.get<Entry>(Keys.EntriesToBeSaved, 30000, 3);
+    const entriesToBeSavedQueue = this.queueProvider.get<Entry>(keys.EntriesToBeSaved, 30000, 3);
 
     await this.initializeQueues(disposer, entriesToBeSavedQueue);
 

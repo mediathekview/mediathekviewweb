@@ -102,8 +102,8 @@ async function init(): Promise<void> {
     return;
   }
 
-  logger.info(`listen on port ${config.api.port}`)
-  server.listen(config.api.port);
+  logger.info(`listen on port ${config.api.port}`);
+  // server.listen(config.api.port);
 
   if (!shutdownToken.isSet) {
     logger.info('starting services');
