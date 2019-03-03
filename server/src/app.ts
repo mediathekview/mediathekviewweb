@@ -1,11 +1,8 @@
 import * as Http from 'http';
 import * as Net from 'net';
-import { MediathekViewWebRestApi } from './api/rest-api';
 import { Logger } from './common/logger';
-import { Serializer } from './common/serializer';
 import { AggregationMode, cancelableTimeout, formatDuration, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
-import { Filmlist } from './entry-source/filmlist/filmlist';
 import { InstanceProvider } from './instance-provider';
 import { initializeSignals, requestShutdown, shutdownToken } from './process-shutdown';
 import { Service } from './service';
@@ -18,7 +15,6 @@ type MicroService = {
 const logger = InstanceProvider.coreLogger();
 
 initializeSignals();
-Serializer.registerPrototype(Filmlist);
 
 // tslint:disable-next-line: no-floating-promises
 (async () => {

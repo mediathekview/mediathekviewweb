@@ -14,7 +14,7 @@ export type Entry = Entity & {
   media: Media[];
 
   source: {
-    identifier: string,
+    name: string,
     data?: any
   }
 };

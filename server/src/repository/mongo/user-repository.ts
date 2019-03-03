@@ -21,7 +21,7 @@ export class MongoUserRepository implements UserRepository {
     return this.baseRepository.insertMany(users);
   }
 
-  async load(id: string): Promise<User | undefined> {
+  async load(id: string): Promise<User> {
     return this.baseRepository.load(id);
   }
 

@@ -149,3 +149,19 @@ export function compareByValue<T>(a: T, b: T): number {
 export function compareByValueDescending<T>(a: T, b: T): number {
   return (a > b) ? -1 : ((b > a) ? 1 : 0);
 }
+
+export function matchAll(regex: RegExp, text: string): RegExpExecArray[] {
+  const matches: RegExpExecArray[] = [];
+
+  let match: RegExpExecArray | null;
+  do {
+    match = regex.exec(text);
+
+    if (match != undefined) {
+      matches.push(match);
+    }
+  }
+  while (match != undefined);
+
+  return matches;
+}

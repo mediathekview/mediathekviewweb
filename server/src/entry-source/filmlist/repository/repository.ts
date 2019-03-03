@@ -1,6 +1,6 @@
-import { Filmlist } from '../filmlist';
+import { Filmlist } from '../../../model/filmlist';
 
 export interface FilmlistRepository {
-    getLatest(): Promise<Filmlist>;
-    getArchive(): AsyncIterable<Filmlist>;
+  getLatest(): Promise<Filmlist>;
+  getArchive(): AsyncIterable<Filmlist>;
 }

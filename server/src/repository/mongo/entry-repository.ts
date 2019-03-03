@@ -24,7 +24,7 @@ export class MongoEntryRepository implements EntryRepository {
     await this.collection.bulkWrite(operations, { ordered: false });
   }
 
-  async load(id: string): Promise<Entry | undefined> {
+  async load(id: string): Promise<Entry> {
     return this.baseRepository.load(id);
   }
 

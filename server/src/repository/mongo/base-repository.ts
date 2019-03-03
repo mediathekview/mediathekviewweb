@@ -58,14 +58,18 @@ export class MongoBaseRepository<T extends Entity> {
     return savedEntities;
   }
 
-  async load(id: string): Promise<T | undefined> {
+  async load(id: string): Promise<T> {
     const filter = {
       _id: id
     };
 
     const document = await this.collection.findOne(filter);
-    const entity = (document == undefined) ? undefined : toEntity(document);
 
+    if (document == undefined) {
+      throw new Error('document not found');
+    }
+
+    const entity = toEntity(document);
     return entity;
   }
 

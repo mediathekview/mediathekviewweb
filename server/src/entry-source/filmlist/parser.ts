@@ -150,7 +150,7 @@ export class FilmlistParser implements AsyncIterable<Entry[]> {
       media: [],
 
       source: {
-        identifier: 'filmlist',
+        name: 'filmlist',
         data: metadata
       }
     }

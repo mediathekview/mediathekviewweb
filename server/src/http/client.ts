@@ -1,13 +1,14 @@
 import * as Needle from 'needle';
-import { HttpResponse } from './response';
 import { Readable } from 'stream';
+import { HttpResponse } from './response';
 
 export class HttpClient {
-  static get(url: string): Promise<HttpResponse<Buffer>> {
+  static async get(url: string): Promise<HttpResponse<Buffer>> {
     return new Promise<HttpResponse<Buffer>>((resolve, reject) => {
       Needle.get(url, (error, response) => {
-        if (error) {
-          return reject(error);
+        if (error != undefined) {
+          reject(error);
+          return;
         }
 
         const result: HttpResponse<Buffer> = {
@@ -26,7 +27,7 @@ export class HttpClient {
     const stringResponse: HttpResponse<string> = {
       ...rawResponse,
       body: rawResponse.body.toString()
-    }
+    };
 
     return stringResponse;
   }

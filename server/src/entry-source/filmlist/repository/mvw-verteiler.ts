@@ -1,7 +1,8 @@
 import { mapAsync, singleAsync } from '../../../common/utils';
 import { File, Listing } from '../../../listing/';
 import { NginxListing } from '../../../listing/nginx';
-import { Filmlist } from '../filmlist';
+import { Filmlist, FilmlistResource } from '../../../model/filmlist';
+import { FilmlistParseResult, parseFilmlistResource } from '../filmlist-parser';
 import { FilmlistRepository } from './repository';
 
 const FILENAME_DATE_REGEX = /^(\d+)-(\d+)-(\d+)-filme\.xz$/;
@@ -18,7 +19,7 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
     const files = directory.getFiles();
 
     const latestFile = await singleAsync(files, (file) => file.name == 'Filmliste-akt.xz');
-    const filmlist = this.fileToFilmlist(latestFile, false);
+    const filmlist = this.latestFileToFilmlist(latestFile);
 
     return filmlist;
   }
@@ -28,21 +29,46 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
     const directories = directory.getDirectories();
 
     const archiveDirectory = await singleAsync(directories, (directory) => directory.name == 'archiv');
-
     const archiveFiles = archiveDirectory.getFiles(true);
-    const filmlists = mapAsync(archiveFiles, (file) => this.fileToFilmlist(file, true));
 
+    const filmlists = mapAsync(archiveFiles, async (file) => this.archiveFileToFilmlist(file));
     yield* filmlists;
   }
 
-  private fileToFilmlist(file: File, parseFilenameForDate: boolean): Filmlist {
-    let date: Date = file.date;
+  private async latestFileToFilmlist(file: File): Promise<Filmlist> {
+    const date = file.date;
+    const timestamp = Math.floor(date.getTime() / 1000);
 
-    if (parseFilenameForDate) {
-      date = this.parseFilenameDate(file.name);
+    const filmlistResource: FilmlistResource = {
+      url: file.resource.uri,
+      timestamp,
+      compressed: true
+    };
+
+    const iterator = parseFilmlistResource(filmlistResource, true);
+    const { value: { filmlist } } = await iterator.next() as IteratorResult<FilmlistParseResult>;
+
+    if (iterator.return != undefined) {
+      await iterator.return();
     }
 
-    const filmlist = new Filmlist(file, true, date);
+    return filmlist;
+  }
+
+  private archiveFileToFilmlist(file: File): Filmlist {
+    const date = this.parseFilenameDate(file.name);
+    const timestamp = Math.floor(date.getTime() / 1000);
+
+    const filmlist: Filmlist = {
+      id: `archive-${timestamp}`,
+      timestamp,
+      resource: {
+        url: file.resource.uri,
+        timestamp,
+        compressed: true
+      }
+    };
+
     return filmlist;
   }
 

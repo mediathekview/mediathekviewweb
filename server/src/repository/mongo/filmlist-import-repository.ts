@@ -18,7 +18,19 @@ export class MongoFilmlistImportRepository implements FilmlistImportRepository {
     return this.baseRepository.insert(filmlistImport);
   }
 
-  async has(filmlistId: string): Promise<boolean> {
+  async setProcessedTimestamp(id: string, processedTimestamp: number): Promise<void> {
+    const result = await this.collection.updateOne({ _id: id }, { $set: { processedTimestamp } });
+
+    if (result.matchedCount == 0) {
+      throw new Error('document not found');
+    }
+  }
+
+  async load(id: string): Promise<FilmlistImport> {
+    return this.baseRepository.load(id);
+  }
+
+  async hasFilmlist(filmlistId: string): Promise<boolean> {
     return this.baseRepository.hasByFilter({ filmlistId });
   }
 }

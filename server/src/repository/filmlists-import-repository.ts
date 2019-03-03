@@ -2,5 +2,10 @@ import { FilmlistImport, FilmlistImportWithPartialId } from '../model/filmlist-i
 
 export interface FilmlistImportRepository {
   insert(filmlistImport: FilmlistImportWithPartialId): Promise<FilmlistImport>;
-  has(id: string): Promise<boolean>;
+
+  setProcessedTimestamp(id: string, processedTime: number): Promise<void>;
+
+  load(id: string): Promise<FilmlistImport>;
+
+  hasFilmlist(filmlistId: string): Promise<boolean>;
 }

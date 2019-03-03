@@ -22,7 +22,7 @@ export class MongoUserActionRepository implements UserActionRepository {
     return this.baseRepository.insertMany(actions);
   }
 
-  async load(id: string): Promise<UserAction | undefined> {
+  async load(id: string): Promise<UserAction> {
     return this.baseRepository.load(id);
   }
 

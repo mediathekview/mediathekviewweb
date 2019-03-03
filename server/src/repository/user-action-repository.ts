@@ -4,7 +4,7 @@ export interface UserActionRepository {
   insert(action: UserActionWithPartialId): Promise<UserAction>;
   insertMany(actions: UserActionWithPartialId[]): Promise<UserAction[]>;
 
-  load(id: string): Promise<UserAction | undefined>;
+  load(id: string): Promise<UserAction>;
   loadManyById(ids: string[]): AsyncIterable<UserAction>;
   loadManyByFilter(filter: Partial<UserActionFilter>): AsyncIterable<UserAction>;
 

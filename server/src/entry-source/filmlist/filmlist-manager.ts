@@ -5,12 +5,12 @@ import { config } from '../../config';
 import { DatastoreFactory, DataType, Key } from '../../datastore';
 import { DistributedLoopProvider } from '../../distributed-loop';
 import { keys } from '../../keys';
-import { FilmlistImportWithPartialId } from '../../model/filmlist-import';
+import { Filmlist } from '../../model/filmlist';
+import { FilmlistImportQueueItem, FilmlistImportWithPartialId } from '../../model/filmlist-import';
 import { Queue, QueueProvider } from '../../queue';
 import { FilmlistImportRepository } from '../../repository/filmlists-import-repository';
 import { Service, ServiceMetric } from '../../service';
 import { ServiceBase } from '../../service-base';
-import { Filmlist } from './filmlist';
 import { FilmlistRepository } from './repository';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
@@ -44,7 +44,7 @@ export class FilmlistManager extends ServiceBase implements Service {
   protected async run(): Promise<void> {
     const lastLatestCheck = this.datastoreFactory.key<Date>(keys.LastLatestCheck, DataType.Date);
     const lastArchiveCheck = this.datastoreFactory.key<Date>(keys.LastArchiveCheck, DataType.Date);
-    const importQueue = this.queueProvider.get<Filmlist>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
+    const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
     const distributedLoop = this.distributedLoopProvider.get(keys.FilmlistManagerLoop, true);
 
     await importQueue.initialize();
@@ -58,7 +58,7 @@ export class FilmlistManager extends ServiceBase implements Service {
     ]);
   }
 
-  private async loop(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<Filmlist>): Promise<void> {
+  private async loop(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
     await this.compareTime(lastLatestCheck, LATEST_CHECK_INTERVAL, async () => await this.checkLatest(importQueue));
     await this.compareTime(lastArchiveCheck, ARCHIVE_CHECK_INTERVAL, async () => await this.checkArchive(importQueue));
   }
@@ -78,13 +78,13 @@ export class FilmlistManager extends ServiceBase implements Service {
     }
   }
 
-  private async checkLatest(importQueue: Queue<Filmlist>): Promise<void> {
+  private async checkLatest(importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
     this.logger.verbose('checking for new current-filmlist');
     const filmlist = await this.filmlistRepository.getLatest();
     await this.enqueueMissingFilmlists([filmlist], 0, importQueue);
   }
 
-  private async checkArchive(importQueue: Queue<Filmlist>): Promise<void> {
+  private async checkArchive(importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
     this.logger.verbose('checking for new archive-filmlist');
 
     const minimumTimestamp = currentTimestamp() - MAX_AGE_SECONDS;
@@ -93,26 +93,29 @@ export class FilmlistManager extends ServiceBase implements Service {
     await this.enqueueMissingFilmlists(archive, minimumTimestamp, importQueue);
   }
 
-  private async enqueueMissingFilmlists(filmlists: AnyIterable<Filmlist>, minimumTimestamp: number, importQueue: Queue<Filmlist>): Promise<void> {
+  private async enqueueMissingFilmlists(filmlists: AnyIterable<Filmlist>, minimumTimestamp: number, importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
     const filmlistsEnumerable = new AsyncEnumerable(filmlists);
 
     await filmlistsEnumerable
       .while(() => !this.cancellationToken.isSet)
       .filter((filmlist) => filmlist.timestamp >= minimumTimestamp)
-      .filter(async (filmlist) => !(await this.filmlistImportRepository.has(filmlist.id)))
-      .parallelForEach(3, async (filmlist) => await this.enqueueFilmlist(filmlist, importQueue));
+      .filter(async (filmlist) => !(await this.filmlistImportRepository.hasFilmlist(filmlist.id)))
+      .forEach(async (filmlist) => await this.enqueueFilmlist(filmlist, importQueue));
   }
 
-  private async enqueueFilmlist(filmlist: Filmlist, importQueue: Queue<Filmlist>): Promise<void> {
-    await importQueue.enqueue(filmlist);
-
+  private async enqueueFilmlist(filmlist: Filmlist, importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
     const filmlistImport: FilmlistImportWithPartialId = {
-      filmlistId: filmlist.id,
+      filmlist,
       enqueuedTimestamp: currentTimestamp(),
       processedTimestamp: null,
       numberOfEntries: null
     };
 
-    await this.filmlistImportRepository.insert(filmlistImport);
+    const insertedFilmlistImport = await this.filmlistImportRepository.insert(filmlistImport);
+    const filmlistImportQueueItem: FilmlistImportQueueItem = {
+      filmlistImportId: insertedFilmlistImport.id
+    };
+
+    await importQueue.enqueue(filmlistImportQueueItem);
   }
 }
