@@ -57,12 +57,12 @@ export const elasticsearchMapping = {
     timestamp: {
       type: 'date',
       index: true,
-      format: 'epoch_second',
+      format: 'epoch_millis',
     },
     date: {
       type: 'date',
       index: true,
-      format: 'epoch_second',
+      format: 'epoch_millis',
     },
     time: {
       type: 'integer',
@@ -79,12 +79,12 @@ export const elasticsearchMapping = {
     firstSeen: {
       type: 'date',
       index: true,
-      format: 'epoch_second',
+      format: 'epoch_millis',
     },
     lastSeen: {
       type: 'date',
       index: true,
-      format: 'epoch_second',
+      format: 'epoch_millis',
     },
     media: {
       type: 'nested',

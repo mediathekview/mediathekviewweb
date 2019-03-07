@@ -34,7 +34,7 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
   private toAggregated(entry: Entry): AggregatedEntry {
     const aggregatedEntry = {
       ...entry,
-      date: this.getDate(entry.timestamp),
+      date: this.getDateTimestamp(entry.timestamp),
       time: this.getTime(entry.timestamp),
 
       metadata: {
@@ -50,7 +50,7 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
     return aggregatedEntry;
   }
 
-  private getDate(timestamp: number): number {
+  private getDateTimestamp(timestamp: number): number {
     const date = new Date(timestamp * 1000);
     const dateWithoutTime = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 

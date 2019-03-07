@@ -8,7 +8,7 @@ import { AsyncDisposer } from './common/disposable';
 import { LockProvider } from './common/lock';
 import { Logger, LogLevel } from './common/logger';
 import { ConsoleLogger } from './common/logger/console';
-import { AggregatedEntry } from './common/model';
+import { AggregatedEntry, Entry } from './common/model';
 import { SearchEngine } from './common/search-engine';
 import { StringMap } from './common/types';
 import { timeout } from './common/utils';
@@ -37,7 +37,8 @@ import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { getElasticsearchLogAdapter } from './utils/elasticsearch-log-adapter-factory';
 import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
-
+import { FilmlistImport } from './model/filmlist-import';
+import { MongoDocument } from './repository/mongo/mongo-document';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -45,6 +46,7 @@ const MONGO_CONNECTION_STRING = 'mongodb://localhost:27017';
 const MONGO_CLIENT_OPTIONS: Mongo.MongoClientOptions = { appname: 'MediathekViewWeb', useNewUrlParser: true, autoReconnect: true, reconnectTries: Number.POSITIVE_INFINITY };
 const MONGO_DATABASE_NAME = 'mediathekviewweb';
 const MONGO_ENTRIES_COLLECTION_NAME = 'entries';
+const FILMLIST_IMPORTS_COLLECTION_NAME = 'filmlistImports'
 
 const ELASTICSEARCH_INDEX_NAME = 'mediathekviewweb';
 const ELASTICSEARCH_TYPE_NAME = 'entry';
@@ -242,10 +244,18 @@ export class InstanceProvider {
     });
   }
 
-  static entriesCollection(): Mongo.Collection {
-    return this.singleton('entriesCollection', () => {
+  static entriesCollection(): Mongo.Collection<MongoDocument<Entry>> {
+    return this.collection(MONGO_ENTRIES_COLLECTION_NAME);
+  }
+
+  static filmlistImportCollection(): Mongo.Collection<MongoDocument<FilmlistImport>> {
+    return this.collection(FILMLIST_IMPORTS_COLLECTION_NAME);
+  }
+
+  static collection(name: string): Mongo.Collection {
+    return this.singleton(`mongo-collection-${name}`, () => {
       const database = this.database();
-      return database.collection(MONGO_ENTRIES_COLLECTION_NAME);
+      return database.collection(name);
     });
   }
 
@@ -309,7 +319,7 @@ export class InstanceProvider {
 
   static filmlistImportRepository(): FilmlistImportRepository {
     return this.singleton(MongoFilmlistImportRepository, () => {
-      const collection = this.entriesCollection();
+      const collection = this.filmlistImportCollection();
       return new MongoFilmlistImportRepository(collection);
     });
   }
@@ -358,11 +368,11 @@ export class InstanceProvider {
 
   static filmlistEntrySource(): FilmlistEntrySource {
     return this.singleton(FilmlistEntrySource, () => {
-      const datastoreFactory = this.datastoreFactory();
+      const filmlistImportRepository = this.filmlistImportRepository();
       const queueProvider = this.queueProvider();
       const logger = this.logger.prefix(`${FILMLIST_ENTRY_SOURCE} `);
 
-      return new FilmlistEntrySource(datastoreFactory, queueProvider, logger);
+      return new FilmlistEntrySource(filmlistImportRepository, queueProvider, logger);
     });
   }
 

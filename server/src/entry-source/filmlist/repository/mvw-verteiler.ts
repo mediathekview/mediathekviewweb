@@ -2,7 +2,7 @@ import { mapAsync, singleAsync } from '../../../common/utils';
 import { File, Listing } from '../../../listing/';
 import { NginxListing } from '../../../listing/nginx';
 import { Filmlist, FilmlistResource } from '../../../model/filmlist';
-import { FilmlistParseResult, parseFilmlistResource } from '../filmlist-parser';
+import { parseFilmlistResourceFilmlist } from '../filmlist-parser';
 import { FilmlistRepository } from './repository';
 
 const FILENAME_DATE_REGEX = /^(\d+)-(\d+)-(\d+)-filme\.xz$/;
@@ -45,19 +45,13 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
       compressed: true
     };
 
-    const iterator = parseFilmlistResource(filmlistResource, true);
-    const { value: { filmlist } } = await iterator.next() as IteratorResult<FilmlistParseResult>;
-
-    if (iterator.return != undefined) {
-      await iterator.return();
-    }
-
+    const filmlist = await parseFilmlistResourceFilmlist(filmlistResource);
     return filmlist;
   }
 
   private archiveFileToFilmlist(file: File): Filmlist {
     const date = this.parseFilenameDate(file.name);
-    const timestamp = Math.floor(date.getTime() / 1000);
+    const timestamp = date.getTime();
 
     const filmlist: Filmlist = {
       id: `archive-${timestamp}`,

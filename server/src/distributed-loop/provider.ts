@@ -1,6 +1,6 @@
 import { LockProvider } from '../common/lock';
-import { DistributedLoop } from './distributed-loop';
 import { Logger } from '../common/logger';
+import { DistributedLoop } from './distributed-loop';
 
 export class DistributedLoopProvider {
   private readonly lockProvider: LockProvider;
@@ -11,7 +11,7 @@ export class DistributedLoopProvider {
     this.logger = logger;
   }
 
-  get(key: string, stopOnError: boolean = true): DistributedLoop {
-    return new DistributedLoop(key, this.lockProvider, this.logger, stopOnError);
+  get(key: string): DistributedLoop {
+    return new DistributedLoop(key, this.lockProvider, this.logger);
   }
 }

@@ -16,7 +16,7 @@ import { FilmlistRepository } from './repository';
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
-const MAX_AGE_SECONDS = MAX_AGE_DAYS * 24 * 60 * 60;
+const MAX_AGE_MILLISECONDS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
 export class FilmlistManager extends ServiceBase implements Service {
   private readonly datastoreFactory: DatastoreFactory;
@@ -45,11 +45,11 @@ export class FilmlistManager extends ServiceBase implements Service {
     const lastLatestCheck = this.datastoreFactory.key<Date>(keys.LastLatestCheck, DataType.Date);
     const lastArchiveCheck = this.datastoreFactory.key<Date>(keys.LastArchiveCheck, DataType.Date);
     const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
-    const distributedLoop = this.distributedLoopProvider.get(keys.FilmlistManagerLoop, true);
+    const distributedLoop = this.distributedLoopProvider.get(keys.FilmlistManagerLoop);
 
     await importQueue.initialize();
 
-    const loopController = distributedLoop.run(async () => await this.loop(lastLatestCheck, lastArchiveCheck, importQueue), 60000, 10000);
+    const loopController = distributedLoop.run(async () => this.check(lastLatestCheck, lastArchiveCheck, importQueue), 60000, 10000);
     await this.cancellationToken; // tslint:disable-line: await-promise
 
     await Promise.all([
@@ -58,7 +58,7 @@ export class FilmlistManager extends ServiceBase implements Service {
     ]);
   }
 
-  private async loop(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
+  private async check(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
     await this.compareTime(lastLatestCheck, LATEST_CHECK_INTERVAL, async () => await this.checkLatest(importQueue));
     await this.compareTime(lastArchiveCheck, ARCHIVE_CHECK_INTERVAL, async () => await this.checkArchive(importQueue));
   }
@@ -87,7 +87,7 @@ export class FilmlistManager extends ServiceBase implements Service {
   private async checkArchive(importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
     this.logger.verbose('checking for new archive-filmlist');
 
-    const minimumTimestamp = currentTimestamp() - MAX_AGE_SECONDS;
+    const minimumTimestamp = currentTimestamp() - MAX_AGE_MILLISECONDS;
 
     const archive = this.filmlistRepository.getArchive();
     await this.enqueueMissingFilmlists(archive, minimumTimestamp, importQueue);

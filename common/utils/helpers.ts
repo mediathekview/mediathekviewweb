@@ -30,6 +30,10 @@ export function now(): Date {
   return new Date();
 }
 
+export function currentTimestampSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
 export function currentTimestamp(): number {
   return Date.now();
 }

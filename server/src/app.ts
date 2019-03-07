@@ -1,5 +1,6 @@
 import * as Http from 'http';
 import * as Net from 'net';
+
 import { Logger } from './common/logger';
 import { AggregationMode, cancelableTimeout, formatDuration, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
@@ -128,7 +129,7 @@ async function init(): Promise<void> {
 async function closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeout: number): Promise<void> {
   const timer = new Timer(true);
 
-  const closePromise = new Promise<void>((resolve, _reject) => server.close(resolve));
+  const closePromise = new Promise<void>((resolve, _reject) => server.close(() => resolve(undefined)));
 
   while (true) {
     const connections = await getConnections(server);

@@ -42,7 +42,7 @@ type EntryAction = UserAction & {
 };
 
 type PlayPause = EntryAction & {
-  seconds: number
+  milliseconds: number
 };
 
 export type Visit = UserAction & {

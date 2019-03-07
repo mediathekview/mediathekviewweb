@@ -4,6 +4,7 @@ import { FilmlistImport } from '../../model/filmlist-import';
 import { FilmlistImportRepository } from '../filmlists-import-repository';
 import { MongoBaseRepository } from './base-repository';
 import { MongoDocument } from './mongo-document';
+import { stringToObjectIdOrString } from './utils';
 
 export class MongoFilmlistImportRepository implements FilmlistImportRepository {
   private readonly collection: Mongo.Collection<MongoDocument<FilmlistImport>>;
@@ -19,7 +20,7 @@ export class MongoFilmlistImportRepository implements FilmlistImportRepository {
   }
 
   async setProcessedTimestamp(id: string, processedTimestamp: number): Promise<void> {
-    const result = await this.collection.updateOne({ _id: id }, { $set: { processedTimestamp } });
+    const result = await this.collection.updateOne({ _id: stringToObjectIdOrString(id) }, { $set: { processedTimestamp } });
 
     if (result.matchedCount == 0) {
       throw new Error('document not found');

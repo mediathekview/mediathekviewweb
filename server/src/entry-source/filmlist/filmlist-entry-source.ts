@@ -38,9 +38,9 @@ export class FilmlistEntrySource implements EntrySource {
           break;
         }
 
-        filmlistImport.processedTimestamp = currentTimestamp();
+        const now = currentTimestamp();
 
-        await this.filmlistImportRepository.update(filmlistImport);
+        await this.filmlistImportRepository.setProcessedTimestamp(filmlistImport.id, now);
         await importQueue.acknowledge(job);
       }
       catch (error) {

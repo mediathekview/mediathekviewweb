@@ -10,13 +10,11 @@ export class DistributedLoop {
   private readonly key: string;
   private readonly lockProvider: LockProvider;
   private readonly logger: Logger;
-  private readonly stopOnError: boolean;
 
-  constructor(key: string, lockProvider: LockProvider, logger: Logger, stopOnError: boolean = true) {
+  constructor(key: string, lockProvider: LockProvider, logger: Logger) {
     this.key = `loop:${key}`;
     this.lockProvider = lockProvider;
     this.logger = logger;
-    this.stopOnError = stopOnError;
   }
 
   run(func: LoopFunction, interval: number, accuracy: number): LoopController {
@@ -48,29 +46,17 @@ export class DistributedLoop {
 
       try {
         while (!stop) {
-          try {
-            timer.restart();
+          timer.restart();
 
-            await lock.acquire(0, async () => {
-              await func(controller);
+          await lock.acquire(0, async () => {
+            await func(controller);
 
-              const timeLeft = interval - timer.milliseconds;
-              const timeoutDuration = timeLeft - (accuracy / 2);
-              await cancelableTimeout(timeoutDuration, stopPromise);
-            });
+            const timeLeft = interval - timer.milliseconds;
+            const timeoutDuration = timeLeft - (accuracy / 2);
+            await cancelableTimeout(timeoutDuration, stopPromise);
+          });
 
-            await cancelableTimeout(accuracy, stopPromise);
-          }
-          catch (error) {
-            if (this.stopOnError) {
-              loopError = error as Error;
-              return;
-            }
-            else {
-              this.logger.error(error as Error);
-              await cancelableTimeout(accuracy, stopPromise);
-            }
-          }
+          await cancelableTimeout(accuracy, stopPromise);
         }
       }
       finally {

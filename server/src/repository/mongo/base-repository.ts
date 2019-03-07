@@ -3,7 +3,7 @@ import { SyncEnumerable } from '../../common/enumerable';
 import { Entity, EntityWithPartialId } from '../../common/model';
 import { MongoDocument, toEntity, toMongoDocumentWithPartialId } from './mongo-document';
 import { MongoFilter, TypedMongoFilter } from './mongo-query';
-import { IdsMap, objectIdOrStringToString } from './utils';
+import { IdsMap, objectIdOrStringToString, stringToObjectIdOrString } from './utils';
 
 export class MongoBaseRepository<T extends Entity> {
   private readonly collection: Mongo.Collection<MongoDocument<T>>;
@@ -13,8 +13,15 @@ export class MongoBaseRepository<T extends Entity> {
   }
 
   async insert(entity: EntityWithPartialId<T>): Promise<T> {
-    const savedEntities = await this.insertMany([entity]);
-    return SyncEnumerable.from(savedEntities).single();
+    //  const savedEntities = await this.insertMany([entity]);
+    const document = toMongoDocumentWithPartialId(entity);
+    const result = await this.collection.insertOne(document as MongoDocument<T>);
+
+    const entityCopy = (entity.id != undefined)
+      ? { ...entity } as T
+      : { ...entity, id: objectIdOrStringToString(result.insertedId) } as T;
+
+    return entityCopy;
   }
 
   async replace(entity: EntityWithPartialId<T>, upsert: boolean): Promise<T> {
@@ -30,8 +37,9 @@ export class MongoBaseRepository<T extends Entity> {
       const entityCopy = { ...entity };
 
       const hasInsertedId = insertedIds.hasOwnProperty(index);
+
       if (hasInsertedId) {
-        entityCopy.id = objectIdOrStringToString(insertedIds[index]._id);
+        entityCopy.id = objectIdOrStringToString(insertedIds[index] as any as Mongo.ObjectId);
       }
 
       return entityCopy as T;
@@ -60,13 +68,13 @@ export class MongoBaseRepository<T extends Entity> {
 
   async load(id: string): Promise<T> {
     const filter = {
-      _id: id
+      _id: stringToObjectIdOrString(id)
     };
 
     const document = await this.collection.findOne(filter);
 
     if (document == undefined) {
-      throw new Error('document not found');
+      throw new Error(`document ${id} not found`);
     }
 
     const entity = toEntity(document);
@@ -74,8 +82,10 @@ export class MongoBaseRepository<T extends Entity> {
   }
 
   async *loadManyById(ids: string[]): AsyncIterableIterator<T> {
+    const normalizedIds = ids.map(stringToObjectIdOrString);
+
     const filter: MongoFilter = {
-      _id: { $in: ids }
+      _id: { $in: normalizedIds }
     };
 
     yield* this.loadManyByFilter(filter);
@@ -106,13 +116,15 @@ export class MongoBaseRepository<T extends Entity> {
   }
 
   async has(id: string): Promise<boolean> {
-    const filter = { _id: id };
+    const filter = { _id: stringToObjectIdOrString(id) };
     return this.hasByFilter(filter);
   }
 
   async hasMany(ids: string[]): Promise<string[]> {
+    const normalizedIds = ids.map(stringToObjectIdOrString);
+
     const filter: MongoFilter = {
-      _id: { $in: ids }
+      _id: { $in: normalizedIds }
     };
 
     const result = await this.collection.distinct('_id', filter) as string[];

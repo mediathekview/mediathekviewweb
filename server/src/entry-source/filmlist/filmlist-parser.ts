@@ -26,6 +26,16 @@ const READ_SIZE = 50 * 1024; // 50 KB
 const METADATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/g;
 
+export async function parseFilmlistResourceFilmlist(filmlistResource: FilmlistResource): Promise<Filmlist> {
+  const filmlistResourceParser = parseFilmlistResource(filmlistResource, true);
+
+  for await (const item of filmlistResourceParser) {
+    return (item as FilmlistParseResult).filmlist;
+  }
+
+  throw new Error('no filmlist yielded');
+}
+
 export function parseFilmlistResource(filmlistResource: FilmlistResource, yieldFilmlist: true): AsyncIterableIterator<FilmlistParseResult | EntriesParseResult>;
 export function parseFilmlistResource(filmlistResource: FilmlistResource, yieldFilmlist: false): AsyncIterableIterator<EntriesParseResult>;
 export async function* parseFilmlistResource(filmlistResource: FilmlistResource, yieldFilmlist: boolean): AsyncIterableIterator<FilmlistParseResult | EntriesParseResult> {
@@ -44,6 +54,8 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
     lastChannel: '',
     lastTopic: ''
   };
+
+  let finished = false;
 
   try {
     for await (const chunk of streamIterable) { // tslint:disable-line: await-promise
@@ -65,9 +77,14 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
         }
       }
     }
+
+    finished = true;
   }
   finally {
-    stream.destroy();
+    if (!finished) {
+      throw new Error('cleanup needed');
+      // stream.destroy();
+    }
   }
 }
 
@@ -82,7 +99,7 @@ function parseFilmlist(context: Context): Filmlist | undefined {
 
   const [, day, month, year, hour, minute, id] = match;
   const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute)));
-  const timestamp = Math.floor(date.valueOf() / 1000);
+  const timestamp = date.getTime();
 
   const filmlist: Filmlist = {
     timestamp,
