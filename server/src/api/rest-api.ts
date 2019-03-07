@@ -5,7 +5,7 @@ import * as KoaRouter from 'koa-router';
 import { createErrorResponse, createResultResponse } from '../common/api/rest';
 import { Logger } from '../common/logger';
 import { precisionRound, Timer } from '../common/utils';
-import { StreamIterable } from '../utils';
+import { readStream } from '../utils';
 import { validateSearchQuery, validateTextSearchQuery, ValidationFunction } from '../validator';
 import { MediathekViewWebApi } from './api';
 
@@ -97,25 +97,11 @@ async function readJsonBody(request: Koa.Request, maxLength: number = 10e6): Pro
   return json;
 }
 
-async function readBody(request: Koa.Request, maxLength: number): Promise<string> {
+async function readBody(request: Koa.Request, maxBytes: number): Promise<string> {
   const { req, charset } = request;
 
-  const requestStream = new StreamIterable<Buffer>(req);
-
-  let totalLength: number = 0;
-  const chunks: Buffer[] = [];
-
-  for await (const chunk of requestStream) { // tslint:disable-line: await-promise
-    chunks.push(chunk);
-    totalLength += chunk.length;
-
-    if (totalLength >= maxLength) {
-      request.req.destroy(new Error('maximum body size exceeded'));
-    }
-  }
-
+  const rawBody = await readStream(req, maxBytes);
   const encoding = (charset != undefined && charset.length > 0) ? charset : 'utf-8';
-  const rawBody = Buffer.concat(chunks, totalLength);
   const body = rawBody.toString(encoding);
 
   return body;

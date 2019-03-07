@@ -1,3 +1,4 @@
+import * as Got from 'got';
 import * as Needle from 'needle';
 import { Readable } from 'stream';
 import { HttpResponse } from './response';
@@ -22,18 +23,15 @@ export class HttpClient {
     });
   }
 
-  static async getString(url: string): Promise<HttpResponse<string>> {
-    const rawResponse = await this.get(url);
-    const stringResponse: HttpResponse<string> = {
-      ...rawResponse,
-      body: rawResponse.body.toString()
-    };
+  static async getString(url: string): Promise<string> {
+    const response = await Got.get(url);
 
-    return stringResponse;
+    throw new Error(JSON.stringify(response, undefined, 2));
+
+    return response.body;
   }
 
   static getStream(url: string): Readable {
-    const stream = Needle.get(url);
-    return stream as Readable;
+    return Got.stream.get(url);
   }
 }
