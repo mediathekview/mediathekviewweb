@@ -119,6 +119,9 @@ html * {
 
 td {
   vertical-align: middle !important;
+  line-height: 1.5rem !important;
+  padding: 0px 8px !important;
+  height: 40px !important;
 }
 
 label {
