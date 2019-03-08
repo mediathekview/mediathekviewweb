@@ -37,7 +37,7 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
 
   private async latestFileToFilmlist(file: File): Promise<Filmlist> {
     const date = file.date;
-    const timestamp = Math.floor(date.getTime() / 1000);
+    const timestamp = date.getTime();
 
     const filmlistResource: FilmlistResource = {
       url: file.resource.uri,

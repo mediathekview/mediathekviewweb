@@ -1,5 +1,5 @@
 import * as Crypto from 'crypto';
-import { createSubtitle, createVideo, Entry, Quality } from '../../common/model';
+import { createSubtitle, createVideo, Entry } from '../../common/model';
 import { matchAll, zBase32Encode } from '../../common/utils';
 import { HttpClient } from '../../http';
 import { Filmlist, FilmlistResource } from '../../model/filmlist';
@@ -82,8 +82,8 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
   }
   finally {
     if (!finished) {
-      throw new Error('cleanup needed');
-      // stream.destroy();
+      stream.destroy();
+      httpStream.destroy();
     }
   }
 }
@@ -175,7 +175,7 @@ function filmlistEntryToEntry(context: Context, filmlistEntry: string, filmlist:
     secondsString
   ] = rawDuration.split(':');
   const duration = (parseInt(hoursString) * 3600) + (parseInt(minutesString) * 60) + parseInt(secondsString);
-  const timestamp = parseInt(date_l);
+  const timestamp = parseInt(date_l) * 1000;
 
   const entry: Entry = {
     id: '',
@@ -199,18 +199,18 @@ function filmlistEntryToEntry(context: Context, filmlistEntry: string, filmlist:
 
   if (url_small.length > 0) {
     const videoUrl = createUrlFromBase(url, url_small);
-    const video = createVideo(videoUrl, Quality.Low);
+    const video = createVideo(videoUrl);
     entry.media.push(video);
   }
 
   if (url.length > 0) {
-    const video = createVideo(url, Quality.Medium);
+    const video = createVideo(url);
     entry.media.push(video);
   }
 
   if (url_hd.length > 0) {
     const videoUrl = createUrlFromBase(url, url_hd);
-    const video = createVideo(videoUrl, Quality.High);
+    const video = createVideo(videoUrl);
     entry.media.push(video);
   }
 

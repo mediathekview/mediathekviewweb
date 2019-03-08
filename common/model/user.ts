@@ -7,9 +7,9 @@ export enum UserType {
 
 export type User = Entity & {
   type: UserType;
-  username: null | string;
-  email: null | string;
-  birthday: null | Date;
+  username: string | null;
+  email: string | null;
+  birthday: Date | null;
 };
 
 export type GuestUser = Entity & {

@@ -1,5 +1,5 @@
 import * as Mongo from 'mongodb';
-import { Entry } from '../../common/model';
+import { Entry, Field } from '../../common/model';
 import { EntryRepository } from '../entry-repository';
 import { MongoBaseRepository } from './base-repository';
 import { MongoDocument, toMongoDocument } from './mongo-document';
@@ -12,6 +12,13 @@ export class MongoEntryRepository implements EntryRepository {
   constructor(collection: Mongo.Collection<MongoDocument<Entry>>) {
     this.collection = collection;
     this.baseRepository = new MongoBaseRepository(collection);
+
+    const indexes: Mongo.IndexSpecification[] = [
+      { key: { [Field.FirstSeen]: 1 } },
+      { key: { [Field.LastSeen]: 1 } }
+    ];
+
+    this.collection.createIndexes(indexes, {}).catch(console.error);
   }
 
   async save(entry: Entry): Promise<void> {

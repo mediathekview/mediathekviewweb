@@ -42,7 +42,11 @@ export enum Field {
   MediaUrl = 'media.url',
   MediaSize = 'media.size',
   VideoQuality = 'media.quality',
-  AudioQuality = 'media.quality'
+  VideoResolutionWidth = 'media.quality.resolution.width',
+  VideoResolutionHeight = 'media.quality.resolution.height',
+  VideoBitrate = 'media.quality.bitrate',
+  AudioQuality = 'media.quality',
+  AudioBitrate = 'media.quality.bitrate'
 }
 
 export const enum MediaType {
@@ -56,33 +60,36 @@ export type Media = Video | Audio | Subtitle;
 type MediaBase = {
   type: MediaType;
   url: string;
-  size?: number;
+  size: number | null;
 };
 
 export type Video = MediaBase & {
   type: MediaType.Video;
-  quality: Quality;
+  quality: VideoQuality | null;
 };
 
 export type Audio = MediaBase & {
   type: MediaType.Audio;
-  quality: Quality;
+  quality: AudioQuality | null;
 };
 
 export type Subtitle = MediaBase & {
   type: MediaType.Subtitle;
 };
 
-export enum Quality {
-  UltraLow = 0,
-  VeryLow = 1,
-  Low = 2,
-  Medium = 3,
-  High = 4,
-  VeryHigh = 5
-}
+export type VideoQuality = {
+  resolution: {
+    width: number,
+    height: number
+  },
+  bitrate: number
+};
 
-export function createVideo(url: string, quality: Quality, size?: number): Video {
+export type AudioQuality = {
+  bitrate: number
+};
+
+export function createVideo(url: string, quality: VideoQuality | null = null, size: number | null = null): Video {
   const video: Video = {
     type: MediaType.Video,
     url,
@@ -93,7 +100,7 @@ export function createVideo(url: string, quality: Quality, size?: number): Video
   return video;
 }
 
-export function createAudio(url: string, quality: Quality, size?: number): Audio {
+export function createAudio(url: string, quality: AudioQuality | null = null, size: number | null = null): Audio {
   const audio: Audio = {
     type: MediaType.Audio,
     url,
@@ -104,7 +111,7 @@ export function createAudio(url: string, quality: Quality, size?: number): Audio
   return audio;
 }
 
-export function createSubtitle(url: string, size?: number): Subtitle {
+export function createSubtitle(url: string, size: number | null = null): Subtitle {
   const subtitle: Subtitle = {
     type: MediaType.Subtitle,
     url,

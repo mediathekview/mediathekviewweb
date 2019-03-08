@@ -40,13 +40,19 @@ import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
 import { FilmlistImport } from './model/filmlist-import';
 import { MongoDocument } from './repository/mongo/mongo-document';
 
+export type InitializeOptions = {
+  redis: boolean,
+  mongo: boolean,
+  elasticsearch: boolean
+};
+
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
 const MONGO_CONNECTION_STRING = 'mongodb://localhost:27017';
 const MONGO_CLIENT_OPTIONS: Mongo.MongoClientOptions = { appname: 'MediathekViewWeb', useNewUrlParser: true, autoReconnect: true, reconnectTries: Number.POSITIVE_INFINITY };
 const MONGO_DATABASE_NAME = 'mediathekviewweb';
 const MONGO_ENTRIES_COLLECTION_NAME = 'entries';
-const FILMLIST_IMPORTS_COLLECTION_NAME = 'filmlistImports'
+const FILMLIST_IMPORTS_COLLECTION_NAME = 'filmlistImports';
 
 const ELASTICSEARCH_INDEX_NAME = 'mediathekviewweb';
 const ELASTICSEARCH_TYPE_NAME = 'entry';
@@ -78,15 +84,23 @@ export class InstanceProvider {
   private static readonly disposer: AsyncDisposer = new AsyncDisposer();
   private static readonly logger: Logger = new ConsoleLogger(LogLevel.Trace);
 
-  private static async connectToDatabases(): Promise<void> {
+  private static async connectToDatabases(options: { redis: boolean, mongo: boolean, elasticsearch: boolean }): Promise<void> {
     const logger = this.coreLogger();
-    const redis = InstanceProvider.redis();
-    const mongo = InstanceProvider.mongo();
-    const elasticsearch = InstanceProvider.elasticsearch();
 
-    await this.connect('redis', async () => await redis.connect() as Promise<void>, logger);
-    await this.connect('mongo', async () => await mongo.connect(), logger);
-    await this.connect('elasticsearch', async () => await elasticsearch.ping({ requestTimeout: 250 }) as Promise<void>, logger);
+    if (options.redis) {
+      const redis = InstanceProvider.redis();
+      await this.connect('redis', async () => await redis.connect() as Promise<void>, logger);
+    }
+
+    if (options.mongo) {
+      const mongo = InstanceProvider.mongo();
+      await this.connect('mongo', async () => await mongo.connect(), logger);
+    }
+
+    if (options.elasticsearch) {
+      const elasticsearch = InstanceProvider.elasticsearch();
+      await this.connect('elasticsearch', async () => await elasticsearch.ping({ requestTimeout: 250 }) as Promise<void>, logger);
+    }
   }
 
   private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger): Promise<void> {
@@ -140,8 +154,8 @@ export class InstanceProvider {
     return this.instances[type] as T;
   }
 
-  static async initialize(): Promise<void> {
-    await this.connectToDatabases();
+  static async initialize(options: InitializeOptions): Promise<void> {
+    await this.connectToDatabases(options);
   }
 
   static async disposeInstances(): Promise<void> {

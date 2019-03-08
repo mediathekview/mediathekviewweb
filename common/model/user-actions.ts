@@ -1,6 +1,5 @@
 import { StringMap } from '../types';
 import { Entity, EntityWithPartialId } from './entity';
-import { Quality } from './entry';
 
 export type Agent = {
   userAgent: string,
@@ -53,13 +52,11 @@ export type Visit = UserAction & {
 };
 
 export type Download = EntryAction & {
-  actionType: UserActionType.Download,
-  quality: Quality
+  actionType: UserActionType.Download
 };
 
 export type Play = PlayPause & {
-  actionType: UserActionType.Play,
-  quality: Quality
+  actionType: UserActionType.Play
 };
 
 export type Pause = PlayPause & {

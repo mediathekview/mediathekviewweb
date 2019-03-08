@@ -58,6 +58,6 @@ export class NonWorkingAggregatedEntryRepository implements AggregatedEntryRepos
   }
 
   private getTime(timestamp: number): number {
-    return timestamp % 86400;
+    return timestamp % 86400000;
   }
 }

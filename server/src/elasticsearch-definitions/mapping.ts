@@ -87,8 +87,8 @@ export const elasticsearchMapping = {
       format: 'epoch_millis',
     },
     media: {
-      type: 'nested',
-      dynamic: false,
+      type: 'object',
+      dynamic: 'strict',
       properties: {
         type: {
           type: 'keyword',
@@ -100,11 +100,31 @@ export const elasticsearchMapping = {
         },
         size: {
           type: 'long',
-          index: true
+          index: false
         },
         quality: {
-          type: 'byte',
-          index: true
+          type: 'object',
+          dynamic: 'strict',
+          properties: {
+            resolution: {
+              type: 'object',
+              dynamic: 'strict',
+              properties: {
+                width: {
+                  type: 'integer',
+                  index: false
+                },
+                height: {
+                  type: 'integer',
+                  index: false
+                }
+              }
+            },
+            bitrate: {
+              type: 'long',
+              index: false
+            }
+          }
         }
       }
     },

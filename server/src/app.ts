@@ -57,7 +57,7 @@ function getMicroServices(): MicroService[] {
     { name: 'FilmlistManager', service: filmlistManager },
     { name: 'Importer', service: importer },
     { name: 'Saver', service: saver },
-    { name: 'Indexer', service: indexer }
+    // { name: 'Indexer', service: indexer }
   ];
 
   return microServices;
@@ -75,7 +75,7 @@ async function init(): Promise<void> {
   initEventLoopWatcher(logger);
 
   await Promise.race([
-    InstanceProvider.initialize(),
+    InstanceProvider.initialize({ redis: true, mongo: true, elasticsearch: false }),
     shutdownToken
   ]);
 
