@@ -26,7 +26,7 @@ export class FilmlistManagerService extends ServiceBase implements Service {
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
 
-  get metrics(): ReadonlyArray<ServiceMetric> {
+  get metrics(): ServiceMetric[] {
     return [];
   }
 

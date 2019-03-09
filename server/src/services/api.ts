@@ -5,26 +5,41 @@ import { Logger } from '../common/logger';
 import { cancelableTimeout, Timer } from '../common/utils';
 import { CancellationToken } from '../common/utils/cancellation-token';
 import { config } from '../config';
-import { validateSearchQuery, validateTextSearchQuery } from '../validator';
-import { Service, ServiceMetric } from './service';
+import { Service, ServiceMetric, ServiceMetricType } from './service';
 import { ServiceBase } from './service-base';
+import * as Prometheus from 'prom-client';
 
 export class ApiService extends ServiceBase implements Service {
   private readonly restApi: RestApi;
   private readonly logger: Logger;
+  private readonly socketsSets: Set<Set<Net.Socket>>;
 
-  metrics: ReadonlyArray<ServiceMetric>;
+  private requests: number;
+
+  get metrics(): ServiceMetric[] {
+    const connections = Array.from(this.socketsSets.values()).reduce((sum, set) => sum + set.size, 0);
+
+    return [
+      { name: 'requests', type: ServiceMetricType.Counter, value: this.requests },
+      { name: 'connections', type: ServiceMetricType.Gauge, value: connections }
+    ];
+  }
 
   constructor(restApi: RestApi, logger: Logger) {
     super();
 
     this.restApi = restApi;
     this.logger = logger;
+
+    this.socketsSets = new Set();
+    this.requests = 0;
   }
 
   protected async run(cancellationToken: CancellationToken): Promise<void> {
     const server = new Http.Server();
     const sockets = new Set<Net.Socket>();
+
+    this.socketsSets.add(sockets);
 
     trackConnectedSockets(server, sockets);
 
@@ -41,13 +56,16 @@ export class ApiService extends ServiceBase implements Service {
 
     this.logger.info('closing http server');
     await this.closeServer(server, sockets, 3000);
+
+    this.socketsSets.delete(sockets);
   }
 
   private expose(): void {
-    if (config.api.search) {
-      this.restApi.registerPostRoute('/entries/search', validateSearchQuery, async (parameters) => this.api.search(parameters));
-      this.restApi.registerPostRoute('/entries/search/text', validateTextSearchQuery, async (parameters) => this.api.textSearch(parameters));
-    }
+    throw new Error('not implemented');
+    /* if (config.api.search) {
+      this.restApi.registerPostRoute('/entries/search', validateSearchParameters, async (parameters) => this.api.search(parameters));
+      this.restApi.registerPostRoute('/entries/search/text', validateTextSearchParameters, async (parameters) => this.api.textSearch(parameters));
+    } */
   }
 
   private async closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeout: number): Promise<void> {

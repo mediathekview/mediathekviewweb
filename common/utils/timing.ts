@@ -37,15 +37,15 @@ export async function cancelableTimeout(milliseconds: number = 0, cancelPromise:
 }
 
 export async function immediate(): Promise<void> {
-  return new Promise<void>((resolve, _reject) => setImmediate(resolve) as void);
+  return new Promise<void>(setImmediate as (callback: () => void) => void);
 }
 
 export async function nextTick(): Promise<void> {
-  return new Promise<void>((resolve, _reject) => process.nextTick(resolve));
+  return new Promise<void>((resolve) => process.nextTick(resolve));
 }
 
 export async function animationFrame(): Promise<number> {
-  return new Promise<number>((resolve, _reject) => requestAnimationFrame(resolve));
+  return new Promise<number>(requestAnimationFrame);
 }
 
 export async function idle(timeout?: number): Promise<IdleDeadline> {

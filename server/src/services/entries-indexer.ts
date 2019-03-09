@@ -1,4 +1,3 @@
-import { Subject } from 'rxjs';
 import { AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable';
 import { Logger } from '../common/logger';
@@ -8,7 +7,7 @@ import { timeout } from '../common/utils';
 import { keys } from '../keys';
 import { Job, Queue, QueueProvider } from '../queue';
 import { AggregatedEntryRepository } from '../repository';
-import { Service, ServiceMetric } from './service';
+import { Service, ServiceMetric, ServiceMetricType } from './service';
 import { ServiceBase } from './service-base';
 
 const BATCH_SIZE = 100;
@@ -18,9 +17,12 @@ export class EntriesIndexerService extends ServiceBase implements Service {
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
-  private readonly indexedSubject: Subject<number>;
 
-  readonly metrics: ServiceMetric[];
+  private indexed: number;
+
+  get metrics(): ServiceMetric[] {
+    return [{ name: 'indexed', type: ServiceMetricType.Counter, value: this.indexed }];
+  }
 
   constructor(indexedEntryRepository: AggregatedEntryRepository, searchEngine: SearchEngine<AggregatedEntry>, queueProvider: QueueProvider, logger: Logger) {
     super();
@@ -30,8 +32,7 @@ export class EntriesIndexerService extends ServiceBase implements Service {
     this.queueProvider = queueProvider;
     this.logger = logger;
 
-    this.indexedSubject = new Subject();
-    this.metrics = [{ name: 'indexed', values: this.indexedSubject.asObservable() }];
+    this.indexed = 0;
   }
 
   protected async run(): Promise<void> {
@@ -47,7 +48,8 @@ export class EntriesIndexerService extends ServiceBase implements Service {
         try {
           await this.indexBatch(batch);
           await entriesToBeIndexedQueue.acknowledge(...batch);
-          this.indexedSubject.next(batch.length);
+
+          this.indexed += batch.length;
         }
         catch (error) {
           this.logger.error(error as Error);

@@ -18,6 +18,7 @@ export class SearchApiEndpoint {
   }
 
   async added({ timestamp }: DeltaParameters): Promise<DeltaResult> {
-    this.entryRepository.
+    throw new Error('not implemented' + timestamp.toString());
+    // this.entryRepository.
   }
 }

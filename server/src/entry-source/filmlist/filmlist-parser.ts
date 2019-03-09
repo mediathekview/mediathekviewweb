@@ -3,7 +3,7 @@ import { createSubtitle, createVideo, Entry } from '../../common/model';
 import { matchAll, zBase32Encode } from '../../common/utils';
 import { HttpClient } from '../../http';
 import { Filmlist, FilmlistResource } from '../../model/filmlist';
-import { decompress, StreamIterable } from '../../utils';
+import { AsyncStreamIterable, decompress } from '../../utils';
 
 export type FilmlistParseResult = {
   filmlist: Filmlist,
@@ -44,7 +44,7 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
   const httpStream = HttpClient.getStream(url);
   const stream = compressed ? decompress(httpStream) : httpStream;
 
-  const streamIterable = new StreamIterable<string>(stream, READ_SIZE);
+  const streamIterable = new AsyncStreamIterable<string>(stream, READ_SIZE);
 
   let filmlist: Filmlist | undefined;
 

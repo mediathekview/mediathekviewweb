@@ -7,7 +7,7 @@ export abstract class ServiceBase implements Service {
   private runPromise: Promise<void>;
   private state: ServiceState;
 
-  abstract metrics: ReadonlyArray<ServiceMetric>;
+  abstract metrics: ServiceMetric[];
 
   protected get cancellationToken(): CancellationToken {
     return this._cancellationToken;
@@ -18,6 +18,7 @@ export abstract class ServiceBase implements Service {
   }
 
   constructor() {
+    this.runPromise = Promise.resolve();
     this.state = ServiceState.Stopped;
     this._cancellationToken = new CancellationToken();
   }

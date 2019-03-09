@@ -1,4 +1,4 @@
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { AsyncDisposer } from '../common/disposable';
 import { AsyncEnumerable } from '../common/enumerable/async-enumerable';
 import { Logger } from '../common/logger';
@@ -7,7 +7,7 @@ import { timeout } from '../common/utils';
 import { keys } from '../keys';
 import { Job, Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
-import { Service, ServiceMetric } from './service';
+import { Service, ServiceMetric, ServiceMetricType, ServiceMetricValue } from './service';
 import { ServiceBase } from './service-base';
 
 const BATCH_SIZE = 250;
@@ -17,9 +17,12 @@ export class EntriesSaverService extends ServiceBase implements Service {
   private readonly entryRepository: EntryRepository;
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
-  private readonly savedSubject: Subject<number>;
 
-  readonly metrics: ServiceMetric[];
+  private savedMetricSubject: Subject<ServiceMetricValue>;
+
+  get metrics(): ServiceMetric[] {
+    return [{ name: 'saved', type: ServiceMetricType.Counter, value: this.saved }];
+  }
 
   constructor(entryRepository: EntryRepository, queueProvider: QueueProvider, logger: Logger) {
     super();
@@ -28,8 +31,7 @@ export class EntriesSaverService extends ServiceBase implements Service {
     this.queueProvider = queueProvider;
     this.logger = logger;
 
-    this.savedSubject = new Subject();
-    this.metrics = [{ name: 'saved', values: this.savedSubject.asObservable() }];
+    this.savedMetricSubject = new Subject();
   }
 
   protected async run(): Promise<void> {
@@ -48,7 +50,8 @@ export class EntriesSaverService extends ServiceBase implements Service {
         try {
           await this.saveBatch(batch, entriesToBeIndexedQueue);
           await entriesToBeSavedQueue.acknowledge(...batch);
-          this.savedSubject.next(batch.length);
+
+          this.saved += batch.length;
         }
         catch (error) {
           this.logger.error(error as Error);

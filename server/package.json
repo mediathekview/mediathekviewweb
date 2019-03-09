@@ -24,6 +24,7 @@
     "lzma-native": "^4.0.3",
     "mongodb": "^3.1.13",
     "needle": "^2.2.4",
+    "prom-client": "^11.2.1",
     "rxjs": "^6.4.0"
   },
   "devDependencies": {

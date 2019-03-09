@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { DeferredPromise } from '../common/promise';
 
-export class StreamIterable<T> implements AsyncIterable<T> {
+export class AsyncStreamIterable<T> implements AsyncIterable<T> {
   private readonly stream: Readable;
   private readonly readSize: number | undefined;
   private readonly readable: DeferredPromise;

@@ -1,8 +1,8 @@
 import { Readable } from 'stream';
-import { StreamIterable } from './stream-iterable';
+import { AsyncStreamIterable } from './async-stream-iterable';
 
 export async function readStream(readable: Readable, maxBytes?: number): Promise<Buffer> {
-  const streamIterable = new StreamIterable<Buffer>(readable);
+  const streamIterable = new AsyncStreamIterable<Buffer>(readable);
 
   let totalLength: number = 0;
   const chunks: Buffer[] = [];

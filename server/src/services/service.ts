@@ -1,8 +1,19 @@
 import { Observable } from 'rxjs';
 
+export enum ServiceMetricType {
+  Counter,
+  Gauge
+}
+
+export type ServiceMetricValue = {
+  value: number,
+  labels: string[]
+}
+
 export type ServiceMetric = {
-  name: string;
-  values: Observable<number>;
+  name: string,
+  type: ServiceMetricType,
+  values: Observable<ServiceMetricValue>
 };
 
 export enum ServiceState {

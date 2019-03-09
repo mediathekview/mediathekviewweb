@@ -7,16 +7,19 @@ import { cancelableTimeout } from '../common/utils';
 import { EntrySource } from '../entry-source';
 import { keys } from '../keys';
 import { Queue, QueueProvider } from '../queue';
-import { Service, ServiceMetric } from './service';
+import { Service, ServiceMetric, ServiceMetricType } from './service';
 import { ServiceBase } from './service-base';
 
 export class EntriesImporterService extends ServiceBase implements Service {
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
   private readonly sources: EntrySource[];
-  private readonly importedSubject: Subject<number>;
 
-  readonly metrics: ServiceMetric[];
+  private imported: number;
+
+  get metrics(): ServiceMetric[] {
+    return [{ name: 'imported', type: ServiceMetricType.Counter, value: this.imported }];
+  }
 
   constructor(queueProvider: QueueProvider, logger: Logger, sources: EntrySource[]) {
     super();
@@ -25,8 +28,7 @@ export class EntriesImporterService extends ServiceBase implements Service {
     this.logger = logger;
     this.sources = sources;
 
-    this.importedSubject = new Subject();
-    this.metrics = [{ name: 'imported', values: this.importedSubject.asObservable() }];
+    this.imported = 0;
   }
 
   protected async run(): Promise<void> {
@@ -58,7 +60,7 @@ export class EntriesImporterService extends ServiceBase implements Service {
       })
       .forEach(async (batch) => {
         await entriesToBeSavedQueue.enqueueMany(batch);
-        this.importedSubject.next(batch.length);
+        this.imported += batch.length;
       });
   }
 
