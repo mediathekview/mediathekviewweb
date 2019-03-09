@@ -8,12 +8,12 @@ import { timeout } from '../common/utils';
 import { keys } from '../keys';
 import { Job, Queue, QueueProvider } from '../queue';
 import { AggregatedEntryRepository } from '../repository';
-import { Service, ServiceMetric } from '../service';
-import { ServiceBase } from '../service-base';
+import { Service, ServiceMetric } from './service';
+import { ServiceBase } from './service-base';
 
 const BATCH_SIZE = 100;
 
-export class EntriesIndexer extends ServiceBase implements Service {
+export class EntriesIndexerService extends ServiceBase implements Service {
   private readonly aggregatedEntryRepository: AggregatedEntryRepository;
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
   private readonly queueProvider: QueueProvider;

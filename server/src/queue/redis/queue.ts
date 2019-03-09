@@ -117,7 +117,7 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     const disposeDeferrer = this.disposer.getDeferrer();
 
     try {
-      const consumerStream = this.getConsumerStream();
+      const consumerStream = await this.getConsumerStream();
       const consumer = this.getConsumerName();
       const lock = this.lockProvider.get(`queue:${this.key}:${consumer}`);
 
@@ -172,8 +172,8 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
     await this.stream.trim(0, false);
   }
 
-  private getConsumerStream(): RedisStream<StreamEntryType> {
-    const consumerRedis = this.redisProvider.get('CONSUMER');
+  private async getConsumerStream(): Promise<RedisStream<StreamEntryType>> {
+    const consumerRedis = await this.redisProvider.get('CONSUMER');
     const consumerStream = new RedisStream<StreamEntryType>(consumerRedis, this.streamName);
 
     return consumerStream;

@@ -7,10 +7,10 @@ import { cancelableTimeout } from '../common/utils';
 import { EntrySource } from '../entry-source';
 import { keys } from '../keys';
 import { Queue, QueueProvider } from '../queue';
-import { Service, ServiceMetric } from '../service';
-import { ServiceBase } from '../service-base';
+import { Service, ServiceMetric } from './service';
+import { ServiceBase } from './service-base';
 
-export class EntriesImporter extends ServiceBase implements Service {
+export class EntriesImporterService extends ServiceBase implements Service {
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
   private readonly sources: EntrySource[];

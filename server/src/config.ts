@@ -1,20 +1,14 @@
-type EnvironmentConfig = {
-  data_directory?: string,
-  elasticsearch_host?: string;
-  elasticsearch_port?: string;
-
-  redis_host?: string;
-  redis_port?: string;
-  redis_password?: string;
-  redis_db?: string;
-
-  importer_latestCheckInterval?: string;
-  importer_archiveCheckInterval?: string;
-  importer_archiveRange?: string;
-};
+import { LogLevel } from "./common/logger";
 
 type Config = {
-  dataDirectory: string,
+  verbosity: number,
+  services: {
+    api: boolean,
+    filmlistManager: boolean,
+    importer: boolean,
+    saver: boolean,
+    indexer: boolean
+  },
   api: {
     port: number
   },
@@ -29,30 +23,76 @@ type Config = {
     db: number
   },
   importer: {
-    latestCheckInterval: number,
-    archiveCheckInterval: number,
+    latestCheckIntervalMinutes: number,
+    archiveCheckIntervalMinutes: number,
     archiveRange: number
   }
 };
 
+export const configValidators = {
+  integer: /^-?\d+$/,
+  positiveInteger: /^[1-9]\d*$/,
+  boolean: /true|false/i
+};
+
 export const config: Config = {
-  dataDirectory: './data',
+  verbosity: integer('VERBOSITY', LogLevel.Info),
+  services: {
+    api: boolean('SERVICE_API', false),
+    filmlistManager: boolean('SERVICE_FILMLIST_MANAGER', false),
+    importer: boolean('SERVICE_IMPORTER', false),
+    saver: boolean('SERVICE_SAVER', false),
+    indexer: boolean('SERVICE_INDEXER', false)
+  },
   api: {
-    port: 8080
+    port: positiveInteger('API_PORT', 8080)
   },
   elasticsearch: {
-    host: 'localhost',
-    port: 9200
+    host: string('ELASTICSEARCH_HOST', 'localhost'),
+    port: positiveInteger('ELASTICSEARCH_PORT', 9200)
   },
   redis: {
-    host: 'localhost',
-    port: 6379,
-    password: undefined,
-    db: 0
+    host: string('REDIS_HOST', 'localhost'),
+    port: positiveInteger('REDIS_PORT', 6379),
+    password: string('REDIS_PASSWORD', ''),
+    db: integer('REDIS_DATABASE', 0)
   },
   importer: {
-    latestCheckInterval: 60 * 1,
-    archiveCheckInterval: 60 * 1,
-    archiveRange: 5
+    latestCheckIntervalMinutes: positiveInteger('FILMLIST_LATEST_CHECK_INTERVAL', 1),
+    archiveCheckIntervalMinutes: positiveInteger('FILMLIST_ARCHIVE_CHECK_INTERVAL', 30),
+    archiveRange: positiveInteger('FILMLIST_ARCHIVE_RANGE', 5)
   }
 };
+
+function boolean(variable: string, defaultValue: boolean): boolean {
+  const stringValue = string(variable, defaultValue.toString(), configValidators.boolean);
+  const value = stringValue.toLowerCase() == 'true';
+
+  return value;
+}
+
+function integer(variable: string, defaultValue: number): number {
+  const stringValue = string(variable, defaultValue.toString(), configValidators.integer);
+  const value = parseInt(stringValue);
+
+  return value;
+}
+
+function positiveInteger(variable: string, defaultValue: number): number {
+  const stringValue = string(variable, defaultValue.toString(), configValidators.positiveInteger);
+  const value = parseInt(stringValue);
+
+  return value;
+}
+
+function string(variable: string, defaultValue: string, validator?: RegExp): string {
+  const environmentValue = process.env[variable];
+  const value = environmentValue != undefined ? environmentValue : defaultValue;
+  const valid = validator == undefined ? true : validator.test(value);
+
+  if (!valid) {
+    throw new Error(`invalid value for ${variable}`);
+  }
+
+  return value;
+}

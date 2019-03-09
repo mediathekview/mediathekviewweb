@@ -15,6 +15,7 @@
   "license": "GPLv3",
   "dependencies": {
     "ajv": "^6.10.0",
+    "commander": "^2.19.0",
     "elasticsearch": "^15.4.1",
     "got": "^9.6.0",
     "ioredis": "^4.6.2",

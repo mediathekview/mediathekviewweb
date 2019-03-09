@@ -1,12 +1,10 @@
-import * as Http from 'http';
-import * as Net from 'net';
-
+import './command-line-parser'; // tslint:disable-line: no-import-side-effect
 import { Logger } from './common/logger';
-import { AggregationMode, cancelableTimeout, formatDuration, PeriodicSampler, Timer } from './common/utils';
+import { AggregationMode, formatDuration, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
 import { InstanceProvider } from './instance-provider';
 import { initializeSignals, requestShutdown, shutdownToken } from './process-shutdown';
-import { Service } from './service';
+import { Service } from './services/service';
 
 type MicroService = {
   name: string;
@@ -47,137 +45,62 @@ async function stopServices(services: MicroService[]): Promise<void> {
   await Promise.all(promises);
 }
 
-function getMicroServices(): MicroService[] {
-  const filmlistManager = InstanceProvider.filmlistManager();
-  const importer = InstanceProvider.entriesImporter();
-  const saver = InstanceProvider.entriesSaver();
-  const indexer = InstanceProvider.entriesIndexer();
+async function getMicroServices(): Promise<MicroService[]> {
+  const microServices: MicroService[] = [];
 
-  const microServices: MicroService[] = [
-    { name: 'FilmlistManager', service: filmlistManager },
-    { name: 'Importer', service: importer },
-    { name: 'Saver', service: saver },
-    // { name: 'Indexer', service: indexer }
-  ];
+  if (config.services.api) {
+    const apiService = await InstanceProvider.apiService();
+    microServices.push({ name: 'Api', service: apiService });
+  }
+
+  if (config.services.filmlistManager) {
+    const filmlistManagerService = await InstanceProvider.filmlistManagerService();
+    microServices.push({ name: 'FilmlistManager', service: filmlistManagerService });
+  }
+
+  if (config.services.importer) {
+    const importerService = await InstanceProvider.entriesImporterService();
+    microServices.push({ name: 'Importer', service: importerService });
+  }
+
+  if (config.services.saver) {
+    const saverService = await InstanceProvider.entriesSaverService();
+    microServices.push({ name: 'Saver', service: saverService });
+  }
+
+  if (config.services.indexer) {
+    const indexerService = await InstanceProvider.entriesIndexerService();
+    microServices.push({ name: 'Indexer', service: indexerService });
+  }
 
   return microServices;
-}
-
-function attachRestApi(server: Http.Server): void {
-  const restApi = InstanceProvider.mediathekViewWebRestApi();
-
-  server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
-    restApi.handleRequest(request, response);
-  });
 }
 
 async function init(): Promise<void> {
   initEventLoopWatcher(logger);
 
-  await Promise.race([
-    InstanceProvider.initialize({ redis: true, mongo: true, elasticsearch: false }),
-    shutdownToken
-  ]);
+  const services = await getMicroServices();
 
-  if (shutdownToken.isSet) {
-    await InstanceProvider.disposeInstances();
-    return;
+  if (services.length > 0) {
+    if (!shutdownToken.isSet) {
+      logger.info('starting services');
+
+      await Promise.race([
+        startServices(services),
+        shutdownToken
+      ]);
+    }
+
+    logger.info('stopping services');
+    await stopServices(services);
+  }
+  else {
+    requestShutdown();
   }
 
-  const services = getMicroServices();
-  const searchEngine = InstanceProvider.entrySearchEngine();
-  const server = new Http.Server();
-  const sockets = new Set<Net.Socket>();
-
-  trackConnectedSockets(server, sockets);
-
-  await searchEngine.initialize();
-  attachRestApi(server);
-
-  if (shutdownToken.isSet) {
-    await InstanceProvider.disposeInstances();
-    return;
-  }
-
-  logger.info(`listen on port ${config.api.port}`);
-  // server.listen(config.api.port);
-
-  if (!shutdownToken.isSet) {
-    logger.info('starting services');
-
-    await Promise.race([
-      startServices(services),
-      shutdownToken
-    ]);
-  }
-
-  logger.info('closing http server');
-  const serverClosePromise = closeServer(server, sockets, 3000);
-
-  logger.info('stopping services');
-  await stopServices(services);
-
-  logger.info('waiting for http server to be closed');
-  await serverClosePromise;
-
-  logger.info('dispose');
   await InstanceProvider.disposeInstances();
 
   logger.info('bye');
-}
-
-async function closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeout: number): Promise<void> {
-  const timer = new Timer(true);
-
-  const closePromise = new Promise<void>((resolve, _reject) => server.close(() => resolve(undefined)));
-
-  while (true) {
-    const connections = await getConnections(server);
-
-    if (connections == 0) {
-      break;
-    }
-
-    if (timer.milliseconds >= timeout) {
-      logger.info(`force closing remaining sockets after waiting for ${timeout} milliseconds`);
-      destroySockets(sockets);
-      break;
-    }
-
-    if (connections > 0) {
-      logger.info(`waiting for ${connections} to end`);
-      await cancelableTimeout(1000, closePromise);
-    }
-  }
-}
-
-function destroySockets(sockets: Iterable<Net.Socket>): void {
-  for (const socket of sockets) {
-    socket.destroy();
-  }
-}
-
-function trackConnectedSockets(server: Net.Server, sockets: Set<Net.Socket>): void {
-  server.on('connection', (socket) => {
-    sockets.add(socket);
-
-    socket.on('close', () => {
-      sockets.delete(socket);
-    });
-  });
-}
-
-async function getConnections(server: Http.Server): Promise<number> {
-  return new Promise<number>((resolve, reject) => {
-    server.getConnections((error, count) => {
-      if (error != undefined) {
-        reject(error);
-        return;
-      }
-
-      resolve(count);
-    });
-  });
 }
 
 async function measureEventLoopDelay(): Promise<number> {
@@ -197,9 +120,10 @@ function initEventLoopWatcher(logger: Logger): void {
 
   sampler
     .watch(0, 100, AggregationMode.ThirdQuartile)
-    .subscribe((delay) => logger.info(`eventloop: ${formatDuration(delay, 2)}`));
+    .subscribe((delay) => logger.debug(`eventloop: ${formatDuration(delay, 2)}`));
 
   sampler.start();
 
+  // tslint:disable-next-line: no-floating-promises
   shutdownToken.then(async () => await sampler.stop());
 }

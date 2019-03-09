@@ -13,19 +13,17 @@ export class RedisQueueProvider implements QueueProvider {
   private readonly lockProvider: LockProvider;
   private readonly distributedLoopProvider: DistributedLoopProvider;
   private readonly logger: Logger;
-  private readonly loggerPrefix: string;
 
-  constructor(redis: Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, logger: Logger, loggerPrefix: string) {
+  constructor(redis: Redis, redisProvider: RedisProvider, lockProvider: LockProvider, distributedLoopProvider: DistributedLoopProvider, logger: Logger) {
     this.redis = redis;
     this.redisProvider = redisProvider;
     this.lockProvider = lockProvider;
     this.distributedLoopProvider = distributedLoopProvider;
     this.logger = logger;
-    this.loggerPrefix = loggerPrefix;
   }
 
   get<DataType>(key: string, retryAfter: number, maxRetries: number): Queue<DataType> {
-    const logger = this.logger.prefix(`${this.loggerPrefix} [${key}] `);
+    const logger = this.logger.prefix(`[${key}] `);
     return new RedisQueue(this.redis, this.redisProvider, this.lockProvider, this.distributedLoopProvider, key, retryAfter, maxRetries, logger);
   }
 }

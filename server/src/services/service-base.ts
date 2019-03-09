@@ -1,4 +1,4 @@
-import { CancellationToken } from './common/utils/cancellation-token';
+import { CancellationToken } from '../common/utils/cancellation-token';
 import { Service, ServiceMetric, ServiceState } from './service';
 
 export abstract class ServiceBase implements Service {
@@ -31,7 +31,7 @@ export abstract class ServiceBase implements Service {
 
     try {
       this.state = ServiceState.Running;
-      this.runPromise = this.run();
+      this.runPromise = this.run(this._cancellationToken);
       await this.runPromise;
       this.state = ServiceState.Stopped;
     }
@@ -50,5 +50,5 @@ export abstract class ServiceBase implements Service {
     await this.runPromise;
   }
 
-  protected abstract run(): Promise<void>;
+  protected abstract run(cancellationToken: CancellationToken): Promise<void>;
 }

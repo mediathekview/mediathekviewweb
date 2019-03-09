@@ -8,6 +8,7 @@ services:
       - /data
     ports:
       - "6379:6379"
+    command: ["--save", ""]
 
   mongodb:
     image: mongo:4

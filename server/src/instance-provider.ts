@@ -17,13 +17,10 @@ import { DatastoreFactory } from './datastore';
 import { RedisDatastoreFactory } from './datastore/redis';
 import { DistributedLoopProvider } from './distributed-loop';
 import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
-import { EntriesImporter } from './entries-importer/importer';
-import { EntriesIndexer } from './entries-indexer/indexer';
-import { EntriesSaver } from './entries-saver/saver';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
-import { FilmlistManager } from './entry-source/filmlist/filmlist-manager';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
 import { RedisLockProvider } from './lock/redis';
+import { FilmlistImport } from './model/filmlist-import';
 import { QueueProvider } from './queue';
 import { RedisQueueProvider } from './queue/redis';
 import { RedisProvider } from './redis/provider';
@@ -31,20 +28,18 @@ import { AggregatedEntryRepository, EntryRepository } from './repository';
 import { FilmlistImportRepository } from './repository/filmlists-import-repository';
 import { MongoEntryRepository } from './repository/mongo/entry-repository';
 import { MongoFilmlistImportRepository } from './repository/mongo/filmlist-import-repository';
+import { MongoDocument } from './repository/mongo/mongo-document';
 import { NonWorkingAggregatedEntryRepository } from './repository/non-working-aggregated-entry-repository';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
+import { ApiService } from './services/api';
+import { EntriesImporterService } from './services/entries-importer';
+import { EntriesIndexerService } from './services/entries-indexer';
+import { EntriesSaverService } from './services/entries-saver';
+import { FilmlistManagerService } from './services/filmlist-manager';
 import { getElasticsearchLogAdapter } from './utils/elasticsearch-log-adapter-factory';
 import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
-import { FilmlistImport } from './model/filmlist-import';
-import { MongoDocument } from './repository/mongo/mongo-document';
-
-export type InitializeOptions = {
-  redis: boolean,
-  mongo: boolean,
-  elasticsearch: boolean
-};
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -59,21 +54,24 @@ const ELASTICSEARCH_TYPE_NAME = 'entry';
 const ELASTICSEARCH_INDEX_SETTINGS = elasticsearchSettings;
 const ELASTICSEARCH_INDEX_MAPPING = elasticsearchMapping;
 
-const CORE_LOG = '[CORE]';
-const FILMLIST_MANAGER_LOG = '[FILMLIST MANAGER]';
-const QUEUE_LOG = '[QUEUE]';
-const LOCK_LOG = '[LOCK]';
-const DISTRIBUTED_LOOP_LOG = '[LOOP]';
-const ENTRIES_IMPORTER_LOG = '[IMPORTER]';
-const FILMLIST_ENTRY_SOURCE = '[FILMLIST SOURCE]';
-const SEARCH_ENGINE_LOG = '[SEARCH ENGINE]';
-const ENTRIES_INDEXER_LOG = '[INDEXER]';
-const ENTRIES_SAVER_LOG = '[SAVER]';
-const ELASTICSEARCH_LOG = '[ELASTICSEARCH]';
-const REDIS_LOG = '[REDIS]';
-const MONGO_LOG = '[MONGO]';
+const CORE_LOG = 'CORE';
+const QUEUE_LOG = 'QUEUE';
+const LOCK_LOG = 'LOCK';
+const DISTRIBUTED_LOOP_LOG = 'LOOP';
+const FILMLIST_ENTRY_SOURCE = 'FILMLIST SOURCE';
+const SEARCH_ENGINE_LOG = 'SEARCH ENGINE';
+const ELASTICSEARCH_LOG = 'ELASTICSEARCH';
+const REDIS_LOG = 'REDIS';
+const MONGO_LOG = 'MONGO';
+const REST_API_LOG = 'REST API';
 
-function getRedisProvider(providerFunction: (scope: string) => Redis): RedisProvider {
+const FILMLIST_MANAGER_SERVICE_LOG = 'FILMLIST MANAGER';
+const ENTRIES_IMPORTER_SERVICE_LOG = 'IMPORTER';
+const ENTRIES_SAVER_SERVICE_LOG = 'SAVER';
+const ENTRIES_INDEXER_SERVICE_LOG = 'INDEXER';
+const API_SERVICE_LOG = 'API';
+
+function getRedisProvider(providerFunction: (scope: string) => Promise<Redis>): RedisProvider {
   return {
     get: providerFunction
   };
@@ -82,47 +80,35 @@ function getRedisProvider(providerFunction: (scope: string) => Redis): RedisProv
 export class InstanceProvider {
   private static readonly instances: StringMap = {};
   private static readonly disposer: AsyncDisposer = new AsyncDisposer();
-  private static readonly logger: Logger = new ConsoleLogger(LogLevel.Trace);
 
-  private static async connectToDatabases(options: { redis: boolean, mongo: boolean, elasticsearch: boolean }): Promise<void> {
-    const logger = this.coreLogger();
-
-    if (options.redis) {
-      const redis = InstanceProvider.redis();
-      await this.connect('redis', async () => await redis.connect() as Promise<void>, logger);
-    }
-
-    if (options.mongo) {
-      const mongo = InstanceProvider.mongo();
-      await this.connect('mongo', async () => await mongo.connect(), logger);
-    }
-
-    if (options.elasticsearch) {
-      const elasticsearch = InstanceProvider.elasticsearch();
-      await this.connect('elasticsearch', async () => await elasticsearch.ping({ requestTimeout: 250 }) as Promise<void>, logger);
-    }
+  private static loggerInstance(): Logger {
+    return this.singleton(ConsoleLogger, () => {
+      const logger = new ConsoleLogger(config.verbosity);
+      return logger;
+    });
   }
 
   private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger): Promise<void> {
     let success = false;
     while (!success && !this.disposer.disposing) {
       try {
-        logger.info(`connecting to ${name}...`);
+        logger.verbose(`connecting to ${name}...`);
         await connectFunction();
         success = true;
         logger.info(`connected to ${name}`);
       }
       catch (error) {
         logger.verbose(`error connecting to ${name} (${(error as Error).message}), trying again...`);
-        await timeout(1000);
+        await timeout(2000);
       }
     }
   }
 
-  private static newRedis(scope: string, lazyConnect: boolean): Redis {
-    const logger = this.logger.prefix(`${REDIS_LOG} [${scope}] `);
+  private static async newRedis(scope: string): Promise<Redis> {
+    const logger = this.logger(`[${REDIS_LOG}] [${scope}] `, false);
+
     const redis = new RedisClient({
-      lazyConnect,
+      lazyConnect: true,
       enableReadyCheck: true,
       maxRetriesPerRequest: undefined,
       ...config.redis
@@ -143,6 +129,8 @@ export class InstanceProvider {
       await endPromise;
     });
 
+    await this.connect('redis', async () => await redis.connect() as Promise<void>, logger);
+
     return redis;
   }
 
@@ -154,69 +142,82 @@ export class InstanceProvider {
     return this.instances[type] as T;
   }
 
-  static async initialize(options: InitializeOptions): Promise<void> {
-    await this.connectToDatabases(options);
-  }
-
   static async disposeInstances(): Promise<void> {
+    this.coreLogger().debug('dispose instances');
     await this.disposer.dispose();
   }
 
-  static mediathekViewWebApi(): MediathekViewWebApi {
-    return this.singleton(MediathekViewWebApi, () => {
-      const searchEngine = InstanceProvider.entrySearchEngine();
+  static logger(prefix: string, autoBrackets: boolean = true): Logger {
+    const formattedPrefix = autoBrackets ? `[${prefix}] ` : prefix;
+    const logger = this.loggerInstance().prefix(formattedPrefix);
+
+    return logger;
+  }
+
+  static async mediathekViewWebApi(): Promise<MediathekViewWebApi> {
+    return this.singleton(MediathekViewWebApi, async () => {
+      const searchEngine = await InstanceProvider.entrySearchEngine();
       return new MediathekViewWebApi(searchEngine);
     });
   }
 
-  static mediathekViewWebRestApi(): MediathekViewWebRestApi {
-    return this.singleton(MediathekViewWebRestApi, () => {
-      const api = this.mediathekViewWebApi();
-      const logger = this.logger.prefix('[REST] ');
+  static async mediathekViewWebRestApi(): Promise<MediathekViewWebRestApi> {
+    return this.singleton(MediathekViewWebRestApi, async () => {
+      const api = await this.mediathekViewWebApi();
+      const logger = this.logger(REST_API_LOG);
 
       return new MediathekViewWebRestApi(api, logger);
     });
   }
 
-  static entriesSaver(): EntriesSaver {
-    return this.singleton(EntriesSaver, () => {
-      const entryRepository = InstanceProvider.entryRepository();
-      const queueProvider = InstanceProvider.queueProvider();
-      const logger = this.logger.prefix(`${ENTRIES_SAVER_LOG} `);
+  static async entriesSaverService(): Promise<EntriesSaverService> {
+    return this.singleton(EntriesSaverService, async () => {
+      const entryRepository = await InstanceProvider.entryRepository();
+      const queueProvider = await InstanceProvider.queueProvider();
+      const logger = this.logger(ENTRIES_SAVER_SERVICE_LOG);
 
-      return new EntriesSaver(entryRepository, queueProvider, logger);
+      return new EntriesSaverService(entryRepository, queueProvider, logger);
     });
   }
 
-  static entriesIndexer(): EntriesIndexer {
-    return this.singleton(EntriesIndexer, () => {
-      const aggregatedEntryRepository = InstanceProvider.aggregatedEntryRepository();
-      const searchEngine = InstanceProvider.entrySearchEngine();
-      const queueProvider = InstanceProvider.queueProvider();
-      const logger = this.logger.prefix(`${ENTRIES_INDEXER_LOG} `);
+  static async entriesIndexerService(): Promise<EntriesIndexerService> {
+    return this.singleton(EntriesIndexerService, async () => {
+      const aggregatedEntryRepository = await InstanceProvider.aggregatedEntryRepository();
+      const searchEngine = await InstanceProvider.entrySearchEngine();
+      const queueProvider = await InstanceProvider.queueProvider();
+      const logger = this.logger(ENTRIES_INDEXER_SERVICE_LOG);
 
-      return new EntriesIndexer(aggregatedEntryRepository, searchEngine, queueProvider, logger);
+      return new EntriesIndexerService(aggregatedEntryRepository, searchEngine, queueProvider, logger);
+    });
+  }
+
+  static async apiService(): Promise<ApiService> {
+    return this.singleton(ApiService, async () => {
+      const restApi = await this.mediathekViewWebRestApi();
+      const logger = this.logger(API_SERVICE_LOG);
+
+      return new ApiService(restApi, logger);
     });
   }
 
   static coreLogger(): Logger {
-    return this.singleton('appLogger', () => {
-      const logger = this.logger.prefix(`${CORE_LOG} `);
+    return this.singleton('coreLogger', () => {
+      const logger = this.logger(CORE_LOG);
       return logger;
     });
   }
 
   static redisProvider(): RedisProvider {
-    return this.singleton(getRedisProvider, () => getRedisProvider((scope) => this.newRedis(scope, false)));
+    return this.singleton(getRedisProvider, () => getRedisProvider(async (scope) => this.newRedis(scope)));
   }
 
-  static redis(): Redis {
-    return this.singleton(RedisClient, () => this.newRedis('MAIN', true));
+  static async redis(): Promise<Redis> {
+    return this.singleton(RedisClient, async () => this.newRedis('MAIN'));
   }
 
-  static elasticsearch(): ElasticsearchClient {
-    return this.singleton(ElasticsearchClient, () => {
-      const logger = this.logger.prefix(`${ELASTICSEARCH_LOG} `);
+  static async elasticsearch(): Promise<ElasticsearchClient> {
+    return this.singleton(ElasticsearchClient, async () => {
+      const logger = this.logger(ELASTICSEARCH_LOG);
       const logAdapter = getElasticsearchLogAdapter(logger);
 
       const elasticsearchClient = new ElasticsearchClient({
@@ -226,13 +227,15 @@ export class InstanceProvider {
 
       this.disposer.addDisposeTasks(() => elasticsearchClient.close());
 
+      await this.connect('elasticsearch', async () => await elasticsearchClient.ping({ requestTimeout: 500 }) as Promise<void>, logger);
+
       return elasticsearchClient;
     });
   }
 
-  static mongo(): Mongo.MongoClient {
-    return this.singleton(Mongo.MongoClient, () => {
-      const logger = this.logger.prefix(`${MONGO_LOG} `);
+  static async mongo(): Promise<Mongo.MongoClient> {
+    return this.singleton(Mongo.MongoClient, async () => {
+      const logger = this.logger(MONGO_LOG);
       const logFunction = getMongoLogAdapter(logger);
 
       Mongo.Logger.setCurrentLogger(logFunction);
@@ -247,43 +250,45 @@ export class InstanceProvider {
 
       this.disposer.addDisposeTasks(async () => await mongoClient.close());
 
+      await this.connect('mongo', async () => await mongoClient.connect(), logger);
+
       return mongoClient;
     });
   }
 
-  static database(): Mongo.Db {
-    return this.singleton(Mongo.Db, () => {
-      const mongo = this.mongo();
+  static async database(): Promise<Mongo.Db> {
+    return this.singleton(Mongo.Db, async () => {
+      const mongo = await this.mongo();
       return mongo.db(MONGO_DATABASE_NAME);
     });
   }
 
-  static entriesCollection(): Mongo.Collection<MongoDocument<Entry>> {
+  static async entriesCollection(): Promise<Mongo.Collection<MongoDocument<Entry>>> {
     return this.collection(MONGO_ENTRIES_COLLECTION_NAME);
   }
 
-  static filmlistImportCollection(): Mongo.Collection<MongoDocument<FilmlistImport>> {
+  static async filmlistImportCollection(): Promise<Mongo.Collection<MongoDocument<FilmlistImport>>> {
     return this.collection(FILMLIST_IMPORTS_COLLECTION_NAME);
   }
 
-  static collection(name: string): Mongo.Collection {
-    return this.singleton(`mongo-collection-${name}`, () => {
-      const database = this.database();
+  static async collection(name: string): Promise<Mongo.Collection> {
+    return this.singleton(`mongo-collection-${name}`, async () => {
+      const database = await this.database();
       return database.collection(name);
     });
   }
 
-  static datastoreFactory(): DatastoreFactory {
-    return this.singleton(RedisDatastoreFactory, () => {
-      const redis = this.redis();
+  static async datastoreFactory(): Promise<DatastoreFactory> {
+    return this.singleton(RedisDatastoreFactory, async () => {
+      const redis = await this.redis();
       return new RedisDatastoreFactory(redis);
     });
   }
 
-  static lockProvider(): LockProvider {
-    return this.singleton(RedisLockProvider, () => {
-      const redis = this.redis();
-      const logger = this.logger.prefix(`${LOCK_LOG} `);
+  static async lockProvider(): Promise<LockProvider> {
+    return this.singleton(RedisLockProvider, async () => {
+      const redis = await this.redis();
+      const logger = this.logger(LOCK_LOG);
 
       return new RedisLockProvider(redis, logger);
     });
@@ -293,68 +298,71 @@ export class InstanceProvider {
     return this.singleton(MediathekViewWebVerteilerFilmlistRepository, () => new MediathekViewWebVerteilerFilmlistRepository(MEDIATHEKVIEWWEB_VERTEILER_URL));
   }
 
-  static distributedLoopProvider(): DistributedLoopProvider {
-    return this.singleton(DistributedLoopProvider, () => {
-      const lockProvider = this.lockProvider();
-      const logger = this.logger.prefix(`${DISTRIBUTED_LOOP_LOG} `);
+  static async distributedLoopProvider(): Promise<DistributedLoopProvider> {
+    return this.singleton(DistributedLoopProvider, async () => {
+      const lockProvider = await this.lockProvider();
+      const logger = this.logger(DISTRIBUTED_LOOP_LOG);
 
       return new DistributedLoopProvider(lockProvider, logger);
     });
   }
 
-  static queueProvider(): QueueProvider {
-    return this.singleton(RedisQueueProvider, () => {
-      const redis = this.redis();
+  static async queueProvider(): Promise<QueueProvider> {
+    return this.singleton(RedisQueueProvider, async () => {
+      const redis = await this.redis();
       const redisProvider = this.redisProvider();
-      const lockProvider = this.lockProvider();
-      const distributedLoopProvider = this.distributedLoopProvider();
-      const queue = new RedisQueueProvider(redis, redisProvider, lockProvider, distributedLoopProvider, this.logger, QUEUE_LOG);
+      const lockProvider = await this.lockProvider();
+      const distributedLoopProvider = await this.distributedLoopProvider();
+      const logger = this.logger(QUEUE_LOG);
 
+      const queue = new RedisQueueProvider(redis, redisProvider, lockProvider, distributedLoopProvider, logger);
       return queue;
     });
   }
 
-  static entriesImporter(): EntriesImporter {
-    return this.singleton(EntriesImporter, () => {
-      const queueProvider = this.queueProvider();
-      const logger = this.logger.prefix(`${ENTRIES_IMPORTER_LOG} `);
-      const source = InstanceProvider.filmlistEntrySource();
+  static async entriesImporterService(): Promise<EntriesImporterService> {
+    return this.singleton(EntriesImporterService, async () => {
+      const queueProvider = await this.queueProvider();
+      const logger = this.logger(ENTRIES_IMPORTER_SERVICE_LOG);
+      const source = await InstanceProvider.filmlistEntrySource();
 
-      return new EntriesImporter(queueProvider, logger, [source]);
+      return new EntriesImporterService(queueProvider, logger, [source]);
     });
   }
 
-  static entryRepository(): EntryRepository {
-    return this.singleton(MongoEntryRepository, () => {
-      const collection = this.entriesCollection();
+  static async entryRepository(): Promise<EntryRepository> {
+    return this.singleton(MongoEntryRepository, async () => {
+      const collection = await this.entriesCollection();
       return new MongoEntryRepository(collection);
     });
   }
 
-  static filmlistImportRepository(): FilmlistImportRepository {
-    return this.singleton(MongoFilmlistImportRepository, () => {
-      const collection = this.filmlistImportCollection();
+  static async filmlistImportRepository(): Promise<FilmlistImportRepository> {
+    return this.singleton(MongoFilmlistImportRepository, async () => {
+      const collection = await this.filmlistImportCollection();
       return new MongoFilmlistImportRepository(collection);
     });
   }
 
-  static aggregatedEntryRepository(): AggregatedEntryRepository {
-    return this.singleton(NonWorkingAggregatedEntryRepository, () => {
-      const entryRepository = this.entryRepository();
+  static async aggregatedEntryRepository(): Promise<AggregatedEntryRepository> {
+    return this.singleton(NonWorkingAggregatedEntryRepository, async () => {
+      const entryRepository = await this.entryRepository();
       return new NonWorkingAggregatedEntryRepository(entryRepository);
     });
   }
 
-  static entrySearchEngine(): SearchEngine<AggregatedEntry> {
-    return this.singleton(ElasticsearchSearchEngine, () => {
-      const elasticsearch = this.elasticsearch();
+  static async entrySearchEngine(): Promise<SearchEngine<AggregatedEntry>> {
+    return this.singleton(ElasticsearchSearchEngine, async () => {
+      const elasticsearch = await this.elasticsearch();
       const converter = this.elasticsearchConverter();
-      const lockProvider = this.lockProvider();
-      const logger = this.logger.prefix(`${SEARCH_ENGINE_LOG} `);
+      const lockProvider = await this.lockProvider();
+      const logger = this.logger(SEARCH_ENGINE_LOG);
 
       const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
 
       this.disposer.addDisposeTasks(async () => await elasticsearchSearchEngine.dispose());
+
+      await elasticsearchSearchEngine.initialize();
 
       return elasticsearchSearchEngine;
     });
@@ -380,26 +388,26 @@ export class InstanceProvider {
     });
   }
 
-  static filmlistEntrySource(): FilmlistEntrySource {
-    return this.singleton(FilmlistEntrySource, () => {
-      const filmlistImportRepository = this.filmlistImportRepository();
-      const queueProvider = this.queueProvider();
-      const logger = this.logger.prefix(`${FILMLIST_ENTRY_SOURCE} `);
+  static async filmlistEntrySource(): Promise<FilmlistEntrySource> {
+    return this.singleton(FilmlistEntrySource, async () => {
+      const filmlistImportRepository = await this.filmlistImportRepository();
+      const queueProvider = await this.queueProvider();
+      const logger = this.logger(FILMLIST_ENTRY_SOURCE);
 
       return new FilmlistEntrySource(filmlistImportRepository, queueProvider, logger);
     });
   }
 
-  static filmlistManager(): FilmlistManager {
-    return this.singleton(FilmlistManager, () => {
-      const datastoreFactory = this.datastoreFactory();
-      const filmlistImportRepository = this.filmlistImportRepository();
+  static async filmlistManagerService(): Promise<FilmlistManagerService> {
+    return this.singleton(FilmlistManagerService, async () => {
+      const datastoreFactory = await this.datastoreFactory();
+      const filmlistImportRepository = await this.filmlistImportRepository();
       const filmlistRepository = this.filmlistRepository();
-      const distributedLoopProvider = this.distributedLoopProvider();
-      const queueProvider = this.queueProvider();
-      const logger = this.logger.prefix(`${FILMLIST_MANAGER_LOG} `);
+      const distributedLoopProvider = await this.distributedLoopProvider();
+      const queueProvider = await this.queueProvider();
+      const logger = this.logger(FILMLIST_MANAGER_SERVICE_LOG);
 
-      return new FilmlistManager(datastoreFactory, filmlistImportRepository, filmlistRepository, distributedLoopProvider, queueProvider, logger);
+      return new FilmlistManagerService(datastoreFactory, filmlistImportRepository, filmlistRepository, distributedLoopProvider, queueProvider, logger);
     });
   }
 }

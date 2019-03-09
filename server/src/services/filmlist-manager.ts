@@ -1,24 +1,24 @@
-import { AsyncEnumerable } from '../../common/enumerable';
-import { Logger } from '../../common/logger';
-import { AnyIterable, currentTimestamp, now } from '../../common/utils';
-import { config } from '../../config';
-import { DatastoreFactory, DataType, Key } from '../../datastore';
-import { DistributedLoopProvider } from '../../distributed-loop';
-import { keys } from '../../keys';
-import { Filmlist } from '../../model/filmlist';
-import { FilmlistImportQueueItem, FilmlistImportWithPartialId } from '../../model/filmlist-import';
-import { Queue, QueueProvider } from '../../queue';
-import { FilmlistImportRepository } from '../../repository/filmlists-import-repository';
-import { Service, ServiceMetric } from '../../service';
-import { ServiceBase } from '../../service-base';
-import { FilmlistRepository } from './repository';
+import { AsyncEnumerable } from '../common/enumerable';
+import { Logger } from '../common/logger';
+import { AnyIterable, currentTimestamp, now } from '../common/utils';
+import { config } from '../config';
+import { DatastoreFactory, DataType, Key } from '../datastore';
+import { DistributedLoopProvider } from '../distributed-loop';
+import { FilmlistRepository } from '../entry-source/filmlist/repository';
+import { keys } from '../keys';
+import { Filmlist } from '../model/filmlist';
+import { FilmlistImportQueueItem, FilmlistImportWithPartialId } from '../model/filmlist-import';
+import { Queue, QueueProvider } from '../queue';
+import { FilmlistImportRepository } from '../repository/filmlists-import-repository';
+import { Service, ServiceMetric } from './service';
+import { ServiceBase } from './service-base';
 
-const LATEST_CHECK_INTERVAL = config.importer.latestCheckInterval * 1000;
-const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckInterval * 1000;
+const LATEST_CHECK_INTERVAL = config.importer.latestCheckIntervalMinutes * 60 * 1000;
+const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckIntervalMinutes * 60 * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
 const MAX_AGE_MILLISECONDS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
-export class FilmlistManager extends ServiceBase implements Service {
+export class FilmlistManagerService extends ServiceBase implements Service {
   private readonly datastoreFactory: DatastoreFactory;
   private readonly filmlistImportRepository: FilmlistImportRepository;
   private readonly filmlistRepository: FilmlistRepository;

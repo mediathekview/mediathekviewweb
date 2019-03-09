@@ -7,13 +7,13 @@ import { timeout } from '../common/utils';
 import { keys } from '../keys';
 import { Job, Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repository/entry-repository';
-import { Service, ServiceMetric } from '../service';
-import { ServiceBase } from '../service-base';
+import { Service, ServiceMetric } from './service';
+import { ServiceBase } from './service-base';
 
 const BATCH_SIZE = 250;
 const BUFFER_SIZE = 3;
 
-export class EntriesSaver extends ServiceBase implements Service {
+export class EntriesSaverService extends ServiceBase implements Service {
   private readonly entryRepository: EntryRepository;
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
