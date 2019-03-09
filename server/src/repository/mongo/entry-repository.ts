@@ -5,6 +5,11 @@ import { MongoBaseRepository } from './base-repository';
 import { MongoDocument, toMongoDocument } from './mongo-document';
 import { TypedMongoFilter } from './mongo-query';
 
+const indexes: Mongo.IndexSpecification[] = [
+  { key: { [Field.FirstSeen]: 1 } },
+  { key: { [Field.LastSeen]: 1 } }
+];
+
 export class MongoEntryRepository implements EntryRepository {
   private readonly collection: Mongo.Collection<MongoDocument<Entry>>;
   private readonly baseRepository: MongoBaseRepository<Entry>;
@@ -12,13 +17,10 @@ export class MongoEntryRepository implements EntryRepository {
   constructor(collection: Mongo.Collection<MongoDocument<Entry>>) {
     this.collection = collection;
     this.baseRepository = new MongoBaseRepository(collection);
+  }
 
-    const indexes: Mongo.IndexSpecification[] = [
-      { key: { [Field.FirstSeen]: 1 } },
-      { key: { [Field.LastSeen]: 1 } }
-    ];
-
-    this.collection.createIndexes(indexes, {}).catch(console.error);
+  async initialize(): Promise<void> {
+    await this.collection.createIndexes(indexes, {});
   }
 
   async save(entry: Entry): Promise<void> {
@@ -35,8 +37,16 @@ export class MongoEntryRepository implements EntryRepository {
     return this.baseRepository.load(id);
   }
 
-  loadMany(ids: string[]): AsyncIterable<Entry> {
-    return this.baseRepository.loadManyById(ids);
+  async *loadMany(ids: string[]): AsyncIterable<Entry> {
+    yield* this.baseRepository.loadManyById(ids);
+  }
+
+  async *added(timestamp: number): AsyncIterable<Entry> {
+    throw new Error("Method not implemented.");
+  }
+
+  async *removed(timestamp: number): AsyncIterable<string> {
+    throw new Error("Method not implemented.");
   }
 
   async drop(): Promise<void> {

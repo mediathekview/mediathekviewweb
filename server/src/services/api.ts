@@ -1,20 +1,21 @@
 import * as Http from 'http';
 import * as Net from 'net';
-import { MediathekViewWebRestApi } from '../api/rest-api';
+import { RestApi } from '../api/rest-api';
 import { Logger } from '../common/logger';
 import { cancelableTimeout, Timer } from '../common/utils';
 import { CancellationToken } from '../common/utils/cancellation-token';
 import { config } from '../config';
+import { validateSearchQuery, validateTextSearchQuery } from '../validator';
 import { Service, ServiceMetric } from './service';
 import { ServiceBase } from './service-base';
 
 export class ApiService extends ServiceBase implements Service {
-  private readonly restApi: MediathekViewWebRestApi;
+  private readonly restApi: RestApi;
   private readonly logger: Logger;
 
   metrics: ReadonlyArray<ServiceMetric>;
 
-  constructor(restApi: MediathekViewWebRestApi, logger: Logger) {
+  constructor(restApi: RestApi, logger: Logger) {
     super();
 
     this.restApi = restApi;
@@ -31,6 +32,8 @@ export class ApiService extends ServiceBase implements Service {
       this.restApi.handleRequest(request, response);
     });
 
+    this.expose();
+
     this.logger.info(`listen on port ${config.api.port}`);
     server.listen(config.api.port);
 
@@ -38,6 +41,13 @@ export class ApiService extends ServiceBase implements Service {
 
     this.logger.info('closing http server');
     await this.closeServer(server, sockets, 3000);
+  }
+
+  private expose(): void {
+    if (config.api.search) {
+      this.restApi.registerPostRoute('/entries/search', validateSearchQuery, async (parameters) => this.api.search(parameters));
+      this.restApi.registerPostRoute('/entries/search/text', validateTextSearchQuery, async (parameters) => this.api.textSearch(parameters));
+    }
   }
 
   private async closeServer(server: Http.Server, sockets: Set<Net.Socket>, timeout: number): Promise<void> {

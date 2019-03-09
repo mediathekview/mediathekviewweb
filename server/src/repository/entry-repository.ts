@@ -7,5 +7,8 @@ export interface EntryRepository {
   load(id: string): Promise<Entry | undefined>;
   loadMany(ids: string[]): AsyncIterable<Entry>;
 
+  added(timestamp: number): AsyncIterable<Entry>;
+  removed(timestamp: number): AsyncIterable<string>;
+
   drop(): Promise<void>;
 }

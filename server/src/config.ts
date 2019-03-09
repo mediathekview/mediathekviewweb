@@ -1,4 +1,4 @@
-import { LogLevel } from "./common/logger";
+import { LogLevel } from './common/logger';
 
 type Config = {
   verbosity: number,
@@ -10,7 +10,8 @@ type Config = {
     indexer: boolean
   },
   api: {
-    port: number
+    port: number,
+    search: boolean
   },
   elasticsearch: {
     host: string,
@@ -45,7 +46,8 @@ export const config: Config = {
     indexer: boolean('SERVICE_INDEXER', false)
   },
   api: {
-    port: positiveInteger('API_PORT', 8080)
+    port: positiveInteger('API_PORT', 8080),
+    search: boolean('API_SEARCH', true),
   },
   elasticsearch: {
     host: string('ELASTICSEARCH_HOST', 'localhost'),

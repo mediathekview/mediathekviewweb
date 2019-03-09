@@ -1,0 +1,323 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+        "Aggregation": {
+            "enum": [
+                "average",
+                "length",
+                "max",
+                "median",
+                "min",
+                "sum"
+            ],
+            "title": "Aggregation",
+            "type": "string"
+        },
+        "DateRounding": {
+            "enum": [
+                "days",
+                "hours",
+                "minutes",
+                "months",
+                "seconds",
+                "weeks",
+                "years"
+            ],
+            "title": "DateRounding",
+            "type": "string"
+        },
+        "Field": {
+            "enum": [
+                "channel",
+                "date",
+                "description",
+                "duration",
+                "firstSeen",
+                "id",
+                "lastSeen",
+                "media.quality",
+                "media.quality.bitrate",
+                "media.quality.resolution.height",
+                "media.quality.resolution.width",
+                "media.size",
+                "media.type",
+                "media.url",
+                "time",
+                "timestamp",
+                "title",
+                "topic",
+                "website"
+            ],
+            "title": "Field",
+            "type": "string"
+        },
+        "Operator": {
+            "enum": [
+                "and",
+                "or"
+            ],
+            "title": "Operator",
+            "type": "string"
+        },
+        "Order": {
+            "enum": [
+                "ascending",
+                "descending"
+            ],
+            "title": "Order",
+            "type": "string"
+        },
+        "QueryBody": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+                "bool": {
+                    "additionalProperties": false,
+                    "minProperties": 1,
+                    "properties": {
+                        "filter": {
+                            "items": {
+                                "$ref": "#/definitions/QueryBody"
+                            },
+                            "title": "filter",
+                            "type": "array"
+                        },
+                        "must": {
+                            "items": {
+                                "$ref": "#/definitions/QueryBody"
+                            },
+                            "title": "must",
+                            "type": "array"
+                        },
+                        "not": {
+                            "items": {
+                                "$ref": "#/definitions/QueryBody"
+                            },
+                            "title": "not",
+                            "type": "array"
+                        },
+                        "should": {
+                            "items": {
+                                "$ref": "#/definitions/QueryBody"
+                            },
+                            "title": "should",
+                            "type": "array"
+                        }
+                    },
+                    "title": "bool",
+                    "type": "object"
+                },
+                "ids": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "title": "ids",
+                    "type": "array"
+                },
+                "matchAll": {
+                    "properties": {
+                    },
+                    "title": "matchAll",
+                    "type": "object"
+                },
+                "range": {
+                    "additionalProperties": false,
+                    "minProperties": 2,
+                    "properties": {
+                        "field": {
+                            "$ref": "#/definitions/Field",
+                            "title": "field"
+                        },
+                        "gt": {
+                            "$ref": "#/definitions/RangeQueryValue",
+                            "title": "gt"
+                        },
+                        "gte": {
+                            "$ref": "#/definitions/RangeQueryValue",
+                            "title": "gte"
+                        },
+                        "lt": {
+                            "$ref": "#/definitions/RangeQueryValue",
+                            "title": "lt"
+                        },
+                        "lte": {
+                            "$ref": "#/definitions/RangeQueryValue",
+                            "title": "lte"
+                        }
+                    },
+                    "required": [
+                        "field"
+                    ],
+                    "title": "range",
+                    "type": "object"
+                },
+                "regex": {
+                    "additionalProperties": false,
+                    "properties": {
+                        "expression": {
+                            "title": "expression",
+                            "type": "string"
+                        },
+                        "field": {
+                            "$ref": "#/definitions/Field",
+                            "title": "field"
+                        }
+                    },
+                    "required": [
+                        "expression",
+                        "field"
+                    ],
+                    "title": "regex",
+                    "type": "object"
+                },
+                "term": {
+                    "additionalProperties": false,
+                    "properties": {
+                        "field": {
+                            "$ref": "#/definitions/Field",
+                            "title": "field"
+                        },
+                        "value": {
+                            "$ref": "#/definitions/TermQueryValue",
+                            "title": "value"
+                        }
+                    },
+                    "required": [
+                        "field",
+                        "value"
+                    ],
+                    "title": "term",
+                    "type": "object"
+                },
+                "text": {
+                    "additionalProperties": false,
+                    "properties": {
+                        "fields": {
+                            "items": {
+                                "enum": [
+                                    "channel",
+                                    "date",
+                                    "description",
+                                    "duration",
+                                    "firstSeen",
+                                    "id",
+                                    "lastSeen",
+                                    "media.quality",
+                                    "media.quality.bitrate",
+                                    "media.quality.resolution.height",
+                                    "media.quality.resolution.width",
+                                    "media.size",
+                                    "media.type",
+                                    "media.url",
+                                    "time",
+                                    "timestamp",
+                                    "title",
+                                    "topic",
+                                    "website"
+                                ],
+                                "type": "string"
+                            },
+                            "minItems": 1,
+                            "title": "fields",
+                            "type": "array"
+                        },
+                        "operator": {
+                            "$ref": "#/definitions/Operator",
+                            "title": "operator"
+                        },
+                        "text": {
+                            "title": "text",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "fields",
+                        "operator",
+                        "text"
+                    ],
+                    "title": "text",
+                    "type": "object"
+                }
+            },
+            "title": "QueryBody",
+            "type": "object"
+        },
+        "RangeQueryValue": {
+            "additionalProperties": false,
+            "properties": {
+                "dateRounding": {
+                    "$ref": "#/definitions/DateRounding",
+                    "title": "dateRounding"
+                },
+                "value": {
+                    "title": "value",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "value"
+            ],
+            "title": "RangeQueryValue",
+            "type": "object"
+        },
+        "TermQueryValue": {
+            "title": "TermQueryValue",
+            "type": [
+                "string",
+                "number",
+                "boolean"
+            ]
+        }
+    },
+    "properties": {
+        "body": {
+            "$ref": "#/definitions/QueryBody",
+            "title": "body"
+        },
+        "cursor": {
+            "title": "cursor",
+            "type": "string"
+        },
+        "limit": {
+            "title": "limit",
+            "type": "integer"
+        },
+        "skip": {
+            "title": "skip",
+            "type": "integer"
+        },
+        "sort": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "aggregation": {
+                        "$ref": "#/definitions/Aggregation",
+                        "title": "aggregation"
+                    },
+                    "field": {
+                        "$ref": "#/definitions/Field",
+                        "title": "field"
+                    },
+                    "order": {
+                        "$ref": "#/definitions/Order",
+                        "title": "order"
+                    }
+                },
+                "required": [
+                    "field",
+                    "order"
+                ],
+                "type": "object"
+            },
+            "title": "sort",
+            "type": "array"
+        }
+    },
+    "required": [
+        "body"
+    ],
+    "type": "object"
+}
+

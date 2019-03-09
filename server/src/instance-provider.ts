@@ -3,7 +3,7 @@ import * as RedisClient from 'ioredis';
 import { Redis } from 'ioredis'; // tslint:disable-line: no-duplicate-imports
 import * as Mongo from 'mongodb';
 import { MediathekViewWebApi } from './api/api';
-import { MediathekViewWebRestApi } from './api/rest-api';
+import { RestApi } from './api/rest-api';
 import { AsyncDisposer } from './common/disposable';
 import { LockProvider } from './common/lock';
 import { Logger, LogLevel } from './common/logger';
@@ -161,12 +161,12 @@ export class InstanceProvider {
     });
   }
 
-  static async mediathekViewWebRestApi(): Promise<MediathekViewWebRestApi> {
-    return this.singleton(MediathekViewWebRestApi, async () => {
+  static async restApi(): Promise<RestApi> {
+    return this.singleton(RestApi, async () => {
       const api = await this.mediathekViewWebApi();
       const logger = this.logger(REST_API_LOG);
 
-      return new MediathekViewWebRestApi(api, logger);
+      return new RestApi(api, logger);
     });
   }
 
@@ -193,7 +193,7 @@ export class InstanceProvider {
 
   static async apiService(): Promise<ApiService> {
     return this.singleton(ApiService, async () => {
-      const restApi = await this.mediathekViewWebRestApi();
+      const restApi = await this.restApi();
       const logger = this.logger(API_SERVICE_LOG);
 
       return new ApiService(restApi, logger);
@@ -333,7 +333,11 @@ export class InstanceProvider {
   static async entryRepository(): Promise<EntryRepository> {
     return this.singleton(MongoEntryRepository, async () => {
       const collection = await this.entriesCollection();
-      return new MongoEntryRepository(collection);
+      const repository = new MongoEntryRepository(collection);
+
+      await repository.initialize();
+
+      return repository;
     });
   }
 

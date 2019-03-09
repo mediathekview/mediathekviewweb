@@ -2,27 +2,24 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as Koa from 'koa';
 import * as KoaRouter from 'koa-router';
-import { createErrorResponse, createResultResponse } from '../common/api/rest';
+import { createErrorResponse, createResultResponse } from '../common/api/response';
 import { Logger } from '../common/logger';
 import { precisionRound, Timer } from '../common/utils';
 import { readStream } from '../utils';
-import { validateSearchQuery, validateTextSearchQuery, ValidationFunction } from '../validator';
-import { MediathekViewWebApi } from './api';
+import { ValidationFunction } from '../validator';
 
 type RequestHandler = (request: IncomingMessage | Http2ServerRequest, response: ServerResponse | Http2ServerResponse) => void;
-type FunctionHandler<TBody, TResult> = (request: Koa.Request, response: Koa.Response, body: TBody) => Promise<TResult>;
+type FunctionHandler<TParameters, TResult> = (parameters: TParameters) => Promise<TResult>;
 
 const PREFIX = '/api/v2';
 
-export class MediathekViewWebRestApi {
-  private readonly api: MediathekViewWebApi;
+export class RestApi {
   private readonly logger: Logger;
   private readonly koa: Koa<void, void>;
   private readonly router: KoaRouter<void, void>;
   private readonly requestHandler: RequestHandler;
 
-  constructor(api: MediathekViewWebApi, logger: Logger) {
-    this.api = api;
+  constructor(logger: Logger) {
     this.logger = logger;
 
     this.koa = new Koa();
@@ -44,18 +41,18 @@ export class MediathekViewWebRestApi {
     this.koa.use(responseTimeMiddleware);
     this.koa.use(this.router.routes());
     this.koa.use(this.router.allowedMethods());
-
-    this.initializeRoutes();
   }
 
-  private initializeRoutes(): void {
-    this.registerPostRoute('/entries/search', async (context) => await this.handle(context, validateSearchQuery, async (_request, _response, body) => this.api.search(body)));
-    this.registerPostRoute('/entries/search/text', async (context) => await this.handle(context, validateTextSearchQuery, async (_request, _response, body) => this.api.textSearch(body)));
+  registerGetRoute<TParameters, TResult>(path: string, validator: ValidationFunction<TParameters>, handler: FunctionHandler<TParameters, TResult>): void {
+    this.router.get(path, async (context, next) => {
+      await this.handle(context, validator, handler);
+      return next();
+    });
   }
 
-  private registerPostRoute(path: string, handler: (context: Koa.Context) => Promise<void>): void {
+  registerPostRoute<TParameters, TResult>(path: string, validator: ValidationFunction<TParameters>, handler: FunctionHandler<TParameters, TResult>): void {
     this.router.post(path, async (context, next) => {
-      await handler(context);
+      await this.handle(context, validator, handler);
       return next();
     });
   }
@@ -63,9 +60,20 @@ export class MediathekViewWebRestApi {
   private async handle<TBody, TResult>(context: Koa.Context, validator: ValidationFunction<TBody>, handler: FunctionHandler<TBody, TResult>): Promise<void> {
     const { request, response } = context;
 
-    let body: unknown;
+    let parameters: unknown;
     try {
-      body = await readJsonBody(request);
+      switch (request.method) {
+        case 'get':
+          parameters = request.query;
+          break;
+
+        case 'post':
+          parameters = await readJsonBody(request);
+          break;
+
+        default:
+          throw new Error('method not supported');
+      }
     }
     catch (error) {
       response.status = 400;
@@ -73,20 +81,20 @@ export class MediathekViewWebRestApi {
       return;
     }
 
-    if (validator(body)) {
+    if (validator(parameters)) {
       try {
-        const result = await handler(request, response, body);
+        const result = await handler(parameters);
         response.body = createResultResponse(result);
       }
       catch (error) {
-        console.error(error);
+        this.logger.error(error as Error);
         response.status = 500;
         response.body = createErrorResponse('server error', { name: (error as Error).name, message: (error as Error).message });
       }
     }
     else {
       response.status = 400;
-      response.body = createErrorResponse('invalid body', validator.errors);
+      response.body = createErrorResponse('invalid parameters', validator.errors);
     }
   }
 }
