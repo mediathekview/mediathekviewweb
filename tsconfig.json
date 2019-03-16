@@ -1,31 +1,33 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "removeComments": true,
     "declaration": false,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["esnext"],
     "newLine": "lf",
     "pretty": true,
-    "sourceMap": true,
+    "removeComments": true,
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
+    "sourceMap": true,
 
+    "downlevelIteration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "downlevelIteration": true,
 
     "alwaysStrict": true,
     "strict": true,
+    "strictBindCallApply": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
 
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noUnusedLocals": false,
-    "noUnusedParameters": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false
+    "noUnusedParameters": true
   }
 }

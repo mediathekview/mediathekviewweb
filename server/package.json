@@ -30,13 +30,13 @@
   "devDependencies": {
     "@types/elasticsearch": "^5.0.31",
     "@types/got": "^9.4.1",
-    "@types/ioredis": "^4.0.9",
+    "@types/ioredis": "^4.0.10",
     "@types/koa": "^2.0.48",
     "@types/koa-router": "^7.0.40",
     "@types/lzma-native": "^4.0.0",
-    "@types/mongodb": "^3.1.21",
+    "@types/mongodb": "^3.1.22",
     "@types/needle": "^2.0.4",
-    "@types/node": "^11.10.5",
+    "@types/node": "^11.11.3",
     "typescript": "^3.3.3333",
     "typescript-json-schema": "^0.36.0"
   }

@@ -4,24 +4,26 @@ services:
   redis:
     image: redis:5-alpine
     container_name: redis
-    tmpfs:
-      - /data
+#    tmpfs:
+#      - /data
+    volumes:
+      - ./redis.conf:/redis.conf
     ports:
       - "6379:6379"
-    command: ["--save", ""]
+    command: ["/redis.conf"]
 
   mongodb:
     image: mongo:4
     container_name: mongodb
-    tmpfs:
-      - /data/db
+#    tmpfs:
+#      - /data/db
     ports:
       - "27017:27017"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.2
     container_name: elasticsearch
-    tmpfs:
-      - /usr/share/elasticsearch/data/
+#    tmpfs:
+#      - /usr/share/elasticsearch/data/
     ports:
       - "9200:9200"

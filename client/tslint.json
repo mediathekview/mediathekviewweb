@@ -1,1 +1,65 @@
-../tslint.json
+{
+  "extends": "../tslint.json",
+  "rulesDirectory": ["codelyzer"],
+  "rules": {
+    "component-class-suffix": [true, "Component"],
+    "component-max-inline-declarations": true,
+    "component-selector": [true, "element", "app", "kebab-case"],
+
+    "contextual-decorator": true,
+    "contextual-lifecycle": true,
+
+    "directive-class-suffix": [true, "Directive"],
+    "directive-selector": [true, "attribute", "app", "camelCase"],
+
+    "i18n": [true, "check-id", "check-text"],
+    "import-destructuring-spacing": true,
+
+    "no-attribute-decorator": true,
+    "no-conflicting-lifecycle": true,
+    "no-forward-ref": true,
+    "no-host-metadata-property": true,
+    "no-input-prefix": true,
+    "no-input-rename": true,
+    "no-inputs-metadata-property": true,
+    "no-lifecycle-call": true,
+    "no-output-named-after-standard-event": true,
+    "no-output-native": true,
+    "no-output-on-prefix": true,
+    "no-output-rename": true,
+    "no-outputs-metadata-property": true,
+    "no-pipe-impure": true,
+    "no-queries-metadata-property": true,
+    "no-unused-css": true,
+
+    "pipe-prefix": true,
+    "prefer-inline-decorator": true,
+    "prefer-output-readonly": true,
+    "relative-url-prefix": true,
+
+    "template-accessibility-alt-text": true,
+    "template-accessibility-element-content": true,
+    "template-accessibility-label-for": true,
+    "template-accessibility-tabindex-no-positive": true,
+    "template-accessibility-table-scope": true,
+    "template-accessibility-valid-aria": true,
+    "template-banana-in-box": true,
+    "template-click-events-have-key-events": true,
+    "template-conditional-complexity": [true, 4],
+    "template-cyclomatic-complexity": [true, 5],
+    "template-i18n": true,
+    "template-mouse-events-have-key-events": true,
+    "template-no-any": true,
+    "template-no-autofocus": true,
+    "template-no-call-expression": true,
+    "template-no-distracting-elements": true,
+    "template-no-negated-async": true,
+    "template-use-track-by-function": true,
+
+    "use-component-selector": true,
+    "use-component-view-encapsulation": true,
+    "use-lifecycle-interface": true,
+    "use-pipe-decorator": true,
+    "use-pipe-transform-interface": true
+  }
+}
