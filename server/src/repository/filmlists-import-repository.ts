@@ -3,7 +3,7 @@ import { FilmlistImport, FilmlistImportWithPartialId } from '../model/filmlist-i
 export interface FilmlistImportRepository {
   insert(filmlistImport: FilmlistImportWithPartialId): Promise<FilmlistImport>;
 
-  setProcessedTimestamp(id: string, processedTime: number): Promise<void>;
+  setProcessed(id: string, data: { processedTimestamp: number, numberOfEntries: number }): Promise<void>;
 
   load(id: string): Promise<FilmlistImport>;
 

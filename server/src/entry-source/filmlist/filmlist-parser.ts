@@ -22,7 +22,7 @@ type Context = {
   lastTopic: string
 };
 
-const READ_SIZE = 50 * 1024; // 50 KB
+const READ_SIZE = 100 * 1024; // 100 KB
 const METADATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/g;
 

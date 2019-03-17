@@ -112,6 +112,7 @@ export class FilmlistManagerService extends ServiceBase implements Service {
     };
 
     const insertedFilmlistImport = await this.filmlistImportRepository.insert(filmlistImport);
+
     const filmlistImportQueueItem: FilmlistImportQueueItem = {
       filmlistImportId: insertedFilmlistImport.id
     };

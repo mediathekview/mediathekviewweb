@@ -3,8 +3,8 @@ import { Entry } from '../../common/model';
 import { currentTimestamp } from '../../common/utils';
 import { CancellationToken } from '../../common/utils/cancellation-token';
 import { keys } from '../../keys';
-import { FilmlistImport, FilmlistImportQueueItem } from '../../model/filmlist-import';
-import { QueueProvider } from '../../queue';
+import { FilmlistImportQueueItem } from '../../model/filmlist-import';
+import { Job, Queue, QueueProvider } from '../../queue';
 import { FilmlistImportRepository } from '../../repository/filmlists-import-repository';
 import { EntrySource } from '../entry-source';
 import { parseFilmlistResource } from './filmlist-parser';
@@ -22,47 +22,52 @@ export class FilmlistEntrySource implements EntrySource {
 
   async *getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
     const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
-    await importQueue.initialize();
 
-    const consumer = importQueue.getConsumer(cancellationToken);
+    try {
+      await importQueue.initialize();
 
-    for await (const job of consumer) {
-      const { data: filmlistImportQueueItem } = job;
+      const consumer = importQueue.getConsumer(cancellationToken);
 
-      try {
-        const filmlistImport = await this.filmlistImportRepository.load(filmlistImportQueueItem.filmlistImportId);
+      for await (const job of consumer) {
+        try {
+          yield* this.processFilmlistImport(job, importQueue, cancellationToken);
 
-        yield* this.processFilmlistImport(filmlistImport, cancellationToken);
-
-        if (cancellationToken.isSet) {
-          break;
+          if (cancellationToken.isSet) {
+            break;
+          }
         }
-
-        const now = currentTimestamp();
-
-        await this.filmlistImportRepository.setProcessedTimestamp(filmlistImport.id, now);
-        await importQueue.acknowledge(job);
-      }
-      catch (error) {
-        this.logger.error(error as Error);
+        catch (error) {
+          this.logger.error(error as Error);
+        }
       }
     }
-
-    await importQueue.dispose();
+    finally {
+      await importQueue.dispose();
+    }
   }
 
-  private async *processFilmlistImport(filmlistImport: FilmlistImport, cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
+  private async *processFilmlistImport(job: Job<FilmlistImportQueueItem>, importQueue: Queue<FilmlistImportQueueItem>, cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
+    const filmlistImportQueueItem = job.data;
+    const filmlistImport = await this.filmlistImportRepository.load(filmlistImportQueueItem.filmlistImportId);
+
     const date = new Date(filmlistImport.filmlist.timestamp);
     this.logger.info(`processing filmlist from ${date}`);
 
     const parsedFilmlistResource = parseFilmlistResource(filmlistImport.filmlist.resource, false);
+    let numberOfEntries = 0;
 
     for await (const { entries } of parsedFilmlistResource) { // tslint:disable-line: await-promise
+      numberOfEntries += entries.length;
       yield entries;
 
       if (cancellationToken.isSet) {
         break;
       }
     }
+
+    const processedTimestamp = currentTimestamp();
+
+    await this.filmlistImportRepository.setProcessed(filmlistImport.id, { processedTimestamp, numberOfEntries });
+    await importQueue.acknowledge(job);
   }
 }

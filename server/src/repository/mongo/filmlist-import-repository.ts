@@ -19,8 +19,13 @@ export class MongoFilmlistImportRepository implements FilmlistImportRepository {
     return this.baseRepository.insert(filmlistImport);
   }
 
-  async setProcessedTimestamp(id: string, processedTimestamp: number): Promise<void> {
-    const result = await this.collection.updateOne({ _id: stringToObjectIdOrString(id) }, { $set: { processedTimestamp } });
+  async setProcessed(id: string, { processedTimestamp, numberOfEntries }: { processedTimestamp: number, numberOfEntries: number }): Promise<void> {
+    const update: Partial<FilmlistImport> = {
+      processedTimestamp,
+      numberOfEntries
+    }
+
+    const result = await this.collection.updateOne({ _id: stringToObjectIdOrString(id) }, { $set: update });
 
     if (result.matchedCount == 0) {
       throw new Error('document not found');
@@ -32,6 +37,6 @@ export class MongoFilmlistImportRepository implements FilmlistImportRepository {
   }
 
   async hasFilmlist(filmlistId: string): Promise<boolean> {
-    return this.baseRepository.hasByFilter({ filmlistId });
+    return this.baseRepository.hasByFilter({ 'filmlist.id': filmlistId });
   }
 }

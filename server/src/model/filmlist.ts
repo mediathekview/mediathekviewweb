@@ -6,6 +6,5 @@ export type Filmlist = {
 
 export type FilmlistResource = {
   url: string,
-  timestamp: number,
   compressed: boolean
 };

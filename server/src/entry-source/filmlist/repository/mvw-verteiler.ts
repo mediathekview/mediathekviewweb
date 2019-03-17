@@ -41,7 +41,6 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
 
     const filmlistResource: FilmlistResource = {
       url: file.resource.uri,
-      timestamp,
       compressed: true
     };
 
@@ -58,7 +57,6 @@ export class MediathekViewWebVerteilerFilmlistRepository implements FilmlistRepo
       timestamp,
       resource: {
         url: file.resource.uri,
-        timestamp,
         compressed: true
       }
     };
