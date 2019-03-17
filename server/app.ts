@@ -159,6 +159,30 @@ const impressum = renderImpressum(config.contact);
     });
   });
 
+  app.post('/api/entries', async (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+
+    try {
+      const ids = JSON.parse(req.body);
+      const entries = searchEngine.getEntries(ids);
+
+      res.status(200).json({
+        result: {
+          results: entries
+        },
+        err: null
+      });
+
+      console.log(moment().format('HH:mm') + ' - entries api used');
+    }
+    catch (error) {
+      res.status(400).json({
+        result: null,
+        err: [error.message]
+      });
+    }
+  });
+
   app.post('/api/query', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
 
@@ -217,7 +241,7 @@ const impressum = renderImpressum(config.contact);
         });
       }
 
-      console.log(moment().format('HH:mm') + ' - api used');
+      console.log(moment().format('HH:mm') + ' - search api used');
     });
   });
 
