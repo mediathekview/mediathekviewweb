@@ -29,6 +29,6 @@
     "@types/lodash": "^4.14.122",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.2.10",
-    "typescript": "^3.1.6"
+    "typescript": "~3.1.6"
   }
 }
