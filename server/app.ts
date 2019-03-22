@@ -163,7 +163,7 @@ const impressum = renderImpressum(config.contact);
     res.header('Access-Control-Allow-Origin', '*');
 
     try {
-      const ids = JSON.parse(req.body);
+      const ids = req.body;
       const entries = searchEngine.getEntries(ids);
 
       res.status(200).json({
