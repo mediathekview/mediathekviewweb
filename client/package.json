@@ -24,9 +24,9 @@
   },
   "devDependencies": {
     "@types/bootstrap": "^3.3.42",
-    "@types/datatables.net": "^1.10.15",
+    "@types/datatables.net": "^1.10.17",
     "@types/jquery": "^3.3.29",
-    "@types/lodash": "^4.14.122",
+    "@types/lodash": "^4.14.123",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.2.10",
     "typescript": "~3.1.6"
