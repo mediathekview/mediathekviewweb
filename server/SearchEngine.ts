@@ -82,7 +82,7 @@ export default class SearchEngine {
   }
 
   async getEntries(ids: string[]): Promise<object[]> {
-    const response = await this.client.mget({ body: { ids } });
+    const response = await this.client.mget({ index: 'filmliste', type: 'entries', body: { ids } });
     const entries = response.docs.map((doc) => doc._source);
 
     return entries;
