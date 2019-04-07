@@ -94,7 +94,10 @@ export default class RSSFeedGenerator {
             description: item.description,
             url: item.url_video_hd || item.url_video,
             guid: item.id,
-            date: new Date(item.timestamp * 1000)
+            date: new Date(item.timestamp * 1000),
+            enclosure: {
+              url: item.url_video_hd || item.url_video
+            }
           });
         }
 
