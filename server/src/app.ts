@@ -1,9 +1,9 @@
 import './command-line-parser'; // tslint:disable-line: no-import-side-effect
+import { initializeSignals, requestShutdown, shutdownToken } from '@common-ts/server/process-shutdown';
 import { Logger } from './common/logger';
 import { AggregationMode, formatDuration, PeriodicSampler, Timer } from './common/utils';
 import { config } from './config';
 import { InstanceProvider } from './instance-provider';
-import { initializeSignals, requestShutdown, shutdownToken } from './process-shutdown';
 import { Service } from './services/service';
 
 type MicroService = {

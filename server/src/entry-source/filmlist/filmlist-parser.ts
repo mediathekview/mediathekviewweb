@@ -3,7 +3,7 @@ import { createSubtitle, createVideo, Entry } from '../../common/model';
 import { matchAll, zBase32Encode } from '../../common/utils';
 import { HttpClient } from '../../http';
 import { Filmlist, FilmlistResource } from '../../model/filmlist';
-import { AsyncStreamIterable, decompress } from '../../utils';
+import {  decompress, AsyncStreamIterable } from '../../utils';
 
 export type FilmlistParseResult = {
   filmlist: Filmlist,
