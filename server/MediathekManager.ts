@@ -45,7 +45,7 @@ export default class MediathekManager extends EventEmitter {
   getRandomFilmlisteMirror(callback) {
     this.stateEmitter.setState('step', 'getRandomFilmlisteMirror');
 
-    return callback(null, 'https://verteiler.mediathekviewweb.de/Filmliste-akt.xz');
+    return callback(null, 'https://liste.mediathekview.de/Filmliste-akt.xz');
 
     request.get('https://res.mediathekview.de/akt.xml', (err, response, body) => {
       if (err) {

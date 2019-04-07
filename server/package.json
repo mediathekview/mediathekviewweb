@@ -20,7 +20,7 @@
     "line-reader": "^0.4.0",
     "lodash": "^4.17.11",
     "lzma-native": "^4.0.3",
-    "matomo-tracker": "^2.2.0",
+    "matomo-tracker": "^2.2.1",
     "moment": "^2.24.0",
     "redis": "^2.8.0",
     "request": "^2.88.0",
@@ -34,11 +34,11 @@
     "@types/elasticsearch": "^5.0.32",
     "@types/express": "^4.16.1",
     "@types/line-reader": "0.0.28",
-    "@types/node": "^11.11.6",
-    "@types/redis": "^2.8.11",
+    "@types/node": "^11.13.0",
+    "@types/redis": "^2.8.12",
     "@types/request": "^2.48.1",
     "@types/rss": "0.0.28",
     "@types/socket.io": "^2.1.2",
-    "typescript": "^3.3.4000"
+    "typescript": "^3.4.2"
   }
 }
