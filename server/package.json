@@ -14,20 +14,20 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "@common-ts/base": "^1.0.13",
-    "@common-ts/mongo": "^1.0.2",
-    "@common-ts/server": "^1.1.12",
+    "@common-ts/base": "^1.11.1",
+    "@common-ts/mongo": "^1.5.0",
+    "@common-ts/server": "^2.4.0",
     "ajv": "^6.10.0",
-    "commander": "^2.19.0",
+    "commander": "^2.20.0",
     "elasticsearch": "^15.4.1",
     "got": "^9.6.0",
-    "ioredis": "^4.6.2",
+    "ioredis": "^4.9.0",
     "koa": "^2.7.0",
     "koa-router": "^7.4.0",
     "lzma-native": "^4.0.3",
-    "mongodb": "^3.2.2",
-    "needle": "^2.2.4",
-    "prom-client": "^11.2.1",
+    "mongodb": "^3.2.3",
+    "needle": "^2.3.0",
+    "prom-client": "^11.3.0",
     "rxjs": "^6.4.0"
   },
   "devDependencies": {
@@ -37,10 +37,10 @@
     "@types/koa": "^2.0.48",
     "@types/koa-router": "^7.0.40",
     "@types/lzma-native": "^4.0.0",
-    "@types/mongodb": "^3.1.22",
+    "@types/mongodb": "^3.1.23",
     "@types/needle": "^2.0.4",
-    "@types/node": "^11.11.6",
-    "typescript": "^3.3.4000",
-    "typescript-json-schema": "^0.36.0"
+    "@types/node": "^11.13.4",
+    "typescript": "^3.4.3",
+    "typescript-json-schema": "^0.37.0"
   }
 }
