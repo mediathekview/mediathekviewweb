@@ -1,6 +1,6 @@
+import { SyncEnumerable } from '@common-ts/base/enumerable';
+import { StringMap } from '@common-ts/base/types';
 import { Redis } from 'ioredis';
-import { SyncEnumerable } from '../../common/enumerable';
-import { StringMap } from '../../common/types';
 import { Consumer } from './consumer';
 import { ConsumerGroup } from './consumer-group';
 import { Entry } from './entry';

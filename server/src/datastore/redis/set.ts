@@ -1,5 +1,5 @@
+import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import * as Redis from 'ioredis';
-import { AsyncEnumerable } from '../../common/enumerable';
 import { DataType } from '../data-type';
 import { Set } from '../set';
 import { BATCH_SIZE } from './constants';

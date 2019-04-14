@@ -1,5 +1,5 @@
+import { Logger } from '@common-ts/base/logger';
 import { log, LoggerState } from 'mongodb';
-import { Logger } from '../common/logger';
 
 export function getMongoLogAdapter(logger: Logger): log {
   const logFunction: log = (message?: string, state?: LoggerState) => {

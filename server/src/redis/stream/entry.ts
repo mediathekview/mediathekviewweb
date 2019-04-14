@@ -1,4 +1,4 @@
-import { StringMap } from '../../common/types';
+import { StringMap } from '@common-ts/base/types';
 
 export type Entry<T extends StringMap> = {
   id: string,

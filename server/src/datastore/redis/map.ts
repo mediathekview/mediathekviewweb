@@ -1,5 +1,5 @@
+import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import * as Redis from 'ioredis';
-import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
 import { DataType } from '../data-type';
 import { Entry, Map } from '../map';
 import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction } from './serializer';

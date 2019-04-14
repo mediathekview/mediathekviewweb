@@ -1,4 +1,4 @@
-import { isValidDate } from '../../utils/date';
+import { isValidDate } from '@common-ts/base/utils';
 
 const PARSE_REGEX = /^(\d{1,2})[\.\-\/]?(?:[\.\-\/](\d{1,2})[\.\-\/]?(?:[\.\-\/](\d{2}|\d{4}))?)?$/;
 

@@ -1,4 +1,4 @@
-import { mapAsync, singleAsync } from '../../../common/utils';
+import { mapAsync, singleAsync } from '@common-ts/base/utils';
 import { File, Listing } from '../../../listing/';
 import { NginxListing } from '../../../listing/nginx';
 import { Filmlist, FilmlistResource } from '../../../model/filmlist';

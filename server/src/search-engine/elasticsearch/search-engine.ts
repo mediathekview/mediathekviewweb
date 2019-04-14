@@ -1,9 +1,9 @@
+import { LockProvider } from '@common-ts/base/lock';
+import { Logger } from '@common-ts/base/logger';
+import { StringMap } from '@common-ts/base/types';
 import * as Elasticsearch from 'elasticsearch';
-import { LockProvider } from '../../common/lock';
-import { Logger } from '../../common/logger';
 import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/search-engine';
 import { SearchQuery } from '../../common/search-engine/query';
-import { StringMap } from '../../common/types';
 import { Converter } from './converter';
 
 type ElasticsearchBulkResponse = {

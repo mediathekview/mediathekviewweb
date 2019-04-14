@@ -1,9 +1,9 @@
+import { Lock, LockController, LockedFunction } from '@common-ts/base/lock';
+import { Logger } from '@common-ts/base/logger';
+import { DeferredPromise } from '@common-ts/base/promise';
+import { cancelableTimeout, currentTimestamp, immediate, timeout, Timer } from '@common-ts/base/utils';
+import { uniqueId } from '@common-ts/server/utils';
 import * as Redis from 'ioredis';
-import { Lock, LockController, LockedFunction } from '../../common/lock';
-import { Logger } from '../../common/logger';
-import { DeferredPromise } from '../../common/promise';
-import { cancelableTimeout, currentTimestamp, immediate, timeout, Timer } from '../../common/utils';
-import { uniqueId } from '../../utils';
 import { AcquireResult } from './acquire-result';
 
 const LOCK_DURATION = 10000;
@@ -21,7 +21,7 @@ export class RedisLock implements Lock {
   }
 
   async acquire(timeout: number, func?: LockedFunction): Promise<LockController | false> {
-    const id = uniqueId();
+    const id = await uniqueId(20);
     const newExpireTimestamp = await this._acquire(id, timeout);
 
     if (newExpireTimestamp == -1) {

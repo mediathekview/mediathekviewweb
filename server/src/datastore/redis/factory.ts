@@ -1,5 +1,5 @@
+import { uniqueId } from '@common-ts/server/utils';
 import * as Redis from 'ioredis';
-import { uniqueId } from '../../utils/unique-id';
 import { DataType } from '../data-type';
 import { DatastoreFactory } from '../factory';
 import { Set } from '../set';
@@ -49,7 +49,7 @@ export class RedisDatastoreFactory implements DatastoreFactory {
   }
 
   private getUniqueKey(): string {
-    const id = uniqueId();
+    const id = uniqueId(20);
     return `unnamed:${id}`;
   }
 }

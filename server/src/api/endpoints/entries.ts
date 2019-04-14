@@ -1,5 +1,5 @@
 import { Entry } from '../../common/model';
-import { EntryRepository } from '../../repository';
+import { EntryRepository } from '../../repositories';
 
 export type DeltaParameters = {
   timestamp: number

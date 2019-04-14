@@ -1,6 +1,6 @@
+import { LockProvider } from '@common-ts/base/lock';
+import { Logger } from '@common-ts/base/logger';
 import { Redis } from 'ioredis';
-import { LockProvider } from '../../common/lock';
-import { Logger } from '../../common/logger';
 import { RedisLock } from './lock';
 
 export class RedisLockProvider implements LockProvider {

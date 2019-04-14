@@ -1,4 +1,4 @@
-import { SyncEnumerable } from '../enumerable';
+import { SyncEnumerable } from '@common-ts/base/enumerable';
 import { QueryBody } from '../search-engine/query';
 import { BoolQueryBuilder, MatchAllQueryBuilder } from '../search-engine/query/builder';
 import { ChannelSegmentConverter } from './converters/channel';

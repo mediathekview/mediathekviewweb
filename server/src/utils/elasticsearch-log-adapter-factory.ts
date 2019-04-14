@@ -1,4 +1,4 @@
-import { Logger } from '../common/logger';
+import { Logger } from '@common-ts/base/logger';
 
 interface ElasticsearchLogAdapter {
   error(message: string): void;

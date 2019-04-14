@@ -1,5 +1,5 @@
+import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import * as URL from 'url';
-import { AsyncEnumerable } from '../../common/enumerable/async-enumerable';
 import { HttpClient } from '../../http';
 import { Directory } from '../directory';
 import { HttpFile } from '../generic';

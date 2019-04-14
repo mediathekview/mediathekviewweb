@@ -14,9 +14,10 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "@common-ts/base": "^1.11.1",
-    "@common-ts/mongo": "^1.5.0",
-    "@common-ts/server": "^2.4.0",
+    "@common-ts/base": "^1.13.0",
+    "@common-ts/database": "^1.2.0",
+    "@common-ts/mongo": "^1.8.1",
+    "@common-ts/server": "^2.7.0",
     "ajv": "^6.10.0",
     "commander": "^2.20.0",
     "elasticsearch": "^15.4.1",
@@ -40,7 +41,7 @@
     "@types/mongodb": "^3.1.23",
     "@types/needle": "^2.0.4",
     "@types/node": "^11.13.4",
-    "typescript": "^3.4.3",
+    "typescript": "~3.4.3",
     "typescript-json-schema": "^0.37.0"
   }
 }

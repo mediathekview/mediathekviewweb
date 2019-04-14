@@ -1,7 +1,7 @@
+import { LockProvider } from '@common-ts/base/lock';
+import { Logger } from '@common-ts/base/logger';
+import { DistributedLoopProvider } from '@common-ts/server/distributed-loop';
 import { Redis } from 'ioredis';
-import { LockProvider } from '../../common/lock';
-import { Logger } from '../../common/logger';
-import { DistributedLoopProvider } from '../../distributed-loop';
 import { RedisProvider } from '../../redis/provider';
 import { QueueProvider } from '../provider';
 import { Queue } from '../queue';

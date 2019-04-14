@@ -1,14 +1,14 @@
+import { AsyncDisposable, AsyncDisposer } from '@common-ts/base/disposable';
+import { LockProvider } from '@common-ts/base/lock';
+import { Logger } from '@common-ts/base/logger';
+import { Serializer } from '@common-ts/base/serializer';
+import { cancelableTimeout, currentTimestamp } from '@common-ts/base/utils';
+import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
+import { DistributedLoop, DistributedLoopProvider } from '@common-ts/server/distributed-loop';
+import { uniqueIdSync } from '@common-ts/server/utils';
 import * as Redis from 'ioredis';
-import { AsyncDisposable, AsyncDisposer } from '../../common/disposable';
-import { LockProvider } from '../../common/lock';
-import { Logger } from '../../common/logger';
-import { Serializer } from '../../common/serializer';
-import { cancelableTimeout, currentTimestamp } from '../../common/utils';
-import { CancellationToken } from '../../common/utils/cancellation-token';
-import { DistributedLoop, DistributedLoopProvider } from '../../distributed-loop';
 import { RedisProvider } from '../../redis/provider';
 import { Entry, RedisStream, SourceEntry } from '../../redis/stream';
-import { uniqueId } from '../../utils';
 import { Job, Queue } from '../queue';
 
 type StreamEntryType = { retries: string, enqueueTimestamp: string, data: string };
@@ -235,6 +235,6 @@ export class RedisQueue<DataType> implements AsyncDisposable, Queue<DataType> {
   }
 
   private getConsumerName(): string {
-    return uniqueId();
+    return uniqueIdSync(20);
   }
 }

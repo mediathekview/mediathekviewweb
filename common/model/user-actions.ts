@@ -1,4 +1,4 @@
-import { StringMap } from '../types';
+import { StringMap } from '@common-ts/base/types';
 import { Entity, EntityWithPartialId } from './entity';
 
 export type Agent = {

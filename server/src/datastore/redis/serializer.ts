@@ -1,4 +1,4 @@
-import { Serializer } from '../../common/serializer';
+import { Serializer } from '@common-ts/base/serializer';
 import { DataType } from '../data-type';
 
 export type SerializeFunction<T> = (obj: T) => string;
@@ -21,6 +21,9 @@ export function serialize(obj: any, dataType: DataType): string {
     case DataType.Object:
       obj = Serializer.rawSerialize(obj);
       break;
+
+    default:
+      throw new Error('DataType not supported');
   }
 
   return JSON.stringify(obj);
@@ -37,6 +40,9 @@ export function deserialize(serialized: string, dataType: DataType): any {
     case DataType.Object:
       deserialized = Serializer.deserialize(deserialized);
       break;
+
+    default:
+      throw new Error('DataType not supported');
   }
 
   return deserialized;

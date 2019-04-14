@@ -1,9 +1,11 @@
+import { matchAll, zBase32Encode } from '@common-ts/base/utils';
+import { NonObjectStringMode } from '@common-ts/server/utils';
+import { TypedReadable } from '@common-ts/server/utils/typed-readable';
 import * as Crypto from 'crypto';
 import { createSubtitle, createVideo, Entry } from '../../common/model';
-import { matchAll, zBase32Encode } from '../../common/utils';
 import { HttpClient } from '../../http';
 import { Filmlist, FilmlistResource } from '../../model/filmlist';
-import {  decompress, AsyncStreamIterable } from '../../utils';
+import { decompress } from '../../utils';
 
 export type FilmlistParseResult = {
   filmlist: Filmlist,
@@ -42,9 +44,7 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
   const { url, compressed } = filmlistResource;
 
   const httpStream = HttpClient.getStream(url);
-  const stream = compressed ? decompress(httpStream) : httpStream;
-
-  const streamIterable = new AsyncStreamIterable<string>(stream, READ_SIZE);
+  const stream: TypedReadable<NonObjectStringMode> = compressed ? decompress(httpStream) : httpStream;
 
   let filmlist: Filmlist | undefined;
 
@@ -58,7 +58,7 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
   let finished = false;
 
   try {
-    for await (const chunk of streamIterable) { // tslint:disable-line: await-promise
+    for await (const chunk of stream) { // tslint:disable-line: await-promise
       context.buffer += chunk;
 
       if (filmlist != undefined) {

@@ -1,4 +1,4 @@
-import { SyncEnumerable } from '../../../enumerable';
+import { SyncEnumerable } from '@common-ts/base/enumerable';
 import { QueryBody, SearchQuery, Sort } from '../definition';
 import { QueryBuilder } from './builder';
 import { SortBuilder } from './sort';

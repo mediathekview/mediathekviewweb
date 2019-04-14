@@ -1,11 +1,11 @@
-import { Logger } from '../../common/logger';
+import { Logger } from '@common-ts/base/logger';
+import { currentTimestamp } from '@common-ts/base/utils';
+import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
 import { Entry } from '../../common/model';
-import { currentTimestamp } from '../../common/utils';
-import { CancellationToken } from '../../common/utils/cancellation-token';
 import { keys } from '../../keys';
 import { FilmlistImportQueueItem } from '../../model/filmlist-import';
 import { Job, Queue, QueueProvider } from '../../queue';
-import { FilmlistImportRepository } from '../../repository/filmlists-import-repository';
+import { FilmlistImportRepository } from '../../repositories/filmlists-import-repository';
 import { EntrySource } from '../entry-source';
 import { parseFilmlistResource } from './filmlist-parser';
 

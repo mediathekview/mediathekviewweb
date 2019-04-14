@@ -1,5 +1,5 @@
-import { AsyncDisposable } from '../common/disposable/disposable';
-import { CancellationToken } from '../common/utils/cancellation-token';
+import { AsyncDisposable } from '@common-ts/base/disposable';
+import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
 
 export type Job<DataType> = { id: string, data: DataType; };
 export type ProcessFunction<DataType> = (job: Job<DataType>) => Promise<void>;

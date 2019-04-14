@@ -1,4 +1,4 @@
-import { PartialProperty } from '../types';
+import { PartialProperty } from '@common-ts/base/types';
 
 export type Entity = {
   id: string;

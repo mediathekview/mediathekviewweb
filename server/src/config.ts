@@ -1,8 +1,8 @@
-import { LogLevel } from './common/logger';
+import { LogLevel } from '@common-ts/base/logger';
 
 type Config = {
   verbosity: number,
-  services: {
+  modules: {
     api: boolean,
     filmlistManager: boolean,
     importer: boolean,
@@ -38,7 +38,7 @@ export const configValidators = {
 
 export const config: Config = {
   verbosity: integer('VERBOSITY', LogLevel.Info),
-  services: {
+  modules: {
     api: boolean('SERVICE_API', false),
     filmlistManager: boolean('SERVICE_FILMLIST_MANAGER', false),
     importer: boolean('SERVICE_IMPORTER', false),

@@ -1,5 +1,5 @@
+import { StringMap } from '@common-ts/base/types';
 import { Aggregation, Sort } from '../../../../common/search-engine/query';
-import { StringMap } from '../../../../common/types';
 
 type ElasticsearchSortOrder = 'asc' | 'desc';
 type ElasticsearchSortMode = 'min' | 'max' | 'sum' | 'avg' | 'median';
