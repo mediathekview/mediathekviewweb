@@ -14,8 +14,7 @@ type Config = {
     search: boolean
   },
   elasticsearch: {
-    host: string,
-    port: number
+    url: string
   },
   redis: {
     host: string,
@@ -50,8 +49,7 @@ export const config: Config = {
     search: boolean('API_SEARCH', true),
   },
   elasticsearch: {
-    host: string('ELASTICSEARCH_HOST', 'localhost'),
-    port: positiveInteger('ELASTICSEARCH_PORT', 9200)
+    url: string('ELASTICSEARCH_URL', 'http://localhost:9200')
   },
   redis: {
     host: string('REDIS_HOST', 'localhost'),

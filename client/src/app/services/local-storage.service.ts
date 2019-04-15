@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { SyncEnumerable } from '../common/enumerable';
+import { SyncEnumerable } from '@common-ts/base/enumerable';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +18,7 @@ export class LocalStorageService {
     try {
       const serializedValue = localStorage.getItem(storageKey);
 
-      if (serializedValue != null) {
+      if (serializedValue != undefined) {
         const value = JSON.parse(serializedValue);
         return value;
       }

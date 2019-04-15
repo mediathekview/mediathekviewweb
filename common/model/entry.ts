@@ -49,7 +49,9 @@ export enum Field {
   AudioBitrate = 'media.quality.bitrate'
 }
 
-export const enum MediaType {
+export const fields = Object.values(Field);
+
+export enum MediaType {
   Video = 'video',
   Audio = 'audio',
   Subtitle = 'subtitle'

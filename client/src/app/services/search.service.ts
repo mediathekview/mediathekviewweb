@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { isErrorResponse, isResultResponse, Response } from '@common-ts/base/api';
+import { toError } from '@common-ts/base/utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { isErrorResponse, isResultResponse, Response } from '../common/api/rest';
 import { EntrySearchResult } from '../common/model';
 import { SearchQuery, TextSearchQuery } from '../common/search-engine/query';
-import { toError } from '../common/utils';
 
 @Injectable({
   providedIn: 'root'

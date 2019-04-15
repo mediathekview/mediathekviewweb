@@ -11,3 +11,11 @@ Commander
   .option('-v, --verbose', 'increase verbosity (can be specified multiple times)', () => config.verbosity++)
   .option('-q, --quite', 'reduces verbosity (can be specified multiple times)', () => config.verbosity--)
   .parse(process.argv);
+
+const modules = Object.keys(config.modules) as (keyof typeof config.modules)[];
+
+if (modules.every((module) => !config.modules[module])) {
+  for (const module of modules) {
+    config.modules[module] = true;
+  }
+}

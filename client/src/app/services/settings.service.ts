@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { SyncEnumerable } from '../common/enumerable';
-import { StringMap } from '../common/types';
+import { SyncEnumerable } from '@common-ts/base/enumerable';
+import { StringMap } from '@common-ts/base/types';
 import { LocalStorageService } from './local-storage.service';
 
 const LOCAL_STORAGE_NAMESPACE = 'settings';

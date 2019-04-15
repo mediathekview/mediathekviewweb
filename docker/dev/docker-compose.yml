@@ -4,8 +4,8 @@ services:
   redis:
     image: redis:5-alpine
     container_name: redis
-#    tmpfs:
-#      - /data
+    # tmpfs:
+    #   - /data
     volumes:
       - ./redis.conf:/redis.conf
     ports:
@@ -15,15 +15,17 @@ services:
   mongodb:
     image: mongo:4
     container_name: mongodb
-#    tmpfs:
-#      - /data/db
+    # tmpfs:
+    #   - /data/db
     ports:
       - "27017:27017"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.0.0
+    environment:
+      discovery.type: single-node
     container_name: elasticsearch
-#    tmpfs:
-#      - /usr/share/elasticsearch/data/
+    # tmpfs:
+    #   - /usr/share/elasticsearch/data/
     ports:
       - "9200:9200"

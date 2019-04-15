@@ -20,7 +20,7 @@ type ElasticsearchMultiMatchQuery = {
 };
 
 export class TextQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: TextQuery, _index: string, _type: string): ConvertResult {
+  tryConvert(query: TextQuery, _index: string): ConvertResult {
     const canHandle = query.hasOwnProperty('text');
 
     if (!canHandle) {

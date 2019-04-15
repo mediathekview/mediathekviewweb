@@ -1,6 +1,6 @@
+import { ValidationResult } from '@common-ts/server/api/validation';
 import * as Ajv from 'ajv';
 import { SearchParametersSchema, TextSearchParametersSchema } from './schemas';
-import { ValidationError, ValidationResult } from './types';
 
 const ajv = new Ajv({ allErrors: true });
 
@@ -14,7 +14,7 @@ export function validateSearchParameters(object: unknown): ValidationResult {
     return { valid, error: undefined };
   }
 
-  return { valid, error: _validateSearchParameters.errors as ValidationError };
+  return { valid, error: _validateSearchParameters.errors };
 }
 
 export function validateTextSearchParameters(object: unknown): ValidationResult {
@@ -24,5 +24,5 @@ export function validateTextSearchParameters(object: unknown): ValidationResult 
     return { valid, error: undefined };
   }
 
-  return { valid, error: _validateSearchParameters.errors as ValidationError };
+  return { valid, error: _validateSearchParameters.errors };
 }

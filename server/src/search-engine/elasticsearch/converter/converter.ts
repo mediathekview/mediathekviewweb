@@ -1,7 +1,8 @@
-import { SearchParams } from 'elasticsearch';
+
 import { QueryBody, SearchQuery } from '../../../common/search-engine/query';
 import { ConvertHandler } from './convert-handler';
 import { SortConverter } from './handlers';
+import { RequestParams } from '@elastic/elasticsearch';
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 250;
@@ -19,7 +20,7 @@ export class Converter {
     this.handlers.push(...handlers);
   }
 
-  convert(query: SearchQuery, index: string, type: string): SearchParams {
+  convert(query: SearchQuery, index: string): RequestParams.Search {
     if ((query.skip != undefined) && (query.cursor != undefined)) {
       throw new Error('cursor and skip cannot be used at the same time');
     }
@@ -32,11 +33,10 @@ export class Converter {
       throw new Error(`Limit of ${query.limit} is above maximum allowed (${MAX_LIMIT})`);
     }
 
-    const queryBody = this.convertBody(query.body, index, type);
+    const queryBody = this.convertBody(query.body, index);
 
-    const elasticQuery: SearchParams = {
+    const elasticQuery: RequestParams.Search = {
       index,
-      type,
       from,
       size,
       body: {
@@ -49,9 +49,9 @@ export class Converter {
     return elasticQuery;
   }
 
-  convertBody(queryBody: QueryBody, index: string, type: string): object {
+  convertBody(queryBody: QueryBody, index: string): object {
     for (const handler of this.handlers) {
-      const converted = handler.tryConvert(queryBody, index, type);
+      const converted = handler.tryConvert(queryBody, index);
 
       if (converted.success) {
         return converted.result;

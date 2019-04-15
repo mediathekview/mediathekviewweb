@@ -18,9 +18,9 @@
     "@common-ts/database": "^1.2.0",
     "@common-ts/mongo": "^1.8.1",
     "@common-ts/server": "^2.7.0",
+    "@elastic/elasticsearch": "^7.0.0-rc.1",
     "ajv": "^6.10.0",
     "commander": "^2.20.0",
-    "elasticsearch": "^15.4.1",
     "got": "^9.6.0",
     "ioredis": "^4.9.0",
     "koa": "^2.7.0",
@@ -32,7 +32,6 @@
     "rxjs": "^6.4.0"
   },
   "devDependencies": {
-    "@types/elasticsearch": "^5.0.32",
     "@types/got": "^9.4.1",
     "@types/ioredis": "^4.0.10",
     "@types/koa": "^2.0.48",

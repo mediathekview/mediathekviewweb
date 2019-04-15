@@ -5,7 +5,7 @@ import { ConvertHandler, ConvertResult } from '../convert-handler';
 type ElasticsearchTermQuery = { term: StringMap<string | number | boolean | Date> };
 
 export class TermQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: TermQuery, _index: string, _type: string): ConvertResult {
+  tryConvert(query: TermQuery, _index: string): ConvertResult {
     const canHandle = ('term' in query);
 
     if (!canHandle) {

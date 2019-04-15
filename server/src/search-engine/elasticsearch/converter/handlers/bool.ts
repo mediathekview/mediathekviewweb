@@ -18,7 +18,7 @@ export class BoolQueryConvertHandler implements ConvertHandler {
     this.converter = converter;
   }
 
-  tryConvert(query: BoolQuery, index: string, type: string): ConvertResult {
+  tryConvert(query: BoolQuery, index: string): ConvertResult {
     const canHandle = query.hasOwnProperty('bool');
 
     if (!canHandle) {
@@ -27,22 +27,22 @@ export class BoolQueryConvertHandler implements ConvertHandler {
 
     const queryObject: ElasticsearchBooleanQuery = {
       bool: {
-        must: this.convertArray(query.bool.must, index, type),
-        should: this.convertArray(query.bool.should, index, type),
-        must_not: this.convertArray(query.bool.not, index, type),
-        filter: this.convertArray(query.bool.filter, index, type)
+        must: this.convertArray(query.bool.must, index),
+        should: this.convertArray(query.bool.should, index),
+        must_not: this.convertArray(query.bool.not, index),
+        filter: this.convertArray(query.bool.filter, index)
       }
     };
 
     return { success: true, result: queryObject };
   }
 
-  private convertArray(queries: QueryBody[] | undefined, index: string, type: string): object[] | undefined {
+  private convertArray(queries: QueryBody[] | undefined, index: string): object[] | undefined {
     if (queries == undefined) {
       return undefined;
     }
 
-    const converted = queries.map((query) => this.converter.convertBody(query, index, type));
+    const converted = queries.map((query) => this.converter.convertBody(query, index));
     return converted;
   }
 }

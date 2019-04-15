@@ -5,7 +5,7 @@ import { ConsoleLogger } from '@common-ts/base/logger/console';
 import { singleton, timeout } from '@common-ts/base/utils';
 import { MongoDocument } from '@common-ts/mongo';
 import { DistributedLoopProvider } from '@common-ts/server/distributed-loop';
-import { Client as ElasticsearchClient } from 'elasticsearch';
+import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import * as RedisClient from 'ioredis';
 import { Redis } from 'ioredis'; // tslint:disable-line: no-duplicate-imports
 import * as Mongo from 'mongodb';
@@ -38,6 +38,7 @@ import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { getElasticsearchLogAdapter } from './utils/elasticsearch-log-adapter-factory';
 import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
+import { HttpApi } from '@common-ts/server/api/http-api';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -55,13 +56,12 @@ const ELASTICSEARCH_INDEX_MAPPING = elasticsearchMapping;
 const CORE_LOG = 'CORE';
 const QUEUE_LOG = 'QUEUE';
 const LOCK_LOG = 'LOCK';
-const DISTRIBUTED_LOOP_LOG = 'LOOP';
 const FILMLIST_ENTRY_SOURCE = 'FILMLIST SOURCE';
 const SEARCH_ENGINE_LOG = 'SEARCH ENGINE';
 const ELASTICSEARCH_LOG = 'ELASTICSEARCH';
 const REDIS_LOG = 'REDIS';
 const MONGO_LOG = 'MONGO';
-const REST_API_LOG = 'REST API';
+const HTTP_API_LOG = 'REST API';
 
 const FILMLIST_MANAGER_MODULE_LOG = 'FILMLIST MANAGER';
 const ENTRIES_IMPORTER_MODULE_LOG = 'IMPORTER';
@@ -165,13 +165,20 @@ export class InstanceProvider {
   }
 
   static async apiModule(): Promise<ApiModule> {
-    throw new Error('not implemented');
-    /* return singleton(ApiModule, async () => {
-     const restApi = await InstanceProvider.restApi();
-     const logger = InstanceProvider.logger(API_MODULE_LOG);
+    return singleton(ApiModule, async () => {
+      const restApi = await InstanceProvider.httpApi();
+      const logger = InstanceProvider.logger(API_MODULE_LOG);
 
-     return new ApiModule(restApi, logger);
-   }); */
+      return new ApiModule(restApi, logger);
+    });
+  }
+
+  static async httpApi(): Promise<HttpApi> {
+    return singleton(HttpApi, async () => {
+      const logger = InstanceProvider.logger(HTTP_API_LOG);
+
+      return new HttpApi({ prefix: '/api', logger, behindProxy: true });
+    });
   }
 
   static coreLogger(): Logger {
@@ -195,13 +202,12 @@ export class InstanceProvider {
       const logAdapter = getElasticsearchLogAdapter(logger);
 
       const elasticsearchClient = new ElasticsearchClient({
-        host: `${config.elasticsearch.host}:${config.elasticsearch.port}`,
-        log: logAdapter
+        node: config.elasticsearch.url
       });
 
-      InstanceProvider.disposer.addDisposeTasks(() => elasticsearchClient.close());
+      InstanceProvider.disposer.addDisposeTasks(async () => elasticsearchClient.close());
 
-      await InstanceProvider.connect('elasticsearch', async () => await elasticsearchClient.ping({ requestTimeout: 500 }) as Promise<void>, logger);
+      await InstanceProvider.connect('elasticsearch', async () => await elasticsearchClient.ping() as Promise<void>, logger);
 
       return elasticsearchClient;
     });
@@ -334,7 +340,7 @@ export class InstanceProvider {
       const lockProvider = await InstanceProvider.lockProvider();
       const logger = InstanceProvider.logger(SEARCH_ENGINE_LOG);
 
-      const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, ELASTICSEARCH_TYPE_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
+      const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
 
       InstanceProvider.disposer.addDisposeTasks(async () => await elasticsearchSearchEngine.dispose());
 

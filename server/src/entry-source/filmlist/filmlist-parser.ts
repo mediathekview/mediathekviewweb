@@ -68,8 +68,7 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
           yield { filmlist: undefined, entries };
         }
       }
-
-      if (filmlist == undefined) {
+      else {
         filmlist = parseFilmlist(context);
 
         if (filmlist != undefined && yieldFilmlist) {

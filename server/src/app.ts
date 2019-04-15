@@ -2,11 +2,13 @@ import './command-line-parser'; // tslint:disable-line: no-import-side-effect
 import { Logger } from '@common-ts/base/logger';
 import { AggregationMode, formatDuration, PeriodicSampler, Timer } from '@common-ts/base/utils';
 import { Module, runModules, stopModules } from '@common-ts/server/module';
-import { initializeSignals, requestShutdown, shutdownToken } from '@common-ts/server/process-shutdown';
+import { initializeSignals, requestShutdown, shutdownToken, setProcessShutdownLogger } from '@common-ts/server/process-shutdown';
 import { config } from './config';
 import { InstanceProvider } from './instance-provider';
 
 const logger = InstanceProvider.coreLogger();
+
+setProcessShutdownLogger(logger);
 
 initializeSignals();
 

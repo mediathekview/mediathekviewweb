@@ -26,7 +26,7 @@ const DATE_ROUNDING_MAP = {
 };
 
 export class RangeQueryConvertHandler implements ConvertHandler {
-  tryConvert(query: RangeQuery, _index: string, _type: string): ConvertResult {
+  tryConvert(query: RangeQuery, _index: string): ConvertResult {
     const canHandle = ('range' in query);
 
     if (!canHandle) {

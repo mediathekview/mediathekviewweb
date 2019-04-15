@@ -1,4 +1,4 @@
-import { CollectionViewer, DataSource, ListRange } from '@angular/cdk/collections';
+import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { Observable, ReplaySubject, Subscription } from 'rxjs';
 import { AggregatedEntry } from '../common/model';
 import { Sort, TextSearchQuery } from '../common/search-engine/query';
@@ -16,7 +16,7 @@ export class EntrySearchDataSource extends DataSource<AggregatedEntry | undefine
   private cursor: string | undefined;
 
   private fetchedData: AggregatedEntry[];
-  private subscription: Subscription;
+  private subscription!: Subscription;
 
   constructor(searchService: SearchService, searchText: string, sort: Sort[]) {
     super();
