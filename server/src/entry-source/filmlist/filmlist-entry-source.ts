@@ -61,7 +61,7 @@ export class FilmlistEntrySource implements EntrySource {
       yield entries;
 
       if (cancellationToken.isSet) {
-        break;
+        return;
       }
     }
 

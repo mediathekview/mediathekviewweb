@@ -202,12 +202,12 @@ export class InstanceProvider {
       const logAdapter = getElasticsearchLogAdapter(logger);
 
       const elasticsearchClient = new ElasticsearchClient({
-        node: config.elasticsearch.url
+        node: config.elasticsearch.url,
       });
 
       InstanceProvider.disposer.addDisposeTasks(async () => elasticsearchClient.close());
 
-      await InstanceProvider.connect('elasticsearch', async () => await elasticsearchClient.ping() as Promise<void>, logger);
+      await InstanceProvider.connect('elasticsearch', async () => await elasticsearchClient.ping(), logger);
 
       return elasticsearchClient;
     });

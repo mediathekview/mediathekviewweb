@@ -42,8 +42,8 @@ export class ApiModule extends ModuleBase implements Module {
 
     this.expose();
 
-    this.logger.info(`listen on port ${config.api.port}`);
     server.listen(config.api.port);
+    this.logger.info(`listening on port ${config.api.port}`);
 
     await cancellationToken; // tslint:disable-line: await-promise
 

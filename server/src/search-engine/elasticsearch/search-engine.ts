@@ -1,6 +1,6 @@
 import { LockProvider } from '@common-ts/base/lock';
 import { Logger } from '@common-ts/base/logger';
-import { StringMap } from '@common-ts/base/types';
+import { Omit, StringMap } from '@common-ts/base/types';
 import * as Elasticsearch from '@elastic/elasticsearch';
 import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/search-engine';
 import { SearchQuery } from '../../common/search-engine/query';
@@ -53,10 +53,10 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   }
 
   async index(items: SearchEngineItem<T>[]): Promise<void> {
-    const bulkRequest: Elasticsearch.RequestParams.Bulk = {
+    const bulkRequest: Elasticsearch.RequestParams.Bulk<({ index: object } | T)[]> = {
       index: this.indexName,
       refresh: 'false',
-      body: [] as any[] // tslint:disable-line: no-any
+      body: [] // tslint:disable-line: no-any
     };
 
     for (const item of items) {
@@ -66,12 +66,10 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       );
     }
 
-    const response = await this.client.bulk(bulkRequest) as Elasticsearch.ApiResponse;
+    const response = await this.client.bulk(bulkRequest) as Omit<Elasticsearch.ApiResponse, 'body'> & { body: { errors: boolean, took: number, items: object[] } };
 
-    throw new Error('check response');
-
-    if (response.warnings) {
-      throw new Error(JSON.stringify(response, undefined, 2));
+    if (response.body.errors) {
+      throw new Error(JSON.stringify(response.body.items, undefined, 2));
     }
   }
 
@@ -106,7 +104,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       }
 
       if (this.indexMapping != undefined) {
-        const elasticsearchMappingObject = this.createElasticsearchMappingObject(this.indexMapping);
+        const elasticsearchMappingObject = this.indexMapping; // this.createElasticsearchMappingObject(this.indexMapping);
         await this.client.indices.putMapping({ index: this.indexName, type: undefined as any, body: elasticsearchMappingObject });
         this.logger.verbose(`applied elasticsearch index mapping for ${this.indexName}`);
       }

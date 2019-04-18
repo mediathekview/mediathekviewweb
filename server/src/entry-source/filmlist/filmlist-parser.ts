@@ -6,6 +6,7 @@ import { createSubtitle, createVideo, Entry } from '../../common/model';
 import { HttpClient } from '../../http';
 import { Filmlist, FilmlistResource } from '../../model/filmlist';
 import { decompress } from '../../utils';
+import { PassThrough, Readable } from 'stream';
 
 export type FilmlistParseResult = {
   filmlist: Filmlist,
@@ -44,7 +45,12 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
   const { url, compressed } = filmlistResource;
 
   const httpStream = HttpClient.getStream(url);
-  const stream: TypedReadable<NonObjectStringMode> = compressed ? decompress(httpStream) : httpStream;
+  const sourceStream = compressed ? decompress(httpStream) : httpStream;
+
+  const stream: TypedReadable<NonObjectStringMode> =
+    sourceStream[Symbol.asyncIterator] != undefined
+      ? sourceStream
+      : wrapStream(sourceStream);
 
   let filmlist: Filmlist | undefined;
 
@@ -85,6 +91,13 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
       httpStream.destroy();
     }
   }
+}
+
+function wrapStream(stream: Readable): Readable {
+  const wrapper = new PassThrough();
+  stream.pipe(wrapper);
+
+  return wrapper;
 }
 
 function parseFilmlist(context: Context): Filmlist | undefined {

@@ -16,9 +16,9 @@
   "dependencies": {
     "@common-ts/base": "^1.13.0",
     "@common-ts/database": "^1.2.0",
-    "@common-ts/mongo": "^1.8.1",
+    "@common-ts/mongo": "^1.8.2",
     "@common-ts/server": "^2.7.0",
-    "@elastic/elasticsearch": "^7.0.0-rc.1",
+    "@elastic/elasticsearch": "^7.0.0-rc.2",
     "ajv": "^6.10.0",
     "commander": "^2.20.0",
     "got": "^9.6.0",
@@ -32,14 +32,14 @@
     "rxjs": "^6.4.0"
   },
   "devDependencies": {
-    "@types/got": "^9.4.1",
+    "@types/got": "^9.4.3",
     "@types/ioredis": "^4.0.10",
     "@types/koa": "^2.0.48",
     "@types/koa-router": "^7.0.40",
     "@types/lzma-native": "^4.0.0",
     "@types/mongodb": "^3.1.23",
     "@types/needle": "^2.0.4",
-    "@types/node": "^11.13.4",
+    "@types/node": "^11.13.5",
     "typescript": "~3.4.3",
     "typescript-json-schema": "^0.37.0"
   }

@@ -18,7 +18,7 @@ export class MongoFilmlistImportRepository extends MongoEntityRepository<Filmlis
       }
     };
 
-    const result = await this.collection.updateOne({ _id: id }, { $set: update });
+    const result = await this.collection.updateOne({ _id: id }, update);
 
     if (result.matchedCount == 0) {
       throw new Error('document not found');
