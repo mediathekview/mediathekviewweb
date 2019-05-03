@@ -8,7 +8,7 @@
 
 declare const Cookies;
 declare const moment;
-declare const videojs;
+declare function videojs(id: any): any;
 
 interface XMLHttpRequest {
   baseOpen: (method: string, url: string, async?: boolean, user?: string, password?: string) => void;
@@ -823,12 +823,7 @@ function playVideo(title, url) {
 
     $('#videocontent').append(vid);
 
-    video = videojs('video-player', {
-      //  chromecast: {
-      //    appId: 'MediathekViewWeb',
-      //    title: title
-      //  }
-    });
+    video = videojs('video-player');
 
     vid.dblclick(() => {
       if (isFullscreen()) {
