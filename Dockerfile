@@ -1,4 +1,4 @@
-FROM node:12-alpine as builder
+FROM node:11-alpine as builder
 
 WORKDIR /client
 COPY client/package.json client/package-lock.json ./
@@ -19,7 +19,7 @@ RUN npm run build
 RUN mv /server/dist /dist && \
     mv /client/dist /dist/client
 
-FROM node:12-alpine
+FROM node:11-alpine
 
 COPY --from=builder /dist /mediathekviewweb
 
