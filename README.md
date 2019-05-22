@@ -8,6 +8,8 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 ![MediathekViewWeb](https://abload.de/img/mediathekviewwebnqrq7.png)
 
 
+## Anleitung
+
 ##### 1. In die Suchliste eintippen, was man anschauen möchte.
 ##### 2. Doppelklick auf das Videosymbol, um die Sendung sofort in der besten verfügbaren Qualität zu starten, oder mit der Maus drübergehen, um das Menü zu öffnen.
 
@@ -20,7 +22,7 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 
 
 
-# Erweiterte Suche
+### Erweiterte Suche
 ##### Die Suchzeile unterstützt das Durchsuchen nach Sender, Thema, Titel und Beschreibung. Hier einige Beispiele:
 
 - "!ard" zeigt alle Beiträge der ARD.
@@ -55,17 +57,25 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 - Wenn "Überall" aktiviert ist, werden alle Begriffe, die **kein** !, #, + oder * davor haben in **allen** Feldern gesucht. Zusätzlich kann man jedoch auch hier noch nach Sender, Thema, Titel und Beschreibung filtern.
 
 
+## FAQ
 
-# Verwendete Programme, Bibliotheken etc.
+
+### SRF und ORF Downloads
+Downloads von Beiträgen des ORF und SRF in MediathekViewWeb bringen lediglich eine m3u8 Datei zum vorschein. Das liegt daran, dass diese Sender keine ganzen Videos mehr anbieten, sondern nur noch HLS-Streams. Diese kann man sich zwar auf der Website anschauen (streamen eben), aber nichts sinnvolles herunterladen.
+
+Abhilfe schaffen hier entweder der Java Desktop Client MediathekView oder Universal-Downloader wie bspw. youtube-dl (das kann entgegen des Namens viel mehr als nur YouTube).
+
+
+# Verwendete Dienste und Libraries
 ##### (zumindest die wichtigsten, siehe [server package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/server/package.json) und [client package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/client/package.json) für mehr)
 
-### Server
+### Serverseitig
 - Node
 - Redis
 - Elasticsearch
 
-### Client
-- bootstrap
+### Clientseitig
+- Bootstrap 3
 - jQuery
 
 ### Auf beiden Seiten
