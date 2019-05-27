@@ -345,8 +345,11 @@ const query = _.throttle(() => {
   const newHash = createURIHash(elements);
 
   if (oldHash !== newHash) {
+    const url = new URL(window.location);
+    url.hash = newHash;
+    history.replaceState(undefined, '', url.toString());
+
     ignoreNextHashChange = true;
-    window.location.hash = newHash;
   }
 
   const parsedQuery = parseQuery(queryString);
