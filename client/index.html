@@ -13,6 +13,13 @@
   <link rel="stylesheet" href="/static/roboto/roboto.css" />
   <link rel="stylesheet" href="/static/index.css" />
 
+  <!-- Add Polyfills if using Internet Explorer -->
+  <script type="text/javascript">
+    if (window.navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
+      document.head.innerHTML += '<script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?flags=gated"></script>';
+  }
+  </script>
+
   <script defer src="/static/jquery.min.js"></script>
   <script defer src="/static/js.cookie.js"></script>
   <script defer src="/static/bootstrap.min.js"></script>
@@ -82,7 +89,7 @@
           <div class="col-lg-8 col-md-7 col-sm-7">
             <div class="input-group">
               <span id="searchSpan" class="input-group-addon" data-toggle="popover" title="Selektoren" data-trigger="hover"
-                data-html="true" data-placement="bottom" data-content="!Sender</br>#Thema</br>+Titel</br>*Beschreibung">Suche</span>
+                    data-html="true" data-placement="bottom" data-content="!Sender</br>#Thema</br>+Titel</br>*Beschreibung">Suche</span>
               <input id="queryInput" type="text" class="form-control" autofocus>
             </div>
             <a tabIndex="-1"><i id="queryInputClearButton" class="material-icons">clear</i></a>
@@ -200,7 +207,7 @@
               <p>Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die <a target="_blank" href="https://github.com/mediathekview/mediathekviewweb/issues">Issues
                   auf GitHub</a></p>
               <p>Für alles andere oder im Fall, dass du kein GitHub Account hast/willst, schreibe mir eine Mail: <a
-                  target="_blank" href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a></p>
+                   target="_blank" href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a></p>
             </div>
           </div>
 
