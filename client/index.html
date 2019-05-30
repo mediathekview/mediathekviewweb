@@ -16,8 +16,11 @@
   <!-- Add Polyfills if using Internet Explorer -->
   <script type="text/javascript">
     if (window.navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
-      document.head.innerHTML += '<script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?flags=gated"></script>';
-  }
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = 'https://polyfill.io/v3/polyfill.min.js?flags=gated';
+      document.head.appendChild(script);
+    }
   </script>
 
   <script defer src="/static/jquery.min.js"></script>
