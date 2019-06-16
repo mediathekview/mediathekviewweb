@@ -1,5 +1,5 @@
-import { uniqueId } from '@common-ts/server/utils';
-import * as Redis from 'ioredis';
+import { getRandomString } from '@common-ts/base/utils';
+import { TypedRedis } from '@common-ts/redis/typed-redis';
 import { DataType } from '../data-type';
 import { DatastoreFactory } from '../factory';
 import { Set } from '../set';
@@ -8,13 +8,13 @@ import { RedisMap } from './map';
 import { RedisSet } from './set';
 
 interface RedisDatastoreConstructable<TInstance> {
-  new(redis: Redis.Redis, key: string, dataType: DataType): TInstance;
+  new(redis: TypedRedis, key: string, dataType: DataType): TInstance;
 }
 
 export class RedisDatastoreFactory implements DatastoreFactory {
-  private readonly redis: Redis.Redis;
+  private readonly redis: TypedRedis;
 
-  constructor(redis: Redis.Redis) {
+  constructor(redis: TypedRedis) {
     this.redis = redis;
   }
 
@@ -49,7 +49,7 @@ export class RedisDatastoreFactory implements DatastoreFactory {
   }
 
   private getUniqueKey(): string {
-    const id = uniqueId(20);
+    const id = getRandomString(15);
     return `unnamed:${id}`;
   }
 }

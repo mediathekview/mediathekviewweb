@@ -1,5 +1,7 @@
+import { disposeAsync } from '@common-ts/base/disposable';
 import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import { Logger } from '@common-ts/base/logger';
+import { QueueProvider, Queue } from '@common-ts/base/queue';
 import { AnyIterable, currentTimestamp, now } from '@common-ts/base/utils';
 import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
 import { DistributedLoopProvider } from '@common-ts/server/distributed-loop';
@@ -10,7 +12,6 @@ import { FilmlistRepository } from '../entry-source/filmlist/repository';
 import { keys } from '../keys';
 import { Filmlist } from '../model/filmlist';
 import { FilmlistImportQueueItem, FilmlistImportWithPartialId } from '../model/filmlist-import';
-import { Queue, QueueProvider } from '../queue';
 import { FilmlistImportRepository } from '../repositories/filmlists-import-repository';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckIntervalMinutes * 60 * 1000;
@@ -44,18 +45,13 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
   protected async _run(_cancellationToken: CancellationToken): Promise<void> {
     const lastLatestCheck = this.datastoreFactory.key<Date>(keys.LastLatestCheck, DataType.Date);
     const lastArchiveCheck = this.datastoreFactory.key<Date>(keys.LastArchiveCheck, DataType.Date);
-    const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
+    const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000);
     const distributedLoop = this.distributedLoopProvider.get(keys.FilmlistManagerLoop);
-
-    await importQueue.initialize();
 
     const loopController = distributedLoop.run(async () => this.check(lastLatestCheck, lastArchiveCheck, importQueue), 60000, 10000);
     await this.cancellationToken; // tslint:disable-line: await-promise
 
-    await Promise.all([
-      importQueue.dispose(),
-      loopController.stop()
-    ]);
+    await loopController.stop();
   }
 
   private async check(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {

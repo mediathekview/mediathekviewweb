@@ -1,3 +1,4 @@
+import { disposeAsync } from '@common-ts/base/disposable';
 import { LockProvider } from '@common-ts/base/lock';
 import { Logger } from '@common-ts/base/logger';
 import { Omit, StringMap } from '@common-ts/base/types';
@@ -48,7 +49,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     }
   }
 
-  async dispose(): Promise<void> {
+  async [disposeAsync](): Promise<void> {
     this.disposing = true;
   }
 
@@ -76,7 +77,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   async search(query: SearchQuery): Promise<SearchResult<T>> {
     const elasticsearchQuery = this.converter.convert(query, this.indexName);
 
-    const response = await this.client.search(elasticsearchQuery) as Elasticsearch.ApiResponse;
+    const response = await this.client.search(elasticsearchQuery);
     throw new Error('check response');
 
     /*    const { hits: { hits, total }, took: milliseconds } = response as any;
@@ -125,7 +126,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private async ensureIndex(): Promise<boolean> {
     let created = false;
 
-    const { body: indexExists } = await this.client.indices.exists({ index: this.indexName }) as Elasticsearch.ApiResponse;
+    const { body: indexExists } = await this.client.indices.exists({ index: this.indexName });
 
     if (!indexExists) {
       await this.client.indices.create({ index: this.indexName });

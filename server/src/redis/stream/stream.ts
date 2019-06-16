@@ -1,4 +1,4 @@
-import { SyncEnumerable } from '@common-ts/base/enumerable';
+import { Enumerable } from '@common-ts/base/enumerable';
 import { StringMap } from '@common-ts/base/types';
 import { Redis } from 'ioredis';
 import { Consumer } from './consumer';
@@ -325,7 +325,7 @@ export class RedisStream<T extends StringMap<string>> {
   }
 
   private parseReadReturnValue(data: ReadReturnValue): Entry<T>[] {
-    const entries = SyncEnumerable.from(data)
+    const entries = Enumerable.from(data)
       .mapMany(([_stream, entries]) => entries)
       .map((entry) => this.parseEntryReturnValue(entry))
       .toArray();

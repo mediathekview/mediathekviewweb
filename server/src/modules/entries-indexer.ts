@@ -1,7 +1,8 @@
 
-import { AsyncDisposer } from '@common-ts/base/disposable';
+import { AsyncDisposer, disposeAsync } from '@common-ts/base/disposable';
 import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import { Logger } from '@common-ts/base/logger';
+import { Job, Queue, QueueProvider } from '@common-ts/base/queue';
 import { timeout } from '@common-ts/base/utils';
 import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
 import { Module, ModuleBase, ModuleMetric } from '@common-ts/server/module';
@@ -9,7 +10,6 @@ import { AggregatedEntry } from '../common/model';
 import { SearchEngine } from '../common/search-engine';
 import { AggregatedEntryDataSource } from '../data-sources/aggregated-entry.data-source';
 import { keys } from '../keys';
-import { Job, Queue, QueueProvider } from '../queue';
 
 const BATCH_SIZE = 100;
 
@@ -34,9 +34,7 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
 
   protected async _run(_cancellationToken: CancellationToken): Promise<void> {
     const disposer = new AsyncDisposer();
-    const entriesToBeIndexedQueue = this.queueProvider.get<string>(keys.EntriesToBeIndexed, 15000, 3);
-
-    await this.initializeQueues(disposer, entriesToBeIndexedQueue);
+    const entriesToBeIndexedQueue = this.queueProvider.get<string>(keys.EntriesToBeIndexed, 15000);
 
     const consumer = entriesToBeIndexedQueue.getBatchConsumer(BATCH_SIZE, this.cancellationToken);
 
@@ -44,7 +42,7 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
       .forEach(async (batch) => {
         try {
           await this.indexBatch(batch);
-          await entriesToBeIndexedQueue.acknowledge(...batch);
+          await entriesToBeIndexedQueue.acknowledge(batch);
         }
         catch (error) {
           this.logger.error(error as Error);
@@ -52,7 +50,7 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
         }
       });
 
-    await disposer.dispose();
+    await disposer[disposeAsync]();
   }
 
   private async indexBatch(batch: Job<string>[]): Promise<void> {
@@ -65,12 +63,5 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
     const searchEngineItems = entries.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);
-  }
-
-  private async initializeQueues(disposer: AsyncDisposer, ...queues: Queue<any>[]): Promise<void> {
-    for (const queue of queues) {
-      await queue.initialize();
-      disposer.addDisposeTasks(async () => await queue.dispose());
-    }
   }
 }

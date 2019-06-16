@@ -1,12 +1,12 @@
-import { AsyncDisposer } from '@common-ts/base/disposable';
+import { AsyncDisposer, disposeAsync } from '@common-ts/base/disposable';
 import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import { Logger } from '@common-ts/base/logger';
+import { QueueProvider, Job, Queue } from '@common-ts/base/queue';
 import { timeout } from '@common-ts/base/utils';
 import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
 import { Module, ModuleBase, ModuleMetric } from '@common-ts/server/module';
 import { Entry } from '../common/model';
 import { keys } from '../keys';
-import { Job, Queue, QueueProvider } from '../queue';
 import { EntryRepository } from '../repositories/entry-repository';
 
 const BATCH_SIZE = 250;
@@ -32,10 +32,8 @@ export class EntriesSaverModule extends ModuleBase implements Module {
   protected async _run(_cancellationToken: CancellationToken): Promise<void> {
     const disposer = new AsyncDisposer();
 
-    const entriesToBeSavedQueue = this.queueProvider.get<Entry>(keys.EntriesToBeSaved, 30000, 3);
-    const entriesToBeIndexedQueue = this.queueProvider.get<string>(keys.EntriesToBeIndexed, 30000, 3);
-
-    await this.initializeQueues(disposer, entriesToBeSavedQueue, entriesToBeIndexedQueue);
+    const entriesToBeSavedQueue = this.queueProvider.get<Entry>(keys.EntriesToBeSaved, 30000);
+    const entriesToBeIndexedQueue = this.queueProvider.get<string>(keys.EntriesToBeIndexed, 30000);
 
     const consumer = entriesToBeSavedQueue.getBatchConsumer(BATCH_SIZE, this.cancellationToken);
 
@@ -44,7 +42,7 @@ export class EntriesSaverModule extends ModuleBase implements Module {
       .forEach(async (batch) => {
         try {
           await this.saveBatch(batch, entriesToBeIndexedQueue);
-          await entriesToBeSavedQueue.acknowledge(...batch);
+          await entriesToBeSavedQueue.acknowledge(batch);
         }
         catch (error) {
           this.logger.error(error as Error);
@@ -52,7 +50,7 @@ export class EntriesSaverModule extends ModuleBase implements Module {
         }
       });
 
-    await disposer.dispose();
+    await disposer[disposeAsync]();
   }
 
   private async saveBatch(batch: Job<Entry>[], entriesToBeIndexedQueue: Queue<string>): Promise<void> {
@@ -61,12 +59,5 @@ export class EntriesSaverModule extends ModuleBase implements Module {
 
     await this.entryRepository.saveMany(entries);
     await entriesToBeIndexedQueue.enqueueMany(ids);
-  }
-
-  private async initializeQueues(disposer: AsyncDisposer, ...queues: Queue<any>[]): Promise<void> {
-    for (const queue of queues) {
-      await queue.initialize();
-      disposer.addDisposeTasks(async () => await queue.dispose());
-    }
   }
 }

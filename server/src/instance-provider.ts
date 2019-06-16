@@ -1,9 +1,14 @@
-import { AsyncDisposer } from '@common-ts/base/disposable';
+import { AsyncDisposer, disposeAsync } from '@common-ts/base/disposable';
 import { LockProvider } from '@common-ts/base/lock';
 import { Logger } from '@common-ts/base/logger';
 import { ConsoleLogger } from '@common-ts/base/logger/console';
+import { QueueProvider } from '@common-ts/base/queue';
 import { singleton, timeout } from '@common-ts/base/utils';
 import { MongoDocument } from '@common-ts/mongo';
+import { RedisLockProvider } from '@common-ts/redis/lock';
+import { RedisQueueProvider } from '@common-ts/redis/queue';
+import { TypedRedis } from '@common-ts/redis/typed-redis';
+import { HttpApi } from '@common-ts/server/api/http-api';
 import { DistributedLoopProvider } from '@common-ts/server/distributed-loop';
 import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import * as RedisClient from 'ioredis';
@@ -19,15 +24,12 @@ import { RedisDatastoreFactory } from './datastore/redis';
 import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
-import { RedisLockProvider } from './lock/redis';
 import { FilmlistImport } from './model/filmlist-import';
 import { ApiModule } from './modules/api';
 import { EntriesImporterModule } from './modules/entries-importer';
 import { EntriesIndexerModule } from './modules/entries-indexer';
 import { EntriesSaverModule } from './modules/entries-saver';
 import { FilmlistManagerModule } from './modules/filmlist-manager';
-import { QueueProvider } from './queue';
-import { RedisQueueProvider } from './queue/redis';
 import { RedisProvider } from './redis/provider';
 import { EntryRepository } from './repositories';
 import { FilmlistImportRepository } from './repositories/filmlists-import-repository';
@@ -38,7 +40,6 @@ import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 import { getElasticsearchLogAdapter } from './utils/elasticsearch-log-adapter-factory';
 import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
-import { HttpApi } from '@common-ts/server/api/http-api';
 
 const MEDIATHEKVIEWWEB_VERTEILER_URL = 'https://verteiler.mediathekviewweb.de/';
 
@@ -69,12 +70,6 @@ const ENTRIES_SAVER_MODULE_LOG = 'SAVER';
 const ENTRIES_INDEXER_MODULE_LOG = 'INDEXER';
 const API_MODULE_LOG = 'API';
 
-function getRedisProvider(providerFunction: (scope: string) => Promise<Redis>): RedisProvider {
-  return {
-    get: providerFunction
-  };
-}
-
 export class InstanceProvider {
   private static readonly disposer: AsyncDisposer = new AsyncDisposer();
 
@@ -101,7 +96,7 @@ export class InstanceProvider {
     }
   }
 
-  private static async newRedis(scope: string): Promise<Redis> {
+  private static async newRedis(scope: string): Promise<TypedRedis> {
     const logger = InstanceProvider.logger(`[${REDIS_LOG}] [${scope}] `, false);
 
     const redis = new RedisClient({
@@ -119,7 +114,7 @@ export class InstanceProvider {
       .on('end', () => logger.verbose('connection end'))
       .on('error', (error: Error) => logger.error(error, false));
 
-    InstanceProvider.disposer.addDisposeTasks(async () => {
+    InstanceProvider.disposer.add(async () => {
       const endPromise = new Promise<void>((resolve) => redis.once('end', resolve));
 
       await redis.quit();
@@ -128,12 +123,12 @@ export class InstanceProvider {
 
     await InstanceProvider.connect('redis', async () => await redis.connect() as Promise<void>, logger);
 
-    return redis;
+    return new TypedRedis(redis);
   }
 
   static async disposeInstances(): Promise<void> {
     InstanceProvider.coreLogger().debug('dispose instances');
-    await InstanceProvider.disposer.dispose();
+    await InstanceProvider.disposer[disposeAsync]();
   }
 
   static logger(prefix: string, autoBrackets: boolean = true): Logger {
@@ -188,12 +183,8 @@ export class InstanceProvider {
     });
   }
 
-  static redisProvider(): RedisProvider {
-    return singleton(getRedisProvider, () => getRedisProvider(async (scope) => InstanceProvider.newRedis(scope)));
-  }
-
-  static async redis(): Promise<Redis> {
-    return singleton(RedisClient, async () => InstanceProvider.newRedis('MAIN'));
+  static async redis(): Promise<TypedRedis> {
+    return singleton('redis', async () => InstanceProvider.newRedis('MAIN'));
   }
 
   static async elasticsearch(): Promise<ElasticsearchClient> {
@@ -205,7 +196,7 @@ export class InstanceProvider {
         node: config.elasticsearch.url,
       });
 
-      InstanceProvider.disposer.addDisposeTasks(async () => elasticsearchClient.close());
+      InstanceProvider.disposer.add(async () => elasticsearchClient.close());
 
       await InstanceProvider.connect('elasticsearch', async () => await elasticsearchClient.ping(), logger);
 
@@ -228,7 +219,7 @@ export class InstanceProvider {
         .on('timeout', () => logger.warn('connection timed out'))
         .on('close', () => logger.verbose('connection closed'));
 
-      InstanceProvider.disposer.addDisposeTasks(async () => await mongoClient.close());
+      InstanceProvider.disposer.add(async () => await mongoClient.close());
 
       await InstanceProvider.connect('mongo', async () => await mongoClient.connect(), logger);
 
@@ -288,12 +279,11 @@ export class InstanceProvider {
   static async queueProvider(): Promise<QueueProvider> {
     return singleton(RedisQueueProvider, async () => {
       const redis = await InstanceProvider.redis();
-      const redisProvider = InstanceProvider.redisProvider();
       const lockProvider = await InstanceProvider.lockProvider();
       const distributedLoopProvider = await InstanceProvider.distributedLoopProvider();
       const logger = InstanceProvider.logger(QUEUE_LOG);
 
-      const queue = new RedisQueueProvider(redis, redisProvider, lockProvider, distributedLoopProvider, logger);
+      const queue = new RedisQueueProvider(redis, lockProvider, distributedLoopProvider);
       return queue;
     });
   }
@@ -342,7 +332,7 @@ export class InstanceProvider {
 
       const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
 
-      InstanceProvider.disposer.addDisposeTasks(async () => await elasticsearchSearchEngine.dispose());
+      InstanceProvider.disposer.add(async () => await elasticsearchSearchEngine[disposeAsync]());
 
       await elasticsearchSearchEngine.initialize();
 

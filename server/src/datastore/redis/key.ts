@@ -1,16 +1,16 @@
-import * as Redis from 'ioredis';
+import { TypedRedis } from '@common-ts/redis/typed-redis';
 import { DataType } from '../data-type';
 import { Key } from '../key';
 import { DeserializeFunction, getDeserializer, getSerializer, SerializeFunction } from './serializer';
 
 export class RedisKey<T> implements Key<T> {
   private readonly key: string;
-  private readonly redis: Redis.Redis;
+  private readonly redis: TypedRedis;
 
   private readonly serialize: SerializeFunction<T>;
   private readonly deserialize: DeserializeFunction<T>;
 
-  constructor(redis: Redis.Redis, key: string, dataType: DataType) {
+  constructor(redis: TypedRedis, key: string, dataType: DataType) {
     this.redis = redis;
     this.key = key;
 
