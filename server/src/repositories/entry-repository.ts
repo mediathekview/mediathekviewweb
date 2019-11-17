@@ -1,4 +1,4 @@
-import { Entry } from '../common/model';
+import { Entry } from '../common/models';
 
 export interface EntryRepository {
   save(entry: Entry): Promise<void>;

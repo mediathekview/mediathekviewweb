@@ -1,10 +1,10 @@
 import { Logger } from '@common-ts/base/logger';
+import { Job, Queue, QueueProvider } from '@common-ts/base/queue';
 import { currentTimestamp } from '@common-ts/base/utils';
 import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
-import { Entry } from '../../common/model';
+import { Entry } from '../../common/models';
 import { keys } from '../../keys';
-import { FilmlistImportQueueItem } from '../../model/filmlist-import';
-import { Job, Queue, QueueProvider } from '../../queue';
+import { FilmlistImportQueueItem } from '../../models/filmlist-import';
 import { FilmlistImportRepository } from '../../repositories/filmlists-import-repository';
 import { EntrySource } from '../entry-source';
 import { parseFilmlistResource } from './filmlist-parser';
@@ -20,29 +20,23 @@ export class FilmlistEntrySource implements EntrySource {
     this.logger = logger;
   }
 
+  // tslint:disable-next-line: no-async-without-await
   async *getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
-    const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000, 3);
+    const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000);
 
-    try {
-      await importQueue.initialize();
+    const consumer = importQueue.getConsumer(cancellationToken);
 
-      const consumer = importQueue.getConsumer(cancellationToken);
+    for await (const job of consumer) {
+      try {
+        yield* this.processFilmlistImport(job, importQueue, cancellationToken);
 
-      for await (const job of consumer) {
-        try {
-          yield* this.processFilmlistImport(job, importQueue, cancellationToken);
-
-          if (cancellationToken.isSet) {
-            break;
-          }
-        }
-        catch (error) {
-          this.logger.error(error as Error);
+        if (cancellationToken.isSet) {
+          break;
         }
       }
-    }
-    finally {
-      await importQueue.dispose();
+      catch (error) {
+        this.logger.error(error as Error);
+      }
     }
   }
 

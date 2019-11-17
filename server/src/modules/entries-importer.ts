@@ -5,7 +5,7 @@ import { Queue, QueueProvider } from '@common-ts/base/queue';
 import { cancelableTimeout } from '@common-ts/base/utils';
 import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
 import { Module, ModuleBase, ModuleMetric } from '@common-ts/server/module';
-import { Entry } from '../common/model';
+import { Entry } from '../common/models';
 import { EntrySource } from '../entry-source';
 import { keys } from '../keys';
 

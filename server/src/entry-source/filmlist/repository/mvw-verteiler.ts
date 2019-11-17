@@ -1,7 +1,7 @@
 import { mapAsync, singleAsync } from '@common-ts/base/utils';
 import { File, Listing } from '../../../listing/';
 import { NginxListing } from '../../../listing/nginx';
-import { Filmlist, FilmlistResource } from '../../../model/filmlist';
+import { Filmlist, FilmlistResource } from '../../../models/filmlist';
 import { parseFilmlistResourceFilmlist } from '../filmlist-parser';
 import { FilmlistRepository } from './repository';
 

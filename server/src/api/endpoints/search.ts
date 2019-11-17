@@ -1,4 +1,4 @@
-import { AggregatedEntry, EntrySearchResult } from '../../common/model';
+import { AggregatedEntry, EntrySearchResult } from '../../common/models';
 import { SearchEngine } from '../../common/search-engine';
 import { SearchQuery, TextSearchQuery } from '../../common/search-engine/query';
 import { SearchStringParser } from '../../common/search-string-parser';

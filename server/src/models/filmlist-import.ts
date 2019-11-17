@@ -1,4 +1,4 @@
-import { Entity, EntityWithPartialId } from '../common/model';
+import { Entity, EntityWithPartialId } from '../common/models';
 import { Filmlist } from './filmlist';
 
 export type FilmlistImportQueueItem = {

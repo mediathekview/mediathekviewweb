@@ -1,4 +1,4 @@
-import { Field } from '../../model';
+import { Field } from '../../models';
 import { Operator } from '../../search-engine/query';
 import { TextQueryBuilder } from '../../search-engine/query/builder';
 import { Segment } from '../segment';

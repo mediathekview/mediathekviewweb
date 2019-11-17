@@ -1,7 +1,7 @@
 import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import { Collection, MongoBaseRepository, MongoDocument, toMongoDocument, TypedIndexSpecification } from '@common-ts/mongo';
 import * as Mongo from 'mongodb';
-import { Entry, Field } from '../../common/model';
+import { Entry, Field } from '../../common/models';
 import { EntryRepository } from '../entry-repository';
 
 const indexes: TypedIndexSpecification<Entry>[] = [
@@ -48,12 +48,12 @@ function toUpdateOneOperation(entry: Entry) {
     _id: entry.id
   };
 
-  const { lastSeen, firstSeen, ...documentWithoutFirstLastSeen } = toMongoDocument(entry);
+  const { lastSeen, firstSeen, ...documentWithoutFirstAndLastSeen } = toMongoDocument(entry);
 
   const update: Mongo.UpdateQuery<MongoDocument<Entry>> = {
     $max: { lastSeen },
     $min: { firstSeen },
-    $set: { ...documentWithoutFirstLastSeen }
+    $set: { ...documentWithoutFirstAndLastSeen }
   };
 
   const operation = {

@@ -1,4 +1,4 @@
-import { Field } from '../../../model';
+import { Field } from '../../../models';
 import { RangeQuery } from '../definition';
 import { QueryBuilder } from './builder';
 

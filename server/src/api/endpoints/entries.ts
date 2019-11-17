@@ -1,4 +1,4 @@
-import { Entry } from '../../common/model';
+import { Entry } from '../../common/models';
 import { EntryRepository } from '../../repositories';
 
 export type DeltaParameters = {

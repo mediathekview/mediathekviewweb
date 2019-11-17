@@ -2,11 +2,11 @@ import { matchAll, zBase32Encode } from '@common-ts/base/utils';
 import { NonObjectStringMode } from '@common-ts/server/utils';
 import { TypedReadable } from '@common-ts/server/utils/typed-readable';
 import * as Crypto from 'crypto';
-import { createSubtitle, createVideo, Entry } from '../../common/model';
-import { HttpClient } from '../../http';
-import { Filmlist, FilmlistResource } from '../../model/filmlist';
-import { decompress } from '../../utils';
 import { PassThrough, Readable } from 'stream';
+import { createSubtitle, createVideo, Entry } from '../../common/models';
+import { HttpClient } from '../../http';
+import { Filmlist, FilmlistResource } from '../../models/filmlist';
+import { decompress } from '../../utils';
 
 export type FilmlistParseResult = {
   filmlist: Filmlist,

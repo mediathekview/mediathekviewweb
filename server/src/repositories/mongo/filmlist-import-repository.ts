@@ -1,6 +1,6 @@
 import { dotNotation } from '@common-ts/base/utils';
 import { Collection, MongoEntityRepository, UpdateQuery } from '@common-ts/mongo';
-import { FilmlistImport } from '../../model/filmlist-import';
+import { FilmlistImport } from '../../models/filmlist-import';
 import { FilmlistImportRepository } from '../filmlists-import-repository';
 
 const filmlistIdProperty = dotNotation(undefined as any as FilmlistImport, 'filmlist', 'id');

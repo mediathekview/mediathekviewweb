@@ -1,5 +1,5 @@
 // tslint:disable: no-redundant-jsdoc
-import { Field } from '../../model';
+import { Field } from '../../models';
 
 export const enum Aggregation {
   Min = 'min',

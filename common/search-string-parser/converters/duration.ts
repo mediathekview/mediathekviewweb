@@ -1,4 +1,4 @@
-import { Field } from '../../model';
+import { Field } from '../../models';
 import { QueryBody } from '../../search-engine/query';
 import { RangeQueryBuilder, TermQueryBuilder } from '../../search-engine/query/builder';
 import { Range, RangeParser, RangeType } from '../parsers/range';

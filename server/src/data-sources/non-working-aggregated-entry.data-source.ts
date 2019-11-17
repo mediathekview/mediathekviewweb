@@ -1,4 +1,4 @@
-import { AggregatedEntry, Entry } from '../common/model';
+import { AggregatedEntry, Entry } from '../common/models';
 import { EntryRepository } from '../repositories/entry-repository';
 import { AggregatedEntryDataSource } from './aggregated-entry.data-source';
 

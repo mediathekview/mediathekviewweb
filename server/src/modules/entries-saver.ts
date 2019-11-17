@@ -1,11 +1,11 @@
 import { AsyncDisposer, disposeAsync } from '@common-ts/base/disposable';
 import { AsyncEnumerable } from '@common-ts/base/enumerable';
 import { Logger } from '@common-ts/base/logger';
-import { QueueProvider, Job, Queue } from '@common-ts/base/queue';
+import { Job, Queue, QueueProvider } from '@common-ts/base/queue';
 import { timeout } from '@common-ts/base/utils';
 import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
 import { Module, ModuleBase, ModuleMetric } from '@common-ts/server/module';
-import { Entry } from '../common/model';
+import { Entry } from '../common/models';
 import { keys } from '../keys';
 import { EntryRepository } from '../repositories/entry-repository';
 

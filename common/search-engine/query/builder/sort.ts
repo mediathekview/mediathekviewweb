@@ -1,4 +1,4 @@
-import { Field } from '../../../model';
+import { Field } from '../../../models';
 import { Aggregation, Order, Sort } from '../definition';
 
 export class SortBuilder {
