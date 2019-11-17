@@ -98,7 +98,12 @@ export default class RSSFeedGenerator {
             enclosure: {
               url: item.url_video_hd || item.url_video,
               size: item.size
-            }
+            },
+            custom_elements: [
+              {
+                duration: item.duration
+              }
+            ]
           });
         }
 
