@@ -1,4 +1,4 @@
-import { StringMap } from '@common-ts/base/types';
+import { StringMap } from '@tstdl/base/types';
 import { TermQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler, ConvertResult } from '../convert-handler';
 

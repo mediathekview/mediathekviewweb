@@ -1,11 +1,11 @@
 
-import { AsyncDisposer, disposeAsync } from '@common-ts/base/disposable';
-import { AsyncEnumerable } from '@common-ts/base/enumerable';
-import { Logger } from '@common-ts/base/logger';
-import { Job, QueueProvider } from '@common-ts/base/queue';
-import { timeout } from '@common-ts/base/utils';
-import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
-import { Module, ModuleBase, ModuleMetric } from '@common-ts/server/module';
+import { AsyncDisposer, disposeAsync } from '@tstdl/base/disposable';
+import { AsyncEnumerable } from '@tstdl/base/enumerable';
+import { Logger } from '@tstdl/base/logger';
+import { Job, QueueProvider } from '@tstdl/base/queue';
+import { timeout } from '@tstdl/base/utils';
+import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
+import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
 import { AggregatedEntry } from '../common/models';
 import { SearchEngine } from '../common/search-engine';
 import { AggregatedEntryDataSource } from '../data-sources/aggregated-entry.data-source';

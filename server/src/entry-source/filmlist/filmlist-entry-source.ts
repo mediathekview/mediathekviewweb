@@ -1,7 +1,7 @@
-import { Logger } from '@common-ts/base/logger';
-import { Job, Queue, QueueProvider } from '@common-ts/base/queue';
-import { currentTimestamp } from '@common-ts/base/utils';
-import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
+import { Logger } from '@tstdl/base/logger';
+import { Job, Queue, QueueProvider } from '@tstdl/base/queue';
+import { currentTimestamp } from '@tstdl/base/utils';
+import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { Entry } from '../../common/models';
 import { keys } from '../../keys';
 import { FilmlistImportQueueItem } from '../../models/filmlist-import';

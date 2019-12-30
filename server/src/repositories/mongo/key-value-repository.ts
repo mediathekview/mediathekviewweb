@@ -1,5 +1,5 @@
-import { StringMap } from '@common-ts/base/types';
-import { Collection, MongoBaseRepository } from '@common-ts/mongo';
+import { StringMap } from '@tstdl/base/types';
+import { Collection, MongoBaseRepository } from '@tstdl/mongo';
 import { KeyValueBag } from '../../models';
 import { KeyValueRepository } from '../key-value-repository';
 
@@ -22,7 +22,8 @@ export class MongoKeyValueRepository<T extends StringMap> implements KeyValueRep
     return bag.data[key] as T;
   }
 
-  set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
-    
+  async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
+    const _key = `data.${key}`;
+    await this.baseRepository.update({ scope: this.scope }, { $set: { [_key]: value } });
   }
 }

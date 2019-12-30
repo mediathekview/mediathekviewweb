@@ -1,4 +1,4 @@
-import { SyncEnumerable } from '@common-ts/base/enumerable';
+import { Enumerable } from '@tstdl/base/enumerable';
 import { QueryBody } from '../search-engine/query';
 import { BoolQueryBuilder, MatchAllQueryBuilder } from '../search-engine/query/builder';
 import { ChannelSegmentConverter } from './converters/channel';
@@ -35,7 +35,7 @@ export class SearchStringParser {
     const trimmedText = text.trim();
     const segments = this.segmentizer.segmentize(trimmedText);
 
-    const groupedResults = SyncEnumerable.from(segments)
+    const groupedResults = Enumerable.from(segments)
       .filter((segment) => segment.text.length > 0)
       .map((result) => this.convertSegment(result))
       .filter((result) => result != undefined)

@@ -1,7 +1,7 @@
-import { disposeAsync } from '@common-ts/base/disposable';
-import { LockProvider } from '@common-ts/base/lock';
-import { Logger } from '@common-ts/base/logger';
-import { Omit, StringMap } from '@common-ts/base/types';
+import { disposeAsync } from '@tstdl/base/disposable';
+import { LockProvider } from '@tstdl/base/lock';
+import { Logger } from '@tstdl/base/logger';
+import { Omit, StringMap } from '@tstdl/base/types';
 import * as Elasticsearch from '@elastic/elasticsearch';
 import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/search-engine';
 import { SearchQuery } from '../../common/search-engine/query';

@@ -1,15 +1,15 @@
-import { AsyncDisposer, disposeAsync } from '@common-ts/base/disposable';
-import { LockProvider } from '@common-ts/base/lock';
-import { Logger } from '@common-ts/base/logger';
-import { ConsoleLogger } from '@common-ts/base/logger/console';
-import { QueueProvider } from '@common-ts/base/queue';
-import { singleton, timeout } from '@common-ts/base/utils';
-import { MongoDocument } from '@common-ts/mongo';
-import { RedisLockProvider } from '@common-ts/redis/lock';
-import { RedisQueueProvider } from '@common-ts/redis/queue';
-import { TypedRedis } from '@common-ts/redis/typed-redis';
-import { HttpApi } from '@common-ts/server/api/http-api';
-import { DistributedLoopProvider } from '@common-ts/server/distributed-loop';
+import { AsyncDisposer, disposeAsync } from '@tstdl/base/disposable';
+import { LockProvider } from '@tstdl/base/lock';
+import { Logger } from '@tstdl/base/logger';
+import { ConsoleLogger } from '@tstdl/base/logger/console';
+import { QueueProvider } from '@tstdl/base/queue';
+import { singleton, timeout } from '@tstdl/base/utils';
+import { MongoDocument } from '@tstdl/mongo';
+import { RedisLockProvider } from '@tstdl/redis/lock';
+import { RedisQueueProvider } from '@tstdl/redis/queue';
+import { TypedRedis } from '@tstdl/redis/typed-redis';
+import { HttpApi } from '@tstdl/server/api/http-api';
+import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
 import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import * as RedisClient from 'ioredis';
 import * as Mongo from 'mongodb';
@@ -18,8 +18,6 @@ import { SearchEngine } from './common/search-engine';
 import { config } from './config';
 import { AggregatedEntryDataSource } from './data-sources/aggregated-entry.data-source';
 import { NonWorkingAggregatedEntryDataSource } from './data-sources/non-working-aggregated-entry.data-source';
-import { DatastoreFactory } from './datastore';
-import { RedisDatastoreFactory } from './datastore/redis';
 import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
@@ -119,7 +117,7 @@ export class InstanceProvider {
       await endPromise;
     });
 
-    await InstanceProvider.connect('redis', async () => await redis.connect() as Promise<void>, logger);
+    await InstanceProvider.connect('redis', async () => redis.connect(), logger);
 
     return new TypedRedis(redis);
   }
@@ -247,13 +245,6 @@ export class InstanceProvider {
     });
   }
 
-  static async datastoreFactory(): Promise<DatastoreFactory> {
-    return singleton(RedisDatastoreFactory, async () => {
-      const redis = await InstanceProvider.redis();
-      return new RedisDatastoreFactory(redis);
-    });
-  }
-
   static async lockProvider(): Promise<LockProvider> {
     return singleton(RedisLockProvider, async () => {
       const redis = await InstanceProvider.redis();
@@ -370,14 +361,13 @@ export class InstanceProvider {
 
   static async filmlistManagerModule(): Promise<FilmlistManagerModule> {
     return singleton(FilmlistManagerModule, async () => {
-      const datastoreFactory = await InstanceProvider.datastoreFactory();
       const filmlistImportRepository = await InstanceProvider.filmlistImportRepository();
       const filmlistRepository = InstanceProvider.filmlistRepository();
       const distributedLoopProvider = await InstanceProvider.distributedLoopProvider();
       const queueProvider = await InstanceProvider.queueProvider();
       const logger = InstanceProvider.logger(FILMLIST_MANAGER_MODULE_LOG);
 
-      return new FilmlistManagerModule(datastoreFactory, filmlistImportRepository, filmlistRepository, distributedLoopProvider, queueProvider, logger);
+      return new FilmlistManagerModule(filmlistImportRepository, filmlistRepository, distributedLoopProvider, queueProvider, logger);
     });
   }
 }

@@ -1,5 +1,5 @@
-import { AsyncEnumerable } from '@common-ts/base/enumerable';
-import { Collection, MongoBaseRepository, MongoDocument, toMongoDocument, TypedIndexSpecification } from '@common-ts/mongo';
+import { AsyncEnumerable } from '@tstdl/base/enumerable';
+import { Collection, MongoBaseRepository, MongoDocument, toMongoDocument, TypedIndexSpecification } from '@tstdl/mongo';
 import * as Mongo from 'mongodb';
 import { Entry, Field } from '../../common/models';
 import { EntryRepository } from '../entry-repository';
@@ -37,8 +37,7 @@ export class MongoEntryRepository implements EntryRepository {
   }
 
   async loadMany(ids: string[]): Promise<Entry[]> {
-    const cursor = this.baseRepository.loadManyById(ids);
-    return AsyncEnumerable.from(cursor).toArray();
+    return this.baseRepository.loadManyById(ids);
   }
 }
 

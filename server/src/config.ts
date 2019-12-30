@@ -1,4 +1,4 @@
-import { LogLevel } from '@common-ts/base/logger';
+import { LogLevel } from '@tstdl/base/logger';
 
 type Config = {
   verbosity: number,

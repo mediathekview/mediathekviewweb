@@ -1,4 +1,4 @@
-import { SyncEnumerable } from '@common-ts/base/enumerable';
+import { Enumerable } from '@tstdl/base/enumerable';
 import { QueryBody, SearchQuery, Sort } from '../definition';
 import { QueryBuilder } from './builder';
 import { SortBuilder } from './sort';
@@ -20,7 +20,7 @@ export class SearchQueryBuilder {
   }
 
   sort(...sort: (Sort | SortBuilder)[]): this {
-    const mapped = SyncEnumerable.from(sort)
+    const mapped = Enumerable.from(sort)
       .mapMany((sortOrBuilder) => (sortOrBuilder instanceof SortBuilder) ? sortOrBuilder.build() : [sortOrBuilder])
       .toArray();
 

@@ -1,4 +1,4 @@
-import { Logger } from '@common-ts/base/logger';
+import { Logger } from '@tstdl/base/logger';
 import { log, LoggerState } from 'mongodb';
 
 export function getMongoLogAdapter(logger: Logger): log {

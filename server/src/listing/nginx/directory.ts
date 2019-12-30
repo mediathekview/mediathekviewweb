@@ -1,4 +1,4 @@
-import { AsyncEnumerable } from '@common-ts/base/enumerable';
+import { AsyncEnumerable } from '@tstdl/base/enumerable';
 import * as URL from 'url';
 import { HttpClient } from '../../http';
 import { Directory } from '../directory';

@@ -1,4 +1,4 @@
-import { StringMap } from '@common-ts/base/types';
+import { StringMap } from '@tstdl/base/types';
 
 export const elasticsearchMapping = {
   properties: {

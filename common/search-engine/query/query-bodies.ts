@@ -1,4 +1,4 @@
-import { PropertyOf, TypeOf } from '@common-ts/base/types';
+import { PropertyOf, TypeOf } from '@tstdl/base/types';
 import { BoolQuery, IdsQuery, MatchAllQuery, RangeQuery, RegexQuery, TermQuery, TextQuery } from './definition';
 
 export type IdsQueryBody = TypeOf<IdsQuery, 'ids'>;

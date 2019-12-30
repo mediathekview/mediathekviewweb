@@ -1,5 +1,5 @@
-import { dotNotation } from '@common-ts/base/utils';
-import { Collection, MongoEntityRepository, UpdateQuery } from '@common-ts/mongo';
+import { dotNotation } from '@tstdl/base/utils';
+import { Collection, MongoEntityRepository, UpdateQuery } from '@tstdl/mongo';
 import { FilmlistImport } from '../../models/filmlist-import';
 import { FilmlistImportRepository } from '../filmlists-import-repository';
 

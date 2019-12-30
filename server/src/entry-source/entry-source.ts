@@ -1,4 +1,4 @@
-import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
+import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { Entry } from '../common/models';
 
 export interface EntrySource {

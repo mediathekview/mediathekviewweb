@@ -1,5 +1,5 @@
-import { Enumerable } from '@common-ts/base/enumerable';
-import { StringMap } from '@common-ts/base/types';
+import { Enumerable } from '@tstdl/base/enumerable';
+import { StringMap } from '@tstdl/base/types';
 import { Redis } from 'ioredis';
 import { Consumer } from './consumer';
 import { ConsumerGroup } from './consumer-group';
@@ -67,7 +67,7 @@ export class RedisStream<T extends StringMap<string>> {
     const { id: sourceId, data } = entry;
     const parameters = this.buildFieldValueArray(data);
 
-    const id = await this.redis.xadd(this.stream, (sourceId != undefined) ? sourceId : '*', ...parameters) as string; // tslint:disable-line: no-unsafe-any
+    const id = await this.redis.xadd(this.stream, (sourceId != undefined) ? sourceId : '*', ...parameters);
     return id;
   }
 
@@ -88,16 +88,16 @@ export class RedisStream<T extends StringMap<string>> {
   }
 
   async range(start: string, end: string, count?: number): Promise<Entry<T>[]> {
-    const parameters = [this.stream, start, end, ...(count != undefined ? [count] : [])] as [string, string, string, number?];
+    const parameters = [this.stream, start, end, ...(count != undefined ? [count] : [])] as [string, string, string, number];
 
-    const range = this.redis.xrange(...parameters) as EntriesReturnValue;
+    const range = await this.redis.xrange(...parameters);
     const entries = this.parseEntriesReturnValue(range);
 
     return entries;
   }
 
   async get(id: string): Promise<Entry<T> | undefined> {
-    const result = await this.redis.xrange(this.stream, id, id, 'COUNT', '1') as EntriesReturnValue; // tslint:disable-line: no-unsafe-any
+    const result = await this.redis.xrange(this.stream, id, id, 'COUNT', '1');
     const entries = this.parseEntriesReturnValue(result);
 
     return entries[0];
@@ -178,7 +178,7 @@ export class RedisStream<T extends StringMap<string>> {
       id
     ];
 
-    const data = await this.redis.xread(...parametersArray) as ReadReturnValue; // tslint:disable-line: no-unsafe-any
+    const data = await (this.redis.xread(...parametersArray) as any as Promise<ReadReturnValue>);
     const entries = this.parseReadReturnValue(data);
 
     return entries;
@@ -194,7 +194,8 @@ export class RedisStream<T extends StringMap<string>> {
       id
     ] as ['GROUP', string, string, ...string[]];
 
-    const data = await this.redis.xreadgroup(...parametersArray) as ReadReturnValue; // tslint:disable-line: no-unsafe-any
+    // tslint:disable-next-line: no-unsafe-any
+    const data = await this.redis.xreadgroup(...parametersArray) as ReadReturnValue;
 
     if (data == undefined) {
       return [];
@@ -206,12 +207,12 @@ export class RedisStream<T extends StringMap<string>> {
   }
 
   async delete(...ids: string[]): Promise<number> {
-    const acknowledgedCount = await this.redis.xdel(this.stream, ...ids) as number; // tslint:disable-line: no-unsafe-any
+    const acknowledgedCount = await this.redis.xdel(this.stream, ...ids);
     return acknowledgedCount;
   }
 
   async acknowledge(group: string, ...ids: string[]): Promise<number> {
-    const acknowledgedCount = await this.redis.xack(this.stream, group, ...ids) as number; // tslint:disable-line: no-unsafe-any
+    const acknowledgedCount = await this.redis.xack(this.stream, group, ...ids);
     return acknowledgedCount;
   }
 
@@ -219,23 +220,23 @@ export class RedisStream<T extends StringMap<string>> {
   async claim({ group, consumer, minimumIdleTime, ids }: ClaimParameters, idsOnly: true): Promise<string[]>;
   async claim({ group, consumer, minimumIdleTime, ids }: ClaimParameters, idsOnly: boolean): Promise<string[] | Entry<T>[]> {
     if (idsOnly) {
-      const claimedIds = await this.redis.xclaim(this.stream, group, consumer, minimumIdleTime, ...ids, 'JUSTID') as string[]; // tslint:disable-line: no-unsafe-any
+      const claimedIds = await this.redis.xclaim(this.stream, group, consumer, minimumIdleTime, ...ids, 'JUSTID') as any as string[];
       return claimedIds;
     }
 
-    const claimedEntries = await this.redis.xclaim(this.stream, group, consumer, minimumIdleTime, ...ids) as EntriesReturnValue; // tslint:disable-line: no-unsafe-any
+    const claimedEntries = await this.redis.xclaim(this.stream, group, consumer, minimumIdleTime, ...ids) as EntriesReturnValue;
     const entries = this.parseEntriesReturnValue(claimedEntries);
 
     return entries;
   }
 
   async trim(maxLength: number, approximate: boolean): Promise<number> {
-    const trimmedCount = await this.redis.xtrim(this.stream, 'MAXLEN', ...(approximate ? ['~'] : []), maxLength) as number; // tslint:disable-line: no-unsafe-any
+    const trimmedCount = await this.redis.xtrim(this.stream, 'MAXLEN', ...(approximate ? ['~'] : []), maxLength);
     return trimmedCount;
   }
 
   async info(): Promise<StreamInfo<T>> {
-    const info = await this.redis.xinfo('STREAM', this.stream) as InfoReturnValue; // tslint:disable-line: no-unsafe-any
+    const info = await this.redis.xinfo('STREAM', this.stream) as InfoReturnValue;
     const streamInfo = this.parseInfoReturnValue(info);
 
     return streamInfo;
@@ -258,28 +259,28 @@ export class RedisStream<T extends StringMap<string>> {
   }
 
   async getGroups(): Promise<ConsumerGroup[]> {
-    const info = await this.redis.xinfo('GROUPS', this.stream) as (string | number)[][]; // tslint:disable-line: no-unsafe-any
+    const info = await this.redis.xinfo('GROUPS', this.stream) as (string | number)[][];
     const groups = info.map((groupInfo) => this.parseGroupInfo(groupInfo));
 
     return groups;
   }
 
   async getConsumers(group: string): Promise<Consumer[]> {
-    const info = await this.redis.xinfo('CONSUMERS', this.stream, group) as (string | number)[][]; // tslint:disable-line: no-unsafe-any
+    const info = await this.redis.xinfo('CONSUMERS', this.stream, group) as (string | number)[][];
     const consumers = info.map((consumerInfo) => this.parseConsumer(consumerInfo));
 
     return consumers;
   }
 
   async deleteConsumer(group: string, consumer: string): Promise<number> {
-    const pendingMessages = await this.redis.xgroup('DELCONSUMER', this.stream, group, consumer) as number; // tslint:disable-line: no-unsafe-any
+    const pendingMessages = await this.redis.xgroup('DELCONSUMER', this.stream, group, consumer) as any as number;
     return pendingMessages;
   }
 
   async getPendingInfo(group: string): Promise<PendingInfo>;
   async getPendingInfo(group: string): Promise<PendingInfo>;
   async getPendingInfo(group: string): Promise<PendingInfo> {
-    const [count, firstId, lastId, pendingConsumerInfo] = await this.redis.xpending(this.stream, group) as PendingReturnValue; // tslint:disable-line: no-unsafe-any
+    const [count, firstId, lastId, pendingConsumerInfo] = await this.redis.xpending(this.stream, group) as PendingReturnValue;
 
     const consumers =
       (pendingConsumerInfo == undefined)
@@ -310,7 +311,7 @@ export class RedisStream<T extends StringMap<string>> {
     const startAtId = (typeof startAtIdOrMakeStream == 'string') ? startAtIdOrMakeStream : '0';
     const makeStream = (typeof startAtIdOrMakeStream == 'boolean') ? startAtIdOrMakeStream : mkStream;
 
-    await this.redis.xgroup('CREATE', this.stream, group, startAtId, ...(makeStream ? ['MKSTREAM'] : [])); // tslint:disable-line: no-unsafe-any
+    await this.redis.xgroup('CREATE', this.stream, group, startAtId, ...(makeStream ? ['MKSTREAM'] : []));
   }
 
   private buildFieldValueArray(data: StringMap<string>): string[] {

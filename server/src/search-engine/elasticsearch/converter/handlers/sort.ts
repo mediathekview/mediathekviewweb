@@ -1,4 +1,4 @@
-import { StringMap } from '@common-ts/base/types';
+import { StringMap } from '@tstdl/base/types';
 import { Aggregation, Sort } from '../../../../common/search-engine/query';
 
 type ElasticsearchSortOrder = 'asc' | 'desc';

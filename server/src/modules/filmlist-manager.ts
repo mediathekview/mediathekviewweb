@@ -1,12 +1,11 @@
-import { AsyncEnumerable } from '@common-ts/base/enumerable';
-import { Logger } from '@common-ts/base/logger';
-import { Queue, QueueProvider } from '@common-ts/base/queue';
-import { AnyIterable, currentTimestamp, now } from '@common-ts/base/utils';
-import { CancellationToken } from '@common-ts/base/utils/cancellation-token';
-import { DistributedLoopProvider } from '@common-ts/server/distributed-loop';
-import { Module, ModuleBase, ModuleMetric } from '@common-ts/server/module';
+import { AsyncEnumerable } from '@tstdl/base/enumerable';
+import { Logger } from '@tstdl/base/logger';
+import { Queue, QueueProvider } from '@tstdl/base/queue';
+import { AnyIterable, currentTimestamp, now } from '@tstdl/base/utils';
+import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
+import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
+import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
 import { config } from '../config';
-import { DatastoreFactory, DataType, Key } from '../datastore';
 import { FilmlistRepository } from '../entry-source/filmlist/repository';
 import { keys } from '../keys';
 import { Filmlist } from '../models/filmlist';
@@ -19,17 +18,15 @@ const MAX_AGE_DAYS = config.importer.archiveRange;
 const MAX_AGE_MILLISECONDS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
 export class FilmlistManagerModule extends ModuleBase implements Module {
-  private readonly datastoreFactory: DatastoreFactory;
   private readonly filmlistImportRepository: FilmlistImportRepository;
   private readonly filmlistRepository: FilmlistRepository;
   private readonly distributedLoopProvider: DistributedLoopProvider;
   private readonly queueProvider: QueueProvider;
   private readonly logger: Logger;
 
-  constructor(datastoreFactory: DatastoreFactory, filmlistImportRepository: FilmlistImportRepository, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider, logger: Logger) {
+  constructor(filmlistImportRepository: FilmlistImportRepository, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, queueProvider: QueueProvider, logger: Logger) {
     super('FilmlistManager');
 
-    this.datastoreFactory = datastoreFactory;
     this.filmlistImportRepository = filmlistImportRepository;
     this.filmlistRepository = filmlistRepository;
     this.distributedLoopProvider = distributedLoopProvider;

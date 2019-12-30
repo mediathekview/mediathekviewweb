@@ -1,6 +1,6 @@
-import { matchAll, zBase32Encode } from '@common-ts/base/utils';
-import { NonObjectStringMode } from '@common-ts/server/utils';
-import { TypedReadable } from '@common-ts/server/utils/typed-readable';
+import { matchAll, zBase32Encode } from '@tstdl/base/utils';
+import { NonObjectStringMode } from '@tstdl/server/utils';
+import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import * as Crypto from 'crypto';
 import { PassThrough, Readable } from 'stream';
 import { createSubtitle, createVideo, Entry } from '../../common/models';

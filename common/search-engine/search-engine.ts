@@ -1,4 +1,4 @@
-import { AsyncDisposable } from '@common-ts/base/disposable';
+import { AsyncDisposable } from '@tstdl/base/disposable';
 import { SearchEngineItem } from './item';
 import { SearchQuery } from './query';
 import { SearchResult } from './result';

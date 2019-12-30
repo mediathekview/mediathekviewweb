@@ -1,4 +1,4 @@
-import { EntityRepository } from '@common-ts/database';
+import { EntityRepository } from '@tstdl/database';
 import { FilmlistImport } from '../models/filmlist-import';
 
 export interface FilmlistImportRepository extends EntityRepository<FilmlistImport> {

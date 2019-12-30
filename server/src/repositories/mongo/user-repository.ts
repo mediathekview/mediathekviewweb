@@ -1,4 +1,4 @@
-import { Collection, MongoEntityRepository } from '@common-ts/mongo';
+import { Collection, MongoEntityRepository } from '@tstdl/mongo';
 import { User } from '../../common/models';
 import { UserRepository } from '../user-repository';
 
