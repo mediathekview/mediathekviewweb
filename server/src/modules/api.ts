@@ -1,7 +1,8 @@
 import { Logger } from '@tstdl/base/logger';
 import { cancelableTimeout, Timer } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { HttpApi } from '@tstdl/server/api/http-api';
+import { BodyType, HttpApi } from '@tstdl/server/api/http-api';
+import { noopValidator } from '@tstdl/server/api/validation/validators';
 import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
 import * as Http from 'http';
 import * as Net from 'net';
@@ -56,8 +57,8 @@ export class ApiModule extends ModuleBase implements Module {
     // throw new Error('not implemented');
 
     if (config.api.search) {
-      this.httpApi.registerPostRoute('/entries/search', validateSearchParameters, async () => Promise.reject(new Error('not implemented'))); // this.api.search(parameters));
-      this.httpApi.registerPostRoute('/entries/search/text', validateTextSearchParameters, async () => Promise.reject(new Error('not implemented'))); // this.api.textSearch(parameters));
+      this.httpApi.registerPostRoute<any, BodyType.Json>('/entries/search', BodyType.Json, noopValidator, async () => Promise.reject(new Error('not implemented'))); // this.api.search(parameters));
+      this.httpApi.registerPostRoute<any, BodyType.Json>('/entries/search/text', BodyType.Json, noopValidator, async () => Promise.reject(new Error('not implemented'))); // this.api.textSearch(parameters));
     }
   }
 

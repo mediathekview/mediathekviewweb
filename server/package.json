@@ -8,7 +8,6 @@
     "inspect-min-memory": "node --inspect --optimize-for-size --memory-reducer --clear-free-memory --use-idle-notification ./dist/app.js",
     "build": "tsc",
     "build-watch": "tsc --watch",
-    "build-schemas": "sh build-schemas.sh",
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "author": "Patrick Hein",
@@ -16,7 +15,7 @@
   "dependencies": {
     "@tstdl/base": "^0.51.0",
     "@tstdl/database": "^0.8.2",
-    "@tstdl/mongo": "^0.19.2",
+    "@tstdl/mongo": "^0.19.3",
     "@tstdl/redis": "^0.4.1",
     "@tstdl/server": "^0.26.1",
     "@elastic/elasticsearch": "^7.5.0",

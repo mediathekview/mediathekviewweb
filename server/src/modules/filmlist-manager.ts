@@ -11,13 +11,20 @@ import { keys } from '../keys';
 import { Filmlist } from '../models/filmlist';
 import { FilmlistImportQueueItem, FilmlistImportWithPartialId } from '../models/filmlist-import';
 import { FilmlistImportRepository } from '../repositories/filmlists-import-repository';
+import { KeyValueRepository } from '../repositories/key-value-repository';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckIntervalMinutes * 60 * 1000;
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckIntervalMinutes * 60 * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
 const MAX_AGE_MILLISECONDS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
+type FilmlistManagerKeyValues = {
+  lastLatestCheck: number,
+  lastArchiveCheck: number,
+};
+
 export class FilmlistManagerModule extends ModuleBase implements Module {
+  private readonly keyValueRepository: KeyValueRepository<FilmlistManagerKeyValues>;
   private readonly filmlistImportRepository: FilmlistImportRepository;
   private readonly filmlistRepository: FilmlistRepository;
   private readonly distributedLoopProvider: DistributedLoopProvider;
@@ -39,34 +46,28 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
   }
 
   protected async _run(_cancellationToken: CancellationToken): Promise<void> {
-    const lastLatestCheck = this.datastoreFactory.key<Date>(keys.LastLatestCheck, DataType.Date);
-    const lastArchiveCheck = this.datastoreFactory.key<Date>(keys.LastArchiveCheck, DataType.Date);
     const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000);
     const distributedLoop = this.distributedLoopProvider.get(keys.FilmlistManagerLoop);
 
-    const loopController = distributedLoop.run(async () => this.check(lastLatestCheck, lastArchiveCheck, importQueue), 60000, 10000);
+    const loopController = distributedLoop.run(async () => this.check(importQueue), 60000, 10000);
     await this.cancellationToken; // tslint:disable-line: await-promise
 
     await loopController.stop();
   }
 
-  private async check(lastLatestCheck: Key<Date>, lastArchiveCheck: Key<Date>, importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
-    await this.compareTime(lastLatestCheck, LATEST_CHECK_INTERVAL, async () => await this.checkLatest(importQueue));
-    await this.compareTime(lastArchiveCheck, ARCHIVE_CHECK_INTERVAL, async () => await this.checkArchive(importQueue));
+  private async check(importQueue: Queue<FilmlistImportQueueItem>): Promise<void> {
+    await this.compareTime('lastLatestCheck', LATEST_CHECK_INTERVAL, async () => await this.checkLatest(importQueue));
+    await this.compareTime('lastArchiveCheck', ARCHIVE_CHECK_INTERVAL, async () => await this.checkArchive(importQueue));
   }
 
-  private async compareTime(dateKey: Key<Date>, interval: number, func: () => Promise<void>): Promise<void> {
-    let date = await dateKey.get();
-
-    if (date == undefined) {
-      date = new Date(0);
-    }
-
-    const difference = Date.now() - date.valueOf();
+  private async compareTime(key: keyof FilmlistManagerKeyValues, interval: number, func: () => Promise<void>): Promise<void> {
+    const lastCheck = await this.keyValueRepository.get(key, 0);
+    const now = currentTimestamp();
+    const difference = now - lastCheck;
 
     if (difference >= interval) {
       await func();
-      await dateKey.set(now());
+      await this.keyValueRepository.set(key, now);
     }
   }
 

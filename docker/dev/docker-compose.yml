@@ -13,7 +13,7 @@ services:
     command: ["/redis.conf"]
 
   mongodb:
-    image: mongo:4
+    image: mongo:4.2
     container_name: mongodb
     tmpfs:
       - /data/db
@@ -21,7 +21,7 @@ services:
       - "27017:27017"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.0.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
     environment:
       discovery.type: single-node
     container_name: elasticsearch

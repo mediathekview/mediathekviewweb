@@ -1,4 +1,4 @@
-import * as Got from 'got';
+import Got from 'got';
 import * as Needle from 'needle';
 import { Readable } from 'stream';
 import { HttpResponse } from './response';

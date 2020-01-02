@@ -1,29 +1,44 @@
 import { StringMap } from '@tstdl/base/types';
-import { Collection, MongoBaseRepository } from '@tstdl/mongo';
-import { KeyValueBag } from '../../models';
+import { TypedIndexSpecification } from '@tstdl/mongo';
+import { Collection } from 'mongodb';
 import { KeyValueRepository } from '../key-value-repository';
 
+type KeyValueItem<T, K extends keyof T = any> = {
+  scope: string,
+  key: K,
+  value: T[K]
+};
+
+const indexes: TypedIndexSpecification<KeyValueItem<any>>[] = [
+  { key: { scope: 1, key: 1 }, unique: true }
+];
+
 export class MongoKeyValueRepository<T extends StringMap> implements KeyValueRepository<T> {
-  private readonly baseRepository: MongoBaseRepository<KeyValueBag<T>>;
+  private readonly collection: Collection<KeyValueItem<T>>;
   private readonly scope: string;
 
-  constructor(collection: Collection<KeyValueBag<T>>, scope: string) {
-    this.baseRepository = new MongoBaseRepository(collection);
+  constructor(collection: Collection<KeyValueItem<T>>, scope: string) {
+    this.collection = collection;
     this.scope = scope;
   }
 
-  async get<K extends keyof T>(key: K, defaultValue: T[K]): Promise<T> {
-    const bag = await this.baseRepository.loadByFilter({ scope: this.scope }, false);
+  async initialize(): Promise<void> {
+    await this.collection.createIndexes(indexes);
+  }
 
-    if (bag == undefined || !bag.data.hasOwnProperty(key)) {
+  async get<K extends keyof T, V extends T[K] = T[K]>(key: K): Promise<V | undefined>;
+  async get<K extends keyof T, V extends T[K]>(key: K, defaultValue: V): Promise<T[K] | V>;
+  async get<K extends keyof T, V extends T[K]>(key: K, defaultValue?: V): Promise<T[K] | V | undefined> {
+    const item = await this.collection.findOne({ scope: this.scope, key });
+
+    if (item == undefined) {
       return defaultValue;
     }
 
-    return bag.data[key] as T;
+    return (item as KeyValueItem<T, K>).value;
   }
 
   async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
-    const _key = `data.${key}`;
-    await this.baseRepository.update({ scope: this.scope }, { $set: { [_key]: value } });
+    await this.collection.updateOne({ scope: this.scope, key }, { value }, { upsert: true });
   }
 }
