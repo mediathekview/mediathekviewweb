@@ -20,13 +20,13 @@
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "socket.io-client": "^2.3.0",
-    "video.js": "^7.6.5"
+    "video.js": "^7.6.6"
   },
   "devDependencies": {
     "@types/bootstrap": "^3.4.0",
     "@types/datatables.net": "^1.10.18",
     "@types/jquery": "^3.3.31",
-    "@types/lodash": "^4.14.148",
+    "@types/lodash": "^4.14.149",
     "@types/socket.io-client": "^1.4.32",
     "@types/video.js": "^7.3.3",
     "typescript": "~3.1.6"
