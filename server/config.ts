@@ -23,7 +23,8 @@ interface Config {
     postcode: string,
     city: string,
     mail: string
-  }
+  },
+  adsText: string
 }
 
 function hasEnv(variable: string): boolean {
@@ -101,7 +102,8 @@ const config: Config = {
     postcode: getEnvOrDefault('CONTACT_POSTCODE', '12345'),
     city: getEnvOrDefault('CONTACT_CITY', 'Musterstadt'),
     mail: getEnvOrDefault('CONTACT_MAIL', 'max@mustermann.tld')
-  }
+  },
+  adsText: getEnvOrDefault('ADS_TEXT', '')
 }
 
 if (config.redis.password.length == 0) {

@@ -109,6 +109,10 @@ const impressum = renderImpressum(config.contact);
     res.send(impressum);
   });
 
+  app.get('/ads.txt', function (req, res) {
+    res.send(config.adsText);
+  });
+
   app.get('/datenschutz', function (req, res) {
     res.sendFile(path.join(__dirname, '/client/datenschutz.html'));
   });
