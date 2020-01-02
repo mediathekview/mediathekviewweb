@@ -1,6 +1,6 @@
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { Observable, ReplaySubject, Subscription } from 'rxjs';
-import { AggregatedEntry } from '../common/model';
+import { AggregatedEntry } from '../common/models';
 import { Sort, TextSearchQuery } from '../common/search-engine/query';
 import { SearchService } from '../services/search.service';
 

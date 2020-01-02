@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, Input, ViewChild, OnChanges, Simple
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MediaQueryService } from 'src/app/services/media-query.service';
-import { AggregatedEntry } from '../../common/model';
+import { AggregatedEntry } from '../../common/models';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 const panelCollapsedHeightLarge = 48;
@@ -19,7 +19,7 @@ const panelExpandedHeightSmall = 128;
 })
 export class EntryListComponent implements OnChanges {
   private readonly mediaQueryService: MediaQueryService;
-  @ViewChild('scrollViewport') scrollViewport: CdkVirtualScrollViewport;
+  @ViewChild('scrollViewport', { static: true }) scrollViewport: CdkVirtualScrollViewport;
 
   @Input() dataSource: DataSource<AggregatedEntry | undefined>;
 

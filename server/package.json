@@ -21,11 +21,11 @@
     "@tstdl/server": "^0.26.1",
     "@elastic/elasticsearch": "^7.5.0",
     "commander": "^4.0.1",
-    "got": "^10.2.0",
+    "got": "^10.2.1",
     "ioredis": "^4.14.1",
     "koa": "^2.11.0",
     "koa-router": "^7.4.0",
-    "lzma-native": "^5.0.1",
+    "lzma-native": "^6.0.0",
     "mongodb": "^3.4.1",
     "needle": "^2.4.0",
     "prom-client": "^11.5.3",
@@ -39,7 +39,7 @@
     "@types/lzma-native": "^4.0.0",
     "@types/mongodb": "^3.3.14",
     "@types/needle": "^2.0.4",
-    "@types/node": "^13.1.1",
+    "@types/node": "^13.1.2",
     "typescript": "~3.7.4"
   }
 }

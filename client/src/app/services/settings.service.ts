@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { SyncEnumerable } from '@common-ts/base/enumerable';
-import { StringMap } from '@common-ts/base/types';
+import { Enumerable } from '@tstdl/base/enumerable';
+import { StringMap } from '@tstdl/base/types';
 import { LocalStorageService } from './local-storage.service';
 
 const LOCAL_STORAGE_NAMESPACE = 'settings';
@@ -18,7 +18,7 @@ export class SettingsService {
   loadSettings(): StringMap {
     const localStorageEntries = this.localStorageService.entries(LOCAL_STORAGE_NAMESPACE);
 
-    const settings = SyncEnumerable.from(localStorageEntries)
+    const settings = Enumerable.from(localStorageEntries)
       .reduce<StringMap>((settings, [key, value]) => ({ ...settings, [key]: value }), {});
 
     return settings;

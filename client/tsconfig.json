@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "@tstdl/base",
   "compilerOptions": {
     "baseUrl": "./",
     "importHelpers": true,

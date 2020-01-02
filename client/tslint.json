@@ -1,5 +1,5 @@
 {
-  "extends": "@common-ts/base/tslint.json",
+  "extends": "@tstdl/base/tslint.json",
   "rulesDirectory": ["codelyzer"],
   "rules": {
     "component-class-suffix": [true, "Component"],

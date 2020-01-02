@@ -12,7 +12,7 @@ import { Segment, Segmentizer } from '../../common/search-string-parser';
 })
 export class SearchInputComponent implements OnInit, OnDestroy {
   private readonly segmentizer: Segmentizer;
-  @ViewChild('searchInputElement') private readonly searchInputRef: ElementRef<HTMLInputElement>;
+  @ViewChild('searchInputElement', { static: true }) private readonly searchInputRef: ElementRef<HTMLInputElement>;
 
   private inputChangeSubscription: Subscription;
 

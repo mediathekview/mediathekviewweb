@@ -2,7 +2,7 @@ import { DataSource } from '@angular/cdk/table';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ReplaySubject } from 'rxjs';
 import { EntrySearchDataSource } from 'src/app/datasources/entry-search-datasource';
-import { AggregatedEntry, Field } from '../../common/model';
+import { AggregatedEntry, Field } from '../../common/models';
 import { Order } from '../../common/search-engine/query';
 import { SearchService } from '../../services/search.service';
 
