@@ -15,7 +15,7 @@
   "dependencies": {
     "@tstdl/base": "^0.51.0",
     "@tstdl/database": "^0.8.2",
-    "@tstdl/mongo": "^0.19.3",
+    "@tstdl/mongo": "^0.20.0",
     "@tstdl/redis": "^0.4.1",
     "@tstdl/server": "^0.26.1",
     "@elastic/elasticsearch": "^7.5.0",
