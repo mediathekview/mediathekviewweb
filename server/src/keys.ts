@@ -1,8 +1,8 @@
 export const keys = {
   LastLatestCheck: 'last-latest-check',
   LastArchiveCheck: 'last-archive-check',
-  FilmlistImportQueue: 'filmlist-import',
+  FilmlistImportQueue: 'filmlist-import-queue',
   FilmlistManagerLoop: 'filmlist-manager',
-  EntriesToBeSaved: 'entries-to-be-saved',
-  EntriesToBeIndexed: 'entries-to-be-indexed'
+  EntriesToBeSavedQueue: 'entries-to-be-saved-queue',
+  EntriesToBeIndexedQueue: 'entries-to-be-indexed-queue'
 };

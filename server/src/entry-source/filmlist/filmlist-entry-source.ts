@@ -1,9 +1,8 @@
 import { Logger } from '@tstdl/base/logger';
-import { Job, Queue, QueueProvider } from '@tstdl/base/queue';
+import { Job, Queue } from '@tstdl/base/queue';
 import { currentTimestamp } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { Entry } from '../../common/models';
-import { keys } from '../../keys';
 import { FilmlistImportQueueItem } from '../../models/filmlist-import';
 import { FilmlistImportRepository } from '../../repositories/filmlists-import-repository';
 import { EntrySource } from '../entry-source';
@@ -11,24 +10,22 @@ import { parseFilmlistResource } from './filmlist-parser';
 
 export class FilmlistEntrySource implements EntrySource {
   private readonly filmlistImportRepository: FilmlistImportRepository;
-  private readonly queueProvider: QueueProvider;
+  private readonly importQueue: Queue<FilmlistImportQueueItem>;
   private readonly logger: Logger;
 
-  constructor(filmlistImportRepository: FilmlistImportRepository, queueProvider: QueueProvider, logger: Logger) {
+  constructor(filmlistImportRepository: FilmlistImportRepository, importQueue: Queue<FilmlistImportQueueItem>, logger: Logger) {
     this.filmlistImportRepository = filmlistImportRepository;
-    this.queueProvider = queueProvider;
+    this.importQueue = importQueue;
     this.logger = logger;
   }
 
   // tslint:disable-next-line: no-async-without-await
   async *getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
-    const importQueue = this.queueProvider.get<FilmlistImportQueueItem>(keys.FilmlistImportQueue, 5 * 60 * 1000);
-
-    const consumer = importQueue.getConsumer(cancellationToken);
+    const consumer = this.importQueue.getConsumer(cancellationToken);
 
     for await (const job of consumer) {
       try {
-        yield* this.processFilmlistImport(job, importQueue, cancellationToken);
+        yield* this.processFilmlistImport(job, this.importQueue, cancellationToken);
 
         if (cancellationToken.isSet) {
           break;
@@ -45,7 +42,7 @@ export class FilmlistEntrySource implements EntrySource {
     const filmlistImport = await this.filmlistImportRepository.load(filmlistImportQueueItem.filmlistImportId);
 
     const date = new Date(filmlistImport.filmlist.timestamp);
-    this.logger.info(`processing filmlist from ${date}`);
+    this.logger.info(`processing filmlist from ${date.toString()}`);
 
     const parsedFilmlistResource = parseFilmlistResource(filmlistImport.filmlist.resource, false);
     let numberOfEntries = 0;

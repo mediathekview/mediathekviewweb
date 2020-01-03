@@ -1,16 +1,16 @@
+import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import { AsyncDisposer, disposeAsync } from '@tstdl/base/disposable';
 import { LockProvider } from '@tstdl/base/lock';
 import { Logger } from '@tstdl/base/logger';
 import { ConsoleLogger } from '@tstdl/base/logger/console';
-import { QueueProvider } from '@tstdl/base/queue';
+import { Queue } from '@tstdl/base/queue';
 import { singleton, timeout } from '@tstdl/base/utils';
 import { MongoDocument } from '@tstdl/mongo';
+import { MongoQueue } from '@tstdl/mongo/queue';
 import { RedisLockProvider } from '@tstdl/redis/lock';
-import { RedisQueueProvider } from '@tstdl/redis/queue';
 import { TypedRedis } from '@tstdl/redis/typed-redis';
 import { HttpApi } from '@tstdl/server/api/http-api';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
-import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import * as RedisClient from 'ioredis';
 import * as Mongo from 'mongodb';
 import { AggregatedEntry, Entry } from './common/models';
@@ -21,6 +21,7 @@ import { NonWorkingAggregatedEntryDataSource } from './data-sources/non-working-
 import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
+import { keys } from './keys';
 import { FilmlistImport } from './models/filmlist-import';
 import { ApiModule } from './modules/api';
 import { EntriesImporterModule } from './modules/entries-importer';
@@ -137,10 +138,11 @@ export class InstanceProvider {
   static async entriesSaverModule(): Promise<EntriesSaverModule> {
     return singleton(EntriesSaverModule, async () => {
       const entryRepository = await InstanceProvider.entryRepository();
-      const queueProvider = await InstanceProvider.queueProvider();
+      const entriesToBeSavedQueue = await InstanceProvider.entriesToBeSavedQueue();
+      const entriesToBeIndexedQueue = await InstanceProvider.entriesToBeIndexedQueue();
       const logger = InstanceProvider.logger(ENTRIES_SAVER_MODULE_LOG);
 
-      return new EntriesSaverModule(entryRepository, queueProvider, logger);
+      return new EntriesSaverModule(entryRepository, entriesToBeSavedQueue, entriesToBeIndexedQueue, logger);
     });
   }
 
@@ -148,11 +150,19 @@ export class InstanceProvider {
     return singleton(EntriesIndexerModule, async () => {
       const aggregatedEntryDataSource = await InstanceProvider.aggregatedEntryDataSource();
       const searchEngine = await InstanceProvider.entrySearchEngine();
-      const queueProvider = await InstanceProvider.queueProvider();
+      const entriesToBeIndexedQueue = await InstanceProvider.entriesToBeIndexedQueue();
       const logger = InstanceProvider.logger(ENTRIES_INDEXER_MODULE_LOG);
 
-      return new EntriesIndexerModule(aggregatedEntryDataSource, searchEngine, queueProvider, logger);
+      return new EntriesIndexerModule(aggregatedEntryDataSource, searchEngine, entriesToBeIndexedQueue, logger);
     });
+  }
+
+  static async entriesToBeSavedQueue(): Promise<Queue<Entry>> {
+    return singleton(keys.EntriesToBeSavedQueue, () => InstanceProvider.mongoQueue<Entry>(keys.EntriesToBeSavedQueue, 15000, 3));
+  }
+
+  static async entriesToBeIndexedQueue(): Promise<Queue<string>> {
+    return singleton(keys.EntriesToBeIndexedQueue, () => InstanceProvider.mongoQueue<string>(keys.EntriesToBeIndexedQueue, 15000, 3));
   }
 
   static async apiModule(): Promise<ApiModule> {
@@ -265,25 +275,24 @@ export class InstanceProvider {
     });
   }
 
-  static async queueProvider(): Promise<QueueProvider> {
-    return singleton(RedisQueueProvider, async () => {
-      const redis = await InstanceProvider.redis();
-      const lockProvider = await InstanceProvider.lockProvider();
-      const distributedLoopProvider = await InstanceProvider.distributedLoopProvider();
-      const logger = InstanceProvider.logger(QUEUE_LOG);
+  static async mongoQueue<T>(collectionName: string, processTimeout: number, maxTries: number): Promise<MongoQueue<T>> {
+    const key = `mongo-queue:${collectionName}`;
 
-      const queue = new RedisQueueProvider(redis, lockProvider, distributedLoopProvider);
+    return singleton(key, async () => {
+      const collection = await InstanceProvider.collection(collectionName);
+      const queue = new MongoQueue<T>(collection, processTimeout, maxTries);
+
       return queue;
     });
   }
 
   static async entriesImporterModule(): Promise<EntriesImporterModule> {
     return singleton(EntriesImporterModule, async () => {
-      const queueProvider = await InstanceProvider.queueProvider();
+      const entryRepository = await InstanceProvider.entryRepository();
       const logger = InstanceProvider.logger(ENTRIES_IMPORTER_MODULE_LOG);
       const source = await InstanceProvider.filmlistEntrySource();
 
-      return new EntriesImporterModule(queueProvider, logger, [source]);
+      return new EntriesImporterModule(entryRepository, logger, [source]);
     });
   }
 
@@ -352,10 +361,9 @@ export class InstanceProvider {
   static async filmlistEntrySource(): Promise<FilmlistEntrySource> {
     return singleton(FilmlistEntrySource, async () => {
       const filmlistImportRepository = await InstanceProvider.filmlistImportRepository();
-      const queueProvider = await InstanceProvider.queueProvider();
       const logger = InstanceProvider.logger(FILMLIST_ENTRY_SOURCE);
 
-      return new FilmlistEntrySource(filmlistImportRepository, queueProvider, logger);
+      return new FilmlistEntrySource(filmlistImportRepository, logger);
     });
   }
 
@@ -364,10 +372,9 @@ export class InstanceProvider {
       const filmlistImportRepository = await InstanceProvider.filmlistImportRepository();
       const filmlistRepository = InstanceProvider.filmlistRepository();
       const distributedLoopProvider = await InstanceProvider.distributedLoopProvider();
-      const queueProvider = await InstanceProvider.queueProvider();
       const logger = InstanceProvider.logger(FILMLIST_MANAGER_MODULE_LOG);
 
-      return new FilmlistManagerModule(filmlistImportRepository, filmlistRepository, distributedLoopProvider, queueProvider, logger);
+      return new FilmlistManagerModule(filmlistImportRepository, filmlistRepository, distributedLoopProvider, logger);
     });
   }
 }
