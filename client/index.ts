@@ -828,6 +828,12 @@ function playVideo(title, url) {
 
     video = videojs('video-player');
 
+    var options = {
+      adTagUrl: 'YOUR_AD_TAG'
+    };
+
+    video.ima(options);
+
     vid.dblclick(() => {
       if (isFullscreen()) {
         exitFullscreen();

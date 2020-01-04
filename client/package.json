@@ -20,7 +20,8 @@
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "socket.io-client": "^2.3.0",
-    "video.js": "^7.6.6"
+    "video.js": "^7.6.6",
+    "videojs-ima": "^1.7.4"
   },
   "devDependencies": {
     "@types/bootstrap": "^3.4.0",
