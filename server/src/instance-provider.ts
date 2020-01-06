@@ -20,7 +20,7 @@ import { AggregatedEntryDataSource } from './data-sources/aggregated-entry.data-
 import { NonWorkingAggregatedEntryDataSource } from './data-sources/non-working-aggregated-entry.data-source';
 import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
-import { FilmlistRepository, MediathekViewWebVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
+import { FilmlistRepository, S3FilmlistVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
 import { keys } from './keys';
 import { FilmlistImport } from './models/filmlist-import';
 import { ApiModule } from './modules/api';
@@ -265,7 +265,7 @@ export class InstanceProvider {
   }
 
   static filmlistRepository(): FilmlistRepository {
-    return singleton(MediathekViewWebVerteilerFilmlistRepository, () => new MediathekViewWebVerteilerFilmlistRepository(MEDIATHEKVIEWWEB_VERTEILER_URL));
+    return singleton(S3FilmlistVerteilerFilmlistRepository, () => new S3FilmlistVerteilerFilmlistRepository(MEDIATHEKVIEWWEB_VERTEILER_URL));
   }
 
   static async distributedLoopProvider(): Promise<DistributedLoopProvider> {
@@ -302,7 +302,6 @@ export class InstanceProvider {
       const repository = new MongoEntryRepository(collection);
 
       await repository.initialize();
-
       return repository;
     });
   }

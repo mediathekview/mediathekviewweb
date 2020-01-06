@@ -2,17 +2,16 @@ import { Entity } from './entity';
 import { EntryMetadata } from './entry-metadata';
 
 export type Entry = Entity & {
-  channel: string;
-  topic: string;
-  title: string;
-  timestamp: number;
-  duration: number;
-  description: string;
-  website: string;
-  firstSeen: number;
-  lastSeen: number;
-  media: Media[];
-
+  channel: string,
+  topic: string,
+  title: string,
+  timestamp: number,
+  duration: number,
+  description: string,
+  website: string,
+  firstSeen: number,
+  lastSeen: number,
+  media: Media[],
   source: {
     name: string,
     data?: any
@@ -20,9 +19,9 @@ export type Entry = Entity & {
 };
 
 export type AggregatedEntry = Entry & {
-  date: number;
-  time: number;
-  metadata: EntryMetadata;
+  date: number,
+  time: number,
+  metadata: EntryMetadata
 };
 
 export enum Field {
@@ -60,23 +59,23 @@ export enum MediaType {
 export type Media = Video | Audio | Subtitle;
 
 type MediaBase = {
-  type: MediaType;
-  url: string;
-  size: number | null;
+  type: MediaType,
+  url: string,
+  size: number | null
 };
 
 export type Video = MediaBase & {
-  type: MediaType.Video;
-  quality: VideoQuality | null;
+  type: MediaType.Video,
+  quality: VideoQuality | null
 };
 
 export type Audio = MediaBase & {
-  type: MediaType.Audio;
-  quality: AudioQuality | null;
+  type: MediaType.Audio,
+  quality: AudioQuality | null
 };
 
 export type Subtitle = MediaBase & {
-  type: MediaType.Subtitle;
+  type: MediaType.Subtitle
 };
 
 export type VideoQuality = {

@@ -1,4 +1,3 @@
-import { AsyncEnumerable } from '@tstdl/base/enumerable';
 import { Collection, MongoBaseRepository, MongoDocument, toMongoDocument, TypedIndexSpecification } from '@tstdl/mongo';
 import * as Mongo from 'mongodb';
 import { Entry, Field } from '../../common/models';
@@ -19,7 +18,7 @@ export class MongoEntryRepository implements EntryRepository {
   }
 
   async initialize(): Promise<void> {
-    await this.collection.createIndexes(indexes, {});
+    await this.collection.createIndexes(indexes);
   }
 
   async save(entry: Entry): Promise<void> {

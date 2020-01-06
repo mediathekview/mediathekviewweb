@@ -28,7 +28,9 @@ export enum UserActionType {
 
 export type UserActionFilter = Partial<Visit | Download | Play | Pause | Comment | Rating>;
 
-export type UserAction = Entity & {
+export type UserAction = UserActionBase | EntryAction | Play | Pause | Visit | Comment | Rating;
+
+type UserActionBase = Entity & {
   actionType: UserActionType,
   userId: string,
   timestamp: number,
@@ -36,15 +38,15 @@ export type UserAction = Entity & {
   pageViewId: string
 };
 
-type EntryAction = UserAction & {
+type EntryAction = UserActionBase & {
   entryId: string
 };
 
 type PlayPause = EntryAction & {
-  milliseconds: number
+  duration: number
 };
 
-export type Visit = UserAction & {
+export type Visit = UserActionBase & {
   actionType: UserActionType.Visit,
   route: string,
   agent: Agent,
@@ -73,7 +75,7 @@ export type Rating = EntryAction & {
   value: number
 };
 
-export type UserActionWithPartialId = EntityWithPartialId<UserAction>;
+export type UserActionWithPartialId = EntityWithPartialId<UserActionBase>;
 
 export type VisitWithPartialId = EntityWithPartialId<Visit>;
 

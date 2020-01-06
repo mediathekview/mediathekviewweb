@@ -95,7 +95,9 @@ export async function* parseFilmlistResource(filmlistResource: FilmlistResource,
 
 function wrapStream(stream: Readable): Readable {
   const wrapper = new PassThrough();
-  stream.pipe(wrapper);
+
+  stream.on('error', (error) => wrapper.destroy(error));
+  stream.pipe(wrapper, { end: true });
 
   return wrapper;
 }

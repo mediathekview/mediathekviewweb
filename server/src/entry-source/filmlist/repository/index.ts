@@ -1,2 +1,2 @@
 export * from './repository';
-export * from './mvw-verteiler';
+export * from './s3-verteiler';

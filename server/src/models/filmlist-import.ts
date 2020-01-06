@@ -1,15 +1,15 @@
 import { Entity, EntityWithPartialId } from '../common/models';
-import { Filmlist } from './filmlist';
-
-export type FilmlistImportQueueItem = {
-  filmlistImportId: string
-};
 
 export type FilmlistImport = Entity & {
-  filmlist: Filmlist,
-  enqueuedTimestamp: number,
-  processedTimestamp: number | null,
-  numberOfEntries: number | null,
+  filmlist: FilmlistMetadata,
+  importTimestamp: number | null,
+  importDuration: number | null,
+  entriesCount: number | null
+};
+
+export type FilmlistMetadata = {
+  id: string,
+  timestamp: number
 };
 
 export type FilmlistImportWithPartialId = EntityWithPartialId<FilmlistImport>;
