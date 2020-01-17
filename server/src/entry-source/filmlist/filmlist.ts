@@ -1,29 +1,30 @@
-import { matchAll, zBase32Encode, AsyncIteratorIterable } from '@tstdl/base/utils';
-import { NonObjectBufferMode } from '@tstdl/server/utils';
+import { AsyncIteratorIterableIterator, matchAll, zBase32Encode } from '@tstdl/base/utils';
+import { createHash, NonObjectBufferMode } from '@tstdl/server/utils';
 import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import { StringDecoder } from 'string_decoder';
 import { createSubtitle, createVideo, Entry } from '../../common/models';
 import { FilmlistMetadata } from '../../models';
 
-const METADATA_REGEX = /{"Filmliste":\[".*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
-const ENTRY_REGEX = /"X":(\["(?:.|[\r\n])*?"\])(?:,|})/g;
+const METADATA_REGEX = /{"Filmliste":\["[^"]*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
+const ENTRY_REGEX = /"X":(\[".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?","(?:\d+|)",".*?",".*?","(?:false|true)"\])(?:,|})/g;
+//const ENTRY_REGEX = /"X":(\[".*?"\])(?:,|})/g;
 
 export type FilmlistParseResult = FilmlistMetadataParseResult | EntriesParseResult;
 
 export type FilmlistMetadataParseResult = {
-  filmlist: Filmlist,
+  filmlistMetadata: FilmlistMetadata,
   entries: undefined
 };
 
 export type EntriesParseResult = {
-  filmlist: undefined,
+  filmlistMetadata: undefined,
   entries: Entry[]
 };
 
-export class Filmlist implements AsyncIterable<Entry> {
+export class Filmlist implements AsyncIterable<Entry[]> {
   private readonly stream: TypedReadable<NonObjectBufferMode>;
 
-  private parseIterable: AsyncIteratorIterable<FilmlistParseResult>;
+  private parseIterable: AsyncIteratorIterableIterator<FilmlistParseResult> | undefined;
   private buffer: string;
   private filmlistMetadata: FilmlistMetadata | undefined;
   private lastChannel: string;
@@ -43,31 +44,111 @@ export class Filmlist implements AsyncIterable<Entry> {
       return this.filmlistMetadata;
     }
 
-    const iterator = this.parseFilmlist(this.stream);
-    this.parseIterable = new AsyncIteratorIterable(iterator, true);
+    const iterable = this.getIterable();
+
+    for await (const item of iterable) {
+      if (item.filmlistMetadata != undefined) {
+        this.filmlistMetadata = item.filmlistMetadata;
+        return this.filmlistMetadata;
+      }
+
+      if (item.entries != undefined) {
+        throw new Error('this should not happen...');
+      }
+    }
+
+    throw new Error('could not parse filmlist');
   }
 
-  [Symbol.asyncIterator](): AsyncIterator<Entry> {
+  async *[Symbol.asyncIterator](): AsyncIterator<Entry[]> {
+    const iterable = this.getIterable();
+    await this.getMetadata();
 
+    for await (const item of iterable) {
+      if (item.entries != undefined) {
+        yield item.entries;
+      }
+      else if (item.filmlistMetadata != undefined) {
+        throw new Error('this should not happen...');
+      }
+    }
   }
 
-  private parse(): Promise<void> {
+  private getIterable(): AsyncIteratorIterableIterator<FilmlistParseResult> {
+    if (this.parseIterable == undefined) {
+      const iterator = this.parseFilmlist();
+      this.parseIterable = new AsyncIteratorIterableIterator(iterator, true);
+    }
 
+    return this.parseIterable;
   }
 
-  private async *parseFilmlist(stream: TypedReadable<NonObjectBufferMode>): AsyncIterableIterator<FilmlistParseResult> {
-    const stringDecoder = new StringDecoder('utf-8');
+  private async *parseFilmlist(): AsyncIterableIterator<FilmlistParseResult> {
+    const stringDecoder = new StringDecoder('utf8');
 
-    for await (const chunk of stream) {
+    for await (const chunk of this.stream) {
       this.buffer += stringDecoder.write(chunk);
+
+      if (this.buffer.length < 50000) {
+        continue;
+      }
+
+      const result = this.parse();
+
+      if (result != undefined) {
+        yield result;
+      }
     }
 
     this.buffer += stringDecoder.end();
+    const result = this.parse();
+
+    if (result != undefined) {
+      yield result;
+    }
+  }
+
+  private parse(): FilmlistParseResult | undefined {
+    if (this.filmlistMetadata == undefined) {
+      const filmlistMetadata = this.parseFilmlistMetadata();
+
+      if (filmlistMetadata != undefined) {
+        return { filmlistMetadata, entries: undefined };
+      }
+    }
+    else {
+      const entries = this.parseEntries(this.filmlistMetadata);
+
+      if (entries != undefined) {
+        return { filmlistMetadata: undefined, entries };
+      }
+    }
+
+    return undefined;
+  }
+
+  private parseFilmlistMetadata(): FilmlistMetadata | undefined {
+    const match = this.buffer.match(METADATA_REGEX);
+
+    if (match == undefined) {
+      return undefined;
+    }
+
+    this.buffer = this.buffer.slice((match.index as number) + match[0].length);
+
+    const [, day, month, year, hour, minute, id] = match;
+    const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute)));
+    const timestamp = date.getTime();
+
+    const filmlist: FilmlistMetadata = {
+      id,
+      timestamp
+    };
+
+    return filmlist;
   }
 
   parseEntries(filmlistMetadata: FilmlistMetadata): Entry[] | undefined {
-    const entries: Entry[] = [];
-
     const regex = new RegExp(ENTRY_REGEX);
     const matches = matchAll(regex, this.buffer);
 
@@ -75,44 +156,39 @@ export class Filmlist implements AsyncIterable<Entry> {
       return undefined;
     }
 
-    for (const match of matches) {
-      const filmlistEntry = match[1];
-      const entry = this.filmlistEntryToEntry(filmlistEntry, filmlistMetadata);
-
-      entries.push(entry);
-    }
+    const entries = matches.map((match) => this.filmlistEntryToEntry(match[1], filmlistMetadata));
 
     const lastMatch = matches[matches.length - 1];
-    this.buffer = this.buffer.slice(lastMatch.index + lastMatch[0].length);
+    this.buffer = this.buffer.slice((lastMatch.index) + lastMatch[0].length);
 
     return entries;
   }
 
   filmlistEntryToEntry(filmlistEntry: string, filmlistMetadata: FilmlistMetadata): Entry {
-    const parsedFilmlistEntry: string[] = JSON.parse(filmlistEntry) as string[];
+    const parsedFilmlistEntry = JSON.parse(filmlistEntry) as string[];
 
     const [
       // tslint:disable: variable-name
       channel,
       topic,
       title,
-      date,
-      time,
+      , // date,
+      , // time,
       rawDuration,
-      size,
+      , // size,
       description,
       url,
       url_website,
       url_subtitle,
-      url_rtmp,
+      , // url_rtmp,
       url_small,
-      url_rtmp_small,
+      , // url_rtmp_small,
       url_hd,
-      url_rtmp_hd,
+      , // url_rtmp_hd,
       date_l,
-      url_history,
-      geo,
-      is_new
+      // url_history,
+      // geo,
+      // is_new
       // tslint:enable: variable-name
     ] = parsedFilmlistEntry;
 
@@ -174,8 +250,8 @@ export class Filmlist implements AsyncIterable<Entry> {
       entry.media.push(subtitle);
     }
 
-    const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.website].join(' _ ');
-    const idBuffer = createHash()   Crypto.createHash('sha1').update(hashString).digest();
+    const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.website].join('-');
+    const idBuffer = createHash('sha1', hashString).toBuffer();
     entry.id = zBase32Encode(idBuffer.buffer);
 
     return entry;

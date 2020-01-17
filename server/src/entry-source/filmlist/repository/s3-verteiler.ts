@@ -1,40 +1,40 @@
 import { NonObjectBufferMode } from '@tstdl/server/utils';
 import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import * as Minio from 'minio';
-import { Duplex, Stream } from 'stream';
 import { createGunzip } from 'zlib';
-import { FilmlistRepository } from './repository';
 import { Filmlist } from '../filmlist';
-
-export function toReadable(stream: Stream): TypedReadable<NonObjectBufferMode> {
-  const duplex = new Duplex();
-  stream.pipe(duplex);
-
-  return duplex;
-}
+import { FilmlistRepository } from './repository';
 
 export class S3FilmlistVerteilerFilmlistRepository implements FilmlistRepository {
   private readonly s3: Minio.Client;
   private readonly bucket: string;
   private readonly object: string;
 
-  constructor(url: URL, accessKey: string, secretKey: string, bucket: string, object: string) {
+  constructor(url: string, accessKey: string, secretKey: string, bucket: string, object: string) {
+    const { hostname, port, protocol } = new URL(url);
+
     this.s3 = new Minio.Client({
-      endPoint: url.hostname,
-      port: url.port.length > 0 ? parseInt(url.port) : undefined,
-      useSSL: url.protocol == 'https:',
+      endPoint: hostname,
+      port: port.length > 0 ? parseInt(port) : undefined,
+      useSSL: protocol == 'https:',
       accessKey,
       secretKey
     });
+
+    this.bucket = bucket;
+    this.object = object;
   }
 
   async getLatest(): Promise<Filmlist> {
     const s3Stream = await this.s3.getObject(this.bucket, this.object);
     const gunzipStream = createGunzip();
-    const filmlistStream = s3Stream.on('error', (error) => gunzipStream.destroy(error)).pipe(gunzipStream) as TypedReadable<NonObjectBufferMode>;
+    const filmlistStream = s3Stream.on('error', (error) => gunzipStream.destroy(error as Error)).pipe(gunzipStream) as TypedReadable<NonObjectBufferMode>;
+    const filmlist = new Filmlist(filmlistStream);
 
+    return filmlist;
   }
 
-  async *getArchive(): AsyncIterable<Filmlist> {
+  getArchive(): AsyncIterable<Filmlist> {
+    throw new Error('archive not supported');
   }
 }

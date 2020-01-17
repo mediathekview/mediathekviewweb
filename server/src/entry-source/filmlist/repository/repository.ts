@@ -1,4 +1,4 @@
-import { Filmlist } from '../../../models/filmlist';
+import { Filmlist } from '../filmlist';
 
 export interface FilmlistRepository {
   getLatest(): Promise<Filmlist>;

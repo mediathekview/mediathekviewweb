@@ -14,19 +14,19 @@
   "license": "GPLv3",
   "dependencies": {
     "@elastic/elasticsearch": "^7.5.0",
-    "@tstdl/base": "^0.54.2",
-    "@tstdl/database": "^0.8.3",
-    "@tstdl/mongo": "^0.20.4",
-    "@tstdl/redis": "^0.4.2",
-    "@tstdl/server": "^0.26.4",
-    "commander": "^4.0.1",
-    "got": "^10.2.1",
+    "@tstdl/base": "^0.55.0",
+    "@tstdl/database": "^0.8.6",
+    "@tstdl/mongo": "^0.21.1",
+    "@tstdl/redis": "^0.4.5",
+    "@tstdl/server": "^0.26.6",
+    "commander": "^4.1.0",
+    "got": "^10.2.2",
     "ioredis": "^4.14.1",
     "koa": "^2.11.0",
     "koa-router": "^7.4.0",
     "lzma-native": "^6.0.0",
     "minio": "^7.0.13",
-    "mongodb": "^3.4.1",
+    "mongodb": "^3.5.0",
     "needle": "^2.4.0",
     "prom-client": "^11.5.3",
     "rxjs": "^6.5.4"
@@ -35,12 +35,12 @@
     "@types/got": "^9.6.9",
     "@types/ioredis": "^4.14.3",
     "@types/koa": "^2.11.0",
-    "@types/koa-router": "^7.0.42",
+    "@types/koa-router": "^7.4.0",
     "@types/lzma-native": "^4.0.0",
     "@types/minio": "^7.0.5",
     "@types/mongodb": "^3.3.14",
     "@types/needle": "^2.0.4",
-    "@types/node": "^13.1.4",
-    "typescript": "~3.7.4"
+    "@types/node": "^13.1.8",
+    "typescript": "~3.7.5"
   }
 }
