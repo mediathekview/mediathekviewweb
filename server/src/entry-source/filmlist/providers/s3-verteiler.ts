@@ -3,12 +3,14 @@ import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import * as Minio from 'minio';
 import { createGunzip } from 'zlib';
 import { Filmlist } from '../filmlist';
-import { FilmlistRepository } from './repository';
+import { FilmlistProvider } from '../provider';
 
-export class S3FilmlistVerteilerFilmlistRepository implements FilmlistRepository {
+export class S3FilmlistVerteilerFilmlistProvider implements FilmlistProvider {
   private readonly s3: Minio.Client;
   private readonly bucket: string;
   private readonly object: string;
+
+  readonly type: string = 's3';
 
   constructor(url: string, accessKey: string, secretKey: string, bucket: string, object: string) {
     const { hostname, port, protocol } = new URL(url);

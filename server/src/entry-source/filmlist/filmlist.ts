@@ -7,7 +7,6 @@ import { FilmlistMetadata } from '../../models';
 
 const METADATA_REGEX = /{"Filmliste":\["[^"]*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\[".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?","(?:\d+|)",".*?",".*?","(?:false|true)"\])(?:,|})/g;
-//const ENTRY_REGEX = /"X":(\[".*?"\])(?:,|})/g;
 
 export type FilmlistParseResult = FilmlistMetadataParseResult | EntriesParseResult;
 

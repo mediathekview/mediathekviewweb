@@ -1,16 +1,14 @@
 import { AsyncEnumerable } from '@tstdl/base/enumerable';
 import { Logger } from '@tstdl/base/logger';
-import { Queue } from '@tstdl/base/queue';
 import { AnyIterable, currentTimestamp } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
 import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
 import { config } from '../config';
-import { FilmlistRepository } from '../entry-source/filmlist/repository';
+import { FilmlistProvider } from '../entry-source/filmlist/filmlist-provider';
 import { keys } from '../keys';
-import { Filmlist } from '../models/filmlist';
-import { FilmlistImportQueueItem, FilmlistImportWithPartialId } from '../models/filmlist-import';
-import { FilmlistImportRepository } from '../repositories/filmlists-import-repository';
+import { FilmlistImportWithPartialId } from '../models';
+import { FilmlistImportRepository } from '../repositories/filmlist-import-repository';
 import { KeyValueRepository } from '../repositories/key-value-repository';
 
 const LATEST_CHECK_INTERVAL = config.importer.latestCheckIntervalMinutes * 60 * 1000;
@@ -26,18 +24,16 @@ type FilmlistManagerKeyValues = {
 export class FilmlistManagerModule extends ModuleBase implements Module {
   private readonly keyValueRepository: KeyValueRepository<FilmlistManagerKeyValues>;
   private readonly filmlistImportRepository: FilmlistImportRepository;
-  private readonly filmlistRepository: FilmlistRepository;
+  private readonly filmlistRepository: FilmlistProvider;
   private readonly distributedLoopProvider: DistributedLoopProvider;
-  private readonly importQueue: Queue<FilmlistImportQueueItem>;
   private readonly logger: Logger;
 
-  constructor(filmlistImportRepository: FilmlistImportRepository, filmlistRepository: FilmlistRepository, distributedLoopProvider: DistributedLoopProvider, filmlistImportQueue: Queue<FilmlistImportQueueItem>, logger: Logger) {
+  constructor(filmlistImportRepository: FilmlistImportRepository, filmlistRepository: FilmlistProvider, distributedLoopProvider: DistributedLoopProvider, logger: Logger) {
     super('FilmlistManager');
 
     this.filmlistImportRepository = filmlistImportRepository;
     this.filmlistRepository = filmlistRepository;
     this.distributedLoopProvider = distributedLoopProvider;
-    this.importQueue = filmlistImportQueue;
     this.logger = logger;
   }
 

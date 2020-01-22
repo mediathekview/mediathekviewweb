@@ -26,14 +26,14 @@
     "koa-router": "^7.4.0",
     "lzma-native": "^6.0.0",
     "minio": "^7.0.13",
-    "mongodb": "^3.5.0",
+    "mongodb": "^3.5.2",
     "needle": "^2.4.0",
     "prom-client": "^11.5.3",
     "rxjs": "^6.5.4"
   },
   "devDependencies": {
     "@types/got": "^9.6.9",
-    "@types/ioredis": "^4.14.3",
+    "@types/ioredis": "^4.14.4",
     "@types/koa": "^2.11.0",
     "@types/koa-router": "^7.4.0",
     "@types/lzma-native": "^4.0.0",

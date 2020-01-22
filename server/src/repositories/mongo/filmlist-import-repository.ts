@@ -1,7 +1,7 @@
 import { dotNotation } from '@tstdl/base/utils';
 import { Collection, MongoEntityRepository, UpdateQuery } from '@tstdl/mongo';
 import { FilmlistImport } from '../../models/filmlist-import';
-import { FilmlistImportRepository } from '../filmlists-import-repository';
+import { FilmlistImportRepository } from '../filmlist-import-repository';
 
 const filmlistIdProperty = dotNotation(undefined as any as FilmlistImport, 'filmlist', 'id');
 

@@ -20,7 +20,7 @@ import { AggregatedEntryDataSource } from './data-sources/aggregated-entry.data-
 import { NonWorkingAggregatedEntryDataSource } from './data-sources/non-working-aggregated-entry.data-source';
 import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
-import { FilmlistRepository, S3FilmlistVerteilerFilmlistRepository } from './entry-source/filmlist/repository';
+import { FilmlistProvider, S3FilmlistVerteilerFilmlistProvider } from './entry-source/filmlist/filmlist-provider';
 import { keys } from './keys';
 import { FilmlistImport } from './models/filmlist-import';
 import { ApiModule } from './modules/api';
@@ -29,7 +29,7 @@ import { EntriesIndexerModule } from './modules/entries-indexer';
 import { EntriesSaverModule } from './modules/entries-saver';
 import { FilmlistManagerModule } from './modules/filmlist-manager';
 import { EntryRepository } from './repositories';
-import { FilmlistImportRepository } from './repositories/filmlists-import-repository';
+import { FilmlistImportRepository } from './repositories/filmlist-import-repository';
 import { MongoEntryRepository } from './repositories/mongo/entry-repository';
 import { MongoFilmlistImportRepository } from './repositories/mongo/filmlist-import-repository';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
@@ -264,8 +264,8 @@ export class InstanceProvider {
     });
   }
 
-  static filmlistRepository(): FilmlistRepository {
-    return singleton(S3FilmlistVerteilerFilmlistRepository, () => new S3FilmlistVerteilerFilmlistRepository(MEDIATHEKVIEWWEB_VERTEILER_URL));
+  static filmlistRepository(): FilmlistProvider {
+    return singleton(S3FilmlistVerteilerFilmlistProvider, () => new S3FilmlistVerteilerFilmlistProvider(MEDIATHEKVIEWWEB_VERTEILER_URL));
   }
 
   static async distributedLoopProvider(): Promise<DistributedLoopProvider> {
