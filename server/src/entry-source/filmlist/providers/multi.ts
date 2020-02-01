@@ -16,9 +16,7 @@ export class MultiFilmlistProvider implements FilmlistProvider {
     }
   }
 
-  getArchive(): AsyncIterable<import("../filmlist").Filmlist> {
+  getArchive(): AsyncIterable<Filmlist> {
     throw new Error("Method not implemented.");
   }
-
-
 }

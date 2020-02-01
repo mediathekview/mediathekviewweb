@@ -4,6 +4,7 @@ import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import { StringDecoder } from 'string_decoder';
 import { createSubtitle, createVideo, Entry } from '../../common/models';
 import { FilmlistMetadata } from '../../models';
+import { FilmlistResource } from './provider';
 
 const METADATA_REGEX = /{"Filmliste":\["[^"]*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const ENTRY_REGEX = /"X":(\[".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?","(?:\d+|)",".*?",".*?","(?:false|true)"\])(?:,|})/g;
@@ -20,18 +21,23 @@ export type EntriesParseResult = {
   entries: Entry[]
 };
 
-export class Filmlist implements AsyncIterable<Entry[]> {
-  private readonly stream: TypedReadable<NonObjectBufferMode>;
+export class Filmlist<TResource extends FilmlistResource> implements AsyncIterable<Entry[]> {
+  private readonly streamProvider: () => Promise<TypedReadable<NonObjectBufferMode>>;
 
+  private started: boolean;
   private parseIterable: AsyncIteratorIterableIterator<FilmlistParseResult> | undefined;
   private buffer: string;
   private filmlistMetadata: FilmlistMetadata | undefined;
   private lastChannel: string;
   private lastTopic: string;
 
-  constructor(stream: TypedReadable<NonObjectBufferMode>) {
-    this.stream = stream;
+  readonly resource: TResource;
 
+  constructor(resource: TResource, streamProvider: () => Promise<TypedReadable<NonObjectBufferMode>>) {
+    this.resource = resource;
+    this.streamProvider = streamProvider;
+
+    this.started = false;
     this.buffer = '';
     this.filmlistMetadata = undefined;
     this.lastChannel = '';
@@ -60,6 +66,11 @@ export class Filmlist implements AsyncIterable<Entry[]> {
   }
 
   async *[Symbol.asyncIterator](): AsyncIterator<Entry[]> {
+    if (this.started) {
+      throw new Error('already started iteration');
+    }
+
+    this.started = true;
     const iterable = this.getIterable();
     await this.getMetadata();
 
@@ -84,8 +95,9 @@ export class Filmlist implements AsyncIterable<Entry[]> {
 
   private async *parseFilmlist(): AsyncIterableIterator<FilmlistParseResult> {
     const stringDecoder = new StringDecoder('utf8');
+    const stream = await this.streamProvider();
 
-    for await (const chunk of this.stream) {
+    for await (const chunk of stream) {
       this.buffer += stringDecoder.write(chunk);
 
       if (this.buffer.length < 50000) {

@@ -14,16 +14,16 @@
   "license": "GPLv3",
   "dependencies": {
     "@elastic/elasticsearch": "^7.5.0",
-    "@tstdl/base": "^0.55.0",
+    "@tstdl/base": "^0.55.1",
     "@tstdl/database": "^0.8.6",
     "@tstdl/mongo": "^0.21.1",
     "@tstdl/redis": "^0.4.5",
     "@tstdl/server": "^0.26.6",
     "commander": "^4.1.0",
-    "got": "^10.2.2",
+    "got": "^10.4.0",
     "ioredis": "^4.14.1",
     "koa": "^2.11.0",
-    "koa-router": "^7.4.0",
+    "@koa/router": "^8.0.6",
     "lzma-native": "^6.0.0",
     "minio": "^7.0.13",
     "mongodb": "^3.5.2",
@@ -33,14 +33,14 @@
   },
   "devDependencies": {
     "@types/got": "^9.6.9",
-    "@types/ioredis": "^4.14.4",
+    "@types/ioredis": "^4.14.6",
     "@types/koa": "^2.11.0",
-    "@types/koa-router": "^7.4.0",
+    "@types/koa__router": "^8.0.2",
     "@types/lzma-native": "^4.0.0",
     "@types/minio": "^7.0.5",
-    "@types/mongodb": "^3.3.14",
+    "@types/mongodb": "^3.3.15",
     "@types/needle": "^2.0.4",
-    "@types/node": "^13.1.8",
+    "@types/node": "^13.7.0",
     "typescript": "~3.7.5"
   }
 }

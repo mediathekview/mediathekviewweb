@@ -14,9 +14,4 @@ export type FilmlistMetadata = {
   timestamp: number
 };
 
-export type FilmlistResource<T = any> = {
-  type: string,
-  data: T
-};
-
 export type FilmlistImportWithPartialId = EntityWithPartialId<FilmlistImport>;
