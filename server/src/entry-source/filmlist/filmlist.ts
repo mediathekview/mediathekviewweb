@@ -7,7 +7,9 @@ import { FilmlistMetadata } from '../../models';
 import { FilmlistResource } from './provider';
 
 const METADATA_REGEX = /{"Filmliste":\["[^"]*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
+const METADATA_REGEX_ALTERNATIVE = /{\s*"Filmliste"\s*:\s*\[\s*"[^"]*?"\s*,\s*"(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\s*\]/;
 const ENTRY_REGEX = /"X":(\[".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?","(?:\d+|)",".*?",".*?","(?:false|true)"\])(?:,|})/g;
+const ENTRY_REGEX_ALTERNATIVE = /"X"\s:\s(\[\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s"(?:\d+|)",\s".*?",\s".*?",\s".*?"\s\])(?:,|})/g;
 
 export type FilmlistParseResult = FilmlistMetadataParseResult | EntriesParseResult;
 
@@ -30,6 +32,8 @@ export class Filmlist<TResource extends FilmlistResource> implements AsyncIterab
   private filmlistMetadata: FilmlistMetadata | undefined;
   private lastChannel: string;
   private lastTopic: string;
+  private metadataRegex: RegExp;
+  private entryRegex: RegExp;
 
   readonly resource: TResource;
 
@@ -42,6 +46,8 @@ export class Filmlist<TResource extends FilmlistResource> implements AsyncIterab
     this.filmlistMetadata = undefined;
     this.lastChannel = '';
     this.lastTopic = '';
+    this.metadataRegex = METADATA_REGEX;
+    this.entryRegex = ENTRY_REGEX;
   }
 
   async getMetadata(): Promise<FilmlistMetadata> {
@@ -139,9 +145,14 @@ export class Filmlist<TResource extends FilmlistResource> implements AsyncIterab
   }
 
   private parseFilmlistMetadata(): FilmlistMetadata | undefined {
-    const match = this.buffer.match(METADATA_REGEX);
+    const match = this.buffer.match(this.metadataRegex);
 
     if (match == undefined) {
+      if (this.buffer.length > 150000) {
+        this.metadataRegex = METADATA_REGEX_ALTERNATIVE;
+        this.entryRegex = ENTRY_REGEX_ALTERNATIVE;
+      }
+
       return undefined;
     }
 
@@ -159,8 +170,8 @@ export class Filmlist<TResource extends FilmlistResource> implements AsyncIterab
     return filmlist;
   }
 
-  parseEntries(filmlistMetadata: FilmlistMetadata): Entry[] | undefined {
-    const regex = new RegExp(ENTRY_REGEX);
+  private parseEntries(filmlistMetadata: FilmlistMetadata): Entry[] | undefined {
+    const regex = new RegExp(this.entryRegex);
     const matches = matchAll(regex, this.buffer);
 
     if (matches.length == 0) {
@@ -175,7 +186,7 @@ export class Filmlist<TResource extends FilmlistResource> implements AsyncIterab
     return entries;
   }
 
-  filmlistEntryToEntry(filmlistEntry: string, filmlistMetadata: FilmlistMetadata): Entry {
+  private filmlistEntryToEntry(filmlistEntry: string, filmlistMetadata: FilmlistMetadata): Entry {
     const parsedFilmlistEntry = JSON.parse(filmlistEntry) as string[];
 
     const [

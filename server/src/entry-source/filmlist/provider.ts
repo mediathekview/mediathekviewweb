@@ -1,6 +1,7 @@
 import { Filmlist } from './filmlist';
 
 export type FilmlistResource<TProviderName extends string = any, TData = any> = {
+  id: string,
   providerName: TProviderName,
   data: TData
 };

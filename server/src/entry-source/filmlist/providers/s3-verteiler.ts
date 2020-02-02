@@ -1,12 +1,20 @@
-import { NonObjectBufferMode } from '@tstdl/server/utils';
+import { createHash, NonObjectBufferMode } from '@tstdl/server/utils';
 import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import * as Minio from 'minio';
+import * as xz from 'xz';
 import { createGunzip } from 'zlib';
 import { Filmlist } from '../filmlist';
 import { FilmlistProvider, FilmlistResource } from '../provider';
 
 type S3Filmlist = Filmlist<S3FilmlistResource>;
-type S3FilmlistResource = FilmlistResource<typeof providerName, { bucket: string, object: string, etag: string }>;
+type S3FilmlistResource = FilmlistResource<typeof providerName, S3FilmlistResourceData>;
+type S3FilmlistResourceData = {
+  bucket: string,
+  object: string,
+  etag: string,
+  lastModified: number,
+  size: number
+};
 
 const providerName = 's3';
 
@@ -65,12 +73,9 @@ export class S3FilmlistVerteilerFilmlistProvider implements FilmlistProvider<S3F
 
     const stream = this.s3.listObjectsV2(this.archive.bucket, this.archive.prefix, true) as TypedReadable<Minio.BucketItem>;
 
-    for await (const item of stream) {
-      if (1 == 1) throw new Error('verify that prefix is not needed');
-      yield this.getFilmlist(this.archive.bucket, item.name, item.etag);
+    for await (const { name, etag, lastModified, size } of stream) {
+      yield this.getFilmlist(this.archive.bucket, name, { etag, lastModified, size });
     }
-
-    throw new Error('archive not supported');
   }
 
   async getFromResource(resource: S3FilmlistResource): Promise<S3Filmlist> {
@@ -80,12 +85,17 @@ export class S3FilmlistVerteilerFilmlistProvider implements FilmlistProvider<S3F
       throw new Error('etag mismatch');
     }
 
-    return this.getFilmlist(resource.data.bucket, resource.data.object, resource.data.etag);
+    return this.getFilmlist(resource.data.bucket, resource.data.object, resource.data);
   }
 
-  private async getFilmlist(bucket: string, object: string, etag?: string): Promise<S3Filmlist> {
-    const _etag = etag ?? (await this.s3.statObject(bucket, object)).etag;
-    const resource: S3FilmlistResource = { providerName, data: { bucket, object, etag: _etag } };
+  private async getFilmlist(bucket: string, object: string, data?: { etag: string, lastModified: number | Date, size: number }): Promise<S3Filmlist> {
+    const { etag, lastModified: lastModifiedData, size } = data != undefined ? data : await this.s3.statObject(bucket, object);
+    const lastModified = typeof lastModifiedData == 'number' ? lastModifiedData : lastModifiedData.valueOf();
+
+    const resourceData: S3FilmlistResourceData = { bucket, object, etag, lastModified, size };
+    const id = createHash('sha1', `${object} ${etag} ${lastModified} ${size}`).toZBase32();
+
+    const resource: S3FilmlistResource = { id, providerName, data: resourceData };
     const streamProvider = this.getStreamProvider(bucket, object);
     const filmlist = new Filmlist(resource, streamProvider);
 
@@ -94,11 +104,18 @@ export class S3FilmlistVerteilerFilmlistProvider implements FilmlistProvider<S3F
 
   private getStreamProvider(bucket: string, object: string): () => Promise<TypedReadable<NonObjectBufferMode>> {
     const streamProvider = async () => {
-      const s3Stream = await this.s3.getObject(bucket, object);
-      const gunzipStream = createGunzip();
-      const filmlistStream = s3Stream.on('error', (error) => gunzipStream.destroy(error as Error)).pipe(gunzipStream) as TypedReadable<NonObjectBufferMode>;
+      let stream = await this.s3.getObject(bucket, object);
 
-      return filmlistStream;
+      const decompressStream =
+        object.endsWith('.gz') ? createGunzip()
+          : object.endsWith('.xz') ? new xz.Decompressor()
+            : undefined;
+
+      if (decompressStream != undefined) {
+        stream = stream.on('error', (error) => decompressStream.destroy(error as Error)).pipe(decompressStream);
+      }
+
+      return stream as TypedReadable<NonObjectBufferMode>;
     };
 
     return streamProvider;
