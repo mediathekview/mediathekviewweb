@@ -1,17 +1,14 @@
 import { Entity, EntityWithPartialId } from '../common/models';
+import { FilmlistMetadata, FilmlistResource } from '../entry-source/filmlist';
 
 export type FilmlistImport = Entity & {
-  filmlist: FilmlistMetadata,
   resource: FilmlistResource,
+  state: 'pending' | 'ok' | 'duplicate' | 'error',
   enqueueTimestamp: number,
+  filmlistMetadata: FilmlistMetadata | null,
   importTimestamp: number | null,
   importDuration: number | null,
   entriesCount: number | null
-};
-
-export type FilmlistMetadata = {
-  id: string,
-  timestamp: number
 };
 
 export type FilmlistImportWithPartialId = EntityWithPartialId<FilmlistImport>;

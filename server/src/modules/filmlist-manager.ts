@@ -1,13 +1,15 @@
 import { AsyncEnumerable } from '@tstdl/base/enumerable';
 import { Logger } from '@tstdl/base/logger';
+import { Queue } from '@tstdl/base/queue';
 import { AnyIterable, currentTimestamp } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
 import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
 import { config } from '../config';
-import { FilmlistProvider } from '../entry-source/filmlist/filmlist-provider';
+import { Filmlist } from '../entry-source/filmlist/filmlist';
+import { FilmlistProvider } from '../entry-source/filmlist/provider';
 import { keys } from '../keys';
-import { FilmlistImportWithPartialId } from '../models';
+import { FilmlistImportQueueItem, FilmlistImportWithPartialId } from '../models';
 import { FilmlistImportRepository } from '../repositories/filmlist-import-repository';
 import { KeyValueRepository } from '../repositories/key-value-repository';
 
@@ -24,15 +26,18 @@ type FilmlistManagerKeyValues = {
 export class FilmlistManagerModule extends ModuleBase implements Module {
   private readonly keyValueRepository: KeyValueRepository<FilmlistManagerKeyValues>;
   private readonly filmlistImportRepository: FilmlistImportRepository;
-  private readonly filmlistRepository: FilmlistProvider;
+  private readonly filmlistImportQueue: Queue<FilmlistImportQueueItem>;
+  private readonly filmlistProvider: FilmlistProvider;
   private readonly distributedLoopProvider: DistributedLoopProvider;
   private readonly logger: Logger;
 
-  constructor(filmlistImportRepository: FilmlistImportRepository, filmlistRepository: FilmlistProvider, distributedLoopProvider: DistributedLoopProvider, logger: Logger) {
+  constructor(keyValueRepository: KeyValueRepository<FilmlistManagerKeyValues>, filmlistImportRepository: FilmlistImportRepository, filmlistImportQueue: Queue<FilmlistImportQueueItem>, filmlistProvider: FilmlistProvider, distributedLoopProvider: DistributedLoopProvider, logger: Logger) {
     super('FilmlistManager');
 
+    this.keyValueRepository = keyValueRepository;
     this.filmlistImportRepository = filmlistImportRepository;
-    this.filmlistRepository = filmlistRepository;
+    this.filmlistImportQueue = filmlistImportQueue;
+    this.filmlistProvider = filmlistProvider;
     this.distributedLoopProvider = distributedLoopProvider;
     this.logger = logger;
   }
@@ -68,7 +73,7 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
 
   private async checkLatest(): Promise<void> {
     this.logger.verbose('checking for new current-filmlist');
-    const filmlist = await this.filmlistRepository.getLatest();
+    const filmlist = await this.filmlistProvider.getLatest();
     await this.enqueueMissingFilmlists([filmlist], 0);
   }
 
@@ -77,7 +82,7 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
 
     const minimumTimestamp = currentTimestamp() - MAX_AGE_MILLISECONDS;
 
-    const archive = this.filmlistRepository.getArchive();
+    const archive = this.filmlistProvider.getArchive();
     await this.enqueueMissingFilmlists(archive, minimumTimestamp);
   }
 
@@ -86,17 +91,28 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
 
     await filmlistsEnumerable
       .while(() => !this.cancellationToken.isSet)
-      .filter((filmlist) => filmlist.timestamp >= minimumTimestamp)
-      .filter(async (filmlist) => !(await this.filmlistImportRepository.hasFilmlist(filmlist.id)))
+      .filter(async (filmlist) => !(await this.filmlistImportRepository.hasResource(filmlist.resource.id)))
+      .filter(async (filmlist) => {
+        const metadata = await filmlist.getMetadata();
+
+        const valid =
+          metadata.timestamp >= minimumTimestamp
+          && !(await this.filmlistImportRepository.hasFilmlist(metadata.id));
+
+        return valid;
+      })
       .forEach(async (filmlist) => await this.enqueueFilmlist(filmlist));
   }
 
   private async enqueueFilmlist(filmlist: Filmlist): Promise<void> {
     const filmlistImport: FilmlistImportWithPartialId = {
-      filmlist,
-      enqueuedTimestamp: currentTimestamp(),
-      processedTimestamp: null,
-      numberOfEntries: null
+      resource: filmlist.resource,
+      state: 'pending',
+      filmlistMetadata: await filmlist.getMetadata(),
+      enqueueTimestamp: currentTimestamp(),
+      importTimestamp: null,
+      importDuration: null,
+      entriesCount: null
     };
 
     const insertedFilmlistImport = await this.filmlistImportRepository.save(filmlistImport);
@@ -105,6 +121,6 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
       filmlistImportId: insertedFilmlistImport.id
     };
 
-    await this.importQueue.enqueue(filmlistImportQueueItem);
+    await this.filmlistImportQueue.enqueue(filmlistImportQueueItem);
   }
 }

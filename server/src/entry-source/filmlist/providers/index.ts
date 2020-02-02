@@ -1,1 +1,1 @@
-export * from './s3-verteiler';
+export * from './s3';

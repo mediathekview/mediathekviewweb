@@ -3,8 +3,8 @@ import { createHash, NonObjectBufferMode } from '@tstdl/server/utils';
 import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import { StringDecoder } from 'string_decoder';
 import { createSubtitle, createVideo, Entry } from '../../common/models';
-import { FilmlistMetadata } from '../../models';
-import { FilmlistResource } from './provider';
+import { FilmlistMetadata } from './filmlist-metadata';
+import { FilmlistResource } from './filmlist-resource';
 
 const METADATA_REGEX = /{"Filmliste":\["[^"]*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
 const METADATA_REGEX_ALTERNATIVE = /{\s*"Filmliste"\s*:\s*\[\s*"[^"]*?"\s*,\s*"(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\s*\]/;
@@ -23,7 +23,7 @@ export type EntriesParseResult = {
   entries: Entry[]
 };
 
-export class Filmlist<TResource extends FilmlistResource> implements AsyncIterable<Entry[]> {
+export class Filmlist<TResource extends FilmlistResource = FilmlistResource> implements AsyncIterable<Entry[]> {
   private readonly streamProvider: () => Promise<TypedReadable<NonObjectBufferMode>>;
 
   private started: boolean;

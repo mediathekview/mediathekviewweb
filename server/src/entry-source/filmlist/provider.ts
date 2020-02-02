@@ -1,15 +1,10 @@
 import { Filmlist } from './filmlist';
+import { FilmlistResource } from './filmlist-resource';
 
-export type FilmlistResource<TProviderName extends string = any, TData = any> = {
-  id: string,
-  providerName: TProviderName,
-  data: TData
-};
-
-export interface FilmlistProvider<TFilmlistResource extends FilmlistResource> {
+export interface FilmlistProvider<TFilmlistResource extends FilmlistResource = FilmlistResource> {
   readonly name: string;
 
-  getLatest(): Promise<Filmlist<TFilmlistResource>>;
+  getLatest(): AsyncIterable<Filmlist<TFilmlistResource>>;
   getArchive(): AsyncIterable<Filmlist<TFilmlistResource>>;
 
   getFromResource(resource: TFilmlistResource): Promise<Filmlist<TFilmlistResource>>;

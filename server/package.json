@@ -15,7 +15,7 @@
   "dependencies": {
     "@elastic/elasticsearch": "^7.5.0",
     "@koa/router": "^8.0.6",
-    "@tstdl/base": "^0.55.3",
+    "@tstdl/base": "^0.55.4",
     "@tstdl/database": "^0.8.7",
     "@tstdl/mongo": "^0.21.2",
     "@tstdl/redis": "^0.4.6",
