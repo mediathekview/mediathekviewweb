@@ -1,8 +1,8 @@
-import './command-line-parser'; // tslint:disable-line: no-import-side-effect
 import { Logger } from '@tstdl/base/logger';
 import { AggregationMode, formatDuration, PeriodicSampler, Timer } from '@tstdl/base/utils';
 import { Module, runModules, stopModules } from '@tstdl/server/module';
-import { initializeSignals, requestShutdown, shutdownToken, setProcessShutdownLogger } from '@tstdl/server/process-shutdown';
+import { initializeSignals, requestShutdown, setProcessShutdownLogger, shutdownToken } from '@tstdl/server/process-shutdown';
+import './command-line-parser'; // tslint:disable-line: no-import-side-effect
 import { config } from './config';
 import { InstanceProvider } from './instance-provider';
 
@@ -41,11 +41,6 @@ async function getModules(): Promise<Module[]> {
     modules.push(importerModule);
   }
 
-  if (config.modules.saver) {
-    const saverModule = await InstanceProvider.entriesSaverModule();
-    modules.push(saverModule);
-  }
-
   if (config.modules.indexer) {
     const indexerModule = await InstanceProvider.entriesIndexerModule();
     modules.push(indexerModule);
@@ -64,13 +59,13 @@ async function init(): Promise<void> {
       logger.info('starting services');
 
       await Promise.race([
-        runModules(modules),
+        runModules(modules, logger),
         shutdownToken
       ]);
     }
 
     logger.info('stopping services');
-    await stopModules(modules);
+    await stopModules(modules, logger);
   }
   else {
     requestShutdown();

@@ -3,7 +3,7 @@ import { AsyncEnumerable } from '@tstdl/base/enumerable';
 import { Logger } from '@tstdl/base/logger';
 import { cancelableTimeout } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
+import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
 import { EntrySource } from '../entry-source';
 import { EntryRepository } from '../repositories';
 
@@ -12,16 +12,22 @@ export class EntriesImporterModule extends ModuleBase implements Module {
   private readonly logger: Logger;
   private readonly sources: EntrySource[];
 
+  private importedEntriesCount: number;
+
   constructor(entryRepository: EntryRepository, logger: Logger, sources: EntrySource[]) {
     super('EntriesImporter');
 
     this.entryRepository = entryRepository;
     this.logger = logger;
     this.sources = sources;
+
+    this.importedEntriesCount = 0;
   }
 
   getMetrics(): ModuleMetric[] {
-    return [];
+    return [
+      { name: 'imported-entries', type: ModuleMetricType.Counter, value: this.importedEntriesCount }
+    ];
   }
 
   protected async _run(_cancellationToken: CancellationToken): Promise<void> {
@@ -50,6 +56,7 @@ export class EntriesImporterModule extends ModuleBase implements Module {
       })
       .forEach(async (batch) => {
         await this.entryRepository.saveMany(batch);
+        this.importedEntriesCount += batch.length;
       });
   }
 }

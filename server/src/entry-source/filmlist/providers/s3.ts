@@ -10,7 +10,7 @@ import { FilmlistProvider } from '../provider';
 
 type S3Filmlist = Filmlist<S3FilmlistResource>;
 
-type S3FilmlistResource = FilmlistResource<typeof providerName, S3FilmlistResourceData>;
+type S3FilmlistResource = FilmlistResource<'s3', S3FilmlistResourceData>;
 
 type S3FilmlistResourceData = {
   bucket: string,
@@ -45,8 +45,6 @@ export enum FilmlistResourceTimestampStrategy {
   FileName
 }
 
-const providerName = 's3';
-
 const FILENAME_DATE_PATTERN = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/;
 
 export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> {
@@ -57,7 +55,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
   readonly name: string;
 
   constructor(instanceName: string, { url, accessKey, secretKey, latest, archive }: S3FilmlistProviderOptions) {
-    this.name = `${providerName}:${instanceName}`;
+    this.name = `s3:${instanceName}`;
 
     const { hostname, port, protocol } = new URL(url);
 
@@ -73,12 +71,12 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     this.archive = archive;
   }
 
-  async getLatest(): Promise<S3Filmlist> {
+  async *getLatest(): AsyncIterable<S3Filmlist> {
     if (this.latest == undefined) {
       throw new Error('s3 options for latest not provided');
     }
 
-    return this.getFilmlist(this.latest.bucket, this.latest.object, FilmlistResourceTimestampStrategy.LastModified);
+    yield this.getFilmlist(this.latest.bucket, this.latest.object, FilmlistResourceTimestampStrategy.LastModified);
   }
 
   async *getArchive(): AsyncIterable<S3Filmlist> {
@@ -100,7 +98,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
       throw new Error('etag mismatch');
     }
 
-    return this.getFilmlist(resource.data.bucket, resource.data.object, FilmlistResourceTimestampStrategy.None, resource.data);
+    return this.getFilmlist(resource.data.bucket, resource.data.object, FilmlistResourceTimestampStrategy.None, { ...resource.data, resourceTimestamp: resource.timestamp });
   }
 
   private async getFilmlist(bucket: string, object: string, resourceTimestampStrategy: FilmlistResourceTimestampStrategy, data?: { etag: string, lastModified: number | Date, size: number, resourceTimestamp?: number }): Promise<S3Filmlist> {
@@ -133,7 +131,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
         throw new Error('invalid ArchiveFilmlistResourceTimestampStrategy');
     }
 
-    const resource: S3FilmlistResource = { id, providerName, timestamp, data: resourceData };
+    const resource: S3FilmlistResource = { id, providerName: this.name as 's3', timestamp, data: resourceData };
     const streamProvider = this.getStreamProvider(bucket, object);
     const filmlist = new Filmlist(resource, streamProvider);
 

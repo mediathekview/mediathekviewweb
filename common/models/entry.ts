@@ -15,7 +15,10 @@ export type Entry = Entity & {
   source: {
     name: string,
     data?: any
-  }
+  },
+  indexRequiredSince?: number,
+  indexJobTimeout?: number,
+  indexJob?: string
 };
 
 export type AggregatedEntry = Entry & {
@@ -45,7 +48,8 @@ export enum Field {
   VideoResolutionHeight = 'media.quality.resolution.height',
   VideoBitrate = 'media.quality.bitrate',
   AudioQuality = 'media.quality',
-  AudioBitrate = 'media.quality.bitrate'
+  AudioBitrate = 'media.quality.bitrate',
+  IndexRequiredSince = 'indexRequiredSince'
 }
 
 export const fields = Object.values(Field);

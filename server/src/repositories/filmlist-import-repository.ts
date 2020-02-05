@@ -12,6 +12,6 @@ export type FilmlistImportProcessData = Partial<{
 
 export interface FilmlistImportRepository extends EntityRepository<FilmlistImport> {
   update(id: string, data: FilmlistImportProcessData): Promise<void>;
-  hasFilmlistFromOtherImport(importId: string, filmlistId: string): Promise<boolean>;
+  hasFilmlistFromOtherImport(excludedImportId: string, filmlistId: string): Promise<boolean>;
   hasResource(resourceId: string): Promise<boolean>;
 }

@@ -17,6 +17,7 @@ const LATEST_CHECK_INTERVAL = config.importer.latestCheckIntervalMinutes * 60 * 
 const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckIntervalMinutes * 60 * 1000;
 const MAX_AGE_DAYS = config.importer.archiveRange;
 const MAX_AGE_MILLISECONDS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+const KEY_VALUE_SCOPE = 'filmlist-manager';
 
 type FilmlistManagerKeyValues = {
   lastLatestCheck: number,
@@ -61,20 +62,20 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
   }
 
   private async compareTime(key: keyof FilmlistManagerKeyValues, interval: number, func: () => Promise<void>): Promise<void> {
-    const lastCheck = await this.keyValueRepository.get(key, 0);
+    const lastCheck = await this.keyValueRepository.get(KEY_VALUE_SCOPE, key, 0);
     const now = currentTimestamp();
     const difference = now - lastCheck;
 
     if (difference >= interval) {
       await func();
-      await this.keyValueRepository.set(key, now);
+      await this.keyValueRepository.set(KEY_VALUE_SCOPE, key, now);
     }
   }
 
   private async checkLatest(): Promise<void> {
     this.logger.verbose('checking for new current-filmlist');
-    const filmlist = await this.filmlistProvider.getLatest();
-    await this.enqueueMissingFilmlists([filmlist], 0);
+    const filmlists = this.filmlistProvider.getLatest();
+    await this.enqueueMissingFilmlists(filmlists, 0);
   }
 
   private async checkArchive(): Promise<void> {
@@ -91,16 +92,8 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
 
     await filmlistsEnumerable
       .while(() => !this.cancellationToken.isSet)
+      .filter((filmlist) => filmlist.resource.timestamp >= minimumTimestamp)
       .filter(async (filmlist) => !(await this.filmlistImportRepository.hasResource(filmlist.resource.id)))
-      .filter(async (filmlist) => {
-        const metadata = await filmlist.getMetadata();
-
-        const valid =
-          metadata.timestamp >= minimumTimestamp
-          && !(await this.filmlistImportRepository.hasFilmlist(metadata.id));
-
-        return valid;
-      })
       .forEach(async (filmlist) => await this.enqueueFilmlist(filmlist));
   }
 
@@ -108,8 +101,8 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
     const filmlistImport: FilmlistImportWithPartialId = {
       resource: filmlist.resource,
       state: 'pending',
-      filmlistMetadata: await filmlist.getMetadata(),
       enqueueTimestamp: currentTimestamp(),
+      filmlistMetadata: null,
       importTimestamp: null,
       importDuration: null,
       entriesCount: null

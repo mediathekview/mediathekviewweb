@@ -1,31 +1,13 @@
 import { AggregatedEntry, Entry } from '../common/models';
-import { EntryRepository } from '../repositories/entry-repository';
 import { AggregatedEntryDataSource } from './aggregated-entry.data-source';
 
 export class NonWorkingAggregatedEntryDataSource implements AggregatedEntryDataSource {
-  private readonly entryRepository: EntryRepository;
-
-  constructor(entryRepository: EntryRepository) {
-    this.entryRepository = entryRepository;
+  async aggregate(entry: Entry): Promise<AggregatedEntry> {
+    return this.toAggregated(entry);
   }
 
-  async load(id: string): Promise<AggregatedEntry | undefined> {
-    let result: AggregatedEntry | undefined;
-
-    const entry = await this.entryRepository.load(id);
-
-    if (entry != undefined) {
-      result = this.toAggregated(entry);
-    }
-
-    return result;
-  }
-
-  async loadMany(ids: string[]): Promise<AggregatedEntry[]> {
-    const entryDocuments = await this.entryRepository.loadMany(ids);
-    const result = entryDocuments.map((entryDocument) => this.toAggregated(entryDocument));
-
-    return result;
+  async aggregateMany(entries: Entry[]): Promise<AggregatedEntry[]> {
+    return entries.map((entry) => this.toAggregated(entry));
   }
 
   private toAggregated(entry: Entry): AggregatedEntry {

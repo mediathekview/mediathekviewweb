@@ -1,5 +1,5 @@
 import { dotNotation } from '@tstdl/base/utils';
-import { Collection, MongoEntityRepository, TypedIndexSpecification } from '@tstdl/mongo';
+import { Collection, FilterQuery, MongoEntityRepository, TypedIndexSpecification } from '@tstdl/mongo';
 import { FilmlistImport } from '../../models/filmlist-import';
 import { FilmlistImportProcessData as FilmlistImportUpdate, FilmlistImportRepository } from '../filmlist-import-repository';
 
@@ -30,5 +30,14 @@ export class MongoFilmlistImportRepository extends MongoEntityRepository<Filmlis
 
   async hasResource(resourceId: string): Promise<boolean> {
     return this.baseRepository.hasByFilter({ [resourceIdProperty]: resourceId });
+  }
+
+  async hasFilmlistFromOtherImport(excludedImportId: string, filmlistId: string): Promise<boolean> {
+    const filter: FilterQuery<FilmlistImport> = {
+      _id: { $ne: excludedImportId },
+      [filmlistIdProperty]: filmlistId
+    };
+
+    return this.baseRepository.hasByFilter(filter);
   }
 }

@@ -73,6 +73,7 @@ export class FilmlistEntrySource implements EntrySource {
 
     if (hasFilmlist) {
       this.logger.info(`skipping import of filmlist ${filmlistMetadata.id}, because it already is (being) imported`);
+      await importQueue.acknowledge(job);
       return;
     }
 

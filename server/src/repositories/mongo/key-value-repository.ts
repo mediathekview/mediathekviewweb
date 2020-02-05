@@ -15,21 +15,19 @@ const indexes: TypedIndexSpecification<KeyValueItem<any>>[] = [
 
 export class MongoKeyValueRepository<T extends StringMap> implements KeyValueRepository<T> {
   private readonly collection: Collection<KeyValueItem<T>>;
-  private readonly scope: string;
 
-  constructor(collection: Collection<KeyValueItem<T>>, scope: string) {
+  constructor(collection: Collection<KeyValueItem<T>>) {
     this.collection = collection;
-    this.scope = scope;
   }
 
   async initialize(): Promise<void> {
     await this.collection.createIndexes(indexes);
   }
 
-  async get<K extends keyof T, V extends T[K] = T[K]>(key: K): Promise<V | undefined>;
-  async get<K extends keyof T, V extends T[K]>(key: K, defaultValue: V): Promise<T[K] | V>;
-  async get<K extends keyof T, V extends T[K]>(key: K, defaultValue?: V): Promise<T[K] | V | undefined> {
-    const item = await this.collection.findOne({ scope: this.scope, key });
+  async get<K extends keyof T, V extends T[K] = T[K]>(scope: string, key: K): Promise<V | undefined>;
+  async get<K extends keyof T, V extends T[K]>(scope: string, key: K, defaultValue: V): Promise<T[K] | V>;
+  async get<K extends keyof T, V extends T[K]>(scope: string, key: K, defaultValue?: V): Promise<T[K] | V | undefined> {
+    const item = await this.collection.findOne({ scope, key });
 
     if (item == undefined) {
       return defaultValue;
@@ -38,7 +36,7 @@ export class MongoKeyValueRepository<T extends StringMap> implements KeyValueRep
     return (item as KeyValueItem<T, K>).value;
   }
 
-  async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
-    await this.collection.updateOne({ scope: this.scope, key }, { value }, { upsert: true });
+  async set<K extends keyof T>(scope: string, key: K, value: T[K]): Promise<void> {
+    await this.collection.updateOne({ scope, key }, { $set: { value } }, { upsert: true });
   }
 }

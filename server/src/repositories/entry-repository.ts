@@ -5,4 +5,5 @@ export interface EntryRepository {
   saveMany(entries: Entry[]): Promise<void>;
   load(id: string): Promise<Entry>;
   loadMany(ids: string[]): Promise<Entry[]>;
+  getIndexJob(count: number, timeout: number): Promise<Entry[]>;
 }

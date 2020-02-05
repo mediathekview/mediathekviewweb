@@ -1,64 +1,56 @@
-
-import { AsyncDisposer, disposeAsync } from '@tstdl/base/disposable';
-import { AsyncEnumerable } from '@tstdl/base/enumerable';
 import { Logger } from '@tstdl/base/logger';
-import { Job, Queue } from '@tstdl/base/queue';
 import { timeout } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
-import { AggregatedEntry } from '../common/models';
+import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
+import { AggregatedEntry, Entry } from '../common/models';
 import { SearchEngine } from '../common/search-engine';
 import { AggregatedEntryDataSource } from '../data-sources/aggregated-entry.data-source';
+import { EntryRepository } from '../repositories';
 
 const BATCH_SIZE = 100;
 
 export class EntriesIndexerModule extends ModuleBase implements Module {
+  private readonly entryRepository: EntryRepository;
   private readonly aggregatedEntryDataSource: AggregatedEntryDataSource;
   private readonly searchEngine: SearchEngine<AggregatedEntry>;
-  private readonly entriesToBeIndexedQueue: Queue<string>;
   private readonly logger: Logger;
 
-  constructor(aggregatedEntryDataSource: AggregatedEntryDataSource, searchEngine: SearchEngine<AggregatedEntry>, entriesToBeIndexedQueue: Queue<string>, logger: Logger) {
+  private indexedEntriesCount: number;
+
+  constructor(entryRepository: EntryRepository, aggregatedEntryDataSource: AggregatedEntryDataSource, searchEngine: SearchEngine<AggregatedEntry>, logger: Logger) {
     super('EntriesIndexer');
 
+    this.entryRepository = entryRepository;
     this.aggregatedEntryDataSource = aggregatedEntryDataSource;
     this.searchEngine = searchEngine;
-    this.entriesToBeIndexedQueue = entriesToBeIndexedQueue;
     this.logger = logger;
+
+    this.indexedEntriesCount = 0;
   }
 
   getMetrics(): ModuleMetric[] {
-    return [];
+    return [
+      { name: 'indexed-entries', type: ModuleMetricType.Counter, value: this.indexedEntriesCount }
+    ];
   }
 
-  protected async _run(_cancellationToken: CancellationToken): Promise<void> {
-    const disposer = new AsyncDisposer();
-
-    const consumer = this.entriesToBeIndexedQueue.getBatchConsumer(BATCH_SIZE, this.cancellationToken);
-
-    await AsyncEnumerable.from(consumer)
-      .forEach(async (batch) => {
-        try {
-          await this.indexBatch(batch);
-          await this.entriesToBeIndexedQueue.acknowledge(batch);
-        }
-        catch (error) {
-          this.logger.error(error as Error);
-          await timeout(2500);
-        }
-      });
-
-    await disposer[disposeAsync]();
+  protected async _run(cancellationToken: CancellationToken): Promise<void> {
+    while (!cancellationToken.isSet) {
+      try {
+        const entries = await this.entryRepository.getIndexJob(BATCH_SIZE, 10000);
+        await this.indexEntries(entries);
+        this.indexedEntriesCount += entries.length;
+      }
+      catch (error) {
+        this.logger.error(error as Error);
+        await timeout(2500);
+      }
+    }
   }
 
-  private async indexBatch(batch: Job<string>[]): Promise<void> {
-    const ids = batch.map((job) => job.data);
-    await this.indexEntries(ids);
-  }
-
-  private async indexEntries(ids: string[]): Promise<void> {
-    const entries = await this.aggregatedEntryDataSource.loadMany(ids);
-    const searchEngineItems = entries.map((entry) => ({ id: entry.id, document: entry }));
+  private async indexEntries(entries: Entry[]): Promise<void> {
+    const aggregatedEntries = await this.aggregatedEntryDataSource.aggregateMany(entries);
+    const searchEngineItems = aggregatedEntries.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);
   }

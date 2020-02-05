@@ -1,14 +1,14 @@
-import { CancellationToken, createArray, MovingMetric, getRandomString, random, currentTimestamp, randomElement } from '@tstdl/base/utils';
+import { CancellationToken, createArray, currentTimestamp, getRandomString, MovingMetric, random, randomElement } from '@tstdl/base/utils';
 import { MongoQueue } from '@tstdl/mongo/queue';
-import { InstanceProvider } from './instance-provider';
 import { Entry } from './common/models';
+import { UserActionType, VisitWithPartialId } from './common/models/user-actions';
+import { InstanceProvider } from './instance-provider';
 import { MongoUserActionRepository } from './repositories/mongo/user-action-repository';
-import { Visit, UserActionType, VisitWithPartialId } from './common/models/user-actions';
 
 // tslint:disable-next-line: no-floating-promises no-unused-expression
 (async () => {
 
-  const collection = await InstanceProvider.collection('queue');
+  const collection = await InstanceProvider.mongoCollection('queue');
   const queue = new MongoQueue<number>(collection, 10000, 3);
   await queue.initialize();
 
@@ -75,7 +75,7 @@ function randomEntry(channels: string[], topics: string[], timestamps: number[],
 }
 
 (async () => {
-  const userActionsCollection = await InstanceProvider.collection('user-actions');
+  const userActionsCollection = await InstanceProvider.mongoCollection('user-actions');
   const userActionsRepository = new MongoUserActionRepository(userActionsCollection);
   await userActionsRepository.initialize();
 
