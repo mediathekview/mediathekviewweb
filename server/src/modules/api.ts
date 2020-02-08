@@ -3,15 +3,30 @@ import { cancelableTimeout, Timer } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { BodyType, HttpApi } from '@tstdl/server/api/http-api';
 import { noopValidator } from '@tstdl/server/api/validation/validators';
-import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
+import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
 import * as Http from 'http';
 import * as Net from 'net';
 import { config } from '../config';
+import { Enumerable } from '@tstdl/base/enumerable';
 
 export class ApiModule extends ModuleBase implements Module {
   private readonly httpApi: HttpApi;
   private readonly logger: Logger;
   private readonly socketsSets: Set<Set<Net.Socket>>;
+
+  private requestCount: number;
+
+  // tslint:disable-next-line: typedef
+  readonly metrics = {
+    requestCount: {
+      type: ModuleMetricType.Counter,
+      getValue: () => this.requestCount
+    },
+    connectedSockets: {
+      type: ModuleMetricType.Gauge,
+      getValue: () => Enumerable.from(this.socketsSets).reduce((sum, set) => sum + set.size, 0)
+    }
+  };
 
   constructor(httpApi: HttpApi, logger: Logger) {
     super('Api');
@@ -20,12 +35,7 @@ export class ApiModule extends ModuleBase implements Module {
     this.logger = logger;
 
     this.socketsSets = new Set();
-  }
-
-  getMetrics(): ModuleMetric[] {
-    // const connections = Array.from(this.socketsSets.values()).reduce((sum, set) => sum + set.size, 0);
-
-    return [];
+    this.requestCount = 0;
   }
 
   protected async _run(cancellationToken: CancellationToken): Promise<void> {
@@ -38,6 +48,7 @@ export class ApiModule extends ModuleBase implements Module {
 
     server.on('request', (request: Http.IncomingMessage, response: Http.ServerResponse) => {
       this.httpApi.handleRequest(request, response);
+      this.requestCount++;
     });
 
     this.expose();
@@ -45,7 +56,7 @@ export class ApiModule extends ModuleBase implements Module {
     server.listen(config.api.port);
     this.logger.info(`listening on port ${config.api.port}`);
 
-    await cancellationToken; // tslint:disable-line: await-promise
+    await cancellationToken;
 
     this.logger.info('closing http server');
     await this.closeServer(server, sockets, 3000);
@@ -54,8 +65,6 @@ export class ApiModule extends ModuleBase implements Module {
   }
 
   private expose(): void {
-    // throw new Error('not implemented');
-
     if (config.api.search) {
       this.httpApi.registerPostRoute<any, BodyType.Json>('/entries/search', BodyType.Json, noopValidator, async () => Promise.reject(new Error('not implemented'))); // this.api.search(parameters));
       this.httpApi.registerPostRoute<any, BodyType.Json>('/entries/search/text', BodyType.Json, noopValidator, async () => Promise.reject(new Error('not implemented'))); // this.api.textSearch(parameters));

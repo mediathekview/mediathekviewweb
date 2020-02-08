@@ -9,10 +9,8 @@ import { singleton, timeout } from '@tstdl/base/utils';
 import { MongoDocument } from '@tstdl/mongo';
 import { MongoLockProvider } from '@tstdl/mongo/lock';
 import { MongoQueue } from '@tstdl/mongo/queue';
-import { TypedRedis } from '@tstdl/redis/typed-redis';
 import { HttpApi } from '@tstdl/server/api/http-api';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
-import * as RedisClient from 'ioredis';
 import * as Mongo from 'mongodb';
 import { mongoNames } from './collections';
 import { AggregatedEntry, Entry } from './common/models';
@@ -99,36 +97,6 @@ export class InstanceProvider {
     }
   }
 
-  private static async newRedis(scope: string): Promise<TypedRedis> {
-    const logger = InstanceProvider.logger(`[${REDIS_LOG}] [${scope}] `, false);
-
-    const redis = new RedisClient({
-      lazyConnect: true,
-      enableReadyCheck: true,
-      maxRetriesPerRequest: undefined,
-      ...config.redis
-    });
-
-    redis
-      .on('connect', () => logger.verbose('connecting'))
-      .on('ready', () => logger.verbose('ready'))
-      .on('close', () => logger.verbose('connection closing'))
-      .on('reconnecting', (milliseconds) => logger.verbose(`reconnecting in ${milliseconds} ms`))
-      .on('end', () => logger.verbose('connection end'))
-      .on('error', (error: Error) => logger.error(error, false));
-
-    InstanceProvider.disposer.add(async () => {
-      const endPromise = new Promise<void>((resolve) => redis.once('end', resolve));
-
-      await redis.quit();
-      await endPromise;
-    });
-
-    await InstanceProvider.connect('redis', async () => redis.connect(), logger);
-
-    return new TypedRedis(redis);
-  }
-
   static async disposeInstances(): Promise<void> {
     InstanceProvider.coreLogger().debug('dispose instances');
     await InstanceProvider.disposer[disposeAsync]();
@@ -185,10 +153,6 @@ export class InstanceProvider {
       const logger = InstanceProvider.logger(CORE_LOG);
       return logger;
     });
-  }
-
-  static async redis(): Promise<TypedRedis> {
-    return singleton('redis', async () => InstanceProvider.newRedis('MAIN'));
   }
 
   static async elasticsearch(): Promise<ElasticsearchClient> {

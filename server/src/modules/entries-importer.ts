@@ -14,6 +14,14 @@ export class EntriesImporterModule extends ModuleBase implements Module {
 
   private importedEntriesCount: number;
 
+  // tslint:disable-next-line: typedef
+  readonly metrics = {
+    importedEntriesCount: {
+      type: ModuleMetricType.Counter,
+      getValue: () => this.importedEntriesCount
+    }
+  };
+
   constructor(entryRepository: EntryRepository, logger: Logger, sources: EntrySource[]) {
     super('EntriesImporter');
 
@@ -22,12 +30,6 @@ export class EntriesImporterModule extends ModuleBase implements Module {
     this.sources = sources;
 
     this.importedEntriesCount = 0;
-  }
-
-  getMetrics(): ModuleMetric[] {
-    return [
-      { name: 'imported-entries', type: ModuleMetricType.Counter, value: this.importedEntriesCount }
-    ];
   }
 
   protected async _run(_cancellationToken: CancellationToken): Promise<void> {

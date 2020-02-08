@@ -37,10 +37,10 @@ export const configValidators = {
 export const config: Config = {
   verbosity: integer('VERBOSITY', LogLevel.Info),
   modules: {
-    api: boolean('SERVICE_API', true),
-    filmlistManager: boolean('SERVICE_FILMLIST_MANAGER', true),
-    importer: boolean('SERVICE_IMPORTER', true),
-    indexer: boolean('SERVICE_INDEXER', true)
+    api: boolean('SERVICE_API', false),
+    filmlistManager: boolean('SERVICE_FILMLIST_MANAGER', false),
+    importer: boolean('SERVICE_IMPORTER', false),
+    indexer: boolean('SERVICE_INDEXER', false)
   },
   api: {
     port: positiveInteger('API_PORT', 8080),

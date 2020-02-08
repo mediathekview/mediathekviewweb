@@ -1,7 +1,7 @@
 import { Logger } from '@tstdl/base/logger';
 import { timeout } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
+import { Module, ModuleBase, ModuleMetricType } from '@tstdl/server/module';
 import { AggregatedEntry, Entry } from '../common/models';
 import { SearchEngine } from '../common/search-engine';
 import { AggregatedEntryDataSource } from '../data-sources/aggregated-entry.data-source';
@@ -17,6 +17,14 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
 
   private indexedEntriesCount: number;
 
+  // tslint:disable-next-line: typedef
+  readonly metrics = {
+    indexedEntriesCount: {
+      type: ModuleMetricType.Counter,
+      getValue: () => this.indexedEntriesCount
+    }
+  };
+
   constructor(entryRepository: EntryRepository, aggregatedEntryDataSource: AggregatedEntryDataSource, searchEngine: SearchEngine<AggregatedEntry>, logger: Logger) {
     super('EntriesIndexer');
 
@@ -26,12 +34,6 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
     this.logger = logger;
 
     this.indexedEntriesCount = 0;
-  }
-
-  getMetrics(): ModuleMetric[] {
-    return [
-      { name: 'indexed-entries', type: ModuleMetricType.Counter, value: this.indexedEntriesCount }
-    ];
   }
 
   protected async _run(cancellationToken: CancellationToken): Promise<void> {

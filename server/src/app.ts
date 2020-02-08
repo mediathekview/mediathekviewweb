@@ -1,8 +1,8 @@
-import { Logger } from '@tstdl/base/logger';
-import { AggregationMode, formatDuration, PeriodicSampler, Timer } from '@tstdl/base/utils';
-import { Module, runModules, stopModules } from '@tstdl/server/module';
-import { initializeSignals, requestShutdown, setProcessShutdownLogger, shutdownToken } from '@tstdl/server/process-shutdown';
 import './command-line-parser'; // tslint:disable-line: no-import-side-effect
+import { Logger } from '@tstdl/base/logger';
+import { AggregationMode, formatDuration, PeriodicSampler, Timer, MetricAggregation } from '@tstdl/base/utils';
+import { Module, runModules, stopModules, ModuleMetricReporter } from '@tstdl/server/module';
+import { initializeSignals, requestShutdown, setProcessShutdownLogger, shutdownToken } from '@tstdl/server/process-shutdown';
 import { config } from './config';
 import { InstanceProvider } from './instance-provider';
 
@@ -23,12 +23,20 @@ initializeSignals();
   }
 })();
 
-async function getModules(): Promise<Module[]> {
+async function getModules(metricReporter: ModuleMetricReporter): Promise<Module[]> {
   const modules: Module[] = [];
 
   if (config.modules.api) {
     const apiModule = await InstanceProvider.apiModule();
     modules.push(apiModule);
+
+    metricReporter.register('API', {
+      metric: apiModule.metrics.requestCount,
+      reports: [
+        { displayName: 'Request Count', aggregation: MetricAggregation.Maximum },
+        { displayName: 'Requests per Second', aggregation: MetricAggregation.Rate }
+      ]
+    });
   }
 
   if (config.modules.filmlistManager) {
@@ -52,7 +60,10 @@ async function getModules(): Promise<Module[]> {
 async function init(): Promise<void> {
   initEventLoopWatcher(logger);
 
-  const modules = await getModules();
+  const metricReporter = new ModuleMetricReporter(1000, 10, 5);
+  const modules = await getModules(metricReporter);
+
+  metricReporter.run(shutdownToken).catch((error) => logger.error(error as Error));
 
   if (modules.length > 0) {
     if (!shutdownToken.isSet) {

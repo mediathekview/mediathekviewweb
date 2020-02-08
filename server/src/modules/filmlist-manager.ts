@@ -4,7 +4,7 @@ import { Queue } from '@tstdl/base/queue';
 import { AnyIterable, currentTimestamp } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
-import { Module, ModuleBase, ModuleMetric } from '@tstdl/server/module';
+import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
 import { config } from '../config';
 import { Filmlist } from '../entry-source/filmlist/filmlist';
 import { FilmlistProvider } from '../entry-source/filmlist/provider';
@@ -32,6 +32,16 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
   private readonly distributedLoopProvider: DistributedLoopProvider;
   private readonly logger: Logger;
 
+  private enqueuedFilmlistsCount: number;
+
+  // tslint:disable-next-line: typedef
+  readonly metrics = {
+    enqueuedFilmlistsCount: {
+      type: ModuleMetricType.Counter,
+      getValue: () => this.enqueuedFilmlistsCount
+    }
+  };
+
   constructor(keyValueRepository: KeyValueRepository<FilmlistManagerKeyValues>, filmlistImportRepository: FilmlistImportRepository, filmlistImportQueue: Queue<FilmlistImportQueueItem>, filmlistProvider: FilmlistProvider, distributedLoopProvider: DistributedLoopProvider, logger: Logger) {
     super('FilmlistManager');
 
@@ -41,10 +51,6 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
     this.filmlistProvider = filmlistProvider;
     this.distributedLoopProvider = distributedLoopProvider;
     this.logger = logger;
-  }
-
-  getMetrics(): ModuleMetric[] {
-    return [];
   }
 
   protected async _run(_cancellationToken: CancellationToken): Promise<void> {
@@ -115,5 +121,6 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
     };
 
     await this.filmlistImportQueue.enqueue(filmlistImportQueueItem);
+    this.enqueuedFilmlistsCount++;
   }
 }
