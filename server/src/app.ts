@@ -34,7 +34,7 @@ async function getModules(metricReporter: ModuleMetricReporter): Promise<Module[
       metric: apiModule.metrics.requestCount,
       reports: [
         { displayName: 'Request Count', aggregation: MetricAggregation.Maximum },
-        { displayName: 'Requests per Second', aggregation: MetricAggregation.Rate }
+        { displayName: 'Requests/sec', aggregation: MetricAggregation.Rate }
       ]
     });
   }
@@ -42,16 +42,39 @@ async function getModules(metricReporter: ModuleMetricReporter): Promise<Module[
   if (config.modules.filmlistManager) {
     const filmlistManagerModule = await InstanceProvider.filmlistManagerModule();
     modules.push(filmlistManagerModule);
+
+    metricReporter.register('Filmlist Manager', {
+      metric: filmlistManagerModule.metrics.enqueuedFilmlistsCount,
+      reports: [
+        { displayName: 'Enqueued Filmlists', aggregation: MetricAggregation.Maximum }
+      ]
+    });
   }
 
   if (config.modules.importer) {
     const importerModule = await InstanceProvider.entriesImporterModule();
     modules.push(importerModule);
+
+    metricReporter.register('Importer', {
+      metric: importerModule.metrics.importedEntriesCount,
+      reports: [
+        { displayName: 'Imported entries', aggregation: MetricAggregation.Maximum },
+        { displayName: 'Imported entries/sec', aggregation: MetricAggregation.Rate }
+      ]
+    });
   }
 
   if (config.modules.indexer) {
     const indexerModule = await InstanceProvider.entriesIndexerModule();
     modules.push(indexerModule);
+
+    metricReporter.register('Indexer', {
+      metric: indexerModule.metrics.indexedEntriesCount,
+      reports: [
+        { displayName: 'Indexed entries', aggregation: MetricAggregation.Maximum },
+        { displayName: 'Indexed entries/sec', aggregation: MetricAggregation.Rate }
+      ]
+    });
   }
 
   return modules;

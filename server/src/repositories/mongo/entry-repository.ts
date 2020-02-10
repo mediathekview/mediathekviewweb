@@ -7,7 +7,9 @@ import { EntryRepository } from '../entry-repository';
 const indexes: TypedIndexSpecification<Entry>[] = [
   { key: { [Field.FirstSeen]: 1 } },
   { key: { [Field.LastSeen]: 1 } },
-  { key: { [Field.IndexRequiredSince]: 1 }, partialFilterExpression: { [Field.IndexRequiredSince]: { $exists: true } } }
+  { key: { [Field.IndexRequiredSince]: 1 }, partialFilterExpression: { [Field.IndexRequiredSince]: { $exists: true } } },
+  { key: { [Field.IndexJobTimeout]: 1 }, partialFilterExpression: { [Field.IndexJobTimeout]: { $exists: true } } },
+  { key: { [Field.IndexJob]: 1 }, partialFilterExpression: { [Field.IndexJob]: { $exists: true } } }
 ];
 
 export class MongoEntryRepository implements EntryRepository {
@@ -41,7 +43,7 @@ export class MongoEntryRepository implements EntryRepository {
     return this.baseRepository.loadManyById(ids);
   }
 
-  async getIndexJob(count: number, timeout: number): Promise<Entry[]> {
+  async getIndexJob(count: number, timeout: number): Promise<{ jobId: string, entries: Entry[] }> {
     const indexJob = getRandomString(10);
     const timestamp = currentTimestamp();
 
@@ -67,7 +69,24 @@ export class MongoEntryRepository implements EntryRepository {
     const operations = createArray(count, () => ({ updateOne: { filter, update } }));
     await this.baseRepository.collection.bulkWrite(operations);
     const entries = await this.baseRepository.loadManyByFilter({ indexJob });
-    return entries;
+
+    return { jobId: indexJob, entries };
+  }
+
+  async setIndexJobFinished(jobId: string): Promise<void> {
+    const filter: FilterQuery<Entry> = {
+      indexJob: jobId
+    };
+
+    const update: UpdateQuery<Entry> = {
+      $unset: {
+        indexRequiredSince: '',
+        indexJobTimeout: '',
+        indexJob: ''
+      }
+    };
+
+    await this.baseRepository.updateMany(filter, update);
   }
 }
 

@@ -39,8 +39,8 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
   protected async _run(cancellationToken: CancellationToken): Promise<void> {
     while (!cancellationToken.isSet) {
       try {
-        const entries = await this.entryRepository.getIndexJob(BATCH_SIZE, 10000);
-        await this.indexEntries(entries);
+        const { jobId, entries } = await this.entryRepository.getIndexJob(BATCH_SIZE, 10000);
+        await this.indexEntries(jobId, entries);
         this.indexedEntriesCount += entries.length;
       }
       catch (error) {
@@ -50,10 +50,11 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
     }
   }
 
-  private async indexEntries(entries: Entry[]): Promise<void> {
+  private async indexEntries(jobId: string, entries: Entry[]): Promise<void> {
     const aggregatedEntries = await this.aggregatedEntryDataSource.aggregateMany(entries);
     const searchEngineItems = aggregatedEntries.map((entry) => ({ id: entry.id, document: entry }));
 
     await this.searchEngine.index(searchEngineItems);
+    await this.entryRepository.setIndexJobFinished(jobId);
   }
 }

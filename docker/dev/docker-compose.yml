@@ -21,7 +21,7 @@ services:
       - "27017:27017"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
     environment:
       discovery.type: single-node
     container_name: elasticsearch

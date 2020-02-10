@@ -58,7 +58,7 @@ export const config: Config = {
   importer: {
     latestCheckIntervalMinutes: positiveInteger('FILMLIST_LATEST_CHECK_INTERVAL', 1),
     archiveCheckIntervalMinutes: positiveInteger('FILMLIST_ARCHIVE_CHECK_INTERVAL', 30),
-    archiveRange: positiveInteger('FILMLIST_ARCHIVE_RANGE', 5)
+    archiveRange: positiveInteger('FILMLIST_ARCHIVE_RANGE', 25)
   }
 };
 

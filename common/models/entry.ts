@@ -49,7 +49,9 @@ export enum Field {
   VideoBitrate = 'media.quality.bitrate',
   AudioQuality = 'media.quality',
   AudioBitrate = 'media.quality.bitrate',
-  IndexRequiredSince = 'indexRequiredSince'
+  IndexRequiredSince = 'indexRequiredSince',
+  IndexJobTimeout = 'indexJobTimeout',
+  IndexJob = 'indexJob'
 }
 
 export const fields = Object.values(Field);
