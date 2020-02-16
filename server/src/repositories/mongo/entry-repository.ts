@@ -7,9 +7,11 @@ import { EntryRepository } from '../entry-repository';
 const indexes: TypedIndexSpecification<Entry>[] = [
   { key: { [Field.FirstSeen]: 1 } },
   { key: { [Field.LastSeen]: 1 } },
-  { key: { [Field.IndexRequiredSince]: 1 }, partialFilterExpression: { [Field.IndexRequiredSince]: { $exists: true } } },
-  { key: { [Field.IndexJobTimeout]: 1 }, partialFilterExpression: { [Field.IndexJobTimeout]: { $exists: true } } },
-  { key: { [Field.IndexJob]: 1 }, partialFilterExpression: { [Field.IndexJob]: { $exists: true } } }
+  { key: { [Field.IndexRequiredSince]: 1 } },
+  { key: { [Field.IndexJobTimeout]: 1 } },
+  { key: { [Field.IndexJob]: 1 } },
+  { key: { indexRequiredSince: 1, indexJob: 1 } },
+  { key: { indexRequiredSince: 1, indexJobTimeout: 1 } }
 ];
 
 export class MongoEntryRepository implements EntryRepository {
@@ -48,14 +50,9 @@ export class MongoEntryRepository implements EntryRepository {
     const timestamp = currentTimestamp();
 
     const filter: FilterQuery<Entry> = {
-      $and: [
-        { indexRequiredSince: { $exists: true } },
-        {
-          $or: [
-            { indexJob: { $exists: false } },
-            { indexJobTimeout: { $lte: timestamp } }
-          ]
-        }
+      $or: [
+        { indexRequiredSince: { $ne: undefined }, indexJob: undefined },
+        { indexRequiredSince: { $ne: undefined }, indexJobTimeout: { $lte: timestamp } }
       ]
     };
 
@@ -79,10 +76,10 @@ export class MongoEntryRepository implements EntryRepository {
     };
 
     const update: UpdateQuery<Entry> = {
-      $unset: {
-        indexRequiredSince: '',
-        indexJobTimeout: '',
-        indexJob: ''
+      $set: {
+        [Field.IndexRequiredSince]: undefined,
+        [Field.IndexJobTimeout]: undefined,
+        [Field.IndexJob]: undefined
       }
     };
 
@@ -103,11 +100,9 @@ function toUpdateOneOperation(entry: Entry) {
     $min: { firstSeen },
     $set: {
       ...documentWithoutFirstAndLastSeen,
-      indexRequiredSince: currentTimestamp()
-    },
-    $unset: {
-      indexJob: '',
-      indexJobTimeout: ''
+      [Field.IndexRequiredSince]: currentTimestamp(),
+      [Field.IndexJob]: undefined,
+      [Field.IndexJobTimeout]: undefined
     }
   };
 

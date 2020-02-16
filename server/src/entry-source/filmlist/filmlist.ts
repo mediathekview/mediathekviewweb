@@ -6,10 +6,9 @@ import { createSubtitle, createVideo, Entry } from '../../common/models';
 import { FilmlistMetadata } from './filmlist-metadata';
 import { FilmlistResource } from './filmlist-resource';
 
-const METADATA_REGEX = /{"Filmliste":\["[^"]*?","(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\]/;
-const METADATA_REGEX_ALTERNATIVE = /{\s*"Filmliste"\s*:\s*\[\s*"[^"]*?"\s*,\s*"(\d+).(\d+).(\d+),\s(\d+):(\d+)".*?"([0-9a-z]+)"\s*\]/;
-const ENTRY_REGEX = /"X":(\[".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?",".*?","(?:\d+|)",".*?",".*?","(?:false|true)"\])(?:,|})/g;
-const ENTRY_REGEX_ALTERNATIVE = /"X"\s:\s(\[\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s".*?",\s"(?:\d+|)",\s".*?",\s".*?",\s".*?"\s\])(?:,|})/g;
+const METADATA_REGEX = /{\s*"Filmliste"\s?:\s?(\[(?:\s?"[^"]*?",?){5}\s?\])/;
+const METADATA_DATE_REGEX = /(\d+).(\d+).(\d+),\s(\d+):(\d+)/;
+const ENTRY_REGEX = /(?:"X":(\[(?:"[^"]*?",){16}"(?:\d+|)",(?:"[^"]*?",){2}"(?:false|true)"\])(?:,|}))|(?:"X":(\[(?:"[\w\W]*?",){16}"(?:\d+|)",(?:"[\w\W]*?",){2}"(?:false|true)"\])(?:,|}))|(?:"X"\s:\s(\[(?:\s"[^"]*?",){16}\s"(?:\d+|)"(?:,\s"[^"]*?"){3}\s\])(?:,|\s*}))|(?:"X"\s:\s(\[(?:\s"[\w\W]*?",){16}\s"(?:\d+|)"(?:,\s"[\w\W]*?"){3}\s\])(?:,|\s*}))/g;
 
 export type FilmlistParseResult = FilmlistMetadataParseResult | EntriesParseResult;
 
@@ -32,8 +31,6 @@ export class Filmlist<TResource extends FilmlistResource = FilmlistResource> imp
   private filmlistMetadata: FilmlistMetadata | undefined;
   private lastChannel: string;
   private lastTopic: string;
-  private metadataRegex: RegExp;
-  private entryRegex: RegExp;
 
   readonly resource: TResource;
 
@@ -46,8 +43,6 @@ export class Filmlist<TResource extends FilmlistResource = FilmlistResource> imp
     this.filmlistMetadata = undefined;
     this.lastChannel = '';
     this.lastTopic = '';
-    this.metadataRegex = METADATA_REGEX;
-    this.entryRegex = ENTRY_REGEX;
   }
 
   async getMetadata(): Promise<FilmlistMetadata> {
@@ -145,12 +140,11 @@ export class Filmlist<TResource extends FilmlistResource = FilmlistResource> imp
   }
 
   private parseFilmlistMetadata(): FilmlistMetadata | undefined {
-    const match = this.buffer.match(this.metadataRegex);
+    const match = this.buffer.match(METADATA_REGEX);
 
     if (match == undefined) {
-      if (this.buffer.length > 150000) {
-        this.metadataRegex = METADATA_REGEX_ALTERNATIVE;
-        this.entryRegex = ENTRY_REGEX_ALTERNATIVE;
+      if (this.buffer.length > 15000) {
+        throw new Error('failed parsing filmlist');
       }
 
       return undefined;
@@ -158,7 +152,28 @@ export class Filmlist<TResource extends FilmlistResource = FilmlistResource> imp
 
     this.buffer = this.buffer.slice((match.index as number) + match[0].length);
 
-    const [, day, month, year, hour, minute, id] = match;
+    const [
+      // tslint:disable: variable-name
+      , // date
+      utcDate,
+      version,
+      , // mSearchVersion,
+      id
+      // tslint:enable: variable-name
+    ] = JSON.parse(match[1]) as string[];
+
+    if (version != '3') {
+      throw new Error(`unknown filmlist version '${version}'`);
+    }
+
+    const dateMatch = utcDate.match(METADATA_DATE_REGEX);
+
+    if (dateMatch == undefined) {
+      throw new Error('failed parsing filmlist date');
+    }
+
+    const [, day, month, year, hour, minute] = dateMatch;
+
     const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute)));
     const timestamp = date.getTime();
 
@@ -171,14 +186,14 @@ export class Filmlist<TResource extends FilmlistResource = FilmlistResource> imp
   }
 
   private parseEntries(filmlistMetadata: FilmlistMetadata): Entry[] | undefined {
-    const regex = new RegExp(this.entryRegex);
+    const regex = new RegExp(ENTRY_REGEX);
     const matches = matchAll(regex, this.buffer);
 
     if (matches.length == 0) {
       return undefined;
     }
 
-    const entries = matches.map((match) => this.filmlistEntryToEntry(match[1], filmlistMetadata));
+    const entries = matches.map((match) => this.filmlistEntryToEntry(match[1] ?? match[2] ?? match[3] ?? match[4], filmlistMetadata));
 
     const lastMatch = matches[matches.length - 1];
     this.buffer = this.buffer.slice((lastMatch.index) + lastMatch[0].length);
@@ -247,7 +262,10 @@ export class Filmlist<TResource extends FilmlistResource = FilmlistResource> imp
         data: {
           filmlistId: filmlistMetadata.id
         }
-      }
+      },
+      indexRequiredSince: undefined,
+      indexJobTimeout: undefined,
+      indexJob: undefined
     };
 
     if (url_small.length > 0) {

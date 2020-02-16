@@ -1,5 +1,5 @@
 import { Logger } from '@tstdl/base/logger';
-import { timeout } from '@tstdl/base/utils';
+import { cancelableTimeout } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { Module, ModuleBase, ModuleMetricType } from '@tstdl/server/module';
 import { AggregatedEntry, Entry } from '../common/models';
@@ -40,12 +40,18 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
     while (!cancellationToken.isSet) {
       try {
         const { jobId, entries } = await this.entryRepository.getIndexJob(BATCH_SIZE, 10000);
+
+        if (entries.length == 0) {
+          await cancelableTimeout(2500, cancellationToken);
+          continue;
+        }
+
         await this.indexEntries(jobId, entries);
         this.indexedEntriesCount += entries.length;
       }
       catch (error) {
         this.logger.error(error as Error);
-        await timeout(2500);
+        await cancelableTimeout(2500, cancellationToken);
       }
     }
   }

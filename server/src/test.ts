@@ -69,7 +69,10 @@ function randomEntry(channels: string[], topics: string[], timestamps: number[],
       data: {
         timestamp: random(0, now, true)
       }
-    }
+    },
+    indexRequiredSince: undefined,
+    indexJobTimeout: undefined,
+    indexJob: undefined
   };
   return entry;
 }

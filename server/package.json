@@ -13,7 +13,7 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "@elastic/elasticsearch": "^7.5.1",
+    "@elastic/elasticsearch": "^7.6.0",
     "@koa/router": "^8.0.8",
     "@tstdl/base": "^0.55.8",
     "@tstdl/database": "^0.8.7",
@@ -24,7 +24,7 @@
     "koa": "^2.11.0",
     "lzma-native": "^6.0.0",
     "minio": "^7.0.13",
-    "mongodb": "^3.5.2",
+    "mongodb": "^3.5.3",
     "needle": "^2.4.0",
     "prom-client": "^11.5.3",
     "rxjs": "^6.5.4",
@@ -32,13 +32,13 @@
   },
   "devDependencies": {
     "@types/got": "^9.6.9",
-    "@types/koa": "^2.11.0",
+    "@types/koa": "^2.11.1",
     "@types/koa__router": "^8.0.2",
     "@types/lzma-native": "^4.0.0",
     "@types/minio": "^7.0.5",
-    "@types/mongodb": "^3.3.15",
+    "@types/mongodb": "^3.3.16",
     "@types/needle": "^2.0.4",
-    "@types/node": "^13.7.0",
+    "@types/node": "^13.7.1",
     "typescript": "~3.7.5"
   }
 }

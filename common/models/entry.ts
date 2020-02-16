@@ -16,9 +16,9 @@ export type Entry = Entity & {
     name: string,
     data?: any
   },
-  indexRequiredSince?: number,
-  indexJobTimeout?: number,
-  indexJob?: string
+  indexRequiredSince: number | undefined,
+  indexJobTimeout: number | undefined,
+  indexJob: string | undefined
 };
 
 export type AggregatedEntry = Entry & {
