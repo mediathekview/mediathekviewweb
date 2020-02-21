@@ -7,7 +7,7 @@ import { Queue } from '@tstdl/base/queue';
 import { StringMap } from '@tstdl/base/types';
 import { singleton, timeout } from '@tstdl/base/utils';
 import { MongoDocument } from '@tstdl/mongo';
-import { MongoLockProvider } from '@tstdl/mongo/lock';
+import { MongoLockProvider, MongoLockRepository } from '@tstdl/mongo/lock';
 import { MongoQueue } from '@tstdl/mongo/queue';
 import { HttpApi } from '@tstdl/server/api/http-api';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
@@ -217,12 +217,22 @@ export class InstanceProvider {
     });
   }
 
+  static async mongoLockRepository(): Promise<MongoLockRepository> {
+    return singleton(MongoLockRepository, async () => {
+      const collection = await InstanceProvider.mongoCollection(mongoNames.Locks);
+      const repository = new MongoLockRepository(collection);
+      await repository.initialize();
+
+      return repository;
+    });
+  }
+
   static async lockProvider(): Promise<LockProvider> {
     return singleton(MongoLockProvider, async () => {
-      const collection = await InstanceProvider.mongoCollection(mongoNames.Locks);
-      const logger = InstanceProvider.logger(LOCK_LOG);
+      const repository = await InstanceProvider.mongoLockRepository();
+      const logger = InstanceProvider.logger('LOCK');
 
-      return new MongoLockProvider(collection, logger);
+      return new MongoLockProvider(repository, logger);
     });
   }
 
