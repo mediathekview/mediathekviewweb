@@ -29,9 +29,9 @@ type Config = {
 };
 
 export const configValidators = {
-  integer: /^-?\d+$/,
-  positiveInteger: /^[1-9]\d*$/,
-  boolean: /true|false/i
+  integer: /^-?\d+$/u,
+  positiveInteger: /^[1-9]\d*$/u,
+  boolean: /true|false/ui
 };
 
 export const config: Config = {
@@ -44,7 +44,7 @@ export const config: Config = {
   },
   api: {
     port: positiveInteger('API_PORT', 8080),
-    search: boolean('API_SEARCH', true),
+    search: boolean('API_SEARCH', true)
   },
   elasticsearch: {
     url: string('ELASTICSEARCH_URL', 'http://localhost:9200')
@@ -63,7 +63,7 @@ export const config: Config = {
 };
 
 function boolean(variable: string, defaultValue: boolean): boolean {
-  const stringValue = string(variable, defaultValue.toString(), configValidators.boolean);
+  const stringValue = string(variable, defaultValue ? 'true' : 'false', configValidators.boolean);
   const value = stringValue.toLowerCase() == 'true';
 
   return value;
@@ -71,19 +71,20 @@ function boolean(variable: string, defaultValue: boolean): boolean {
 
 function integer(variable: string, defaultValue: number): number {
   const stringValue = string(variable, defaultValue.toString(), configValidators.integer);
-  const value = parseInt(stringValue);
+  const value = parseInt(stringValue, 10);
 
   return value;
 }
 
 function positiveInteger(variable: string, defaultValue: number): number {
   const stringValue = string(variable, defaultValue.toString(), configValidators.positiveInteger);
-  const value = parseInt(stringValue);
+  const value = parseInt(stringValue, 10);
 
   return value;
 }
 
 function string(variable: string, defaultValue: string, validator?: RegExp): string {
+  // eslint-disable-next-line no-process-env
   const environmentValue = process.env[variable];
   const value = environmentValue != undefined ? environmentValue : defaultValue;
   const valid = validator == undefined ? true : validator.test(value);

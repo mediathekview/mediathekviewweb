@@ -8,7 +8,9 @@ import { StringMap } from '@tstdl/base/types';
 import { singleton, timeout } from '@tstdl/base/utils';
 import { MongoDocument } from '@tstdl/mongo';
 import { MongoLockProvider, MongoLockRepository } from '@tstdl/mongo/lock';
+import { LockEntity } from '@tstdl/mongo/lock/model';
 import { MongoQueue } from '@tstdl/mongo/queue';
+import { MongoJob } from '@tstdl/mongo/queue/job';
 import { HttpApi } from '@tstdl/server/api/http-api';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
 import * as Mongo from 'mongodb';
@@ -33,11 +35,10 @@ import { FilmlistImportRepository } from './repositories/filmlist-import-reposit
 import { KeyValueRepository } from './repositories/key-value-repository';
 import { MongoEntryRepository } from './repositories/mongo/entry-repository';
 import { MongoFilmlistImportRepository } from './repositories/mongo/filmlist-import-repository';
-import { MongoKeyValueRepository } from './repositories/mongo/key-value-repository';
+import { KeyValueItem, MongoKeyValueRepository } from './repositories/mongo/key-value-repository';
 import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
-import { getElasticsearchLogAdapter } from './utils/elasticsearch-log-adapter-factory';
 import { getMongoLogAdapter } from './utils/mongo-log-adapter-factory';
 
 const MVW_VERTEILER_FILMLIST_PROVIDER_INSTANCE_NAME = 'mvw-verteiler';
@@ -51,51 +52,24 @@ const MONGO_CLIENT_OPTIONS: Mongo.MongoClientOptions = {
 };
 
 const ELASTICSEARCH_INDEX_NAME = 'mediathekviewweb';
-const ELASTICSEARCH_TYPE_NAME = 'entry';
 const ELASTICSEARCH_INDEX_SETTINGS = elasticsearchSettings;
 const ELASTICSEARCH_INDEX_MAPPING = elasticsearchMapping;
 
 const CORE_LOG = 'CORE';
-const QUEUE_LOG = 'QUEUE';
-const LOCK_LOG = 'LOCK';
 const FILMLIST_ENTRY_SOURCE = 'FILMLIST SOURCE';
 const SEARCH_ENGINE_LOG = 'SEARCH ENGINE';
 const ELASTICSEARCH_LOG = 'ELASTICSEARCH';
-const REDIS_LOG = 'REDIS';
 const MONGO_LOG = 'MONGO';
 const HTTP_API_LOG = 'REST API';
 
 const FILMLIST_MANAGER_MODULE_LOG = 'FILMLIST MANAGER';
 const ENTRIES_IMPORTER_MODULE_LOG = 'IMPORTER';
-const ENTRIES_SAVER_MODULE_LOG = 'SAVER';
 const ENTRIES_INDEXER_MODULE_LOG = 'INDEXER';
 const API_MODULE_LOG = 'API';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class InstanceProvider {
   private static readonly disposer: AsyncDisposer = new AsyncDisposer();
-
-  private static loggerInstance(): Logger {
-    return singleton(ConsoleLogger, () => {
-      const logger = new ConsoleLogger(config.verbosity);
-      return logger;
-    });
-  }
-
-  private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger): Promise<void> {
-    let success = false;
-    while (!success && !InstanceProvider.disposer.disposing) {
-      try {
-        logger.verbose(`connecting to ${name}...`);
-        await connectFunction();
-        success = true;
-        logger.info(`connected to ${name}`);
-      }
-      catch (error) {
-        logger.verbose(`error connecting to ${name} (${(error as Error).message}), trying again...`);
-        await timeout(2000);
-      }
-    }
-  }
 
   static async disposeInstances(): Promise<void> {
     InstanceProvider.coreLogger().debug('dispose instances');
@@ -111,7 +85,7 @@ export class InstanceProvider {
 
   static async entriesIndexerModule(): Promise<EntriesIndexerModule> {
     return singleton(EntriesIndexerModule, async () => {
-      const aggregatedEntryDataSource = await InstanceProvider.aggregatedEntryDataSource();
+      const aggregatedEntryDataSource = InstanceProvider.aggregatedEntryDataSource();
       const searchEngine = await InstanceProvider.entrySearchEngine();
       const entryRepository = await InstanceProvider.entryRepository();
       const logger = InstanceProvider.logger(ENTRIES_INDEXER_MODULE_LOG);
@@ -122,28 +96,27 @@ export class InstanceProvider {
 
   static async keyValueRepository(): Promise<KeyValueRepository<StringMap>> {
     return singleton(MongoKeyValueRepository, async () => {
-      const collection = await InstanceProvider.mongoCollection(mongoNames.KeyValues);
+      const collection = await InstanceProvider.mongoCollection<KeyValueItem<any>>(mongoNames.KeyValues);
       return new MongoKeyValueRepository(collection);
     });
   }
 
   static async filmlistImportQueue(): Promise<Queue<FilmlistImportQueueItem>> {
-    return singleton(mongoNames.FilmlistImportQueue, () => InstanceProvider.mongoQueue<FilmlistImportQueueItem>(mongoNames.FilmlistImportQueue, 10 * 60 * 1000, 3));
+    return singleton(mongoNames.FilmlistImportQueue, async () => InstanceProvider.mongoQueue<FilmlistImportQueueItem>(mongoNames.FilmlistImportQueue, 10 * 60 * 1000, 3));
   }
 
-  static async apiModule(): Promise<ApiModule> {
-    return singleton(ApiModule, async () => {
-      const restApi = await InstanceProvider.httpApi();
+  static apiModule(): ApiModule {
+    return singleton(ApiModule, () => {
+      const restApi = InstanceProvider.httpApi();
       const logger = InstanceProvider.logger(API_MODULE_LOG);
 
       return new ApiModule(restApi, logger);
     });
   }
 
-  static async httpApi(): Promise<HttpApi> {
-    return singleton(HttpApi, async () => {
+  static httpApi(): HttpApi {
+    return singleton(HttpApi, () => {
       const logger = InstanceProvider.logger(HTTP_API_LOG);
-
       return new HttpApi({ prefix: '/api', logger, behindProxy: true });
     });
   }
@@ -158,15 +131,14 @@ export class InstanceProvider {
   static async elasticsearch(): Promise<ElasticsearchClient> {
     return singleton(ElasticsearchClient, async () => {
       const logger = InstanceProvider.logger(ELASTICSEARCH_LOG);
-      const logAdapter = getElasticsearchLogAdapter(logger);
 
       const elasticsearchClient = new ElasticsearchClient({
-        node: config.elasticsearch.url,
+        node: config.elasticsearch.url
       });
 
       InstanceProvider.disposer.add(async () => elasticsearchClient.close());
 
-      await InstanceProvider.connect('elasticsearch', async () => await elasticsearchClient.ping(), logger);
+      await InstanceProvider.connect('elasticsearch', async () => elasticsearchClient.ping(), logger);
 
       return elasticsearchClient;
     });
@@ -187,9 +159,9 @@ export class InstanceProvider {
         .on('timeout', () => logger.warn('connection timed out'))
         .on('close', () => logger.verbose('connection closed'));
 
-      InstanceProvider.disposer.add(async () => await mongoClient.close());
+      InstanceProvider.disposer.add(async () => mongoClient.close());
 
-      await InstanceProvider.connect('mongo', async () => await mongoClient.connect(), logger);
+      await InstanceProvider.connect('mongo', async () => mongoClient.connect(), logger);
 
       return mongoClient;
     });
@@ -210,16 +182,16 @@ export class InstanceProvider {
     return InstanceProvider.mongoCollection(mongoNames.FilmlistImports);
   }
 
-  static async mongoCollection(name: string): Promise<Mongo.Collection> {
+  static async mongoCollection<T>(name: string): Promise<Mongo.Collection<T>> {
     return singleton(`mongo-collection-${name}`, async () => {
       const database = await InstanceProvider.database();
-      return database.collection(name);
+      return database.collection<T>(name);
     });
   }
 
   static async mongoLockRepository(): Promise<MongoLockRepository> {
     return singleton(MongoLockRepository, async () => {
-      const collection = await InstanceProvider.mongoCollection(mongoNames.Locks);
+      const collection = await InstanceProvider.mongoCollection<MongoDocument<LockEntity>>(mongoNames.Locks);
       const repository = new MongoLockRepository(collection);
       await repository.initialize();
 
@@ -259,7 +231,7 @@ export class InstanceProvider {
     const key = `mongo-queue:${collectionName}`;
 
     return singleton(key, async () => {
-      const collection = await InstanceProvider.mongoCollection(collectionName);
+      const collection = await InstanceProvider.mongoCollection<MongoDocument<MongoJob<T>>>(collectionName);
       const queue = new MongoQueue<T>(collection, processTimeout, maxTries);
 
       return queue;
@@ -293,8 +265,8 @@ export class InstanceProvider {
     });
   }
 
-  static async aggregatedEntryDataSource(): Promise<AggregatedEntryDataSource> {
-    return singleton(NonWorkingAggregatedEntryDataSource, async () => new NonWorkingAggregatedEntryDataSource());
+  static aggregatedEntryDataSource(): AggregatedEntryDataSource {
+    return singleton(NonWorkingAggregatedEntryDataSource, () => new NonWorkingAggregatedEntryDataSource());
   }
 
   static async entrySearchEngine(): Promise<SearchEngine<AggregatedEntry>> {
@@ -306,7 +278,7 @@ export class InstanceProvider {
 
       const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
 
-      InstanceProvider.disposer.add(async () => await elasticsearchSearchEngine[disposeAsync]());
+      InstanceProvider.disposer.add(async () => elasticsearchSearchEngine[disposeAsync]());
 
       await elasticsearchSearchEngine.initialize();
 
@@ -357,5 +329,28 @@ export class InstanceProvider {
 
       return new FilmlistManagerModule(keyValueRepository, filmlistImportRepository, filmlistImportQueue, filmlistProvider, distributedLoopProvider, logger);
     });
+  }
+
+  private static loggerInstance(): Logger {
+    return singleton(ConsoleLogger, () => {
+      const logger = new ConsoleLogger(config.verbosity);
+      return logger;
+    });
+  }
+
+  private static async connect(name: string, connectFunction: (() => Promise<any>), logger: Logger): Promise<void> {
+    let success = false;
+    while (!success && !InstanceProvider.disposer.disposing) {
+      try {
+        logger.verbose(`connecting to ${name}...`);
+        await connectFunction();
+        success = true;
+        logger.info(`connected to ${name}`);
+      }
+      catch (error) {
+        logger.verbose(`error connecting to ${name} (${(error as Error).message}), trying again...`);
+        await timeout(2000);
+      }
+    }
   }
 }

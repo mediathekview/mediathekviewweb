@@ -45,7 +45,7 @@ export enum FilmlistResourceTimestampStrategy {
   FileName
 }
 
-const FILENAME_DATE_PATTERN = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/;
+const FILENAME_DATE_PATTERN = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
 
 export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> {
   private readonly s3: Minio.Client;
@@ -61,7 +61,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
 
     this.s3 = new Minio.Client({
       endPoint: hostname,
-      port: port.length > 0 ? parseInt(port) : undefined,
+      port: port.length > 0 ? parseInt(port, 10) : undefined,
       useSSL: protocol == 'https:',
       accessKey,
       secretKey
@@ -71,6 +71,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     this.archive = archive;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async *getLatest(): AsyncIterable<S3Filmlist> {
     if (this.latest == undefined) {
       throw new Error('s3 options for latest not provided');
@@ -124,7 +125,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
         break;
 
       case FilmlistResourceTimestampStrategy.FileName:
-        timestamp = this.parseFilenameTimestamp(object);
+        timestamp = parseFilenameTimestamp(object);
         break;
 
       default:
@@ -138,23 +139,12 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     return filmlist;
   }
 
-  private parseFilenameTimestamp(object: string): number {
-    const match = object.match(FILENAME_DATE_PATTERN);
-
-    if (match == undefined) {
-      throw new Error('could not parse timestamp from filename');
-    }
-
-    const { year, month, day } = match.groups as StringMap<string>;
-    return Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day));
-  }
-
   private getStreamProvider(bucket: string, object: string): () => Promise<TypedReadable<NonObjectBufferMode>> {
-    const streamProvider = async () => {
+    const streamProvider = async (): Promise<TypedReadable<NonObjectBufferMode>> => {
       let stream = await this.s3.getObject(bucket, object);
 
-      const decompressStream =
-        object.endsWith('.gz') ? createGunzip()
+      const decompressStream
+        = object.endsWith('.gz') ? createGunzip()
           : object.endsWith('.xz') ? new xz.Decompressor()
             : undefined;
 
@@ -167,4 +157,15 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
 
     return streamProvider;
   }
+}
+
+function parseFilenameTimestamp(object: string): number {
+  const match = FILENAME_DATE_PATTERN.exec(object);
+
+  if (match == undefined) {
+    throw new Error('could not parse timestamp from filename');
+  }
+
+  const { year, month, day } = match.groups as StringMap<string>;
+  return Date.UTC(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
 }

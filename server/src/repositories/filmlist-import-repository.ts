@@ -1,5 +1,5 @@
 import { EntityRepository } from '@tstdl/database';
-import { FilmlistMetadata, Filmlist } from '../entry-source/filmlist';
+import { FilmlistMetadata } from '../entry-source/filmlist';
 import { FilmlistImport } from '../models/filmlist-import';
 
 export type FilmlistImportProcessData = Partial<{

@@ -62,7 +62,7 @@ export type Play = PlayPause & {
 };
 
 export type Pause = PlayPause & {
-  actionType: UserActionType.Pause,
+  actionType: UserActionType.Pause
 };
 
 export type Comment = EntryAction & {

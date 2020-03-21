@@ -3,7 +3,7 @@ import { TypedIndexSpecification } from '@tstdl/mongo';
 import { Collection } from 'mongodb';
 import { KeyValueRepository } from '../key-value-repository';
 
-type KeyValueItem<T, K extends keyof T = any> = {
+export type KeyValueItem<T, K extends keyof T = any> = {
   scope: string,
   key: K,
   value: T[K]

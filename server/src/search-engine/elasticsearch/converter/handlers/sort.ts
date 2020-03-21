@@ -14,8 +14,7 @@ export class SortConverter {
 
   convert(sort: Sort): object {
     if (sort.aggregation == 'length') {
-      const lengthSort = this.lengthSort(sort);
-      return lengthSort;
+      return lengthSort(sort);
     }
 
     const sortObj: ElasticsearchSort = {};
@@ -28,45 +27,45 @@ export class SortConverter {
     }
     else {
       const order = (sort.order == 'ascending') ? 'asc' : 'desc';
-      const mode = this.aggregationToMode(sort.aggregation);
+      const mode = aggregationToMode(sort.aggregation);
 
       sortObj[field] = { order, mode };
     }
 
     return sortObj;
   }
+}
 
-  private aggregationToMode(aggregation: Aggregation): ElasticsearchSortMode {
-    switch (aggregation) {
-      case Aggregation.Min:
-      case Aggregation.Max:
-      case Aggregation.Sum:
-      case Aggregation.Median:
-        return aggregation;
+function aggregationToMode(aggregation: Aggregation): ElasticsearchSortMode {
+  switch (aggregation) {
+    case Aggregation.Min:
+    case Aggregation.Max:
+    case Aggregation.Sum:
+    case Aggregation.Median:
+      return aggregation;
 
-      case Aggregation.Average:
-        return 'avg';
+    case Aggregation.Average:
+      return 'avg';
 
-      case Aggregation.Length:
-        throw new Error('call lengthSort for sorting by length');
+    case Aggregation.Length:
+      throw new Error('call lengthSort for sorting by length');
 
-      default:
-        throw new Error(`${aggregation} not implemented`);
+    default:
+      throw new Error(`${aggregation as string} not implemented`);
+  }
+}
+
+function lengthSort(sort: Sort): object {
+  const scriptObj = {
+    _script: {
+      type: 'number',
+      script: {
+        lang: 'expression',
+        inline: `doc['${sort.field}'].length`
+      },
+      order: (sort.order == 'ascending') ? 'asc' : 'desc'
     }
-  }
+  };
 
-  private lengthSort(sort: Sort): object {
-    const scriptObj = {
-      _script: {
-        type: 'number',
-        script: {
-          lang: 'expression',
-          inline: `doc['${sort.field}'].length`,
-        },
-        order: (sort.order == 'ascending') ? 'asc' : 'desc'
-      }
-    };
-
-    return scriptObj;
-  }
+  return scriptObj;
 }

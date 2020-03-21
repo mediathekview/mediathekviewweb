@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 export const elasticsearchSettings = {
   settings: {
     refresh_interval: '3s',

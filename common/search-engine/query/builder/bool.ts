@@ -22,16 +22,16 @@ export class BoolQueryBuilder extends QueryBuilder {
     };
 
     if (this._must.length > 0) {
-      queryObj.bool.must = this._must.map((q) => q instanceof QueryBuilder ? q.build() : q);
+      queryObj.bool.must = this._must.map((q) => (q instanceof QueryBuilder ? q.build() : q));
     }
     if (this._should.length > 0) {
-      queryObj.bool.should = this._should.map((q) => q instanceof QueryBuilder ? q.build() : q);
+      queryObj.bool.should = this._should.map((q) => (q instanceof QueryBuilder ? q.build() : q));
     }
     if (this._not.length > 0) {
-      queryObj.bool.not = this._not.map((q) => q instanceof QueryBuilder ? q.build() : q);
+      queryObj.bool.not = this._not.map((q) => (q instanceof QueryBuilder ? q.build() : q));
     }
     if (this._filter.length > 0) {
-      queryObj.bool.filter = this._filter.map((q) => q instanceof QueryBuilder ? q.build() : q);
+      queryObj.bool.filter = this._filter.map((q) => (q instanceof QueryBuilder ? q.build() : q));
     }
 
     return queryObj;

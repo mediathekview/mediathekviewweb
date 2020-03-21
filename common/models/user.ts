@@ -6,24 +6,24 @@ export enum UserType {
 }
 
 export type User = Entity & {
-  type: UserType;
-  username: string | null;
-  email: string | null;
-  birthday: Date | null;
+  type: UserType,
+  username: string | null,
+  email: string | null,
+  birthday: Date | null
 };
 
 export type GuestUser = Entity & {
-  type: UserType.Guest;
-  username: null;
-  email: null;
-  birthday: null;
+  type: UserType.Guest,
+  username: null,
+  email: null,
+  birthday: null
 };
 
 export type RegisteredUser = Entity & {
-  type: UserType.Registered;
-  username: string;
-  email: string;
-  birthday: Date;
+  type: UserType.Registered,
+  username: string,
+  email: string,
+  birthday: Date
 };
 
 export type UserWithPartialId = EntityWithPartialId<User>;

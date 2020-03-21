@@ -7,7 +7,7 @@ import { SegmentConverter } from '../segment-converter';
 import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
 
 const FIELD = Field.Duration;
-const SELECTOR_REGEX = /^(?:du(?:r(?:a(?:t(?:i(?:o(?:n)?)?)?)?)?)?|dau(?:e(?:r)?)?)$/;
+const SELECTOR_REGEX = /^(?:du(?:r(?:a(?:t(?:i(?:o(?:n)?)?)?)?)?)?|dau(?:e(?:r)?)?)$/u;
 
 const RANGE_INCLUSIVE = true;
 
@@ -27,13 +27,15 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
 
     if (ranges == undefined) {
       return undefined;
-    } else if (ranges.length == 1) {
-      return this.convertSingle(ranges[0]);
-    } else if (ranges.length == 2) {
-      return this.convertFromTo(ranges[0], ranges[1]);
-    } else {
-      throw new Error(`did not expected a range count of ${ranges.length}`);
     }
+    else if (ranges.length == 1) {
+      return this.convertSingle(ranges[0]);
+    }
+    else if (ranges.length == 2) {
+      return this.convertFromTo(ranges[0], ranges[1]);
+    }
+
+    throw new Error(`did not expected a range count of ${ranges.length}`);
   }
 
   private convertSingle(range: Range): QueryBody | undefined {

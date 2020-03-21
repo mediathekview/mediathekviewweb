@@ -6,7 +6,7 @@ type ElasticsearchBooleanQuery = {
   bool: {
     must?: object,
     should?: object,
-    must_not?: object,
+    must_not?: object, // eslint-disable-line camelcase
     filter?: object
   }
 };
@@ -19,7 +19,7 @@ export class BoolQueryConvertHandler implements ConvertHandler {
   }
 
   tryConvert(query: BoolQuery, index: string): ConvertResult {
-    const canHandle = query.hasOwnProperty('bool');
+    const canHandle = Object.prototype.hasOwnProperty.call(query, 'bool');
 
     if (!canHandle) {
       return { success: false };
@@ -29,7 +29,7 @@ export class BoolQueryConvertHandler implements ConvertHandler {
       bool: {
         must: this.convertArray(query.bool.must, index),
         should: this.convertArray(query.bool.should, index),
-        must_not: this.convertArray(query.bool.not, index),
+        must_not: this.convertArray(query.bool.not, index), // eslint-disable-line camelcase
         filter: this.convertArray(query.bool.filter, index)
       }
     };

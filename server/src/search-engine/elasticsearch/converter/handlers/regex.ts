@@ -5,6 +5,7 @@ import { ConvertHandler, ConvertResult } from '../convert-handler';
 type ElasticsearchRegexQuery = { regexp: StringMap<string> };
 
 export class RegexQueryConvertHandler implements ConvertHandler {
+  // eslint-disable-next-line class-methods-use-this
   tryConvert(query: RegexQuery, _index: string): ConvertResult {
     const canHandle = ('regex' in query);
 

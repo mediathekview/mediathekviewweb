@@ -6,10 +6,6 @@ export class TermQueryBuilder extends QueryBuilder {
   private _field?: Field;
   private _value?: TermQueryValue;
 
-  constructor() {
-    super();
-  }
-
   field(field: Field): TermQueryBuilder {
     this._field = field;
     return this;

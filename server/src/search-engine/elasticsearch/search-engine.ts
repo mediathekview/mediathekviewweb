@@ -1,8 +1,8 @@
+import * as Elasticsearch from '@elastic/elasticsearch';
 import { disposeAsync } from '@tstdl/base/disposable';
 import { LockProvider } from '@tstdl/base/lock';
 import { Logger } from '@tstdl/base/logger';
-import { Omit, StringMap } from '@tstdl/base/types';
-import * as Elasticsearch from '@elastic/elasticsearch';
+import { Omit } from '@tstdl/base/types';
 import { SearchEngine, SearchEngineItem, SearchResult } from '../../common/search-engine';
 import { SearchQuery } from '../../common/search-engine/query';
 import { Converter } from './converter';
@@ -35,8 +35,9 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
 
     let success = false;
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (!success && !this.disposing) {
-      await lock.acquire(1000, async () => {
+      await lock.acquire(1000, async () => { // eslint-disable-line no-loop-func
         const created = await this.ensureIndex();
 
         if (created) {
@@ -49,6 +50,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async [disposeAsync](): Promise<void> {
     this.disposing = true;
   }
@@ -57,11 +59,11 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     const bulkRequest: Elasticsearch.RequestParams.Bulk<({ index: object } | T)[]> = {
       index: this.indexName,
       refresh: 'false',
-      body: [] // tslint:disable-line: no-any
+      body: []
     };
 
     for (const item of items) {
-      bulkRequest.body.push( // tslint:disable-line: no-unsafe-any space-within-parens
+      bulkRequest.body.push(
         { index: { _id: item.id } },
         item.document
       );
@@ -77,22 +79,24 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   async search(query: SearchQuery): Promise<SearchResult<T>> {
     const elasticsearchQuery = this.converter.convert(query, this.indexName);
 
-    const response = await this.client.search(elasticsearchQuery);
+    const _response = await this.client.search(elasticsearchQuery);
     throw new Error('check response');
 
-    /*    const { hits: { hits, total }, took: milliseconds } = response as any;
-        const items = hits.map((hit) => hit._source);
-
-        const cursor = hits.length > 0 ? JSON.stringify(hits[hits.length - 1].sort) : undefined;
-
-        const searchResult: SearchResult<T> = {
-          total,
-          milliseconds,
-          cursor,
-          items
-        };
-
-        return searchResult; */
+    /*
+     *  const { hits: { hits, total }, took: milliseconds } = response as any;
+     *  const items = hits.map((hit) => hit._source);
+     *
+     *  const cursor = hits.length > 0 ? JSON.stringify(hits[hits.length - 1].sort) : undefined;
+     *
+     *  const searchResult: SearchResult<T> = {
+     *    total,
+     *    milliseconds,
+     *    cursor,
+     *    items
+     *  };
+     *
+     *  return searchResult;
+     */
   }
 
   async putIndexOptions(): Promise<void> {
@@ -105,7 +109,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
       }
 
       if (this.indexMapping != undefined) {
-        const elasticsearchMappingObject = this.indexMapping; // this.createElasticsearchMappingObject(this.indexMapping);
+        const elasticsearchMappingObject = this.indexMapping;
         await this.client.indices.putMapping({ index: this.indexName, type: undefined as any, body: elasticsearchMappingObject });
         this.logger.verbose(`applied elasticsearch index mapping for ${this.indexName}`);
       }
@@ -126,7 +130,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private async ensureIndex(): Promise<boolean> {
     let created = false;
 
-    const { body: indexExists } = await this.client.indices.exists({ index: this.indexName });
+    const { body: indexExists } = await this.client.indices.exists({ index: this.indexName }) as { body: boolean };
 
     if (!indexExists) {
       await this.client.indices.create({ index: this.indexName });
@@ -136,12 +140,5 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     }
 
     return created;
-  }
-
-  private createElasticsearchMappingObject(mapping: object): StringMap<object> {
-    const actualMapping: StringMap<object> = {};
-    actualMapping['a'] = mapping;
-
-    return actualMapping;
   }
 }

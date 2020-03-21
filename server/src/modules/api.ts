@@ -1,13 +1,13 @@
+import { Enumerable } from '@tstdl/base/enumerable';
 import { Logger } from '@tstdl/base/logger';
 import { cancelableTimeout, Timer } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { BodyType, HttpApi } from '@tstdl/server/api/http-api';
 import { noopValidator } from '@tstdl/server/api/validation/validators';
-import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
+import { Module, ModuleBase, ModuleMetricType } from '@tstdl/server/module';
 import * as Http from 'http';
 import * as Net from 'net';
 import { config } from '../config';
-import { Enumerable } from '@tstdl/base/enumerable';
 
 export class ApiModule extends ModuleBase implements Module {
   private readonly httpApi: HttpApi;
@@ -16,15 +16,14 @@ export class ApiModule extends ModuleBase implements Module {
 
   private requestCount: number;
 
-  // tslint:disable-next-line: typedef
   readonly metrics = {
     requestCount: {
       type: ModuleMetricType.Counter,
-      getValue: () => this.requestCount
+      getValue: () => this.requestCount // eslint-disable-line no-invalid-this
     },
     connectedSockets: {
       type: ModuleMetricType.Gauge,
-      getValue: () => Enumerable.from(this.socketsSets).reduce((sum, set) => sum + set.size, 0)
+      getValue: () => Enumerable.from(this.socketsSets).reduce((sum, set) => sum + set.size, 0) // eslint-disable-line no-invalid-this
     }
   };
 

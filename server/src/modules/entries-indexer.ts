@@ -17,11 +17,10 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
 
   private indexedEntriesCount: number;
 
-  // tslint:disable-next-line: typedef
   readonly metrics = {
     indexedEntriesCount: {
       type: ModuleMetricType.Counter,
-      getValue: () => this.indexedEntriesCount
+      getValue: () => this.indexedEntriesCount // eslint-disable-line no-invalid-this
     }
   };
 

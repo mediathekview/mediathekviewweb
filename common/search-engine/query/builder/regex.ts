@@ -6,10 +6,6 @@ export class RegexQueryBuilder extends QueryBuilder {
   private _field?: Field;
   private _expression?: string;
 
-  constructor() {
-    super();
-  }
-
   field(field: Field): RegexQueryBuilder {
     if (field.length == 0) {
       throw new Error('no field specified');

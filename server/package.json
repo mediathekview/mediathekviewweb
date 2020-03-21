@@ -8,23 +8,23 @@
     "inspect-min-memory": "node --inspect --optimize-for-size --memory-reducer --clear-free-memory --use-idle-notification ./dist/app.js",
     "build": "tsc",
     "build-watch": "tsc --watch",
-    "lint": "tslint -c tslint.json -p tsconfig.json"
+    "lint": "eslint -c .eslintrc.js --ext .ts ."
   },
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "@elastic/elasticsearch": "^7.6.0",
+    "@elastic/elasticsearch": "^7.6.1",
     "@koa/router": "^8.0.8",
-    "@tstdl/base": "^0.56.1",
-    "@tstdl/database": "^0.9.1",
-    "@tstdl/mongo": "^0.23.1",
-    "@tstdl/server": "^0.28.2",
-    "commander": "^4.1.1",
+    "@tstdl/base": "^0.57.9",
+    "@tstdl/database": "^0.9.2",
+    "@tstdl/mongo": "^0.23.2",
+    "@tstdl/server": "^0.28.3",
+    "commander": "^5.0.0",
     "got": "^10.6.0",
     "koa": "^2.11.0",
     "lzma-native": "^6.0.0",
-    "minio": "^7.0.14",
-    "mongodb": "^3.5.3",
+    "minio": "^7.0.15",
+    "mongodb": "^3.5.5",
     "needle": "^2.4.0",
     "prom-client": "^12.0.0",
     "rxjs": "^6.5.4",
@@ -32,13 +32,16 @@
   },
   "devDependencies": {
     "@types/got": "^9.6.9",
-    "@types/koa": "^2.11.1",
     "@types/koa__router": "^8.0.2",
+    "@types/koa": "^2.11.2",
     "@types/lzma-native": "^4.0.0",
     "@types/minio": "^7.0.5",
-    "@types/mongodb": "^3.3.16",
+    "@types/mongodb": "^3.5.2",
     "@types/needle": "^2.0.4",
-    "@types/node": "^13.7.4",
-    "typescript": "~3.8.2"
+    "@types/node": "^13.9.2",
+    "@typescript-eslint/eslint-plugin": "^2.24.0",
+    "@typescript-eslint/parser": "^2.24.0",
+    "eslint": "^6.8.0",
+    "typescript": "~3.8.3"
   }
 }

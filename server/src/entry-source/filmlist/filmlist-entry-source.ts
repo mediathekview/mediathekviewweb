@@ -24,7 +24,6 @@ export class FilmlistEntrySource implements EntrySource {
     this.logger = logger;
   }
 
-  // tslint:disable-next-line: no-async-without-await
   async *getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
     const consumer = this.importQueue.getConsumer(cancellationToken);
 
@@ -42,6 +41,7 @@ export class FilmlistEntrySource implements EntrySource {
     }
   }
 
+  // eslint-disable-next-line max-statements, max-lines-per-function
   private async *processFilmlistImport(job: Job<FilmlistImportQueueItem>, importQueue: Queue<FilmlistImportQueueItem>, cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
     const importTimestamp = currentTimestamp();
     const filmlistImportId = job.data.filmlistImportId;
@@ -71,6 +71,7 @@ export class FilmlistEntrySource implements EntrySource {
       throw new Error('failed acquiring lock');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (hasFilmlist) {
       this.logger.info(`skipping import of filmlist ${filmlistMetadata.id}, because it already is (being) imported`);
       await importQueue.acknowledge(job);

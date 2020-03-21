@@ -9,10 +9,6 @@ export class RangeQueryBuilder extends QueryBuilder {
   private _gt?: number;
   private _gte?: number;
 
-  constructor() {
-    super();
-  }
-
   build(): RangeQuery {
     if (this._field == undefined) {
       throw new Error('field not set');

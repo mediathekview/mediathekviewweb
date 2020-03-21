@@ -33,7 +33,7 @@ export class EntrySearchDataSource extends DataSource<AggregatedEntry | undefine
   }
 
   connect(collectionViewer: CollectionViewer): Observable<(AggregatedEntry | undefined)[]> {
-    // tslint:disable-next-line: no-floating-promises
+
     this.fetchPage(0, true);
 
     this.subscription = collectionViewer.viewChange.subscribe(({ start, end }) => {
@@ -52,7 +52,7 @@ export class EntrySearchDataSource extends DataSource<AggregatedEntry | undefine
     const endPage = this.getPageForIndex(end - 1);
 
     for (let i = startPage; i <= endPage; i++) {
-      // tslint:disable-next-line: no-floating-promises
+
       this.fetchPage(i);
     }
   }

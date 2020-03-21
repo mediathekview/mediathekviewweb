@@ -35,9 +35,9 @@ export abstract class SelectorSegmentConverterBase implements SegmentConverter {
     return result;
   }
 
-  protected abstract textToQuery(text: string): QueryBody | undefined;
-
   private canHandleSelector(segment: Segment): boolean {
     return (segment.selector != undefined) && this.selectorRegex.test(segment.selector);
   }
+
+  protected abstract textToQuery(text: string): QueryBody | undefined;
 }

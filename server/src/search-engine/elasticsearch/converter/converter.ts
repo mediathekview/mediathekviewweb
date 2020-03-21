@@ -26,11 +26,11 @@ export class Converter {
     }
 
     const from = (query.skip != undefined) ? query.skip : undefined;
-    const search_after = (query.cursor != undefined) ? JSON.parse(query.cursor) : undefined; // tslint:disable-line: variable-name
+    const search_after = (query.cursor != undefined) ? JSON.parse(query.cursor) : undefined; // eslint-disable-line camelcase
     const size = (query.limit != undefined) ? query.limit : DEFAULT_LIMIT;
 
     if (size > MAX_LIMIT) {
-      throw new Error(`Limit of ${query.limit} is above maximum allowed (${MAX_LIMIT})`);
+      throw new Error(`Limit of ${size} is above maximum allowed (${MAX_LIMIT})`);
     }
 
     const queryBody = this.convertBody(query.body, index);
@@ -41,7 +41,7 @@ export class Converter {
       size,
       body: {
         query: queryBody,
-        search_after,
+        search_after, // eslint-disable-line camelcase
         sort: this.getSort(query)
       }
     };

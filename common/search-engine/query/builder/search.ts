@@ -4,8 +4,9 @@ import { QueryBuilder } from './builder';
 import { SortBuilder } from './sort';
 
 export class SearchQueryBuilder {
+  private readonly _sort: Sort[];
+
   private _body: QueryBody | undefined;
-  private _sort: Sort[]; // tslint:disable-line: prefer-readonly
   private _skip: number | undefined;
   private _limit: number | undefined;
   private _cursor: string | undefined;
@@ -21,7 +22,7 @@ export class SearchQueryBuilder {
 
   sort(...sort: (Sort | SortBuilder)[]): this {
     const mapped = Enumerable.from(sort)
-      .mapMany((sortOrBuilder) => (sortOrBuilder instanceof SortBuilder) ? sortOrBuilder.build() : [sortOrBuilder])
+      .mapMany((sortOrBuilder) => ((sortOrBuilder instanceof SortBuilder) ? sortOrBuilder.build() : [sortOrBuilder]))
       .toArray();
 
     this._sort.push(...mapped);

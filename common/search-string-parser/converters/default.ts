@@ -7,6 +7,7 @@ import { SegmentConverter, SegmentConverterResultArray, SegmentConverterResultTy
 const fields = [Field.Topic, Field.Title];
 
 export class DefaultSegmentConverter implements SegmentConverter {
+  // eslint-disable-next-line class-methods-use-this
   tryConvert(segment: Segment): SegmentConverterResultArray | undefined {
     const builder = new TextQueryBuilder();
 

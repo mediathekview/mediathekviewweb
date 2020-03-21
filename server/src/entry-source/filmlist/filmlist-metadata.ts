@@ -1,4 +1,4 @@
 export type FilmlistMetadata = {
-  id: string;
-  timestamp: number;
+  id: string,
+  timestamp: number
 };

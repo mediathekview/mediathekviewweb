@@ -31,43 +31,40 @@ export const enum DateRounding {
 }
 
 export type Sort = {
-  field: Field;
-  order: Order;
-  aggregation?: Aggregation;
+  field: Field,
+  order: Order,
+  aggregation?: Aggregation
 };
 
 /** @minProperties 1 */
 export type QueryBody = Partial<TermQuery & IdsQuery & MatchAllQuery & BoolQuery & RangeQuery & TextQuery & RegexQuery>;
 
 type QueryOptions = {
-  sort?: Sort[];
-  /** @type integer */
-  skip?: number;
-  /** @type integer */
-  limit?: number;
-  cursor?: string;
+  sort?: Sort[],
+  skip?: number,
+  limit?: number,
+  cursor?: string
 };
 
 export type SearchQuery = QueryOptions & {
-  body: QueryBody;
+  body: QueryBody
 };
 
 export type TextSearchQuery = QueryOptions & {
-  text: string;
+  text: string
 };
 
 export type TermQueryValue = string | number | boolean;
 
 export type TermQuery = {
   term: {
-    field: Field;
-    value: TermQueryValue;
+    field: Field,
+    value: TermQueryValue
   }
 };
 
 export type IdsQuery = {
-  /** @minItems 1 */
-  ids: string[];
+  ids: string[]
 };
 
 export type MatchAllQuery = {
@@ -78,7 +75,6 @@ export type MatchAllQuery = {
  * @minProperties 1
  */
 export type BoolQuery = {
-  /** @minProperties 1 */
   bool: {
     must?: QueryBody[],
     should?: QueryBody[],
@@ -93,28 +89,26 @@ export type RangeQueryValue = {
 };
 
 export type RangeQuery = {
-  /** @minProperties 2 */
   range: {
-    field: Field;
-    lt?: RangeQueryValue;
-    lte?: RangeQueryValue;
-    gt?: RangeQueryValue;
-    gte?: RangeQueryValue;
+    field: Field,
+    lt?: RangeQueryValue,
+    lte?: RangeQueryValue,
+    gt?: RangeQueryValue,
+    gte?: RangeQueryValue
   }
 };
 
 export type TextQuery = {
   text: {
-    /** @minItems 1 */
-    fields: Field[];
-    text: string;
-    operator: Operator;
+    fields: Field[],
+    text: string,
+    operator: Operator
   }
 };
 
 export type RegexQuery = {
   regex: {
-    field: Field;
-    expression: string;
+    field: Field,
+    expression: string
   }
 };

@@ -3,6 +3,7 @@ import * as Needle from 'needle';
 import { Readable } from 'stream';
 import { HttpResponse } from './response';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class HttpClient {
   static async get(url: string): Promise<HttpResponse<Buffer>> {
     return new Promise<HttpResponse<Buffer>>((resolve, reject) => {

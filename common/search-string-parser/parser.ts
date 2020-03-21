@@ -1,4 +1,5 @@
 import { Enumerable } from '@tstdl/base/enumerable';
+import { compareByValue } from '@tstdl/base/utils';
 import { QueryBody } from '../search-engine/query';
 import { BoolQueryBuilder, MatchAllQueryBuilder } from '../search-engine/query/builder';
 import { ChannelSegmentConverter } from './converters/channel';
@@ -41,7 +42,7 @@ export class SearchStringParser {
       .filter((result) => result != undefined)
       .cast<SegmentConverterResultArray>()
       .mapMany((items) => items)
-      .group((result) => this.groupResultSelector(result))
+      .group((result) => groupResultSelector(result))
       .map(([, results]) => results)
       .toArray();
 
@@ -49,43 +50,7 @@ export class SearchStringParser {
       return matchAllQueryBuilder.build();
     }
 
-    const query = this.createQuery(groupedResults);
-    return query;
-  }
-
-  private groupResultSelector(result: SegmentConverterResult): string {
-    return result.fields.sort().join('+');
-  }
-
-  private createQuery(groupedResults: Iterable<SegmentConverterResult[]>): QueryBody {
-    const boolQueryBuilder = new BoolQueryBuilder();
-
-    for (const results of groupedResults) {
-      const innerBoolQueryBuilder = new BoolQueryBuilder();
-
-      for (const result of results) {
-        switch (result.type) {
-          case SegmentConverterResultType.Include:
-            if (result.joinSameFieldsResults) {
-              innerBoolQueryBuilder.must(result.query);
-            } else {
-              innerBoolQueryBuilder.should(result.query);
-            }
-            break;
-
-          case SegmentConverterResultType.Exclude:
-            innerBoolQueryBuilder.not(result.query);
-            break;
-
-          default:
-            throw new Error('unknown SegmentConverterResultType');
-        }
-      }
-
-      boolQueryBuilder.filter(innerBoolQueryBuilder);
-    }
-
-    const query = boolQueryBuilder.build();
+    const query = createQuery(groupedResults);
     return query;
   }
 
@@ -100,4 +65,41 @@ export class SearchStringParser {
 
     return undefined;
   }
+}
+
+function groupResultSelector(result: SegmentConverterResult): string {
+  return result.fields.sort(compareByValue).join('+');
+}
+
+function createQuery(groupedResults: Iterable<SegmentConverterResult[]>): QueryBody {
+  const boolQueryBuilder = new BoolQueryBuilder();
+
+  for (const results of groupedResults) {
+    const innerBoolQueryBuilder = new BoolQueryBuilder();
+
+    for (const result of results) {
+      switch (result.type) {
+        case SegmentConverterResultType.Include:
+          if (result.joinSameFieldsResults) {
+            innerBoolQueryBuilder.must(result.query);
+          }
+          else {
+            innerBoolQueryBuilder.should(result.query);
+          }
+          break;
+
+        case SegmentConverterResultType.Exclude:
+          innerBoolQueryBuilder.not(result.query);
+          break;
+
+        default:
+          throw new Error('unknown SegmentConverterResultType');
+      }
+    }
+
+    boolQueryBuilder.filter(innerBoolQueryBuilder);
+  }
+
+  const query = boolQueryBuilder.build();
+  return query;
 }

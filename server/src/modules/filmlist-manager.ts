@@ -4,7 +4,7 @@ import { Queue } from '@tstdl/base/queue';
 import { AnyIterable, currentTimestamp } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
-import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
+import { Module, ModuleBase, ModuleMetricType } from '@tstdl/server/module';
 import { config } from '../config';
 import { Filmlist } from '../entry-source/filmlist/filmlist';
 import { FilmlistProvider } from '../entry-source/filmlist/provider';
@@ -21,7 +21,7 @@ const KEY_VALUE_SCOPE = 'filmlist-manager';
 
 type FilmlistManagerKeyValues = {
   lastLatestCheck: number,
-  lastArchiveCheck: number,
+  lastArchiveCheck: number
 };
 
 export class FilmlistManagerModule extends ModuleBase implements Module {
@@ -34,11 +34,10 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
 
   private enqueuedFilmlistsCount: number;
 
-  // tslint:disable-next-line: typedef
   readonly metrics = {
     enqueuedFilmlistsCount: {
       type: ModuleMetricType.Counter,
-      getValue: () => this.enqueuedFilmlistsCount
+      getValue: () => this.enqueuedFilmlistsCount // eslint-disable-line no-invalid-this
     }
   };
 
@@ -57,14 +56,14 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
     const distributedLoop = this.distributedLoopProvider.get(keys.FilmlistManagerLoop);
 
     const loopController = distributedLoop.run(async () => this.check(), 60000, 10000);
-    await this.cancellationToken; // tslint:disable-line: await-promise
+    await this.cancellationToken;
 
     await loopController.stop();
   }
 
   private async check(): Promise<void> {
-    await this.compareTime('lastLatestCheck', LATEST_CHECK_INTERVAL, async () => await this.checkLatest());
-    await this.compareTime('lastArchiveCheck', ARCHIVE_CHECK_INTERVAL, async () => await this.checkArchive());
+    await this.compareTime('lastLatestCheck', LATEST_CHECK_INTERVAL, async () => this.checkLatest());
+    await this.compareTime('lastArchiveCheck', ARCHIVE_CHECK_INTERVAL, async () => this.checkArchive());
   }
 
   private async compareTime(key: keyof FilmlistManagerKeyValues, interval: number, func: () => Promise<void>): Promise<void> {
@@ -100,7 +99,7 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
       .while(() => !this.cancellationToken.isSet)
       .filter((filmlist) => filmlist.resource.timestamp >= minimumTimestamp)
       .filter(async (filmlist) => !(await this.filmlistImportRepository.hasResource(filmlist.resource.id)))
-      .forEach(async (filmlist) => await this.enqueueFilmlist(filmlist));
+      .forEach(async (filmlist) => this.enqueueFilmlist(filmlist));
   }
 
   private async enqueueFilmlist(filmlist: Filmlist): Promise<void> {

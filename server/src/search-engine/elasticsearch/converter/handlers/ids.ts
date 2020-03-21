@@ -9,6 +9,7 @@ type ElasticsearchIdsQuery = {
 };
 
 export class IdsQueryConvertHandler implements ConvertHandler {
+  // eslint-disable-next-line class-methods-use-this
   tryConvert(query: IdsQuery, _index: string): ConvertResult {
     const canHandle = ('ids' in query);
 

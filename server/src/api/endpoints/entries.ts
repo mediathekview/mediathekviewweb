@@ -17,7 +17,8 @@ export class SearchApiEndpoint {
     this.entryRepository = entryRepository;
   }
 
+  // eslint-disable-next-line class-methods-use-this, @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
   async added({ timestamp }: DeltaParameters): Promise<DeltaResult> {
-    throw new Error('not implemented' + timestamp.toString());
+    throw new Error('not implemented');
   }
 }

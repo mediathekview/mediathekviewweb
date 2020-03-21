@@ -9,4 +9,4 @@ if (environment.production) {
 }
 
 platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch((error) => console.error(error)); // tslint:disable-line: no-console
+  .catch((error) => console.error(error));

@@ -3,7 +3,7 @@ import { AsyncEnumerable } from '@tstdl/base/enumerable';
 import { Logger } from '@tstdl/base/logger';
 import { cancelableTimeout } from '@tstdl/base/utils';
 import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { Module, ModuleBase, ModuleMetric, ModuleMetricType } from '@tstdl/server/module';
+import { Module, ModuleBase, ModuleMetricType } from '@tstdl/server/module';
 import { EntrySource } from '../entry-source';
 import { EntryRepository } from '../repositories';
 
@@ -14,11 +14,10 @@ export class EntriesImporterModule extends ModuleBase implements Module {
 
   private importedEntriesCount: number;
 
-  // tslint:disable-next-line: typedef
   readonly metrics = {
     importedEntriesCount: {
       type: ModuleMetricType.Counter,
-      getValue: () => this.importedEntriesCount
+      getValue: () => this.importedEntriesCount // eslint-disable-line no-invalid-this
     }
   };
 
@@ -40,7 +39,7 @@ export class EntriesImporterModule extends ModuleBase implements Module {
     const disposer = new AsyncDisposer();
 
     await disposer.defer(async () => {
-      const promises = this.sources.map((source) => this.import(source)); // tslint:disable-line: promise-function-async
+      const promises = this.sources.map(async (source) => this.import(source));
       await Promise.all(promises);
     });
 

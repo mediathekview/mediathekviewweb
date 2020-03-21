@@ -1,10 +1,12 @@
+/* eslint-disable camelcase */
+
 import { StringMap } from '@tstdl/base/types';
 
 export const elasticsearchMapping = {
   properties: {
     id: {
       type: 'keyword',
-      index: true,
+      index: true
     },
     channel: {
       type: 'text',
@@ -57,12 +59,12 @@ export const elasticsearchMapping = {
     timestamp: {
       type: 'date',
       index: true,
-      format: 'epoch_millis',
+      format: 'epoch_millis'
     },
     date: {
       type: 'date',
       index: true,
-      format: 'epoch_millis',
+      format: 'epoch_millis'
     },
     time: {
       type: 'integer',
@@ -70,21 +72,21 @@ export const elasticsearchMapping = {
     },
     duration: {
       type: 'integer',
-      index: true,
+      index: true
     },
     website: {
       type: 'keyword',
-      index: false,
+      index: false
     },
     firstSeen: {
       type: 'date',
       index: true,
-      format: 'epoch_millis',
+      format: 'epoch_millis'
     },
     lastSeen: {
       type: 'date',
       index: true,
-      format: 'epoch_millis',
+      format: 'epoch_millis'
     },
     media: {
       type: 'object',
@@ -171,7 +173,7 @@ export const elasticsearchMapping = {
 };
 
 export const textTypeFields = Object.getOwnPropertyNames(elasticsearchMapping.properties).filter((property) => {
-  const type = (elasticsearchMapping.properties as StringMap)[property].type;
+  const type = (elasticsearchMapping.properties as StringMap<{ type: string }>)[property].type;
   const isTextType = type == 'text';
 
   return isTextType;

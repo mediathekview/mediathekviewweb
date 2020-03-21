@@ -87,7 +87,7 @@ export class MongoEntryRepository implements EntryRepository {
   }
 }
 
-// tslint:disable-next-line: typedef
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function toUpdateOneOperation(entry: Entry) {
   const filter: Mongo.FilterQuery<MongoDocument<Entry>> = {
     _id: entry.id

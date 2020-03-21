@@ -3,11 +3,11 @@ import { FilmlistResource } from '../filmlist-resource';
 import { FilmlistProvider } from '../provider';
 
 export class MultiFilmlistProvider implements FilmlistProvider {
-  name: string;
-
   private readonly providers: FilmlistProvider[];
 
   readonly type: string = 'multi';
+
+  readonly name: string;
 
   constructor() {
     this.providers = [];
@@ -17,12 +17,14 @@ export class MultiFilmlistProvider implements FilmlistProvider {
     this.providers.push(provider);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async *getLatest(): AsyncIterable<Filmlist> {
     for (const provider of this.providers) {
       yield* provider.getLatest();
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async *getArchive(): AsyncIterable<Filmlist> {
     for (const provider of this.providers) {
       yield* provider.getArchive();

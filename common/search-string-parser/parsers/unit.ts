@@ -1,4 +1,5 @@
-const PARSE_REGEX = /(\d+(?:[.,]\d+)?)([a-zA-Z]*)/g;
+// eslint-disable-next-line prefer-named-capture-group
+const PARSE_REGEX = /(\d+(?:[.,]\d+)?)([a-zA-Z]*)/ug;
 
 export type Unit = { pattern: string | RegExp, factor: number };
 
@@ -14,50 +15,51 @@ export class UnitParser {
   parse(text: string): number {
     let total = 0;
 
-    const splits = this.split(text);
+    const splits = split(text);
 
-    for (const split of splits) {
-      total += this.parseSplit(split);
+    for (const splitResult of splits) {
+      total += parseSplit(this.units, splitResult);
     }
 
     return total;
   }
+}
 
-  private split(text: string): SplitResult[] {
-    const regex = new RegExp(PARSE_REGEX);
+function split(text: string): SplitResult[] {
+  const regex = new RegExp(PARSE_REGEX); // eslint-disable-line require-unicode-regexp
 
-    const results: SplitResult[] = [];
+  const results: SplitResult[] = [];
 
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(text)) != null) {
-      const [, valueString, unit] = match;
-      const normalizedValueString = valueString.replace(',', '.');
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) != undefined) {
+    const [, valueString, unit] = match;
+    const normalizedValueString = valueString.replace(',', '.');
 
-      const value = Number.parseFloat(normalizedValueString);
-      const result: SplitResult = { value: value, unitString: unit };
+    const value = Number.parseFloat(normalizedValueString);
+    const result: SplitResult = { value, unitString: unit };
 
-      results.push(result);
-    }
-
-    return results;
+    results.push(result);
   }
 
-  private parseSplit(splitResult: SplitResult): number {
-    for (const unit of this.units) {
-      let matches: boolean;
+  return results;
+}
 
-      if (typeof unit.pattern == 'string') {
-        matches = splitResult.unitString == unit.pattern;
-      } else {
-        matches = unit.pattern.test(splitResult.unitString);
-      }
+function parseSplit(units: Unit[], splitResult: SplitResult): number {
+  for (const unit of units) {
+    let matches: boolean;
 
-      if (matches) {
-        const result = splitResult.value * unit.factor;
-        return result;
-      }
+    if (typeof unit.pattern == 'string') {
+      matches = splitResult.unitString == unit.pattern;
+    }
+    else {
+      matches = unit.pattern.test(splitResult.unitString);
     }
 
-    throw new Error(`no unit for ${splitResult.unitString} available`);
+    if (matches) {
+      const result = splitResult.value * unit.factor;
+      return result;
+    }
   }
+
+  throw new Error(`no unit for ${splitResult.unitString} available`);
 }

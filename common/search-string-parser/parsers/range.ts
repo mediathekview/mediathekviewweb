@@ -1,4 +1,5 @@
-const PARSE_REGEX = /^(?:(>=|<=|<|>|=|)(?:([^-"<>=]+)|"(.+?)")|(?:([^-"<>=]+)|"(.+?)")-(?:([^-"<>=]+)|"(.+?)"))$/;
+// eslint-disable-next-line prefer-named-capture-group
+const PARSE_REGEX = /^(?:(>=|<=|<|>|=|)(?:([^-"<>=]+)|"(.+?)")|(?:([^-"<>=]+)|"(.+?)")-(?:([^-"<>=]+)|"(.+?)"))$/u;
 
 export enum RangeType {
   Equals,
@@ -27,7 +28,7 @@ export class RangeParser {
   }
 
   parse(text: string): Range[] | undefined {
-    const match = text.match(PARSE_REGEX);
+    const match = PARSE_REGEX.exec(text);
 
     if (match == undefined) {
       return undefined;
@@ -42,11 +43,11 @@ export class RangeParser {
     let result: Range[] = [];
 
     if (rangeTypeString != undefined && value != undefined) {
-      const range = this.parseSingle(rangeTypeString, value);
+      const range = parseSingle(rangeTypeString, value);
       result = [range];
     }
     else if (left != undefined && right != undefined) {
-      result = this.parseMulti(left, right);
+      result = parseMulti(left, right, this.inclusive);
     }
     else {
       throw new Error('should not happen');
@@ -54,29 +55,29 @@ export class RangeParser {
 
     return result;
   }
+}
 
-  private parseSingle(typeString: string, text: string): Range {
-    const type = RANGE_TYPE_MAP.get(typeString);
+function parseSingle(typeString: string, text: string): Range {
+  const type = RANGE_TYPE_MAP.get(typeString);
 
-    if (type == undefined) {
-      throw new Error('should not happen');
-    }
-
-    const range: Range = { type, text };
-    return range;
+  if (type == undefined) {
+    throw new Error('should not happen');
   }
 
-  private parseMulti(left: string, right: string): Range[] {
-    const leftRange: Range = {
-      type: this.inclusive ? RangeType.GreaterEquals : RangeType.Greater,
-      text: left
-    };
+  const range: Range = { type, text };
+  return range;
+}
 
-    const rightRange: Range = {
-      type: this.inclusive ? RangeType.LessEquals : RangeType.Less,
-      text: right
-    };
+function parseMulti(left: string, right: string, inclusive: boolean): Range[] {
+  const leftRange: Range = {
+    type: inclusive ? RangeType.GreaterEquals : RangeType.Greater,
+    text: left
+  };
 
-    return [leftRange, rightRange];
-  }
+  const rightRange: Range = {
+    type: inclusive ? RangeType.LessEquals : RangeType.Less,
+    text: right
+  };
+
+  return [leftRange, rightRange];
 }

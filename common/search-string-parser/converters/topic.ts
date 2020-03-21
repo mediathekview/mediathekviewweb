@@ -5,13 +5,14 @@ import { SegmentConverter } from '../segment-converter';
 import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
 
 const FIELD = Field.Topic;
-const SELECTOR_REGEX = /^(?:to(?:p(?:i(?:c)?)?)?|th(?:e(?:m(?:a)?)?)?|#)$/;
+const SELECTOR_REGEX = /^(?:to(?:p(?:i(?:c)?)?)?|th(?:e(?:m(?:a)?)?)?|#)$/u;
 
 export class TopicSegmentConverter extends SelectorSegmentConverterBase implements SegmentConverter {
   constructor() {
     super(FIELD, SELECTOR_REGEX);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   protected textToQuery(text: string): QueryBody {
     const builder = new TextQueryBuilder();
 

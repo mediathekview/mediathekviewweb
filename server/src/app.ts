@@ -1,33 +1,34 @@
-import './command-line-parser'; // tslint:disable-line: no-import-side-effect
+import './command-line-parser';
 import { Logger } from '@tstdl/base/logger';
-import { AggregationMode, formatDuration, PeriodicSampler, Timer, MetricAggregation } from '@tstdl/base/utils';
-import { Module, runModules, stopModules, ModuleMetricReporter } from '@tstdl/server/module';
+import { AggregationMode, formatDuration, MetricAggregation, PeriodicSampler, Timer } from '@tstdl/base/utils';
+import { Module, ModuleMetricReporter, runModules, stopModules } from '@tstdl/server/module';
 import { initializeSignals, requestShutdown, setProcessShutdownLogger, shutdownToken } from '@tstdl/server/process-shutdown';
 import { config } from './config';
 import { InstanceProvider } from './instance-provider';
 
-const logger = InstanceProvider.coreLogger();
+const coreLogger = InstanceProvider.coreLogger();
 
-setProcessShutdownLogger(logger);
+setProcessShutdownLogger(coreLogger);
 
 initializeSignals();
 
-// tslint:disable-next-line: no-floating-promises
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   try {
     await init();
   }
   catch (error) {
-    logger.error(error as Error);
+    coreLogger.error(error as Error);
     requestShutdown();
   }
 })();
 
+// eslint-disable-next-line max-statements, max-lines-per-function
 async function getModules(metricReporter: ModuleMetricReporter): Promise<Module[]> {
   const modules: Module[] = [];
 
   if (config.modules.api) {
-    const apiModule = await InstanceProvider.apiModule();
+    const apiModule = InstanceProvider.apiModule();
     modules.push(apiModule);
 
     metricReporter.register('API', {
@@ -81,25 +82,25 @@ async function getModules(metricReporter: ModuleMetricReporter): Promise<Module[
 }
 
 async function init(): Promise<void> {
-  initEventLoopWatcher(logger);
+  initEventLoopWatcher(coreLogger);
 
   const metricReporter = new ModuleMetricReporter(1000, 10, 5);
   const modules = await getModules(metricReporter);
 
-  metricReporter.run(shutdownToken).catch((error) => logger.error(error as Error));
+  metricReporter.run(shutdownToken).catch((error) => coreLogger.error(error as Error));
 
   if (modules.length > 0) {
     if (!shutdownToken.isSet) {
-      logger.info('starting services');
+      coreLogger.info('starting services');
 
       await Promise.race([
-        runModules(modules, logger),
+        runModules(modules, coreLogger),
         shutdownToken
       ]);
     }
 
-    logger.info('stopping services');
-    await stopModules(modules, logger);
+    coreLogger.info('stopping services');
+    await stopModules(modules, coreLogger);
   }
   else {
     requestShutdown();
@@ -107,7 +108,7 @@ async function init(): Promise<void> {
 
   await InstanceProvider.disposeInstances();
 
-  logger.info('bye');
+  coreLogger.info('bye');
 }
 
 async function measureEventLoopDelay(): Promise<number> {
@@ -131,6 +132,6 @@ function initEventLoopWatcher(logger: Logger): void {
 
   sampler.start();
 
-  // tslint:disable-next-line: no-floating-promises
-  shutdownToken.then(async () => await sampler.stop());
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  shutdownToken.then(async () => sampler.stop());
 }

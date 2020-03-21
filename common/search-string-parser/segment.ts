@@ -6,8 +6,6 @@ export class Segment {
   readonly sourceLength: number;
   readonly isQuote: boolean;
 
-  constructor(inverted: boolean, text: string, sourceIndex: number, sourceLength: number, isQuote: boolean);
-  constructor(inverted: boolean, text: string, sourceIndex: number, sourceLength: number, isQuote: boolean, selector: string);
   constructor(inverted: boolean, text: string, sourceIndex: number, sourceLength: number, isQuote: boolean, selector?: string) {
     this.inverted = inverted;
     this.text = text;

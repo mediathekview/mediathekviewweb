@@ -26,6 +26,7 @@ const DATE_ROUNDING_MAP = {
 };
 
 export class RangeQueryConvertHandler implements ConvertHandler {
+  // eslint-disable-next-line class-methods-use-this
   tryConvert(query: RangeQuery, _index: string): ConvertResult {
     const canHandle = ('range' in query);
 
@@ -36,27 +37,27 @@ export class RangeQueryConvertHandler implements ConvertHandler {
     const queryObject: ElasticsearchRangeQuery = {
       range: {
         [query.range.field]: {
-          lt: this.convertValue(query.range.lt),
-          gt: this.convertValue(query.range.gt),
-          lte: this.convertValue(query.range.lte),
-          gte: this.convertValue(query.range.gte)
+          lt: convertValue(query.range.lt),
+          gt: convertValue(query.range.gt),
+          lte: convertValue(query.range.lte),
+          gte: convertValue(query.range.gte)
         }
       }
     };
 
     return { success: true, result: queryObject };
   }
+}
 
-  private convertValue(value: RangeQueryValue | undefined): ElasticsearchRangeQueryValue | undefined {
-    if (value == undefined) {
-      return undefined;
-    }
-
-    if (value.dateRounding != undefined) {
-      const roundSymbol = DATE_ROUNDING_MAP[value.dateRounding];
-      return `${value.value}/${roundSymbol}`;
-    }
-
-    return value.value;
+function convertValue(value: RangeQueryValue | undefined): ElasticsearchRangeQueryValue | undefined {
+  if (value == undefined) {
+    return undefined;
   }
+
+  if (value.dateRounding != undefined) {
+    const roundSymbol = DATE_ROUNDING_MAP[value.dateRounding];
+    return `${value.value}/${roundSymbol}`;
+  }
+
+  return value.value;
 }
