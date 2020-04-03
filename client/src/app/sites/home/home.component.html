@@ -1,5 +1,0 @@
-<mvw-search-input (searchStringChange)="searchStringChanged($event)"></mvw-search-input>
-
-<div *ngIf="(error$ | async) as error">{{ error.message }}</div>
-
-<mvw-entry-list [dataSource]="entriesDataSource | async"></mvw-entry-list>

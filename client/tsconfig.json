@@ -1,18 +1,18 @@
 {
   "extends": "@tstdl/base",
+  "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
-    "importHelpers": true,
     "outDir": "./dist/out-tsc",
-    "module": "es2015",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "module": "esnext",
     "moduleResolution": "node",
-    "target": "es6",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "lib": [
-      "esnext",
-      "dom"
-    ]
+    "importHelpers": true,
+    "target": "es2015",
+  },
+  "angularCompilerOptions": {
+    "fullTemplateTypeCheck": true,
+    "strictInjectionParameters": true
   }
 }

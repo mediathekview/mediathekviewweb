@@ -1,3 +1,5 @@
+@import '~bulma/bulma';
+
 html,
 body {
   height: 100%;
@@ -6,56 +8,4 @@ body {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-}
-
-@for $i from 1 through 10 {
-  @if ($i > 0) {
-    .is-width-#{$i} {
-      width: #{$i/2}rem;
-    }
-
-    .is-height-#{$i} {
-      height: #{$i/2}rem;
-    }
-  }
-}
-
-.has-pointer {
-  cursor: pointer;
-}
-
-.is-transparent {
-  opacity: 0;
-}
-
-.is-hover-scale:hover {
-  transform: scale(1.15);
-}
-
-*:hover>.is-parent-hover-scale {
-  transform: scale(1.15);
-}
-
-.is-animated {
-
-  @at-root fa-icon#{&} svg,
-  & {
-    transition: all 0.3s;
-  }
-
-  @at-root fa-icon#{&}.fast svg,
-  &.fast {
-    transition: all 0.15s;
-  }
-
-  @at-root fa-icon#{&}.slow svg,
-  &.slow {
-    transition: all 0.5s;
-  }
-}
-
-cdk-virtual-scroll-viewport.unset-position>.cdk-virtual-scroll-content-wrapper {
-  position: unset;
-  top: unset;
-  left: unset;
 }
