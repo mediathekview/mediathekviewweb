@@ -1,0 +1,22 @@
+mat-form-field {
+  width: 100%;
+  margin-bottom: -1.05rem;
+}
+
+mat-expansion-panel {
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
+}
+
+.bar-container{
+  display: flex;
+  flex-flow: row;
+}
+
+mat-icon {
+  transition: transform 0.2s;
+}
+
+.rotate180 {
+  transform: rotateZ(180deg);
+}

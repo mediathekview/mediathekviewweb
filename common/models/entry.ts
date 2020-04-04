@@ -1,5 +1,6 @@
 import { Entity } from './entity';
 import { EntryMetadata } from './entry-metadata';
+import { Omit } from '@tstdl/base/types';
 
 export type Entry = Entity & {
   channel: string,
@@ -26,6 +27,8 @@ export type AggregatedEntry = Entry & {
   time: number,
   metadata: EntryMetadata
 };
+
+export type PublicEntry = Omit<AggregatedEntry, 'source' | 'indexJob' | 'indexJobTimeout' | 'indexRequiredSince'>;
 
 export enum Field {
   Id = 'id',

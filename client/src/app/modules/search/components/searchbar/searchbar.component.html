@@ -1,0 +1,17 @@
+<mat-form-field>
+  <mat-label>Search</mat-label>
+
+  <input matInput type="text" [(ngModel)]="value">
+
+  <button mat-button *ngIf="value.length > 0" matSuffix mat-icon-button aria-label="Clear" (click)="value=''">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <button mat-button matSuffix mat-icon-button (click)="settingsExpanded = !settingsExpanded">
+    <mat-icon [class.rotate180]="settingsExpanded">expand_more</mat-icon>
+  </button>
+</mat-form-field>
+
+<mat-expansion-panel [expanded]="settingsExpanded">
+  <p>This is the primary content of the panel.</p>
+</mat-expansion-panel>

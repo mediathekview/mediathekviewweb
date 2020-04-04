@@ -1,0 +1,13 @@
+$breakpoint: 768px;
+
+@mixin small {
+  @media (max-width: #{$breakpoint - 1}) {
+    @content;
+  }
+}
+
+@mixin large {
+  @media (min-width: #{$breakpoint}) {
+    @content;
+  }
+}

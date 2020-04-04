@@ -1,0 +1,23 @@
+:host {
+  display: grid;
+  min-height: 100vh;
+  row-gap: 1rem;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "navbar"
+    "content"
+    "footer";
+}
+
+app-navbar {
+  grid-area: navbar;
+}
+
+.content {
+  grid-area: content;
+  width: 100%;
+}
+
+.footer {
+  grid-area: footer;
+}
