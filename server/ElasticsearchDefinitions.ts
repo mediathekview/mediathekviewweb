@@ -37,11 +37,11 @@ export const mapping = {
     },
     duration: {
       type: 'long',
-      index: false
+      index: true
     },
     size: {
       type: 'long',
-      index: false
+      index: true
     },
     url_video: {
       type: 'keyword',

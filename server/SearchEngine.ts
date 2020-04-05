@@ -149,6 +149,18 @@ export default class SearchEngine {
       }
     }
 
+    if (query.duration_max && query.duration_min) {
+      let durationFilter = {
+        range: {
+          duration: {
+            lt: query.duration_max,
+            gt: query.duration_min
+          }
+        }
+      };
+      elasticQuery.body.query.bool.filter.push(durationFilter);
+    }
+
     if (query.future === false) {
       let rangeFilter = {
         range: {

@@ -132,6 +132,8 @@ function parseQuery(query) {
   const titles = [];
   const descriptions = [];
   let generics = [];
+  let duration_min = -1;
+  let duration_max = 9999999;
 
   const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
     return (split.length > 0);
