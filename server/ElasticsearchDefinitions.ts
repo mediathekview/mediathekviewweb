@@ -41,7 +41,7 @@ export const mapping = {
     },
     size: {
       type: 'long',
-      index: true
+      index: false
     },
     url_video: {
       type: 'keyword',
