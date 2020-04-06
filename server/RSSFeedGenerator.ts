@@ -102,7 +102,10 @@ export default class RSSFeedGenerator {
             custom_elements: [
               {
                 duration: item.duration
-              }
+              },
+              {
+                websiteUrl: item.website_url
+              },
             ]
           });
         }
