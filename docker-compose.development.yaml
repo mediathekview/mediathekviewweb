@@ -1,68 +1,20 @@
 version: "3.7"
 
 services:
-  application:
-    container_name: mediathekviewweb
-    image: mediathekview/mediathekviewweb:development
-    restart: always
-    depends_on:
-      - elasticsearch
-      - redis
-    environment:
-      DATA_DIRECTORY: /data
-      WEBSERVER_PORT: 8000
-      INDEX: true
-      WORKER_COUNT:
-      WORKER_ARGS:
-      REDIS_HOST: redis
-      REDIS_PORT:
-      REDIS_PASSWORD:
-      REDIS_DB:
-      ELASTICSEARCH_HOST: elasticsearch
-      ELASTICSEARCH_PORT: 9200
-      MATOMO_ENABLED:
-      MATOMO_URL:
-      MATOMO_SITE_URL:
-      MATOMO_AUTH_TOKEN:
-      MATOMO_SITE_ID:
-      CONTACT_NAME:
-      CONTACT_STREET:
-      CONTACT_POSTCODE:
-      CONTACT_CITY:
-      CONTACT_MAIL:
-    volumes:
-      - "mediathekviewweb:/data"
-    ports:
-      - "8001:8000"
-    networks:
-      - elasticsearch
-      - redis
-
   elasticsearch:
-    container_name: elasticsearch
-    image: "docker.elastic.co/elasticsearch/elasticsearch:6.7.2"
-    restart: always
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.8
     environment:
-      - ES_JAVA_OPTS=-Xms2G -Xmx2G
-    volumes:
-      - "elasticsearch:/usr/share/elasticsearch/data"
-    networks:
-      - elasticsearch
+      discovery.type: single-node
+    container_name: elasticsearch
+    tmpfs:
+      - /usr/share/elasticsearch/data/
+    ports:
+      - "9200:9200"
 
   redis:
     container_name: redis
-    image: "redis:5.0-alpine"
-    restart: always
-    volumes:
-      - "redis:/data"
-    networks:
-      - redis
-
-volumes:
-  mediathekviewweb:
-  redis:
-  elasticsearch:
-
-networks:
-  elasticsearch:
-  redis:
+    image: redis:5-alpine
+    tmpfs:
+      - /data
+    ports:
+      - "6379:6379"
