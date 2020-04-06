@@ -124,8 +124,8 @@ export default class RSSFeedGenerator {
     const titles = [];
     const descriptions = [];
     let generics = [];
-    let duration_min = -1;
-    let duration_max = 9999999;
+    let duration_min = undefined;
+    let duration_max = undefined;
 
     const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
       return (split.length > 0);
@@ -167,14 +167,14 @@ export default class RSSFeedGenerator {
           return (split.length > 0);
         });
         if (d.length > 0 && !isNaN(d[0])) {
-          duration_min=d[0]*1;
+          duration_min = d[0] * 60;
         }
       } else if (split[0] == '<') {
         const d = split.slice(1, split.length).split(',').filter((split) => {
           return (split.length > 0);
         });
         if (d.length > 0 && !isNaN(d[0])) {
-          duration_max=d[0]*1;
+          duration_max = d[0] * 60;
         }
       } else {
         generics = generics.concat(split.split(/\s+/));
