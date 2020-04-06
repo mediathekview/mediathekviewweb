@@ -149,6 +149,24 @@ export default class SearchEngine {
       }
     }
 
+    if (query.duration_min != undefined || query.duration_max != undefined) {
+      const durationFilter = {
+        range: {
+          duration: {} as { gt?: number, lt?: number }
+        }
+      };
+
+      if (query.duration_min != undefined) {
+        durationFilter.range.duration.gt = query.duration_min;
+      }
+
+      if (query.duration_max != undefined) {
+        durationFilter.range.duration.lt = query.duration_max;
+      }
+
+      elasticQuery.body.query.bool.filter.push(durationFilter);
+    }
+
     if (query.future === false) {
       let rangeFilter = {
         range: {

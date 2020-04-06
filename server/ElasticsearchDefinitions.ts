@@ -37,7 +37,7 @@ export const mapping = {
     },
     duration: {
       type: 'long',
-      index: false
+      index: true
     },
     size: {
       type: 'long',

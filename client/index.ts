@@ -132,6 +132,8 @@ function parseQuery(query) {
   const titles = [];
   const descriptions = [];
   let generics = [];
+  let duration_min = undefined;
+  let duration_max = undefined;
 
   const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
     return (split.length > 0);
@@ -168,6 +170,20 @@ function parseQuery(query) {
       if (d.length > 0) {
         descriptions.push(d);
       }
+    } else if (split[0] == '>') {
+      const d = split.slice(1, split.length).split(',').filter((split) => {
+        return (split.length > 0);
+      });
+      if (d.length > 0 && !isNaN(d[0])) {
+        duration_min = d[0] * 60;
+      }
+    } else if (split[0] == '<') {
+      const d = split.slice(1, split.length).split(',').filter((split) => {
+        return (split.length > 0);
+      });
+      if (d.length > 0 && !isNaN(d[0])) {
+        duration_max = d[0] * 60;
+      }
     } else {
       generics = generics.concat(split.split(/\s+/));
     }
@@ -178,6 +194,8 @@ function parseQuery(query) {
     topics: topics,
     titles: titles,
     descriptions: descriptions,
+    duration_min: duration_min,
+    duration_max: duration_max,
     generics: generics
   }
 }
@@ -395,6 +413,8 @@ const query = _.throttle(() => {
     sortBy: 'timestamp',
     sortOrder: 'desc',
     future: future,
+    duration_min: parsedQuery.duration_min,
+    duration_max: parsedQuery.duration_max,
     offset: currentPage * itemsPerPage,
     size: itemsPerPage
   };
@@ -991,17 +1011,17 @@ $(() => {
       clearButton.animate({
         opacity: 0
       }, {
-          easing: 'swing',
-          duration: 20
-        });
+        easing: 'swing',
+        duration: 20
+      });
       queryInputClearButtonState = 'hidden';
     } else if (currentQueryString.length > 0 && queryInputClearButtonState == 'hidden') {
       clearButton.animate({
         opacity: 1
       }, {
-          easing: 'swing',
-          duration: 20
-        });
+        easing: 'swing',
+        duration: 20
+      });
       queryInputClearButtonState = 'shown';
     }
   });
