@@ -1,9 +1,9 @@
 <mat-form-field>
   <mat-label>Search</mat-label>
 
-  <input matInput type="text" [(ngModel)]="value">
+  <input matInput type="text" [formControl]="searchStringInput">
 
-  <button mat-button *ngIf="value.length > 0" matSuffix mat-icon-button aria-label="Clear" (click)="value=''">
+  <button mat-button *ngIf="searchStringInput.value?.length > 0" matSuffix mat-icon-button aria-label="Clear" (click)="searchStringInput.setValue('')">
     <mat-icon>close</mat-icon>
   </button>
 
@@ -12,6 +12,9 @@
   </button>
 </mat-form-field>
 
-<mat-expansion-panel [expanded]="settingsExpanded">
-  <p>This is the primary content of the panel.</p>
+<mat-expansion-panel class="without-header" [expanded]="settingsExpanded">
+  <mat-checkbox>Zukünftige</mat-checkbox>
+
+  <!--<app-searchbar-sort></app-searchbar-sort>-->
+
 </mat-expansion-panel>

@@ -28,19 +28,19 @@
     "@fortawesome/free-solid-svg-icons": "^5.13.0",
     "@tstdl/base": "^0.57.10",
     "bootstrap": "^4.4.1",
-    "rxjs": "~6.5.4",
-    "tslib": "^1.10.0",
+    "rxjs": "~6.5.5",
+    "tslib": "^1.11.1",
     "video.js": "^7.7.5",
-    "zone.js": "~0.10.2"
+    "zone.js": "~0.10.3"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.901.0",
     "@angular/cli": "~9.1.0",
     "@angular/compiler-cli": "~9.1.0",
     "@angular/language-service": "~9.1.0",
-    "@types/node": "^12.11.1",
+    "@types/node": "^12.12.34",
     "@types/video.js": "^7.3.7",
-    "codelyzer": "^5.1.2",
+    "codelyzer": "^5.2.2",
     "source-map-explorer": "^2.4.2",
     "typescript": "~3.8.3",
     "webpack-bundle-analyzer": "^3.6.1"

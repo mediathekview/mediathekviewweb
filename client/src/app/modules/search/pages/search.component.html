@@ -1,3 +1,7 @@
-<app-searchbar></app-searchbar>
+<app-searchbar (searchChange)="onSearchChange($event)"></app-searchbar>
 
-<app-entry-list></app-entry-list>
+<app-entry-list [entries]="searchResult.items"
+                [resultsCount]="searchResult.total"
+                [pageSize]="pageSize" (pageSizeChange)="onPageSizeChange($event)"
+                [pageIndex]="pageIndex" (pageIndexChange)="onPageIndexChange($event)">
+</app-entry-list>

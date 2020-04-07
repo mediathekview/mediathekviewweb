@@ -1,4 +1,3 @@
-// tslint:disable: no-redundant-jsdoc
 import { Field } from '../../models';
 
 export const enum Aggregation {
@@ -36,7 +35,6 @@ export type Sort = {
   aggregation?: Aggregation
 };
 
-/** @minProperties 1 */
 export type QueryBody = Partial<TermQuery & IdsQuery & MatchAllQuery & BoolQuery & RangeQuery & TextQuery & RegexQuery>;
 
 type QueryOptions = {
@@ -71,9 +69,6 @@ export type MatchAllQuery = {
   matchAll: {}
 };
 
-/**
- * @minProperties 1
- */
 export type BoolQuery = {
   bool: {
     must?: QueryBody[],

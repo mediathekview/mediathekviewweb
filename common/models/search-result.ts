@@ -1,4 +1,4 @@
 import { SearchResult } from '../search-engine';
-import { AggregatedEntry } from './entry';
+import { PublicEntry } from './entry';
 
-export type EntrySearchResult = SearchResult<AggregatedEntry>;
+export type EntrySearchResult = SearchResult<PublicEntry>;
