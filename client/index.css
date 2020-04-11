@@ -3,23 +3,11 @@ html * {
 }
 
 .spin-left {
-  -webkit-animation: spinleft 2s infinite linear;
   animation: spinleft 2s infinite linear;
 }
 
 .spin-right {
-  -webkit-animation: spinright 2s infinite linear;
   animation: spinright 2s infinite linear;
-}
-
-@-webkit-keyframes spinleft {
-  from {
-    -webkit-transform: rotate(360deg);
-  }
-
-  to {
-    -webkit-transform: rotate(0deg);
-  }
 }
 
 @keyframes spinleft {
@@ -32,16 +20,6 @@ html * {
   }
 }
 
-@-webkit-keyframes spinright {
-  from {
-    -webkit-transform: rotate(0deg);
-  }
-
-  to {
-    -webkit-transform: rotate(360deg);
-  }
-}
-
 @keyframes spinright {
   from {
     transform: scale(1) rotate(0deg);
@@ -50,6 +28,25 @@ html * {
   to {
     transform: scale(1) rotate(360deg);
   }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+  }
+
+  50% {
+    transform: scale(0.8);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* The element to apply the animation to */
+.pulse {
+  animation: pulse 0.5s;
 }
 
 .showafter1s {

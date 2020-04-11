@@ -25,6 +25,7 @@ let contactModal;
 let indexingModal;
 let uid;
 let playingInterval;
+let playStartTimestamp;
 let lastQueryString = null;
 let ignoreNextHashChange = false;
 let impressum = null;
@@ -567,6 +568,7 @@ function createVideoRow(text, url, videoTitle, filename, filesize?) {
   });
 
   const watchIcon = $('<i>').addClass('material-icons floatLeft').text('ondemand_video');
+  watchButton.click(() => { watchIcon.addClass('pulse'); setTimeout(() => watchIcon.removeClass('pulse'), 500); });
   watchButton.append(watchIcon);
 
   const downloadButton = $('<a>', {
@@ -575,16 +577,27 @@ function createVideoRow(text, url, videoTitle, filename, filesize?) {
     download: filename
   });
 
-  downloadButton.click(() => track('download-video'));
-
   const downloadIcon = $('<i>').addClass('material-icons floatRight').text('save');
+
+  downloadButton.click(() => { downloadIcon.addClass('pulse'); setTimeout(() => downloadIcon.removeClass('pulse'), 500); track('download-video'); });
   downloadButton.append(downloadIcon);
+
+  const clipboardButton = $('<a>', {
+    target: '_blank',
+    href: url,
+    download: filename
+  });
+
+  const clipboardIcon = $('<i>').addClass('material-icons floatRight').text('assignment');
+
+  clipboardButton.click(() => { copyToClipboard(url); clipboardIcon.addClass('pulse'); setTimeout(() => clipboardIcon.removeClass('pulse'), 500); return false; });
+  clipboardButton.append(clipboardIcon);
 
   const filesizeCell = $('<td>').text((isNaN(filesize) || !filesize) ? '?' : formatBytes(filesize, 2)).addClass('filesizeCell');
 
   tableRow.append($('<td>').text(text));
   tableRow.append(filesizeCell);
-  tableRow.append($('<td>').append($('<div>').append(watchButton).append(downloadButton).addClass('watchDownloadField')));
+  tableRow.append($('<td>').append($('<div>').append(watchButton).append(clipboardButton).append(downloadButton).addClass('watchDownloadField')));
 
   return tableRow;
 }
@@ -869,9 +882,16 @@ function playVideo(title, url) {
   }, 1 * 60 * 1000); /*every minute*/
 
   track('play');
+  playStartTimestamp = Date.now();
 }
 
 function closeVideo() {
+  const playDuration = Date.now() - playStartTimestamp;
+
+  if (playDuration >= 1000 * 30) {
+    location.reload();
+  }
+
   video.dispose();
   $('#videocontent').empty();
   $('#videooverlay').hide(200);
@@ -887,6 +907,15 @@ function openContactsModal() {
 
 function returnEmptyString() {
   return '';
+}
+
+function copyToClipboard(text) {
+  var dummy = document.createElement('textarea');
+  document.body.appendChild(dummy);
+  dummy.value = text;
+  dummy.select();
+  document.execCommand('copy');
+  document.body.removeChild(dummy);
 }
 
 $(() => {
