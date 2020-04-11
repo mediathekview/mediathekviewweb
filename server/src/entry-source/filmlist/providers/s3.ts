@@ -2,6 +2,7 @@ import { StringMap } from '@tstdl/base/types';
 import { createHash, NonObjectBufferMode } from '@tstdl/server/utils';
 import { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import * as Minio from 'minio';
+import { pipeline } from 'stream';
 import * as xz from 'xz';
 import { createGunzip } from 'zlib';
 import { Filmlist } from '../filmlist';
@@ -141,7 +142,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
 
   private getStreamProvider(bucket: string, object: string): () => Promise<TypedReadable<NonObjectBufferMode>> {
     const streamProvider = async (): Promise<TypedReadable<NonObjectBufferMode>> => {
-      let stream = await this.s3.getObject(bucket, object);
+      let stream = await this.s3.getObject(bucket, object) as NodeJS.ReadableStream;
 
       const decompressStream
         = object.endsWith('.gz') ? createGunzip()
@@ -149,7 +150,10 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
             : undefined;
 
       if (decompressStream != undefined) {
-        stream = stream.on('error', (error) => decompressStream.destroy(error as Error)).pipe(decompressStream);
+        stream = pipeline(
+          stream,
+          decompressStream
+        );
       }
 
       return stream as TypedReadable<NonObjectBufferMode>;
