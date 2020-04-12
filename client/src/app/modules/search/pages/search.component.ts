@@ -16,7 +16,7 @@ export class SearchComponent implements OnInit {
   pageSize: number;
 
   constructor() {
-    this.pageSize = 10;
+    this.pageSize = 5;
     this.pageIndex = 0;
   }
 

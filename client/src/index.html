@@ -17,33 +17,35 @@
   <style>
     .loading-screen {
       display: flex;
+      z-index: 1000;
       justify-content: center;
       align-items: center;
       flex-direction: column;
-      position: absolute;
+      position: fixed;
       top: 0;
       right: 0;
-      bottom: 100vh;
+      bottom: 0;
       left: 0;
-      opacity: 0;
       overflow: hidden;
       background-color: #2c3e50;
       color: white;
-      transition: opacity 0.25s ease-in, bottom 0.25s ease-in;
-      font-family: sans-serif;
-      font-size: calc(0.75rem + 5vw);
-      line-height: 1.5;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: calc(1rem + 4vw);
+      line-height: calc(1.5rem + 6vw);
     }
 
-    app-root:empty+.loading-screen {
-      opacity: 1;
-      bottom: 0;
+    .loading-screen.hide {
+      animation: hide-loading-screen 0.25s ease-in both;
+    }
+
+    .loading-screen.title {
+      text-shadow: calc(0.5rem + 1vw) calc(0.5rem + 1vw) calc(0.5rem + 1vw) black;
     }
 
     .spinner {
       display: flex;
       justify-content: space-between;
-      width: 6rem;
+      width: calc(5rem + 3vw);
     }
 
     .spinner>div {
@@ -52,7 +54,7 @@
       background-color: white;
       border-radius: 100%;
       display: inline-block;
-      animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+      animation: bounce 1.4s alternate infinite ease-in-out;
     }
 
     .spinner .bounce1 {
@@ -63,16 +65,35 @@
       animation-delay: -0.16s;
     }
 
-    @keyframes sk-bouncedelay {
-
-      0%,
-      80%,
-      100% {
-        transform: scale(0);
+    @keyframes hide-loading-screen {
+      0% {
+        opacity: 1;
+        transform: scale(1);
       }
 
-      40% {
+      99%,
+      100% {
+        opacity: 0;
+        transform: scale(5);
+      }
+
+      100% {
+        transform: translateX(-1000vw);
+      }
+    }
+
+    @keyframes bounce {
+
+      0%,
+      70%,
+      100% {
+        transform: scale(0);
+        box-shadow: 0px 0px 0px black;
+      }
+
+      35% {
         transform: scale(1.0);
+        box-shadow: 2rem 2rem 20px black;
       }
     }
   </style>
@@ -83,7 +104,7 @@
   <app-root></app-root>
 
   <div class="loading-screen">
-    <span>MediahtekViewWeb</span>
+    <span class="title">MediahtekViewWeb</span>
     <div class="spinner">
       <div class="bounce1"></div>
       <div class="bounce2"></div>

@@ -5,9 +5,9 @@ import { Observable, ReplaySubject } from 'rxjs';
 import { PublicEntry } from 'src/app/shared/models';
 
 const panelCollapsedHeightLarge = 48;
-const panelCollapsedHeightSmall = 96;
+const panelCollapsedHeightSmall = 72;
 const panelExpandedHeightLarge = 64;
-const panelExpandedHeightSmall = 128;
+const panelExpandedHeightSmall = 96;
 
 @Component({
   selector: 'app-entry-list',
@@ -48,7 +48,7 @@ export class EntryListComponent implements OnInit {
     this.pageIndexChange = new EventEmitter();
 
     this.resultsCount = 100;
-    this.pageSize = 15;
+    this.pageSize = 5;
     this.pageIndex = 0;
   }
 
