@@ -8,7 +8,8 @@ const routes: Routes = [
   },
   {
     path: '',
-    loadChildren: () => import('./modules/search/search.module').then((child) => child.SearchModule)
+    pathMatch: 'prefix',
+    loadChildren: './modules/search/search.module#SearchModule'
   }
 ];
 

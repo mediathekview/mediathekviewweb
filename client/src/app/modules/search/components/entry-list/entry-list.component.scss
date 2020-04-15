@@ -26,8 +26,6 @@ mat-accordion {
       "topic topic topic topic ."
       "title title title title ."
       "channel . datetime duration .";
-    /*  "channel divider topic . datetime ."
-      "title title title title title ."; */
   }
 
   span {
@@ -40,7 +38,7 @@ mat-accordion {
     align-self: center;
     font-size: 1em;
 
-    &.entry-channel {
+    &.channel {
       grid-area: channel;
       align-self: flex-end;
       font-size: 0.85em;
@@ -50,11 +48,7 @@ mat-accordion {
       }
     }
 
-    &.entry-channel-topic-divider {
-      grid-area: divider;
-    }
-
-    &.entry-topic {
+    &.topic {
       grid-area: topic;
       white-space: nowrap;
       overflow: hidden;
@@ -67,13 +61,13 @@ mat-accordion {
       }
     }
 
-    &.entry-title {
+    &.title {
       line-height: 1;
       grid-area: title;
       align-self: center;
     }
 
-    &.entry-datetime {
+    &.datetime {
       grid-area: datetime;
 
       @include small {
@@ -83,7 +77,7 @@ mat-accordion {
       }
     }
 
-    &.entry-duration {
+    &.duration {
       grid-area: duration;
 
       @include small {

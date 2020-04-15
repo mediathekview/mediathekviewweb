@@ -13,6 +13,13 @@
 </mat-form-field>
 
 <mat-expansion-panel class="without-header" [expanded]="settingsExpanded">
-  <mat-checkbox>Zukünftige</mat-checkbox>
-  <app-searchbar-sort></app-searchbar-sort>
+  <div class="settings-container">
+    <div class="quick">
+      <mat-checkbox>Zukünftige</mat-checkbox>
+    </div>
+
+    <app-searchbar-filter class="filter"></app-searchbar-filter>
+
+    <app-searchbar-sort class="sort"></app-searchbar-sort>
+  </div>
 </mat-expansion-panel>

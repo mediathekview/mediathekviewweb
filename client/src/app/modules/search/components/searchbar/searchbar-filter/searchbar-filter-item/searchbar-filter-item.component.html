@@ -1,0 +1,11 @@
+<div class="filter-item-container flex-auto-wrap gap-x-1 gap-y--5">
+  <mat-form-field class="field-select" floatLabel="never">
+    <mat-select>
+      <mat-option [value]="'value'">Kanal</mat-option>
+      <mat-option [value]="'value'">Thema</mat-option>
+      <mat-option [value]="'value'">Titel</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <app-searchbar-filter-item-string-input (valueChange)="valueChange($event)"></app-searchbar-filter-item-string-input>
+</div>

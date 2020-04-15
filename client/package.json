@@ -13,12 +13,12 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "~9.1.1",
-    "@angular/cdk": "^9.2.0",
+    "@angular/cdk": "^9.2.1",
     "@angular/common": "~9.1.1",
     "@angular/compiler": "~9.1.1",
     "@angular/core": "~9.1.1",
     "@angular/forms": "~9.1.1",
-    "@angular/material": "^9.2.0",
+    "@angular/material": "^9.2.1",
     "@angular/platform-browser": "~9.1.1",
     "@angular/platform-browser-dynamic": "~9.1.1",
     "@angular/router": "~9.1.1",
@@ -28,6 +28,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.13.0",
     "@tstdl/base": "^0.57.11",
     "bootstrap": "^4.4.1",
+    "material-design-icons": "^3.0.1",
     "rxjs": "~6.5.5",
     "tslib": "^1.11.1",
     "video.js": "^7.7.5",
@@ -43,6 +44,6 @@
     "codelyzer": "^5.2.2",
     "source-map-explorer": "^2.4.2",
     "typescript": "~3.8.3",
-    "webpack-bundle-analyzer": "^3.6.1"
+    "webpack-bundle-analyzer": "^3.7.0"
   }
 }

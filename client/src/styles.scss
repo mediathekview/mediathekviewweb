@@ -1,5 +1,7 @@
 @import '~bootstrap/dist/css/bootstrap-grid.css';
 @import './app/styles/overrides/loader';
+@import './app/styles/material-icons';
+@import './app/styles/roboto-fonts';
 
 html,
 body {
@@ -9,4 +11,42 @@ body {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.flex-auto-wrap {
+  display: flex;
+  flex-wrap: wrap;
+
+  @for $i from -10 through 10 {
+    $distance: #{$i / 8};
+    $negativeDistance: #{-($i / 8)};
+
+    &.gap-#{$i} {
+      margin: #{$negativeDistance}rem;
+
+      >* {
+        margin: #{$distance}rem;
+      }
+    }
+
+    &.gap-x-#{$i} {
+      margin-left: #{$negativeDistance}rem;
+      margin-right: #{$negativeDistance}rem;
+
+      >* {
+        margin-left: #{$distance}rem;
+        margin-right: #{$distance}rem;
+      }
+    }
+
+    &.gap-y-#{$i} {
+      margin-top: #{$negativeDistance}rem;
+      margin-bottom: #{$negativeDistance}rem;
+
+      >* {
+        margin-top: #{$distance}rem;
+        margin-bottom: #{$distance}rem;
+      }
+    }
+  }
 }

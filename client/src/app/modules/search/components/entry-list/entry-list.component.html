@@ -2,12 +2,11 @@
   <mat-expansion-panel *ngFor="let entry of entries">
     <mat-expansion-panel-header [collapsedHeight]="(panelCollapsedHeight$ | async) + 'px'" [expandedHeight]="(panelExpandedHeight$ | async) + 'px'">
       <div class="entry-grid">
-        <span class="entry-channel">{{ entry.channel }}</span>
-        <span class="entry-topic">{{ entry.topic }}</span>
-        <span class="entry-title">{{ entry.title }}</span>
-        <span class="entry-datetime">{{ (entry.timestamp * 1000) | date:'short' }}</span>
-        <span
-              class="entry-duration">{{ ((entry.duration * 1000) >= (60 * 60 * 1000)) ? ((entry.duration * 1000) | date:'hh\'h\'mm\'m\'') : ((entry.duration * 1000) | date:'mm\'m\'ss\'s\'') }}</span>
+        <span class="channel">{{ entry.channel }}</span>
+        <span class="topic">{{ entry.topic }}</span>
+        <span class="title">{{ entry.title }}</span>
+        <span class="datetime">{{ (entry.timestamp * 1000) | date:'short' }}</span>
+        <span class="duration">{{ ((entry.duration * 1000) >= (60 * 60 * 1000)) ? ((entry.duration * 1000) | date:'hh\'h\'mm\'m\'') : ((entry.duration * 1000) | date:'mm\'m\'ss\'s\'') }}</span>
       </div>
     </mat-expansion-panel-header>
 

@@ -1,23 +1,24 @@
 <mat-form-field class="example-chip-list">
   <mat-chip-list #chipList aria-label="Fruit selection" [selectable]="false">
     <mat-chip
-              *ngFor="let field of selectedFields"
+              *ngFor="let item of selected; trackBy: trackBySelectedSortItem"
               [removable]="true"
-              (removed)="remove(field)">
-      {{ field }}
-      <mat-icon class="sort-direction">arrow_downward</mat-icon>
+              (removed)="remove(item)">
+      {{ item.item.display }}
+      <mat-icon class="sort-direction mat-chip-trailing-icon" (click)="changeDirection(item)">{{ item.direction == 1 ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
       <mat-icon matChipRemove>cancel</mat-icon>
     </mat-chip>
     <input
            #fieldInput
+           placeholder="Sort"
            [formControl]="fieldControl"
            [matAutocomplete]="auto"
            [matChipInputFor]="chipList"
            (matChipInputTokenEnd)="add($event)">
   </mat-chip-list>
   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="add($event)">
-    <mat-option *ngFor="let field of filteredFields" [value]="field">
-      {{ field }}
+    <mat-option *ngFor="let item of filtered" [value]="item">
+      {{ item.display }}
     </mat-option>
   </mat-autocomplete>
 </mat-form-field>

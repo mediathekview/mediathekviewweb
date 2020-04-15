@@ -15,3 +15,22 @@ mat-icon {
 .rotate180 {
   transform: rotateZ(180deg);
 }
+
+.settings-container {
+  display: grid;
+
+  column-gap: 1rem;
+  row-gap: 1rem;
+  grid-template-columns: 2fr 1fr;
+  grid-template-areas:
+    "filter quick"
+    "filter sort";
+
+  .filter {
+    grid-area: filter;
+  }
+
+  .sort {
+    grid-area: sort;
+  }
+}

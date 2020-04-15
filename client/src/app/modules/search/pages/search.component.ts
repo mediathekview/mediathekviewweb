@@ -46,7 +46,5 @@ export class SearchComponent implements OnInit {
       items: entries,
       milliseconds: 7.58
     };
-
-    console.log(this.searchResult);
   }
 }
