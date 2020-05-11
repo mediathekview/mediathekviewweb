@@ -1,12 +1,17 @@
-import { StringMap } from '@tstdl/base/types';
 import { TextQuery } from '../../../../common/search-engine/query';
 import { ConvertHandler, ConvertResult } from '../convert-handler';
+import { StringMap } from '@tstdl/base/types';
 
 type ElasticsearchMatchOperator = 'and' | 'or';
 
-type ElasticsearchMatchType = { query: string, operator: ElasticsearchMatchOperator };
+type ElasticsearchMatchType = {
+  query: string,
+  operator: ElasticsearchMatchOperator
+};
 
-type ElasticsearchMatchQuery = { match: StringMap<ElasticsearchMatchType> };
+type ElasticsearchMatchQuery = {
+  match: StringMap<ElasticsearchMatchType>
+};
 
 type ElasticsearchMultiMatchType = 'best_fields' | 'most_fields' | 'cross_fields' | 'phrase' | 'phrase_prefix';
 

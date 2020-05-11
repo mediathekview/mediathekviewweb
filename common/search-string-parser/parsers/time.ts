@@ -1,14 +1,10 @@
-import { Unit, UnitParser } from './unit';
+import { Unit, unitParser } from './unit';
 
-const UNITS: Unit[] = [
+const timeUnits: Unit[] = [
   { pattern: '', factor: 1 },
   { pattern: /^(?:(?:s(?:e(?:k(?:u(?:n(?:d(?:e(?:n)?)?)?)?)?)?)?)|(?:s(?:e(?:c(?:o(?:n(?:d(?:s)?)?)?)?)?)?))$/u, factor: 1 },
   { pattern: /^(?:m(?:i(?:n(?:u(?:t(?:e(?:n|s)?)?)?)?)?)?)$/u, factor: 60 },
   { pattern: /^(?:std|(?:s(?:t(?:u(?:n(?:d(?:e(?:n)?)?)?)?)?)?)|(?:h(?:o(?:u(?:r(?:s)?)?)?)?))$/u, factor: 60 * 60 }
 ];
 
-export class TimeParser extends UnitParser {
-  constructor() {
-    super(UNITS);
-  }
-}
+export const parseTime = unitParser(timeUnits);

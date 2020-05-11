@@ -1,5 +1,4 @@
 import { Enumerable } from '@tstdl/base/enumerable';
-import { compareByValue } from '@tstdl/base/utils';
 import { QueryBody } from '../search-engine/query';
 import { BoolQueryBuilder, MatchAllQueryBuilder } from '../search-engine/query/builder';
 import { ChannelSegmentConverter } from './converters/channel';
@@ -9,10 +8,10 @@ import { DurationSegmentConverter } from './converters/duration';
 import { TitleSegmentConverter } from './converters/title';
 import { TopicSegmentConverter } from './converters/topic';
 import { Segment } from './segment';
-import { SegmentConverter, SegmentConverterResult, SegmentConverterResultArray, SegmentConverterResultType } from './segment-converter';
-import { Segmentizer } from './segmentizer';
+import { SegmentConverter, SegmentConverterResult } from './segment-converter';
+import { segmentize } from './segmentizer';
 
-const CONVERTERS: SegmentConverter[] = [
+const DEFAULT_CONVERTERS: SegmentConverter[] = [
   new ChannelSegmentConverter(),
   new DescriptionSegmentConverter(),
   new DurationSegmentConverter(),
@@ -25,25 +24,20 @@ const matchAllQueryBuilder = new MatchAllQueryBuilder();
 
 export class SearchStringParser {
   private readonly converters: SegmentConverter[];
-  private readonly segmentizer: Segmentizer;
 
-  constructor() {
-    this.converters = CONVERTERS;
-    this.segmentizer = new Segmentizer();
+  constructor(converters: SegmentConverter[] = DEFAULT_CONVERTERS) {
+    this.converters = converters;
   }
 
   parse(text: string): QueryBody {
     const trimmedText = text.trim();
-    const segments = this.segmentizer.segmentize(trimmedText);
+    const segments = segmentize(trimmedText);
 
     const groupedResults = Enumerable.from(segments)
-      .filter((segment) => segment.text.length > 0)
+      .filter((segment) => segment.value.length > 0)
       .map((result) => this.convertSegment(result))
       .filter((result) => result != undefined)
-      .cast<SegmentConverterResultArray>()
-      .mapMany((items) => items)
-      .group((result) => groupResultSelector(result))
-      .map(([, results]) => results)
+      .cast<SegmentConverterResult>()
       .toArray();
 
     if (groupedResults.length == 0) {
@@ -54,7 +48,7 @@ export class SearchStringParser {
     return query;
   }
 
-  private convertSegment(segment: Segment): SegmentConverterResultArray | undefined {
+  private convertSegment(segment: Segment): SegmentConverterResult | undefined {
     for (const converter of this.converters) {
       const result = converter.tryConvert(segment);
 
@@ -67,37 +61,15 @@ export class SearchStringParser {
   }
 }
 
-function groupResultSelector(result: SegmentConverterResult): string {
-  return result.fields.sort(compareByValue).join('+');
-}
-
-function createQuery(groupedResults: Iterable<SegmentConverterResult[]>): QueryBody {
+function createQuery(results: SegmentConverterResult[]): QueryBody {
   const boolQueryBuilder = new BoolQueryBuilder();
 
-  for (const results of groupedResults) {
-    const innerBoolQueryBuilder = new BoolQueryBuilder();
-
-    for (const result of results) {
-      switch (result.type) {
-        case SegmentConverterResultType.Include:
-          if (result.joinSameFieldsResults) {
-            innerBoolQueryBuilder.must(result.query);
-          }
-          else {
-            innerBoolQueryBuilder.should(result.query);
-          }
-          break;
-
-        case SegmentConverterResultType.Exclude:
-          innerBoolQueryBuilder.not(result.query);
-          break;
-
-        default:
-          throw new Error('unknown SegmentConverterResultType');
-      }
-    }
-
-    boolQueryBuilder.filter(innerBoolQueryBuilder);
+  for (const result of results) {
+    boolQueryBuilder
+      .must(...(result.must ?? []))
+      .should(...(result.should ?? []))
+      .not(...(result.not ?? []))
+      .filter(...(result.filter ?? []));
   }
 
   const query = boolQueryBuilder.build();

@@ -5,20 +5,14 @@ export type Unit = { pattern: string | RegExp, factor: number };
 
 type SplitResult = { value: number, unitString: string };
 
-export class UnitParser {
-  private readonly units: Unit[];
-
-  constructor(units: Unit[]) {
-    this.units = units;
-  }
-
-  parse(text: string): number {
+export function unitParser(units: Unit[]): (text: string) => number {
+  return function parse(text: string): number {
     let total = 0;
 
     const splits = split(text);
 
     for (const splitResult of splits) {
-      total += parseSplit(this.units, splitResult);
+      total += parseSplit(units, splitResult);
     }
 
     return total;

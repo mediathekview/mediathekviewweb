@@ -20,41 +20,34 @@ const RANGE_TYPE_MAP = new Map<string, RangeType>([
   ['>=', RangeType.GreaterEquals]
 ]);
 
-export class RangeParser {
-  private readonly inclusive: boolean;
 
-  constructor(inclusive: boolean) {
-    this.inclusive = inclusive;
+export function parseRange(text: string, inclusive: boolean): Range[] | undefined {
+  const match = PARSE_REGEX.exec(text);
+
+  if (match == undefined) {
+    return undefined;
   }
 
-  parse(text: string): Range[] | undefined {
-    const match = PARSE_REGEX.exec(text);
+  const [, rangeTypeString, unquotedValue, quotedValue, unquotedLeft, quotedLeft, unquotedRight, quotedRight] = match;
 
-    if (match == undefined) {
-      return undefined;
-    }
+  const value = (unquotedValue != undefined) ? unquotedValue : quotedValue;
+  const left = (unquotedLeft != undefined) ? unquotedLeft : quotedLeft;
+  const right = (unquotedRight != undefined) ? unquotedRight : quotedRight;
 
-    const [, rangeTypeString, unquotedValue, quotedValue, unquotedLeft, quotedLeft, unquotedRight, quotedRight] = match;
+  let result: Range[] = [];
 
-    const value = (unquotedValue != undefined) ? unquotedValue : quotedValue;
-    const left = (unquotedLeft != undefined) ? unquotedLeft : quotedLeft;
-    const right = (unquotedRight != undefined) ? unquotedRight : quotedRight;
-
-    let result: Range[] = [];
-
-    if (rangeTypeString != undefined && value != undefined) {
-      const range = parseSingle(rangeTypeString, value);
-      result = [range];
-    }
-    else if (left != undefined && right != undefined) {
-      result = parseMulti(left, right, this.inclusive);
-    }
-    else {
-      throw new Error('should not happen');
-    }
-
-    return result;
+  if (rangeTypeString != undefined && value != undefined) {
+    const range = parseSingle(rangeTypeString, value);
+    result = [range];
   }
+  else if (left != undefined && right != undefined) {
+    result = parseMulti(left, right, inclusive);
+  }
+  else {
+    throw new Error('should not happen');
+  }
+
+  return result;
 }
 
 function parseSingle(typeString: string, text: string): Range {

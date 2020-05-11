@@ -1,20 +1,14 @@
 import { QueryBody } from '../search-engine/query';
+import { QueryBuilder } from '../search-engine/query/builder';
 import { Segment } from './segment';
 
-export enum SegmentConverterResultType {
-  Include,
-  Exclude
-}
-
 export type SegmentConverterResult = {
-  fields: string[],
-  type: SegmentConverterResultType,
-  joinSameFieldsResults: boolean,
-  query: QueryBody
+  must?: (QueryBody | QueryBuilder)[],
+  should?: (QueryBody | QueryBuilder)[],
+  not?: (QueryBody | QueryBuilder)[],
+  filter?: (QueryBody | QueryBuilder)[]
 };
 
-export type SegmentConverterResultArray = SegmentConverterResult[];
-
 export interface SegmentConverter {
-  tryConvert(segment: Segment): SegmentConverterResultArray | undefined;
+  tryConvert(segment: Segment): SegmentConverterResult | undefined;
 }

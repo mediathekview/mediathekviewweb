@@ -8,6 +8,8 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 })
 export class SearchbarFilterComponent implements OnInit {
 
+
+
   constructor() { }
 
   ngOnInit(): void {

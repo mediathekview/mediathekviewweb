@@ -1,9 +1,10 @@
 import { Field } from '../../models';
 import { QueryBody } from '../../search-engine/query';
 import { RangeQueryBuilder, TermQueryBuilder } from '../../search-engine/query/builder';
-import { Range, RangeParser, RangeType } from '../parsers/range';
-import { TimeParser } from '../parsers/time';
-import { SegmentConverter } from '../segment-converter';
+import { parseRange, Range, RangeType } from '../parsers/range';
+import { parseTime } from '../parsers/time';
+import { Segment } from '../segment';
+import { SegmentConverter, SegmentConverterResult } from '../segment-converter';
 import { SelectorSegmentConverterBase } from './selector-segment-converter-base';
 
 const FIELD = Field.Duration;
@@ -12,39 +13,38 @@ const SELECTOR_REGEX = /^(?:du(?:r(?:a(?:t(?:i(?:o(?:n)?)?)?)?)?)?|dau(?:e(?:r)?
 const RANGE_INCLUSIVE = true;
 
 export class DurationSegmentConverter extends SelectorSegmentConverterBase implements SegmentConverter {
-  private readonly rangeParser: RangeParser;
-  private readonly timeParser: TimeParser;
-
   constructor() {
     super(FIELD, SELECTOR_REGEX);
-
-    this.rangeParser = new RangeParser(RANGE_INCLUSIVE);
-    this.timeParser = new TimeParser();
   }
 
-  protected textToQuery(text: string): QueryBody | undefined {
-    const ranges = this.rangeParser.parse(text);
+  protected convert(segment: Segment): SegmentConverterResult | undefined {
+    const ranges = parseRange(segment.value, RANGE_INCLUSIVE);
+
+    let query: QueryBody | undefined = undefined;
 
     if (ranges == undefined) {
       return undefined;
     }
     else if (ranges.length == 1) {
-      return this.convertSingle(ranges[0]);
+      query = this.convertSingle(ranges[0]);
     }
     else if (ranges.length == 2) {
-      return this.convertFromTo(ranges[0], ranges[1]);
+      query = this.convertFromTo(ranges[0], ranges[1]);
+    }
+    else {
+      throw new Error(`did not expected a range count of ${ranges.length}`);
     }
 
-    throw new Error(`did not expected a range count of ${ranges.length}`);
+    return { filter: [query] };
   }
 
-  private convertSingle(range: Range): QueryBody | undefined {
+  private convertSingle(range: Range): QueryBody {
     let queryBuilder: TermQueryBuilder | RangeQueryBuilder;
 
     switch (range.type) {
       case RangeType.Equals:
         const termQueryBuilder = new TermQueryBuilder();
-        const time = this.timeParser.parse(range.text);
+        const time = parseTime(range.text);
         termQueryBuilder.value(time);
         queryBuilder = termQueryBuilder;
 
@@ -65,7 +65,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
     return query;
   }
 
-  private convertFromTo(from: Range, to: Range): QueryBody | undefined {
+  private convertFromTo(from: Range, to: Range): QueryBody {
     const rangeQueryBuilder = new RangeQueryBuilder();
     rangeQueryBuilder.field(FIELD);
 
@@ -77,24 +77,27 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
   }
 
   private setRange(rangeQueryBuilder: RangeQueryBuilder, range: Range): void {
-    const time = this.timeParser.parse(range.text);
+    const time = parseTime(range.text);
 
     switch (range.type) {
       case RangeType.Greater:
         rangeQueryBuilder.gt(time);
         break;
+
       case RangeType.GreaterEquals:
         rangeQueryBuilder.gte(time);
         break;
+
       case RangeType.Less:
         rangeQueryBuilder.lt(time);
         break;
+
       case RangeType.LessEquals:
         rangeQueryBuilder.lte(time);
         break;
 
       default:
-        throw new Error('should not happen');
+        throw new Error('unknown RangeType');
     }
   }
 }

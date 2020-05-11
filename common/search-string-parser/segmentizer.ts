@@ -1,21 +1,19 @@
-import { Segment } from './segment';
+import { Segment, SegmentType } from './segment';
 
-const SEGMENTATION_REGEX = /\S*".*?"|\S*"[^"]+|[^\s"]+/ug;
-const SEGMENT_PARSE_REGEX = /^(\^|-)?(?:([a-zA-Z]+):|([!#*+]))?(?:["](.+?)["]?|([^ "]+)"?|"{1,2})?$/u; // eslint-disable-line prefer-named-capture-group
+const SEGMENTATION_REGEX = /(?:"(.*?)")|(?:"[^"]+)|(?:\b[^\s"]+)/ug;
+const SEGMENT_PARSE_REGEX = /^(\^|-)?(?:(?:(\w+):)|([!#*+]))?(?:(?:\/(.*?)\/)|(?:"(.*?)")|(.*?))$/u
 
-export class Segmentizer {
-  segmentize(search: string): Segment[] { // eslint-disable-line class-methods-use-this
-    const regex = new RegExp(SEGMENTATION_REGEX); // eslint-disable-line require-unicode-regexp
-    const segments: Segment[] = [];
+export function segmentize(search: string): Segment[] {
+  const regex = new RegExp(SEGMENTATION_REGEX);
+  const segments: Segment[] = [];
 
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(search)) != undefined) {
-      const segment = parseSegment(match[0], match.index);
-      segments.push(segment);
-    }
-
-    return segments;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(search)) != undefined) {
+    const segment = parseSegment(match[0], match.index);
+    segments.push(segment);
   }
+
+  return segments;
 }
 
 function parseSegment(segmentString: string, index: number): Segment {
@@ -25,21 +23,22 @@ function parseSegment(segmentString: string, index: number): Segment {
     throw new Error(`${segmentString} - no match, should not happen`);
   }
 
-  const [, invertedString, selectorA, selectorB, quotedText, nonQuotedText] = match;
+  const [, excludeString, selectorA, selectorB, patternValue, quotedValue, nonQuotedValue] = match;
 
-  const selector = (selectorA != undefined) ? selectorA : selectorB;
+  const selector = selectorA ?? selectorB ?? '_NONE_';
+  const exclude = (excludeString != undefined);
+  const value = patternValue ?? (quotedValue ?? nonQuotedValue).trim();
+  const type =
+    (patternValue != undefined) ? SegmentType.Pattern
+      : (quotedValue != undefined) ? SegmentType.Quoted
+        : SegmentType.Normal;
 
-  const inverted = (invertedString != undefined);
-  let text = '';
-  let isQuote = false;
-
-  if (quotedText != undefined) {
-    text = quotedText;
-    isQuote = true;
-  }
-  else if (nonQuotedText != undefined) {
-    text = nonQuotedText;
-  }
-
-  return new Segment(inverted, text, index, segmentString.length, isQuote, selector);
+  return {
+    exclude,
+    value,
+    sourceIndex: index,
+    sourceLength: segmentString.length,
+    type,
+    selector
+  };
 }
