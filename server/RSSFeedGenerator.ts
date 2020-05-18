@@ -57,8 +57,8 @@ export default class RSSFeedGenerator {
       sortBy: 'timestamp',
       sortOrder: 'desc',
       future: urlQuery.future || false,
-      duration_min: urlQuery.duration_min,
-      duration_max: urlQuery.duration_max,
+      duration_min: parsedQuery.duration_min,
+      duration_max: parsedQuery.duration_max,
       offset: 0,
       size: 50
     };
