@@ -2,12 +2,10 @@
 /// <reference types="datatables.net" />
 /// <reference types="jquery" />
 /// <reference types="lodash" />
-/// <reference types="moment" />
 /// <reference types="socket.io-client" />
 /// <reference types="video.js" />
 
 declare const Cookies;
-declare const moment;
 declare function videojs(id: any): any;
 
 interface XMLHttpRequest {
@@ -92,9 +90,6 @@ if (!String.prototype.startsWith) {
   };
 }
 
-const locale = (window.navigator as any).userLanguage || window.navigator.language;
-moment.locale(locale);
-
 function pad(value: number, size: number) {
   let stringValue = value.toString();
   while (stringValue.length < (size || 2)) {
@@ -115,6 +110,25 @@ function randomString(len) {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
 
   return text;
+}
+
+function formatDate(epochSeconds: number) {
+  return new Date(epochSeconds * 1000).toLocaleDateString('de', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+}
+
+function formatTime(epochSeconds: number) {
+  return new Date(epochSeconds * 1000).toLocaleTimeString('de', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function formatDuration(seconds: number) {
+  return pad(Math.floor(seconds / 60), 2) + ':' + pad(seconds % 60, 2);
 }
 
 function formatBytes(bytes, decimals) {
@@ -452,14 +466,11 @@ function handleQueryResult(result, err) {
       data.dateString = data.timeString = '?';
     }
     else {
-      data.dateString = moment.unix(data.timestamp).format('DD.MM.YYYY');
-      data.timeString = moment.unix(data.timestamp).format('HH:mm');
+      data.dateString = formatDate(data.timestamp);
+      data.timeString = formatTime(data.timestamp);
     }
 
-    const durationMoment = moment.duration(data.duration, 'seconds');
-    const minutes = pad(durationMoment.hours() * 60 + durationMoment.minutes(), 2);
-    const seconds = pad(durationMoment.seconds(), 2);
-    data.durationString = isNaN(data.duration) ? '?' : (minutes + ':' + seconds);
+    data.durationString = isNaN(data.duration) ? '?' : formatDuration(data.duration);
 
     mediathekTable.row.add(data);
   }
@@ -471,10 +482,10 @@ function handleQueryResult(result, err) {
 
   createPagination(shownPagesCount);
 
-  const filmlisteMoment = moment.unix(result.queryInfo.filmlisteTimestamp);
+  const filmlisteTime = formatTime(result.queryInfo.filmlisteTimestamp);
 
   $('#queryInfoLabel').html('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
-    ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.</br>Filmliste zuletzt um ' + filmlisteMoment.format('HH:mm') + ' Uhr aktualisiert.');
+    ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.</br>Filmliste zuletzt um ' + filmlisteTime + ' Uhr aktualisiert.');
 }
 
 function createPaginationButton(html, active, enabled, callback) {
@@ -716,7 +727,7 @@ function createVideoActionButton(entry) {
   const tableHead = $('<thead>');
   const tableBody = $('<tbody>');
 
-  const filenamebase = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + moment.unix(entry.timestamp).format('DD.MM.YYYY HH:mm');
+  const filenamebase = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + formatDate(entry.timestamp) + ' ' + formatTime(entry.timestamp);
 
   let lowRow, midRow, highRow, subtitleRow;
 
