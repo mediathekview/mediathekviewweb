@@ -4,6 +4,7 @@
 <head data-cast-api-enabled="true">
   <title>MediathekViewWeb</title>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="/static/favicon.png" sizes="96x96">
 
@@ -155,8 +156,8 @@
         <div id="genericHtmlContent"></div>
       </div>
 
-      <div id="connectingModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
+      <div id="connectingModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog"role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title">Keine Verbindung</h4>
@@ -170,8 +171,8 @@
         </div>
       </div>
 
-      <div id="indexingModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
+      <div id="indexingModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title">Server aktualisiert Datenbank...</h4>
@@ -200,8 +201,8 @@
         </div>
       </div>
 
-      <div id="contactModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
+      <div id="contactModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog"role="document">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal">&times;</button>
