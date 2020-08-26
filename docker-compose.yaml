@@ -51,7 +51,7 @@ services:
 
   redis:
     container_name: redis
-    image: "redis:5.0-alpine"
+    image: "redis:6-alpine"
     restart: always
     volumes:
       - "redis:/data"

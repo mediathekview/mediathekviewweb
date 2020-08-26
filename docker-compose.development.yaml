@@ -13,7 +13,7 @@ services:
 
   redis:
     container_name: redis
-    image: redis:5-alpine
+    image: redis:6-alpine
     tmpfs:
       - /data
     ports:

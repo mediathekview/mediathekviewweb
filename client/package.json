@@ -14,20 +14,20 @@
   "license": "GPLv3",
   "dependencies": {
     "bootstrap": "^3.4.1",
-    "datatables.net": "^1.10.20",
-    "jquery": "^3.4.1",
+    "datatables.net": "^1.10.21",
+    "jquery": "^3.5.1",
     "js-cookie": "^2.2.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "socket.io-client": "^2.3.0",
-    "video.js": "^7.6.6"
+    "video.js": "^7.8.4"
   },
   "devDependencies": {
     "@types/bootstrap": "^3.4.0",
-    "@types/datatables.net": "^1.10.18",
-    "@types/jquery": "^3.3.31",
-    "@types/lodash": "^4.14.149",
-    "@types/socket.io-client": "^1.4.32",
-    "@types/video.js": "^7.3.3",
-    "typescript": "~3.1.6"
+    "@types/datatables.net": "^1.10.19",
+    "@types/jquery": "^3.5.1",
+    "@types/lodash": "^4.14.160",
+    "@types/socket.io-client": "^1.4.33",
+    "@types/video.js": "^7.3.10",
+    "typescript": "~4.0.2"
   }
 }
