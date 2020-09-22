@@ -32,8 +32,13 @@
   <script defer src="/static/lodash.min.js"></script>
   <script defer src="/static/video.min.js"></script>
   <script defer src="/static/index.js"></script>
-  <script data-ad-client="ca-pub-2430783446079517" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-  <script>(adsbygoogle = window.adsbygoogle || []).pauseAdRequests = localStorage.getItem('allowCookies') != 'true' ? 1 : 0;</script>
+  <script data-ad-client="ca-pub-2430783446079517" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <script>
+    if (localStorage.getItem('allowCookies') != 'true') {
+      console.log('pausing ads');
+      (adsbygoogle = window.adsbygoogle || []).pauseAdRequests = 0;
+    }
+  </script>
 </head>
 
 <body>
