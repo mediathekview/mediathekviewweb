@@ -32,11 +32,14 @@
   <script defer src="/static/lodash.min.js"></script>
   <script defer src="/static/video.min.js"></script>
   <script defer src="/static/index.js"></script>
-  <script data-ad-client="ca-pub-2430783446079517" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
   <script>
-    if (localStorage.getItem('allowCookies') != 'true') {
-      console.log('pausing ads');
-      (adsbygoogle = window.adsbygoogle || []).pauseAdRequests = 0;
+    if (localStorage.getItem('allowCookies') == 'true') {
+      var adsense = document.createElement("script");
+      adsense.type = "text/javascript";
+      adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
+      adsense.setAttribute('async', 'async');
+      adsense.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+      document.head.appendChild(adsense);
     }
   </script>
 </head>
