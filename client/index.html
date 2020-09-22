@@ -32,7 +32,8 @@
   <script defer src="/static/lodash.min.js"></script>
   <script defer src="/static/video.min.js"></script>
   <script defer src="/static/index.js"></script>
-  <script data-ad-client="ca-pub-2430783446079517" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <script data-ad-client="ca-pub-2430783446079517" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <script>(adsbygoogle = window.adsbygoogle || []).pauseAdRequests = localStorage.getItem('allowCookies') != 'true' ? 1 : 0;</script>
 </head>
 
 <body>
@@ -62,6 +63,7 @@
           <ul class="nav navbar-nav">
           </ul>
           <ul class="nav navbar-nav navbar-right">
+            <li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BDVH46DLCM7E8&source=url" target="_blank">Spenden</a></li>
             <li><a id="forumButton" target="_blank" href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb">Forum</a></li>
             <li><a id="contactButton" href="mailto:kontakt@mediathekviewweb.de" data-onclick-return-false>Kontakt</a></li>
             <li><a id="githubButton" target="_blank" href="https://github.com/mediathekview/mediathekviewweb">GitHub</a></li>
@@ -70,6 +72,7 @@
               <a class="dropdown-toggle about" data-toggle="dropdown">Über
                 <span class="caret"></span>
               </a>
+
               <ul class="dropdown-menu">
                 <li><a id="donateButton" target="_blank" href="/donate">Spenden</a></li>
                 <li><a id="impressumButton" target="_blank" href="/impressum">Impressum</a></li>
@@ -93,7 +96,8 @@
           <div class="col-lg-8 col-md-7 col-sm-7">
             <div class="input-group">
               <span id="searchSpan" class="input-group-addon" data-toggle="popover" title="Selektoren" data-trigger="hover"
-                    data-html="true" data-placement="bottom" data-content="!Sender</br>#Thema</br>+Titel</br>*Beschreibung</br>&amp;lt;x (in minuten)</br>&amp;gt;x (in minuten)">Suche</span>
+                    data-html="true" data-placement="bottom"
+                    data-content="!Sender</br>#Thema</br>+Titel</br>*Beschreibung</br>&amp;lt;x (in minuten)</br>&amp;gt;x (in minuten)">Suche</span>
               <input id="queryInput" type="text" class="form-control" autofocus>
             </div>
             <a tabIndex="-1"><i id="queryInputClearButton" class="material-icons">clear</i></a>
@@ -156,7 +160,7 @@
       </div>
 
       <div id="connectingModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog"role="document">
+        <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title">Keine Verbindung</h4>
@@ -201,17 +205,37 @@
       </div>
 
       <div id="contactModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog"role="document">
+        <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal">&times;</button>
               <h4 class="modal-title">Kontakt</h4>
             </div>
             <div class="modal-body">
-              <p>Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die <a target="_blank" href="https://github.com/mediathekview/mediathekviewweb/issues">Issues
-                  auf GitHub</a></p>
-              <p>Für alles andere oder im Fall, dass du kein GitHub Account hast/willst, schreibe mir eine Mail: <a
-                   target="_blank" href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a></p>
+              <p>Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die <a target="_blank" href="https://github.com/mediathekview/mediathekviewweb/issues">Issues auf
+                  GitHub</a></p>
+              <p>Für fehlende Sendungen gibt es Hilfe <a target="_blank" href="https://forum.mediathekview.de/">im Forum</a>.</p>
+              <p>Für alles andere oder im Fall, dass du kein GitHub Account hast/willst, schreibe mir eine Mail: <a target="_blank"
+                   href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a>. Bitte keine Anfragen zu fehlenden Sendungen per Mail!</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="cookieModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Cookies</h4>
+            </div>
+            <div class="modal-body">
+              <p>Diese Website verwendet Cookies für die Darstellung von Werbung – nähere Informationen dazu und zu Ihren Rechten als Benutzer finden Sie in unserer
+                Datenschutzerklärung unter <a target="_blank"
+                   href="https://mediathekviewweb.de/datenschutz">https://mediathekviewweb.de/datenschutz</a>. Klicken
+                Sie auf „Ich stimme zu“, um Cookies zu akzeptieren und direkt unsere Website besuchen zu können.</p>
+              <button id="cookieAcceptButton" class="btn btn-default btn-success" type="button">Ich stimme zu</button>
             </div>
           </div>
 

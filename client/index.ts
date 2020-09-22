@@ -19,6 +19,7 @@ let currentPage = 0;
 let mediathekTable;
 let connectingModal;
 let contactModal;
+let cookieModal;
 let indexingModal;
 let uid;
 let playingInterval;
@@ -933,6 +934,13 @@ $(() => {
 
   $('#browserWarning').remove();
 
+  cookieModal = $('#cookieModal');
+  cookieModal.modal({
+    backdrop: 'static',
+    keyboard: false,
+    show: false
+  });
+
   connectingModal = $('#connectingModal');
   connectingModal.modal({
     backdrop: 'static',
@@ -953,6 +961,21 @@ $(() => {
     keyboard: true,
     show: false
   });
+
+  const allowCookies = localStorage.getItem('allowCookies');
+
+  if (allowCookies != 'true') {
+    cookieModal = $('#cookieModal');
+    cookieModal.modal('show');
+
+    const cookieAcceptButtonElement = document.getElementById('cookieAcceptButton');
+
+    cookieAcceptButtonElement.addEventListener('click', () => {
+      localStorage.setItem('allowCookies', 'true');
+      cookieModal.modal('hide');
+      location.reload();
+    });
+  }
 
   socket.on('connect', () => {
     connectingModal.modal('hide');
