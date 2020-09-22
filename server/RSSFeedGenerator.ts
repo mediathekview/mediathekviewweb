@@ -106,7 +106,7 @@ export default class RSSFeedGenerator {
                 duration: item.duration
               },
               {
-                websiteUrl: item.website_url
+                websiteUrl: item.url_website
               },
             ]
           });
