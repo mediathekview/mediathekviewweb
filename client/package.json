@@ -14,7 +14,7 @@
   "license": "GPLv3",
   "dependencies": {
     "bootstrap": "^3.4.1",
-    "datatables.net": "^1.10.21",
+    "datatables.net": "^1.10.22",
     "jquery": "^3.5.1",
     "js-cookie": "^2.2.1",
     "lodash": "^4.17.20",
@@ -25,9 +25,9 @@
     "@types/bootstrap": "^3.4.0",
     "@types/datatables.net": "^1.10.19",
     "@types/jquery": "^3.5.1",
-    "@types/lodash": "^4.14.160",
+    "@types/lodash": "^4.14.161",
     "@types/socket.io-client": "^1.4.33",
-    "@types/video.js": "^7.3.10",
-    "typescript": "~4.0.2"
+    "@types/video.js": "^7.3.11",
+    "typescript": "~4.0.3"
   }
 }

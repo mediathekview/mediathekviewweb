@@ -975,6 +975,8 @@ $(() => {
       cookieModal.modal('hide');
       location.reload();
     });
+
+    return;
   }
 
   socket.on('connect', () => {
