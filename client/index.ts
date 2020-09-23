@@ -964,11 +964,12 @@ $(() => {
 
   const allowCookies = localStorage.getItem('allowCookies');
 
-  if (allowCookies != 'true') {
+  if (allowCookies != 'true' && allowCookies != 'false') {
     cookieModal = $('#cookieModal');
     cookieModal.modal('show');
 
     const cookieAcceptButtonElement = document.getElementById('cookieAcceptButton');
+    const cookieDenyButtonElement = document.getElementById('cookieDenyButton');
 
     cookieAcceptButtonElement.addEventListener('click', () => {
       localStorage.setItem('allowCookies', 'true');
@@ -976,7 +977,10 @@ $(() => {
       location.reload();
     });
 
-    return;
+    cookieDenyButtonElement.addEventListener('click', () => {
+      localStorage.setItem('allowCookies', 'false');
+      cookieModal.modal('hide');
+    });
   }
 
   socket.on('connect', () => {
