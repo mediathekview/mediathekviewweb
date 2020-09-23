@@ -75,6 +75,10 @@ html * {
   margin-right: 0.2em;
 }
 
+.margin-right-1 {
+  margin-right: 1rem;
+}
+
 .paginationstyle {
   margin: 0 !important;
   float: right;
