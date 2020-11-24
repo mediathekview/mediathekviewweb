@@ -11,7 +11,7 @@ services:
     environment:
       DATA_DIRECTORY: /data
       WEBSERVER_PORT: 8000
-      INDEX: true
+      INDEX: 'true'
       WORKER_COUNT:
       WORKER_ARGS:
       REDIS_HOST: redis
