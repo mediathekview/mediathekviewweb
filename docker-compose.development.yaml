@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.8
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.13
     environment:
       discovery.type: single-node
     container_name: elasticsearch

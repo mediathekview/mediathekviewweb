@@ -233,7 +233,7 @@ function track(action) {
   });
 }
 
-if (typeof (Storage) !== "undefined" && localStorage != null) {
+if (typeof localStorage != 'undefined') {
   uid = localStorage.getItem('uid');
 }
 if (!!uid) {
@@ -248,7 +248,7 @@ if (!!uid && uid.length == 32) {
   track('index');
 } else {
   socket.on('uid', (_uid) => {
-    if (typeof (Storage) !== "undefined" && localStorage != null) {
+    if (typeof localStorage != 'undefined') {
       localStorage.setItem('uid', _uid);
     }
     Cookies.set('uid', _uid, {
@@ -310,10 +310,10 @@ function setQueryFromURIHash() {
     $('#everywhereCheckbox').prop('checked', false);
   }
 
-  if (props['future'] === 'true') {
-    $('#futureCheckbox').prop('checked', true);
-  } else {
+  if (props['future'] === 'false') {
     $('#futureCheckbox').prop('checked', false);
+  } else {
+    $('#futureCheckbox').prop('checked', true);
   }
 
   if (!isNaN(parseInt(props['page']))) {
@@ -363,8 +363,8 @@ const query = _.throttle(() => {
   if (everywhere === true) {
     elements['everywhere'] = true;
   }
-  if (future === true) {
-    elements['future'] = true;
+  if (future === false) {
+    elements['future'] = false;
   }
   if (currentPage > 0) {
     elements['page'] = currentPage + 1;
@@ -427,7 +427,7 @@ const query = _.throttle(() => {
     queries: queries,
     sortBy: 'timestamp',
     sortOrder: 'desc',
-    future: future,
+    future,
     duration_min: parsedQuery.duration_min,
     duration_max: parsedQuery.duration_max,
     offset: currentPage * itemsPerPage,
@@ -962,9 +962,9 @@ $(() => {
     show: false
   });
 
-  const allowCookies = localStorage.getItem('allowCookies');
+  const allowCookies = typeof localStorage != 'undefined' ? localStorage.getItem('allowCookies') : 'false';
 
-  if (allowCookies != 'true' && allowCookies != 'false') {
+  if ((allowCookies != 'true') && (allowCookies != 'false')) {
     cookieModal = $('#cookieModal');
     cookieModal.modal('show');
 

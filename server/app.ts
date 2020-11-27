@@ -8,7 +8,7 @@ import moment from 'moment';
 import path from 'path';
 import REDIS from 'redis';
 import request from 'request';
-import SocketIO from 'socket.io';
+import * as SocketIO from 'socket.io';
 import URL from 'url';
 import config from './config';
 import MediathekManager from './MediathekManager';
@@ -40,7 +40,7 @@ const impressum = renderImpressum(config.contact);
 
   const app = express();
   const httpServer = new http.Server(app);
-  const io = SocketIO(httpServer);
+  const io = new SocketIO.Server(httpServer);
 
   app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
@@ -118,7 +118,7 @@ const impressum = renderImpressum(config.contact);
   });
 
   app.get('/stats', function (req, res) {
-    res.send(`Socket.io connections: ${(io.engine as any).clientsCount}`);
+    res.send(`Socket.io connections: ${io.sockets.sockets.size}`);
   });
 
   app.get('/feed', function (req, res) {
