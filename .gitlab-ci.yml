@@ -79,10 +79,10 @@ publish:image:
   except:
     - schedules
   script:
-    - docker pull $DIST_IMAGE_SHA
-    - docker tag $DIST_IMAGE_SHA $DIST_IMAGE_DOCKER_HUB
-    - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
-    - docker push $DIST_IMAGE_DOCKER_HUB
+    - apk add --no-cache skopeo
+    - skopeo login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - skopeo login --username "$DOCKER_HUB_USER" --password "$DOCKER_HUB_PASSWORD" "docker.io"
+    - skopeo copy "docker://${DIST_IMAGE_SHA}" "docker://${DIST_IMAGE_DOCKER_HUB_DEVELOPMENT}"
   tags:
     - docker
 
