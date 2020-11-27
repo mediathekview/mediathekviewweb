@@ -96,8 +96,8 @@ publish:image-development:
     - schedules
   script:
     - apk add --no-cache skopeo
-    - skopeo login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-    - skopeo login --username "$DOCKER_HUB_USER"  --password "$DOCKER_HUB_PASSWORD" "docker.io"
+    - skopeo login --username="$CI_REGISTRY_USER" --password="$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - skopeo login --username="$DOCKER_HUB_USER" --password="$DOCKER_HUB_PASSWORD" "docker.io"
     - skopeo copy "docker://${DIST_IMAGE_SHA}" "docker://${DIST_IMAGE_DOCKER_HUB_DEVELOPMENT}"
   tags:
     - docker
