@@ -19,13 +19,8 @@ variables:
   DIST_IMAGE_DOCKER_HUB_DEVELOPMENT: "mediathekview/mediathekviewweb:development"
 
 before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  - mkdir empty_dir
-
-image: $DOCKER_BASH_IMAGE_LATEST
-
-services:
-  - docker:dind
+  - mkdir -p /kaniko/.docker
+  - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
 stages:
   - build:dependencies
@@ -33,57 +28,60 @@ stages:
   - pack
   - publish
 
-build:docker-bash:
-  stage: build:dependencies
-  image: docker:stable
-  tags:
-    - docker
-  only:
-    variables:
-      - $BUILD_DOCKER_BASH == "true"
-  script:
-    - docker pull $DOCKER_BASH_IMAGE_LATEST || true
-    - docker build --pull -f ci/docker-bash.dockerfile --cache-from $DOCKER_BASH_IMAGE_LATEST --tag $DOCKER_BASH_IMAGE_SHA --tag $DOCKER_BASH_IMAGE_LATEST empty_dir
-    - docker push $DOCKER_BASH_IMAGE_LATEST
-    - docker push $DOCKER_BASH_IMAGE_SHA
-
 build:server:
   stage: build:application
-  tags:
-    - docker
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   except:
     - schedules
   script:
-    - bash ci/build-image.sh -f ci/server.dockerfile -c $SERVER_DIST_IMAGE_BEFORE_SHA -c $SERVER_DIST_IMAGE_SHA -n $SERVER_DIST_IMAGE_SHA -n $SERVER_DIST_IMAGE_LATEST .
+    - /kaniko/executor --cache=true
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/ci/server.dockerfile"
+      --destination "$SERVER_DIST_IMAGE_SHA"
+      --destination "$SERVER_DIST_IMAGE_LATEST"
+  tags:
+    - docker
 
 build:client:
   stage: build:application
-  tags:
-    - docker
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   except:
     - schedules
   script:
-    - bash ci/build-image.sh -f ci/client.dockerfile -c $CLIENT_DIST_IMAGE_BEFORE_SHA -c $CLIENT_DIST_IMAGE_SHA -n $CLIENT_DIST_IMAGE_SHA -n $CLIENT_DIST_IMAGE_LATEST .
+    - /kaniko/executor --cache=true
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/ci/client.dockerfile"
+      --destination "$CLIENT_DIST_IMAGE_SHA"
+      --destination "$CLIENT_DIST_IMAGE_LATEST"
+  tags:
+    - docker
 
 pack:dist:
   stage: pack
-  tags:
-    - docker
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   except:
     - schedules
   script:
-    - bash ci/build-image.sh -f ci/dist.dockerfile -a CLIENT_DIST_IMAGE=$CLIENT_DIST_IMAGE_SHA -a SERVER_DIST_IMAGE=$SERVER_DIST_IMAGE_SHA -c $DIST_IMAGE_SHA_BEFORE -c $DIST_IMAGE_SHA -n $DIST_IMAGE_SHA -n $DIST_IMAGE_LATEST empty_dir
-    - bash ci/extract-from-image.sh $DIST_IMAGE_SHA /mediathekviewweb dist
-  artifacts:
-    paths:
-      - dist
-    expire_in: 3 months
+    - /kaniko/executor --cache=true
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/ci/dist.dockerfile"
+      --build-arg "SERVER_DIST_IMAGE=$SERVER_DIST_IMAGE_SHA"
+      --build-arg "CLIENT_DIST_IMAGE=$CLIENT_DIST_IMAGE_SHA"
+      --destination "$DIST_IMAGE_SHA"
+      --destination "$DIST_IMAGE_LATEST"
+  tags:
+    - docker
 
 publish:image:
   stage: publish
   when: manual
-  tags:
-    - docker
+  image: alpine:latest
   only:
     - master
   except:
@@ -93,18 +91,21 @@ publish:image:
     - docker tag $DIST_IMAGE_SHA $DIST_IMAGE_DOCKER_HUB
     - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
     - docker push $DIST_IMAGE_DOCKER_HUB
+  tags:
+    - docker
 
 publish:image-development:
   stage: publish
   when: manual
-  tags:
-    - docker
+  image: alpine:latest
   only:
     - development
   except:
     - schedules
   script:
-    - docker pull $DIST_IMAGE_SHA
-    - docker tag $DIST_IMAGE_SHA $DIST_IMAGE_DOCKER_HUB_DEVELOPMENT
-    - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
-    - docker push $DIST_IMAGE_DOCKER_HUB_DEVELOPMENT
+    - apk add --no-cache skopeo
+    - skopeo login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - skopeo login --username "$DOCKER_HUB_USER"  --password "$DOCKER_HUB_PASSWORD" "docker.io"
+    - skopeo copy "docker://${DIST_IMAGE_SHA}" "docker://${DIST_IMAGE_DOCKER_HUB_DEVELOPMENT}"
+  tags:
+    - docker
