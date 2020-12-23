@@ -1,8 +1,18 @@
 {
   "extends": "@tstdl/server",
   "compilerOptions": {
-    "rootDir": "src",
+    "baseUrl": "source",
+    "rootDir": "source",
     "outDir": "dist",
-    "sourceMap": true
+    "sourceMap": true,
+    "declaration": false,
+    "paths": {
+      "$shared/*": ["shared/*"],
+      "$endpoints/*": ["endpoints/*"],
+      "$repositories/*": ["repositories/*"],
+      "$api/*": ["api/*"],
+      "$exposer/*": ["exposer/*"],
+      "$root/*": ["*"]
+    }
   }
 }

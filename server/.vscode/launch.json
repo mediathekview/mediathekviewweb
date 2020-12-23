@@ -30,7 +30,7 @@
     "request": "launch",
     "name": "Launch Test",
     "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-    "program": "${workspaceFolder}/dist/test2.js",
+    "program": "${workspaceFolder}/dist/test.js",
     "sourceMaps": true,
     "showAsyncStacks": true,
     "autoAttachChildProcesses": true,

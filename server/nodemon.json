@@ -1,0 +1,7 @@
+{
+  "delay": 200,
+  "signal": "SIGINT",
+  "watch": [
+    "dist/"
+  ]
+}
