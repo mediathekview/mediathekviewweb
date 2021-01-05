@@ -39,6 +39,8 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 
 - "#tagesschau \*klima" zeigt alle Beiträge der "Tagesschau", die "Klima" in der Beschreibung enthalten.
 
+- ">60" zeigt Beiträge, die länger als 60 Minuten dauern. Der Operator "<" wird analog unterstützt.
+
 
 ##### Das Komma ist der "und" Operator
 
