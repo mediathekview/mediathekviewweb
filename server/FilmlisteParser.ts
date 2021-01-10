@@ -73,10 +73,11 @@ const mapListLineToRedis = ({ line, currentChannel, currentTopic }) => {
       ? parseInt(a) + parseInt(b) * 60
       : parseInt(b) * (Math.pow(60, index)) + a
   ));
+
   return [
     currentChannel,
     currentTopic,
-    JSON.stringify({
+    {
       channel: currentChannel,
       topic: currentTopic,
       title,
@@ -89,7 +90,7 @@ const mapListLineToRedis = ({ line, currentChannel, currentTopic }) => {
       url_video,
       url_video_low: createUrlFromBase(url_video, url_video_low),
       url_video_hd: createUrlFromBase(url_video, url_video_hd)
-    })
+    }
   ]
 }
 
@@ -141,8 +142,14 @@ function parseFilmliste(file, setKey, timestampKey) {
           });
         }
 
-        [currentChannel, currentTopic, entry] = mapListLineToRedis({ line, currentChannel, currentTopic })
-        buffer.push(['sadd', setKey, entry]);
+        [currentChannel, currentTopic, entry] = mapListLineToRedis({ line, currentChannel, currentTopic });
+
+        const blacklisted = entry.title == 'Wir haben genug - Wirtschaft ohne Wachstum';
+
+        if (!blacklisted) {
+          const jsonEntry = JSON.stringify(entry);
+          buffer.push(['sadd', setKey, jsonEntry]);
+        }
 
         if (currentLine % 500 == 0) {
           redis.batch(buffer).exec();
