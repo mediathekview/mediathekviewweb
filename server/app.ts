@@ -88,7 +88,7 @@ const impressum = renderImpressum(config.contact);
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
       'X-Content-Type-Options': 'nosniff',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
+      'Referrer-Policy': 'no-referrer'
     });
 
     next();
