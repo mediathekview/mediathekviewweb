@@ -249,6 +249,68 @@ const impressum = renderImpressum(config.contact);
     });
   });
 
+ app.get('/api/query', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+
+    let query;
+    try {
+      query = JSON.parse(req.query.q);
+    } catch (e) {
+      res.status(400).json({
+        result: null,
+        err: [e.message]
+      });
+      return;
+    }
+
+    const begin = process.hrtime();
+    searchEngine.search(query, (result, err) => {
+      const end = process.hrtime(begin);
+
+      if (err) {
+        if (err[0] == 'cannot query while indexing') {
+          res.status(503);
+        } else {
+          res.status(500);
+        }
+
+        res.json({
+          result: result,
+          err: err
+        });
+        return;
+      }
+
+      const searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
+
+      const queryInfo = {
+        filmlisteTimestamp: filmlisteTimestamp,
+        searchEngineTime: searchEngineTime,
+        resultCount: result.result.length,
+        totalResults: result.totalResults
+      };
+
+      res.status(200).json({
+        result: {
+          results: result.result,
+          queryInfo: queryInfo
+        },
+        err: null
+      });
+
+      if (!!matomo) {
+        matomo.track({
+          token_auth: config.matomo.token_auth,
+          url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
+          uid: 'api',
+          action_name: 'api-query'
+        });
+      }
+
+      console.log(moment().format('HH:mm') + ' - search api used');
+    });
+  });
+
   io.on('connection', (socket) => {
     const clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
     let socketUid = null;
