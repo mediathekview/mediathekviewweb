@@ -73,7 +73,7 @@ pack:dist:
 publish:image:
   stage: publish
   when: manual
-  image: alpine:edge
+  image: alpine:3.13
   only:
     - master
   except:
@@ -89,7 +89,7 @@ publish:image:
 publish:image-development:
   stage: publish
   when: manual
-  image: alpine:edge
+  image: alpine:3.13
   only:
     - development
   except:
