@@ -12,10 +12,10 @@ import * as SocketIO from 'socket.io';
 import URL from 'url';
 import config from './config';
 import MediathekManager from './MediathekManager';
+import renderImpressum from './pages/impressum';
 import RSSFeedGenerator from './RSSFeedGenerator';
 import SearchEngine from './SearchEngine';
 import * as utils from './utils';
-import renderImpressum from './pages/impressum';
 
 const impressum = renderImpressum(config.contact);
 
@@ -201,18 +201,39 @@ const impressum = renderImpressum(config.contact);
       return;
     }
 
+    handleQuery(query, res);
+  });
+
+  app.get('/api/query', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+
+    let query;
+    try {
+      query = JSON.parse(req.query.query as string);
+    } catch (e) {
+      res.status(400).json({
+        result: null,
+        err: [e.message]
+      });
+      return;
+    }
+
+    handleQuery(query, res);
+  });
+
+  function handleQuery(query: object, response: express.Response): void {
     const begin = process.hrtime();
     searchEngine.search(query, (result, err) => {
       const end = process.hrtime(begin);
 
       if (err) {
         if (err[0] == 'cannot query while indexing') {
-          res.status(503);
+          response.status(503);
         } else {
-          res.status(500);
+          response.status(500);
         }
 
-        res.json({
+        response.json({
           result: result,
           err: err
         });
@@ -228,7 +249,7 @@ const impressum = renderImpressum(config.contact);
         totalResults: result.totalResults
       };
 
-      res.status(200).json({
+      response.status(200).json({
         result: {
           results: result.result,
           queryInfo: queryInfo
@@ -247,7 +268,7 @@ const impressum = renderImpressum(config.contact);
 
       console.log(moment().format('HH:mm') + ' - search api used');
     });
-  });
+  }
 
   io.on('connection', (socket) => {
     const clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
