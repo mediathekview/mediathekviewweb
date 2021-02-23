@@ -32,6 +32,19 @@ let donate = null;
 let queryInputClearButtonState = 'hidden';
 let video;
 
+const preferedThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+preferedThemeMediaQuery.addEventListener('change', (event) => {
+  updateTheme(event.matches);
+});
+
+updateTheme(preferedThemeMediaQuery.matches);
+
+function updateTheme(dark: boolean): void {
+  const theme = dark ? 'static/bootstrap-darkly.min.css' : 'static/bootstrap-lumen.min.css';
+  (document.getElementById('bootstrap-theme') as HTMLLinkElement).href = theme;
+}
+
 socket.on('connect', () => {
   console.log('connected');
 });
