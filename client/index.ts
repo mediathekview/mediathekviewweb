@@ -32,13 +32,13 @@ let donate = null;
 let queryInputClearButtonState = 'hidden';
 let video;
 
-const preferedThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+const preferedThemeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
 
-preferedThemeMediaQuery.addEventListener('change', (event) => {
+preferedThemeMediaQuery?.addEventListener?.('change', (event) => {
   updateTheme(event.matches);
 });
 
-updateTheme(preferedThemeMediaQuery.matches);
+updateTheme(preferedThemeMediaQuery?.matches ?? false);
 
 function updateTheme(dark: boolean): void {
   const theme = dark ? 'static/bootstrap-darkly.min.css' : 'static/bootstrap-lumen.min.css';
@@ -246,9 +246,8 @@ function track(action) {
   });
 }
 
-if (typeof localStorage != 'undefined') {
-  uid = localStorage.getItem('uid');
-}
+uid = window.localStorage?.getItem?.('uid');
+
 if (!!uid) {
   uid = uid.trim();
 } else {
@@ -261,9 +260,8 @@ if (!!uid && uid.length == 32) {
   track('index');
 } else {
   socket.on('uid', (_uid) => {
-    if (typeof localStorage != 'undefined') {
-      localStorage.setItem('uid', _uid);
-    }
+    window.localStorage?.setItem?.('uid', _uid);
+
     Cookies.set('uid', _uid, {
       expires: 99999
     });
@@ -975,7 +973,7 @@ $(() => {
     show: false
   });
 
-  const allowCookies = typeof localStorage != 'undefined' ? localStorage.getItem('allowCookies') : 'false';
+  const allowCookies = window.localStorage?.getItem?.('allowCookies') ?? 'false';
 
   if ((allowCookies != 'true') && (allowCookies != 'false')) {
     cookieModal = $('#cookieModal');
@@ -985,13 +983,13 @@ $(() => {
     const cookieDenyButtonElement = document.getElementById('cookieDenyButton');
 
     cookieAcceptButtonElement.addEventListener('click', () => {
-      localStorage.setItem('allowCookies', 'true');
+      window.localStorage?.setItem?.('allowCookies', 'true');
       cookieModal.modal('hide');
       location.reload();
     });
 
     cookieDenyButtonElement.addEventListener('click', () => {
-      localStorage.setItem('allowCookies', 'false');
+      window.localStorage?.setItem?.('allowCookies', 'false');
       cookieModal.modal('hide');
     });
   }
