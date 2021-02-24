@@ -1,13 +1,13 @@
-import { Filmlist } from '../filmlist';
-import { FilmlistResource } from '../filmlist-resource';
-import { FilmlistProvider } from '../provider';
+import type { Filmlist } from '../filmlist-parser';
+import type { FilmlistResource } from '../filmlist-resource';
+import type { FilmlistProvider } from '../provider';
 
 export class MultiFilmlistProvider implements FilmlistProvider {
   private readonly providers: FilmlistProvider[];
 
   readonly type: string = 'multi';
 
-  readonly name: string;
+  readonly sourceId: string;
 
   constructor() {
     this.providers = [];
@@ -25,19 +25,23 @@ export class MultiFilmlistProvider implements FilmlistProvider {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async *getArchive(): AsyncIterable<Filmlist> {
+  async *getArchive(minimumTimestamp: number): AsyncIterable<Filmlist> {
     for (const provider of this.providers) {
-      yield* provider.getArchive();
+      yield* provider.getArchive(minimumTimestamp);
     }
   }
 
   async getFromResource(resource: FilmlistResource): Promise<Filmlist> {
     for (const provider of this.providers) {
-      if (provider.name == resource.providerName) {
-        return provider.getFromResource(resource);
+      if (provider.type == resource.type) {
+        const canHandle = provider.canHandle(resource);
+
+        if (canHandle) {
+          return provider.getFromResource(resource);
+        }
       }
     }
 
-    throw new Error(`no provider named ${resource.providerName} available`);
+    throw new Error(`no provider for filmlist-resource with type ${resource.type} available`);
   }
 }

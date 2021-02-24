@@ -6,11 +6,9 @@ import * as Minio from 'minio';
 import { pipeline } from 'stream';
 import * as xz from 'xz';
 import { createGunzip } from 'zlib';
-import { Filmlist } from '../filmlist';
+import { Filmlist } from '../filmlist-parser';
 import type { FilmlistResource } from '../filmlist-resource';
 import type { FilmlistProvider } from '../provider';
-
-type S3Filmlist = Filmlist<S3FilmlistResource>;
 
 type S3FilmlistResource = FilmlistResource<'s3', S3FilmlistResourceData>;
 
@@ -42,9 +40,9 @@ type ArchiveOptions = {
 };
 
 export enum FilmlistResourceTimestampStrategy {
-  None,
-  LastModified,
-  FileName
+  None = 0,
+  LastModified = 1,
+  FileName = 2
 }
 
 const FILENAME_DATE_PATTERN = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
@@ -54,10 +52,11 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
   private readonly latest: LatestOptions | undefined;
   private readonly archive: ArchiveOptions | undefined;
 
-  readonly name: string;
+  readonly type: 's3' = 's3';
+  readonly source: string;
 
   constructor(instanceName: string, { url, accessKey, secretKey, latest, archive }: S3FilmlistProviderOptions) {
-    this.name = `s3:${instanceName}`;
+    this.source = instanceName;
 
     const { hostname, port, protocol } = new URL(url);
 
@@ -73,8 +72,12 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     this.archive = archive;
   }
 
+  canHandle(resource: FilmlistResource): boolean {
+    return resource.type == this.type && resource.source == this.source;
+  }
+
   // eslint-disable-next-line @typescript-eslint/require-await
-  async *getLatest(): AsyncIterable<S3Filmlist> {
+  async *getLatest(): AsyncIterable<Filmlist> {
     if (this.latest == undefined) {
       throw new Error('s3 options for latest not provided');
     }
@@ -82,7 +85,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     yield this.getFilmlist(this.latest.bucket, this.latest.object, FilmlistResourceTimestampStrategy.LastModified);
   }
 
-  async *getArchive(): AsyncIterable<S3Filmlist> {
+  async *getArchive(): AsyncIterable<Filmlist> {
     if (this.archive == undefined) {
       throw new Error('s3 options for archive not provided');
     }
@@ -94,7 +97,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     }
   }
 
-  async getFromResource(resource: S3FilmlistResource): Promise<S3Filmlist> {
+  async getFromResource(resource: S3FilmlistResource): Promise<Filmlist> {
     const metadata = await this.s3.statObject(resource.data.bucket, resource.data.object);
 
     if (metadata.etag != resource.data.etag) {
@@ -104,12 +107,12 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     return this.getFilmlist(resource.data.bucket, resource.data.object, FilmlistResourceTimestampStrategy.None, { ...resource.data, resourceTimestamp: resource.timestamp });
   }
 
-  private async getFilmlist(bucket: string, object: string, resourceTimestampStrategy: FilmlistResourceTimestampStrategy, data?: { etag: string, lastModified: number | Date, size: number, resourceTimestamp?: number }): Promise<S3Filmlist> {
+  private async getFilmlist(bucket: string, object: string, resourceTimestampStrategy: FilmlistResourceTimestampStrategy, data?: { etag: string, lastModified: number | Date, size: number, resourceTimestamp?: number }): Promise<Filmlist> {
     const { etag, lastModified: lastModifiedData, size } = data != undefined ? data : await this.s3.statObject(bucket, object);
     const lastModified = typeof lastModifiedData == 'number' ? lastModifiedData : lastModifiedData.valueOf();
 
     const resourceData: S3FilmlistResourceData = { bucket, object, etag, lastModified, size };
-    const id = createHash('sha1', `${object} ${etag} ${lastModified} ${size}`).toZBase32();
+    const tag = createHash('sha1', `${etag} ${lastModified} ${size}`).toZBase32();
 
     let timestamp: number;
 
@@ -134,7 +137,7 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
         throw new Error('invalid ArchiveFilmlistResourceTimestampStrategy');
     }
 
-    const resource: S3FilmlistResource = { id, providerName: this.name as 's3', timestamp, data: resourceData };
+    const resource: S3FilmlistResource = { type: 's3', source: this.source, tag, timestamp, data: resourceData };
     const streamProvider = this.getStreamProvider(bucket, object);
     const filmlist = new Filmlist(resource, streamProvider);
 
@@ -172,5 +175,5 @@ function parseFilenameTimestamp(object: string): number {
   }
 
   const { year, month, day } = match.groups as StringMap<string>;
-  return Date.UTC(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+  return Date.UTC(parseInt(year!, 10), parseInt(month!, 10) - 1, parseInt(day!, 10));
 }

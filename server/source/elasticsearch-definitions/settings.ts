@@ -1,6 +1,8 @@
-/* eslint-disable camelcase */
+/* eslint-disable @typescript-eslint/naming-convention */
 
-export const elasticsearchSettings = {
+import type { IndicesPutSettings } from '@elastic/elasticsearch/api/requestParams';
+
+export const elasticsearchSettings: IndicesPutSettings['body'] = {
   settings: {
     refresh_interval: '3s',
     analysis: {

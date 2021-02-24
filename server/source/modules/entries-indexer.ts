@@ -1,11 +1,12 @@
-import { Logger } from '@tstdl/base/logger';
+import type { Logger } from '@tstdl/base/logger';
 import { cancelableTimeout } from '@tstdl/base/utils';
-import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { Module, ModuleBase, ModuleMetricType } from '@tstdl/server/module';
-import { AggregatedEntry, Entry } from '$shared/models';
-import { SearchEngine } from '$shared/search-engine';
-import { AggregatedEntryDataSource } from '../data-sources/aggregated-entry.data-source';
-import { EntryRepository } from '../repositories';
+import type { CancellationToken } from '@tstdl/base/utils/cancellation-token';
+import type { Module } from '@tstdl/server/module';
+import { ModuleBase, ModuleMetricType } from '@tstdl/server/module';
+import type { AggregatedEntry, Entry } from '$shared/models/core';
+import type { SearchEngine } from '$shared/search-engine';
+import type { AggregatedEntryDataSource } from '../data-sources/aggregated-entry.data-source';
+import type { EntryRepository } from '../repositories';
 
 const BATCH_SIZE = 100;
 
@@ -48,7 +49,7 @@ export class EntriesIndexerModule extends ModuleBase implements Module {
         await this.indexEntries(jobId, entries);
         this.indexedEntriesCount += entries.length;
       }
-      catch (error) {
+      catch (error: unknown) {
         this.logger.error(error as Error);
         await cancelableTimeout(2500, cancellationToken);
       }

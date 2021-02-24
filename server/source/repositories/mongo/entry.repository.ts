@@ -1,27 +1,25 @@
-import type { EntryRepository } from '$repositories/entry-repository';
+import type { EntryRepository } from '$repositories/entry.repository';
 import type { Entry } from '$shared/models/core';
 import { fields } from '$shared/models/core';
+import type { Logger } from '@tstdl/base/logger';
 import { Alphabet, createArray, currentTimestamp, getRandomString } from '@tstdl/base/utils';
 import type { Collection, FilterQuery, TypedIndexSpecification, UpdateQuery } from '@tstdl/mongo';
-import { MongoBaseRepository, toMongoDocument } from '@tstdl/mongo';
+import { MongoEntityRepository, noopTransformer, toMongoDocument } from '@tstdl/mongo';
 
 const indexes: TypedIndexSpecification<Entry>[] = [
+  { key: { [fields.tag]: 1 }, unique: true },
   { key: { [fields.firstSeen]: 1 } },
   { key: { [fields.lastSeen]: 1 } },
   { key: { [fields.indexRequiredSince]: 1 } },
   { key: { [fields.indexJobTimeout]: 1 } },
   { key: { [fields.indexJob]: 1 } },
-  { key: { indexRequiredSince: 1, indexJob: 1 } },
-  { key: { indexRequiredSince: 1, indexJobTimeout: 1 } }
+  { key: { [fields.indexRequiredSince]: 1, [fields.indexJob]: 1 } },
+  { key: { [fields.indexRequiredSince]: 1, [fields.indexJobTimeout]: 1 } }
 ];
 
-export class MongoEntryRepository implements EntryRepository {
-  private readonly collection: Collection<Entry>;
-  private readonly baseRepository: MongoBaseRepository<Entry>;
-
-  constructor(collection: Collection<Entry>) {
-    this.collection = collection;
-    this.baseRepository = new MongoBaseRepository(collection);
+export class MongoEntryRepository extends MongoEntityRepository<Entry> implements EntryRepository {
+  constructor(collection: Collection<Entry>, logger: Logger) {
+    super(collection, noopTransformer, { indexes, logger });
   }
 
   async initialize(): Promise<void> {
@@ -36,14 +34,6 @@ export class MongoEntryRepository implements EntryRepository {
   async saveMany(entries: Entry[]): Promise<void> {
     const operations = entries.map(toUpdateOneOperation);
     await this.collection.bulkWrite(operations, { ordered: false });
-  }
-
-  async load(id: string): Promise<Entry> {
-    return this.baseRepository.load(id, true);
-  }
-
-  async loadMany(ids: string[]): Promise<Entry[]> {
-    return this.baseRepository.loadManyById(ids, true);
   }
 
   async getIndexJob(count: number, timeout: number): Promise<{ jobId: string, entries: Entry[] }> {

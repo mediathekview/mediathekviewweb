@@ -1,8 +1,9 @@
-/* eslint-disable camelcase */
+/* eslint-disable @typescript-eslint/naming-convention */
+import type { IndicesPutMapping } from '@elastic/elasticsearch/api/requestParams';
+import type { StringMap } from '@tstdl/base/types';
+import { assertDefinedPass } from '@tstdl/base/utils';
 
-import { StringMap } from '@tstdl/base/types';
-
-export const elasticsearchMapping = {
+export const elasticsearchMapping: IndicesPutMapping['body'] = {
   properties: {
     id: {
       type: 'keyword',
@@ -173,7 +174,7 @@ export const elasticsearchMapping = {
 };
 
 export const textTypeFields = Object.getOwnPropertyNames(elasticsearchMapping.properties).filter((property) => {
-  const type = (elasticsearchMapping.properties as StringMap<{ type: string }>)[property].type;
+  const type = assertDefinedPass((elasticsearchMapping.properties as StringMap<{ type: string }>)[property]).type;
   const isTextType = type == 'text';
 
   return isTextType;

@@ -1,11 +1,12 @@
-import { FilmlistImportJobData } from '$shared/models';
-import { Entry } from '$shared/models/core';
+import type { Entry } from '$shared/models/core';
+import { FilmlistImportJobData, FilmlistImportRecord, FilmlistImportRecordState } from '$shared/models/filmlist';
 import type { LockProvider } from '@tstdl/base/lock';
 import type { Logger } from '@tstdl/base/logger';
 import type { Job, Queue } from '@tstdl/base/queue';
 import { currentTimestamp, Timer } from '@tstdl/base/utils';
 import type { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import type { FilmlistImportProcessData, FilmlistImportRepository } from '../../repositories/filmlist-import-repository';
+import { EntityPatch } from '@tstdl/database';
+import type { FilmlistImportRepository } from '../../repositories/filmlist-import.repository';
 import type { EntrySource } from '../entry-source';
 import type { FilmlistProvider } from './provider';
 
@@ -48,19 +49,19 @@ export class FilmlistEntrySource implements EntrySource {
     const filmlistImport = await this.filmlistImportRepository.load(filmlistImportId);
 
     const filmlist = await this.filmlistProvider.getFromResource(filmlistImport.resource);
-    const filmlistMetadata = await filmlist.getMetadata();
+    const { id: filmlistId, timestamp: filmlistTimestamp } = await filmlist.getMetadata();
 
-    const lock = this.lockProvider.get(`filmlist:${filmlistMetadata.id}`);
+    const lock = this.lockProvider.get(`filmlist:${filmlistId}`);
 
     let hasFilmlist = false;
     const { success } = await lock.using(30000, false, async () => {
-      hasFilmlist = await this.filmlistImportRepository.hasFilmlistFromOtherImport(filmlistImport.id, filmlistMetadata.id);
+      hasFilmlist = await this.filmlistImportRepository.hasFilmlistResourceImport(filmlistImport.id, filmlistId);
 
-      const update: FilmlistImportProcessData = hasFilmlist
-        ? { state: 'duplicate', filmlistMetadata, importTimestamp }
-        : { filmlistMetadata, importTimestamp };
+      const update: EntityPatch<FilmlistImportRecord> = hasFilmlist
+        ? { state: FilmlistImportRecordState.Duplicate, filmlistId, filmlistTimestamp, importTimestamp }
+        : { filmlistId, filmlistTimestamp, importTimestamp };
 
-      await this.filmlistImportRepository.updateState(filmlistImport.id, update);
+      await this.filmlistImportRepository.patch(filmlistImport, update);
     });
 
     if (!success) {

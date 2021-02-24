@@ -1,7 +1,8 @@
-import { Logger } from '@tstdl/base/logger';
-import { Collection, MongoEntityRepository, noopTransformer, TypedIndexSpecification } from '@tstdl/mongo';
-import { UserAction } from '$shared/models/core/user-actions.model';
-import { UserActionRepository } from '../user-action-repository';
+import type { UserAction } from '$shared/models/core/user-actions.model';
+import type { Logger } from '@tstdl/base/logger';
+import type { Collection, TypedIndexSpecification } from '@tstdl/mongo';
+import { MongoEntityRepository, noopTransformer } from '@tstdl/mongo';
+import type { UserActionRepository } from '../user-action.repository';
 
 const indexes: TypedIndexSpecification<UserAction>[] = [
   { name: 'actionType', key: { actionType: 1 } },

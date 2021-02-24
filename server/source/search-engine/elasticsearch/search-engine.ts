@@ -12,12 +12,12 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
   private readonly indexName: string;
   private readonly lockProvider: LockProvider;
   private readonly logger: Logger;
-  private readonly indexSettings: Elasticsearch.RequestParams.IndicesPutSettings | undefined;
-  private readonly indexMapping: Elasticsearch.RequestParams.IndicesPutSettings | undefined;
+  private readonly indexSettings: Elasticsearch.RequestParams.IndicesPutSettings['body'] | undefined;
+  private readonly indexMapping: Elasticsearch.RequestParams.IndicesPutMapping['body'] | undefined;
 
   private disposing: boolean;
 
-  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, lockProvider: LockProvider, logger: Logger, indexSettings?: Elasticsearch.RequestParams.IndicesPutSettings, indexMapping?: Elasticsearch.RequestParams.IndicesPutSettings) {
+  constructor(client: Elasticsearch.Client, converter: Converter, indexName: string, lockProvider: LockProvider, logger: Logger, indexSettings?: Elasticsearch.RequestParams.IndicesPutSettings['body'], indexMapping?: Elasticsearch.RequestParams.IndicesPutMapping['body']) {
     this.client = client;
     this.converter = converter;
     this.indexName = indexName;
@@ -35,6 +35,7 @@ export class ElasticsearchSearchEngine<T> implements SearchEngine<T> {
     let success = false;
 
     while (!success && !this.disposing) {
+      // eslint-disable-next-line @typescript-eslint/no-loop-func
       await lock.using(1000, false, async () => {
         const created = await this.ensureIndex();
 

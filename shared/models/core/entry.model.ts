@@ -1,8 +1,9 @@
 import { dotNotation, dotNotator } from '@tstdl/base/utils';
-import type { Entity } from '@tstdl/database';
+import type { Entity, NewEntity } from '@tstdl/database';
 import type { EntryMetadata } from './entry-metadata.model';
 
 export type Entry = Entity & {
+  tag: string,
   channel: string,
   topic: string,
   title: string,
@@ -22,6 +23,8 @@ export type Entry = Entity & {
   indexJob?: string
 };
 
+export type NewEntry = NewEntity<Entry>;
+
 export type AggregatedEntry = Entry & {
   date: number,
   time: number,
@@ -32,6 +35,7 @@ export type PublicEntry = Omit<AggregatedEntry, 'source' | 'indexJob' | 'indexJo
 
 export const fields = {
   id: dotNotation<AggregatedEntry>('id'),
+  tag: dotNotation<AggregatedEntry>('tag'),
   channel: dotNotation<AggregatedEntry>('channel'),
   topic: dotNotation<AggregatedEntry>('topic'),
   title: dotNotation<AggregatedEntry>('title'),
@@ -46,12 +50,12 @@ export const fields = {
   mediaType: dotNotator<AggregatedEntry>().array('media')('type').notate(),
   mediaUrl: dotNotator<AggregatedEntry>().array('media')('url').notate(),
   mediaSize: dotNotator<AggregatedEntry>().array('media')('size').notate(),
-  videoQuality: dotNotator<AggregatedEntry>().array('media')('quality').notate(),
-  videoResolutionWidth: dotNotator<AggregatedEntry>().array('media')('quality')('resolution')('width').notate(),
-  videoResolutionHeight: dotNotator<AggregatedEntry>().array('media')('quality')('resolution')('height').notate(),
-  videoBitrate: dotNotator<Entry>().array('media')('quality')('bitrate'),
-  audioQuality: 'media.quality',
-  audioBitrate: 'media.quality.bitrate',
+  videoQuality: dotNotator<AggregatedEntry>().array('media').cast<Video>()('quality').notate(),
+  videoResolutionWidth: dotNotator<AggregatedEntry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('resolution')('width').notate(),
+  videoResolutionHeight: dotNotator<AggregatedEntry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('resolution')('height').notate(),
+  videoBitrate: dotNotator<Entry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('bitrate'),
+  audioQuality: dotNotator<AggregatedEntry>().array('media').cast<Audio>()('quality').notate(),
+  audioBitrate: dotNotator<Entry>().array('media').cast<Audio>()('quality').cast<AudioQuality>()('bitrate'),
   indexRequiredSince: dotNotation<AggregatedEntry>('indexRequiredSince'),
   indexJobTimeout: dotNotation<AggregatedEntry>('indexJobTimeout'),
   indexJob: dotNotation<AggregatedEntry>('indexJob')

@@ -1,11 +1,13 @@
-import { Filmlist } from './filmlist';
-import { FilmlistResource } from './filmlist-resource';
+import type { Filmlist } from './filmlist-parser';
+import type { FilmlistResource } from './filmlist-resource';
 
 export interface FilmlistProvider<TFilmlistResource extends FilmlistResource = FilmlistResource> {
-  readonly name: string;
+  readonly type: string;
 
-  getLatest(): AsyncIterable<Filmlist<TFilmlistResource>>;
-  getArchive(): AsyncIterable<Filmlist<TFilmlistResource>>;
+  getLatest(): AsyncIterable<Filmlist>;
+  getArchive(minimumTimestamp: number): AsyncIterable<Filmlist>;
 
-  getFromResource(resource: TFilmlistResource): Promise<Filmlist<TFilmlistResource>>;
+  canHandle(resource: FilmlistResource): boolean;
+
+  getFromResource(resource: TFilmlistResource): Promise<Filmlist>;
 }
