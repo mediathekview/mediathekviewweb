@@ -3,6 +3,7 @@ import type { Entity, NewEntity } from '@tstdl/database';
 import type { EntryMetadata } from './entry-metadata.model';
 
 export type Entry = Entity & {
+  source: string,
   tag: string,
   channel: string,
   topic: string,
@@ -14,10 +15,6 @@ export type Entry = Entity & {
   firstSeen: number,
   lastSeen: number,
   media: Media[],
-  source: {
-    name: string,
-    data?: any
-  },
   indexRequiredSince?: number,
   indexJobTimeout?: number,
   indexJob?: string
@@ -35,6 +32,7 @@ export type PublicEntry = Omit<AggregatedEntry, 'source' | 'indexJob' | 'indexJo
 
 export const fields = {
   id: dotNotation<AggregatedEntry>('id'),
+  source: dotNotation<AggregatedEntry>('source'),
   tag: dotNotation<AggregatedEntry>('tag'),
   channel: dotNotation<AggregatedEntry>('channel'),
   topic: dotNotation<AggregatedEntry>('topic'),

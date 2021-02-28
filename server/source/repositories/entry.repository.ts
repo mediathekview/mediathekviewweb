@@ -1,12 +1,11 @@
-import type { Entry } from '$shared/models/core';
+import type { Entry, NewEntry } from '$shared/models/core';
+import type { EntityRepository } from '@tstdl/database';
 
 export type IndexJob = { jobId: string, entries: Entry[] };
 
-export interface EntryRepository {
-  save(entry: Entry): Promise<void>;
-  saveMany(entries: Entry[]): Promise<void>;
-  load(id: string): Promise<Entry>;
-  loadMany(ids: string[]): Promise<Entry[]>;
+export interface EntryRepository extends EntityRepository<Entry> {
+  upsertEntry(entry: NewEntry): Promise<void>;
+  upsertEntries(entries: NewEntry[]): Promise<void>;
   getIndexJob(count: number, timeout: number): Promise<IndexJob>;
   setIndexJobFinished(jobId: string): Promise<void>;
 }

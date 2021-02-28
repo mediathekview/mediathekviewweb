@@ -1,11 +1,12 @@
 import { AsyncDisposer, disposeAsync } from '@tstdl/base/disposable';
 import { AsyncEnumerable } from '@tstdl/base/enumerable';
-import { Logger } from '@tstdl/base/logger';
+import type { Logger } from '@tstdl/base/logger';
 import { cancelableTimeout } from '@tstdl/base/utils';
-import { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { Module, ModuleBase, ModuleMetricType } from '@tstdl/server/module';
-import { EntrySource } from '../entry-source';
-import { EntryRepository } from '../repositories';
+import type { CancellationToken } from '@tstdl/base/utils/cancellation-token';
+import type { Module } from '@tstdl/server/module';
+import { ModuleBase, ModuleMetricType } from '@tstdl/server/module';
+import type { EntrySource } from '../entry-source';
+import type { EntryRepository } from '../repositories';
 
 export class EntriesImporterModule extends ModuleBase implements Module {
   private readonly entryRepository: EntryRepository;
@@ -55,8 +56,8 @@ export class EntriesImporterModule extends ModuleBase implements Module {
         await cancelableTimeout(1000, this.cancellationToken);
         return !this.cancellationToken.isSet;
       })
-      .forEach(async (batch) => {
-        await this.entryRepository.saveMany(batch);
+      .parallelForEach(5, async (batch) => {
+        await this.entryRepository.upsertEntries(batch);
         this.importedEntriesCount += batch.length;
       });
   }

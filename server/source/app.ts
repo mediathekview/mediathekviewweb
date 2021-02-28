@@ -8,18 +8,16 @@ import type { Module } from '@tstdl/server/module';
 import { ModuleMetricReporter, runModules, stopModules } from '@tstdl/server/module';
 import { initializeSignals, requestShutdown, setProcessShutdownLogger, shutdownToken } from '@tstdl/server/process-shutdown';
 import { config } from './config';
-import { } from './instance-provider';
+import { getEntriesImporterModule, getEntriesIndexerModule, getFilmlistManagerModule } from './instance-provider';
 
 const coreLogger = getCoreLogger();
 
 setProcessShutdownLogger(coreLogger);
-
 initializeSignals();
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-(async () => {
+void (async () => {
   try {
-    await init();
+    await main();
   }
   catch (error: unknown) {
     coreLogger.error(error as Error);
@@ -27,65 +25,7 @@ initializeSignals();
   }
 })();
 
-// eslint-disable-next-line max-statements, max-lines-per-function
-async function getModules(metricReporter: ModuleMetricReporter): Promise<Module[]> {
-  const modules: Module[] = [];
-
-  if (config.modules.api) {
-    const webServerModule = getWebServerModule();
-    modules.push(webServerModule);
-
-    metricReporter.register('WEB_SERVER', {
-      metric: webServerModule.metrics.requestCount,
-      reports: [
-        { displayName: 'Request Count', aggregation: MetricAggregation.Maximum },
-        { displayName: 'Requests/sec', aggregation: MetricAggregation.Rate }
-      ]
-    });
-  }
-
-  if (config.modules.filmlistManager) {
-    const filmlistManagerModule = await get();
-    modules.push(filmlistManagerModule);
-
-    metricReporter.register('Filmlist Manager', {
-      metric: filmlistManagerModule.metrics.enqueuedFilmlistsCount,
-      reports: [
-        { displayName: 'Enqueued Filmlists', aggregation: MetricAggregation.Maximum }
-      ]
-    });
-  }
-
-  if (config.modules.importer) {
-    const importerModule = await InstanceProvider.entriesImporterModule();
-    modules.push(importerModule);
-
-    metricReporter.register('Importer', {
-      metric: importerModule.metrics.importedEntriesCount,
-      reports: [
-        { displayName: 'Imported entries', aggregation: MetricAggregation.Maximum },
-        { displayName: 'Imported entries/sec', aggregation: MetricAggregation.Rate }
-      ]
-    });
-  }
-
-  if (config.modules.indexer) {
-    const indexerModule = await InstanceProvider.entriesIndexerModule();
-    modules.push(indexerModule);
-
-    metricReporter.register('Indexer', {
-      metric: indexerModule.metrics.indexedEntriesCount,
-      reports: [
-        { displayName: 'Indexed entries', aggregation: MetricAggregation.Maximum },
-        { displayName: 'Indexed entries/sec', aggregation: MetricAggregation.Rate }
-      ]
-    });
-  }
-
-  return modules;
-}
-
-async function init(): Promise<void> {
+async function main(): Promise<void> {
   runEventLoopWatcher(coreLogger, shutdownToken);
 
   const metricReporter = new ModuleMetricReporter(1000, 10, 5);
@@ -107,10 +47,69 @@ async function init(): Promise<void> {
     await stopModules(modules, coreLogger);
   }
   else {
+    coreLogger.info('no modules requested to run');
     requestShutdown();
   }
 
   await disposeInstances();
 
   coreLogger.info('bye');
+}
+
+// eslint-disable-next-line max-statements, max-lines-per-function
+async function getModules(metricReporter: ModuleMetricReporter): Promise<Module[]> {
+  const modules: Module[] = [];
+
+  if (config.modules.api) {
+    const webServerModule = getWebServerModule();
+    modules.push(webServerModule);
+
+    metricReporter.register('WEB_SERVER', {
+      metric: webServerModule.metrics.requestCount,
+      reports: [
+        { displayName: 'Request Count', aggregation: MetricAggregation.Maximum },
+        { displayName: 'Requests/sec', aggregation: MetricAggregation.Rate }
+      ]
+    });
+  }
+
+  if (config.modules.filmlistManager) {
+    const filmlistManagerModule = await getFilmlistManagerModule();
+    modules.push(filmlistManagerModule);
+
+    metricReporter.register('Filmlist Manager', {
+      metric: filmlistManagerModule.metrics.enqueuedFilmlistsCount,
+      reports: [
+        { displayName: 'Enqueued Filmlists', aggregation: MetricAggregation.Maximum }
+      ]
+    });
+  }
+
+  if (config.modules.importer) {
+    const importerModule = await getEntriesImporterModule();
+    modules.push(importerModule);
+
+    metricReporter.register('Importer', {
+      metric: importerModule.metrics.importedEntriesCount,
+      reports: [
+        { displayName: 'Imported entries', aggregation: MetricAggregation.Maximum },
+        { displayName: 'Imported entries/sec', aggregation: MetricAggregation.Rate }
+      ]
+    });
+  }
+
+  if (config.modules.indexer) {
+    const indexerModule = await getEntriesIndexerModule();
+    modules.push(indexerModule);
+
+    metricReporter.register('Indexer', {
+      metric: indexerModule.metrics.indexedEntriesCount,
+      reports: [
+        { displayName: 'Indexed entries', aggregation: MetricAggregation.Maximum },
+        { displayName: 'Indexed entries/sec', aggregation: MetricAggregation.Rate }
+      ]
+    });
+  }
+
+  return modules;
 }

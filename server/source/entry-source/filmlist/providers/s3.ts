@@ -1,12 +1,13 @@
+import type { Logger } from '@tstdl/base/logger';
 import type { StringMap } from '@tstdl/base/types';
-import type { NonObjectBufferMode } from '@tstdl/server/utils';
+import { isDefined } from '@tstdl/base/utils';
 import { createHash } from '@tstdl/server/utils';
 import type { TypedReadable } from '@tstdl/server/utils/typed-readable';
 import * as Minio from 'minio';
+import type { Readable } from 'stream';
 import { pipeline } from 'stream';
 import * as xz from 'xz';
 import { createGunzip } from 'zlib';
-import { Filmlist } from '../filmlist-parser';
 import type { FilmlistResource } from '../filmlist-resource';
 import type { FilmlistProvider } from '../provider';
 
@@ -40,9 +41,8 @@ type ArchiveOptions = {
 };
 
 export enum FilmlistResourceTimestampStrategy {
-  None = 0,
-  LastModified = 1,
-  FileName = 2
+  LastModified = 0,
+  FileName = 1
 }
 
 const FILENAME_DATE_PATTERN = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
@@ -51,12 +51,14 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
   private readonly s3: Minio.Client;
   private readonly latest: LatestOptions | undefined;
   private readonly archive: ArchiveOptions | undefined;
+  private readonly logger: Logger;
 
   readonly type: 's3' = 's3';
   readonly source: string;
 
-  constructor(instanceName: string, { url, accessKey, secretKey, latest, archive }: S3FilmlistProviderOptions) {
+  constructor(instanceName: string, { url, accessKey, secretKey, latest, archive }: S3FilmlistProviderOptions, logger: Logger) {
     this.source = instanceName;
+    this.logger = logger;
 
     const { hostname, port, protocol } = new URL(url);
 
@@ -77,37 +79,37 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async *getLatest(): AsyncIterable<Filmlist> {
+  async *getLatest(): AsyncIterable<S3FilmlistResource> {
     if (this.latest == undefined) {
-      throw new Error('s3 options for latest not provided');
+      return;
     }
 
-    yield this.getFilmlist(this.latest.bucket, this.latest.object, FilmlistResourceTimestampStrategy.LastModified);
+    yield this.getFilmlistResource(this.latest.bucket, this.latest.object, FilmlistResourceTimestampStrategy.LastModified);
   }
 
-  async *getArchive(): AsyncIterable<Filmlist> {
+  async *getArchive(): AsyncIterable<S3FilmlistResource> {
     if (this.archive == undefined) {
-      throw new Error('s3 options for archive not provided');
+      return;
     }
 
     const stream = this.s3.listObjectsV2(this.archive.bucket, this.archive.prefix, true) as TypedReadable<Minio.BucketItem>;
 
     for await (const { name, etag, lastModified, size } of stream) {
-      yield this.getFilmlist(this.archive.bucket, name, this.archive.timestampStrategy, { etag, lastModified, size });
+      yield this.getFilmlistResource(this.archive.bucket, name, this.archive.timestampStrategy, { etag, lastModified, size });
     }
   }
 
-  async getFromResource(resource: S3FilmlistResource): Promise<Filmlist> {
+  async getFromResource(resource: S3FilmlistResource): Promise<Readable> {
     const metadata = await this.s3.statObject(resource.data.bucket, resource.data.object);
 
     if (metadata.etag != resource.data.etag) {
       throw new Error('etag mismatch');
     }
 
-    return this.getFilmlist(resource.data.bucket, resource.data.object, FilmlistResourceTimestampStrategy.None, { ...resource.data, resourceTimestamp: resource.timestamp });
+    return this.getStream(resource.data.bucket, resource.data.object);
   }
 
-  private async getFilmlist(bucket: string, object: string, resourceTimestampStrategy: FilmlistResourceTimestampStrategy, data?: { etag: string, lastModified: number | Date, size: number, resourceTimestamp?: number }): Promise<Filmlist> {
+  private async getFilmlistResource(bucket: string, object: string, resourceTimestampStrategy: FilmlistResourceTimestampStrategy, data?: { etag: string, lastModified: number | Date, size: number, resourceTimestamp?: number }): Promise<S3FilmlistResource> {
     const { etag, lastModified: lastModifiedData, size } = data != undefined ? data : await this.s3.statObject(bucket, object);
     const lastModified = typeof lastModifiedData == 'number' ? lastModifiedData : lastModifiedData.valueOf();
 
@@ -117,14 +119,6 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     let timestamp: number;
 
     switch (resourceTimestampStrategy) {
-      case FilmlistResourceTimestampStrategy.None:
-        if (data?.resourceTimestamp == undefined) {
-          throw new Error('FilmlistResourceTimestampStrategy is None, but resourceTimestamp not provided');
-        }
-
-        timestamp = data.resourceTimestamp;
-        break;
-
       case FilmlistResourceTimestampStrategy.LastModified:
         timestamp = lastModified;
         break;
@@ -138,32 +132,26 @@ export class S3FilmlistProvider implements FilmlistProvider<S3FilmlistResource> 
     }
 
     const resource: S3FilmlistResource = { type: 's3', source: this.source, tag, timestamp, data: resourceData };
-    const streamProvider = this.getStreamProvider(bucket, object);
-    const filmlist = new Filmlist(resource, streamProvider);
-
-    return filmlist;
+    return resource;
   }
 
-  private getStreamProvider(bucket: string, object: string): () => Promise<TypedReadable<NonObjectBufferMode>> {
-    const streamProvider = async (): Promise<TypedReadable<NonObjectBufferMode>> => {
-      let stream = await this.s3.getObject(bucket, object) as NodeJS.ReadableStream;
+  private async getStream(bucket: string, object: string): Promise<Readable> {
+    let stream = await this.s3.getObject(bucket, object) as NodeJS.ReadableStream;
 
-      const decompressStream
-        = object.endsWith('.gz') ? createGunzip()
-          : object.endsWith('.xz') ? new xz.Decompressor()
-            : undefined;
+    const decompressStream
+      = object.endsWith('.gz') ? createGunzip()
+        : object.endsWith('.xz') ? new xz.Decompressor()
+          : undefined;
 
-      if (decompressStream != undefined) {
-        stream = pipeline(
-          stream,
-          decompressStream
-        );
-      }
+    if (decompressStream != undefined) {
+      stream = pipeline(stream, decompressStream, (error) => {
+        if (isDefined(error)) {
+          this.logger.error(error, true);
+        }
+      });
+    }
 
-      return stream as TypedReadable<NonObjectBufferMode>;
-    };
-
-    return streamProvider;
+    return stream as Readable;
   }
 }
 

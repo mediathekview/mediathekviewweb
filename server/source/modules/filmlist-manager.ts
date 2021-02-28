@@ -1,3 +1,4 @@
+import type { FilmlistResource } from '$root/entry-source/filmlist';
 import type { FilmlistImportJobData, NewFilmlistImportRecord } from '$shared/models/filmlist';
 import { FilmlistImportRecordState } from '$shared/models/filmlist';
 import { AsyncEnumerable } from '@tstdl/base/enumerable';
@@ -11,7 +12,6 @@ import type { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
 import type { Module } from '@tstdl/server/module';
 import { ModuleBase, ModuleMetricType } from '@tstdl/server/module';
 import { config } from '../config';
-import type { Filmlist } from '../entry-source/filmlist/filmlist-parser';
 import type { FilmlistProvider } from '../entry-source/filmlist/provider';
 import { keys } from '../keys';
 import type { FilmlistImportRepository } from '../repositories/filmlist-import.repository';
@@ -81,8 +81,8 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
 
   private async checkLatest(): Promise<void> {
     this.logger.verbose('checking for new current-filmlist');
-    const filmlists = this.filmlistProvider.getLatest();
-    await this.enqueueMissingFilmlists(filmlists, 0);
+    const latest = this.filmlistProvider.getLatest();
+    await this.enqueueMissingFilmlistResources(latest, 0);
   }
 
   private async checkArchive(): Promise<void> {
@@ -91,22 +91,22 @@ export class FilmlistManagerModule extends ModuleBase implements Module {
     const minimumTimestamp = currentTimestamp() - MAX_AGE_MILLISECONDS;
 
     const archive = this.filmlistProvider.getArchive(minimumTimestamp);
-    await this.enqueueMissingFilmlists(archive, minimumTimestamp);
+    await this.enqueueMissingFilmlistResources(archive, minimumTimestamp);
   }
 
-  private async enqueueMissingFilmlists(filmlists: AnyIterable<Filmlist>, minimumTimestamp: number): Promise<void> {
-    const filmlistsEnumerable = new AsyncEnumerable(filmlists);
+  private async enqueueMissingFilmlistResources(resources: AnyIterable<FilmlistResource>, minimumTimestamp: number): Promise<void> {
+    const filmlistsEnumerable = new AsyncEnumerable(resources);
 
     await filmlistsEnumerable
       .while(() => !this.cancellationToken.isSet)
-      .filter((filmlist) => filmlist.resource.timestamp >= minimumTimestamp)
-      .filter(async (filmlist) => !(await this.filmlistImportRepository.hasFilmlistResourceImport(filmlist.resource.source, filmlist.resource.tag)))
-      .forEach(async (filmlist) => this.enqueueFilmlist(filmlist));
+      .filter((resource) => resource.timestamp >= minimumTimestamp)
+      .filter(async (resource) => !(await this.filmlistImportRepository.hasFilmlistResourceImport(resource.source, resource.tag)))
+      .forEach(async (resource) => this.enqueueFilmlistResource(resource));
   }
 
-  private async enqueueFilmlist(filmlist: Filmlist): Promise<void> {
+  private async enqueueFilmlistResource(resource: FilmlistResource): Promise<void> {
     const filmlistImport: NewFilmlistImportRecord = {
-      resource: filmlist.resource,
+      resource,
       state: FilmlistImportRecordState.Pending,
       enqueueTimestamp: currentTimestamp()
     };

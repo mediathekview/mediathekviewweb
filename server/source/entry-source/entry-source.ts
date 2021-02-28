@@ -1,6 +1,6 @@
-import type { Entry } from '$shared/models/core';
+import type { NewEntry } from '$shared/models/core';
 import type { CancellationToken } from '@tstdl/base/utils/cancellation-token';
 
 export interface EntrySource {
-  getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]>;
+  getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<NewEntry[]>;
 }

@@ -1,6 +1,7 @@
-import { EntriesImporterModule, EntriesIndexerModule, FilmlistManagerKeyValues, FilmlistManagerModule } from '$root/modules';
-import type { AggregatedEntry, Entry } from '$shared/models/core';
-import type { FilmlistImportJobData, FilmlistImportRecord } from '$shared/models/filmlist';
+import type { FilmlistManagerKeyValues } from '$root/modules';
+import { EntriesImporterModule, EntriesIndexerModule, FilmlistManagerModule } from '$root/modules';
+import type { AggregatedEntry } from '$shared/models/core';
+import type { FilmlistImportJobData } from '$shared/models/filmlist';
 import type { SearchEngine } from '$shared/search-engine';
 import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import { disposeAsync } from '@tstdl/base/disposable';
@@ -8,8 +9,7 @@ import { configureBaseInstanceProvider, disposer, getKeyValueStore, getLockProvi
 import { LogLevel } from '@tstdl/base/logger';
 import type { Queue } from '@tstdl/base/queue';
 import { singleton } from '@tstdl/base/utils';
-import type { Collection } from '@tstdl/mongo';
-import { configureMongoInstanceProvider, getMongoCollection, getMongoLockProvider, getMongoMigrationStateRepository, getMongoQueue, getMongoRepository } from '@tstdl/mongo/instance-provider';
+import { configureMongoInstanceProvider, getMongoKeyValueStoreProvider, getMongoLockProvider, getMongoMigrationStateRepository, getMongoQueue, getMongoRepository } from '@tstdl/mongo/instance-provider';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
 import { configureServerInstanceProvider, connect } from '@tstdl/server/instance-provider';
 import type * as Mongo from 'mongodb';
@@ -21,6 +21,7 @@ import type { FilmlistProvider } from './entry-source/filmlist';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import type { S3FilmlistProviderOptions } from './entry-source/filmlist/providers';
 import { FilmlistResourceTimestampStrategy, S3FilmlistProvider } from './entry-source/filmlist/providers';
+import { MultiFilmlistProvider } from './entry-source/filmlist/providers/multi';
 import { mongoQueues, mongoRepositories } from './mongo-configs';
 import type { EntryRepository, FilmlistImportRepository } from './repositories';
 import { MongoEntryRepository } from './repositories/mongo/entry.repository';
@@ -29,8 +30,28 @@ import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
 import { Converter } from './search-engine/elasticsearch/converter';
 import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 
-const MVW_VERTEILER_FILMLIST_PROVIDER_INSTANCE_NAME = 'mvw-verteiler';
-const MVW_VERTEILER_S3_URL = 'https://s3.mediathekviewweb.de';
+const MVW_ARCHIVE_FILMLIST_PROVIDER_INSTANCE_NAME = 'mvw-verteiler';
+const MV_VERTEILER_FILMLIST_PROVIDER_INSTANCE_NAME = 'mv-verteiler';
+const S3_FILMLIST_ARCHIVE_ENDPOINT = 'https://s3.mediathekviewweb.de';
+const S3_FILMLIST_ARCHIVE_BUCKET = 'verteiler-archiv';
+const S3_LATEST_ENDPOINT = 'https://s3.mvorg.de';
+const S3_LATEST_BUCKET = 'filmlisten';
+const S3_LATEST_OBJECT = 'Filmliste-akt.xz';
+
+
+const mvwArchivOptions: S3FilmlistProviderOptions = {
+  url: S3_FILMLIST_ARCHIVE_ENDPOINT,
+  accessKey: '',
+  secretKey: '',
+  archive: { bucket: S3_FILMLIST_ARCHIVE_BUCKET, timestampStrategy: FilmlistResourceTimestampStrategy.FileName }
+};
+
+const mvVerteilerOptions: S3FilmlistProviderOptions = {
+  url: S3_LATEST_ENDPOINT,
+  accessKey: '',
+  secretKey: '',
+  latest: { bucket: S3_LATEST_BUCKET, object: S3_LATEST_OBJECT }
+};
 
 const MONGO_CONNECTION_STRING = 'mongodb://localhost:27017';
 const MONGO_CLIENT_OPTIONS: Mongo.MongoClientOptions = {
@@ -43,7 +64,8 @@ const ELASTICSEARCH_INDEX_NAME = 'mediathekviewweb';
 const ELASTICSEARCH_INDEX_SETTINGS = elasticsearchSettings;
 const ELASTICSEARCH_INDEX_MAPPING = elasticsearchMapping;
 
-const FILMLIST_ENTRY_SOURCE = 'FILMLIST SOURCE';
+const FILMLIST_ENTRY_SOURCE_LOG = 'FILMLIST SOURCE';
+const S3_LOG = 'S3';
 const SEARCH_ENGINE_LOG = 'SEARCH ENGINE';
 const ELASTICSEARCH_LOG = 'ELASTICSEARCH';
 
@@ -55,7 +77,8 @@ const filmlistManagerKeyValueStoreScope = 'filmlist-manager';
 
 configureBaseInstanceProvider({
   logLevel: LogLevel.Trace,
-  lockProviderProvider: getMongoLockProvider
+  lockProviderProvider: getMongoLockProvider,
+  keyValueStoreProviderProvider: getMongoKeyValueStoreProvider
 });
 
 configureServerInstanceProvider({
@@ -73,7 +96,7 @@ configureMongoInstanceProvider({
   mongoKeyValueRepositoryConfig: mongoRepositories.keyValues
 });
 
-async function getEntriesIndexerModule(): Promise<EntriesIndexerModule> {
+export async function getEntriesIndexerModule(): Promise<EntriesIndexerModule> {
   return singleton(EntriesIndexerModule, async () => {
     const aggregatedEntryDataSource = getAggregatedEntryDataSource();
     const searchEngine = await getEntrySearchEngine();
@@ -84,11 +107,11 @@ async function getEntriesIndexerModule(): Promise<EntriesIndexerModule> {
   });
 }
 
-async function getFilmlistImportQueue(): Promise<Queue<FilmlistImportJobData>> {
+export async function getFilmlistImportQueue(): Promise<Queue<FilmlistImportJobData>> {
   return getMongoQueue(mongoQueues.filmlistImportQueue);
 }
 
-async function getElasticsearch(): Promise<ElasticsearchClient> {
+export async function getElasticsearch(): Promise<ElasticsearchClient> {
   return singleton(ElasticsearchClient, async () => {
     const logger = getLogger(ELASTICSEARCH_LOG);
 
@@ -104,34 +127,29 @@ async function getElasticsearch(): Promise<ElasticsearchClient> {
   });
 }
 
-async function getEntriesCollection(): Promise<Collection<Entry>> {
-  return getMongoCollection(mongoRepositories.entries);
+export function getFilmlistProvider(): FilmlistProvider {
+  return singleton(MultiFilmlistProvider, () => {
+    const logger = getLogger(S3_LOG);
+
+    const archive = new S3FilmlistProvider(MVW_ARCHIVE_FILMLIST_PROVIDER_INSTANCE_NAME, mvwArchivOptions, logger);
+    const latest = new S3FilmlistProvider(MV_VERTEILER_FILMLIST_PROVIDER_INSTANCE_NAME, mvVerteilerOptions, logger);
+    const provider = new MultiFilmlistProvider();
+
+    provider.registerProvider(archive);
+    provider.registerProvider(latest);
+
+    return provider;
+  });
 }
 
-async function getFilmlistImportCollection(): Promise<Collection<FilmlistImportRecord>> {
-  return getMongoCollection(mongoRepositories.filmlistImports);
-}
-
-function filmlistProvider(): FilmlistProvider {
-  const options: S3FilmlistProviderOptions = {
-    url: MVW_VERTEILER_S3_URL,
-    accessKey: '',
-    secretKey: '',
-    latest: { bucket: 'verteiler', object: 'Filmliste-akt.xz' },
-    archive: { bucket: 'verteiler-archiv', timestampStrategy: FilmlistResourceTimestampStrategy.FileName }
-  };
-
-  return singleton(S3FilmlistProvider, () => new S3FilmlistProvider(MVW_VERTEILER_FILMLIST_PROVIDER_INSTANCE_NAME, options));
-}
-
-async function getDistributedLoopProvider(): Promise<DistributedLoopProvider> {
+export async function getDistributedLoopProvider(): Promise<DistributedLoopProvider> {
   return singleton(DistributedLoopProvider, async () => {
     const lockProvider = await getLockProvider();
     return new DistributedLoopProvider(lockProvider);
   });
 }
 
-async function getEntriesImporterModule(): Promise<EntriesImporterModule> {
+export async function getEntriesImporterModule(): Promise<EntriesImporterModule> {
   return singleton(EntriesImporterModule, async () => {
     const entryRepository = await getEntryRepository();
     const logger = getLogger(ENTRIES_IMPORTER_MODULE_LOG);
@@ -141,19 +159,19 @@ async function getEntriesImporterModule(): Promise<EntriesImporterModule> {
   });
 }
 
-async function getEntryRepository(): Promise<EntryRepository> {
+export async function getEntryRepository(): Promise<EntryRepository> {
   return getMongoRepository(MongoEntryRepository, mongoRepositories.entries);
 }
 
-async function getFilmlistImportRepository(): Promise<FilmlistImportRepository> {
+export async function getFilmlistImportRepository(): Promise<FilmlistImportRepository> {
   return getMongoRepository(MongoFilmlistImportRepository, mongoRepositories.filmlistImports);
 }
 
-function aggregatedEntryDataSource(): AggregatedEntryDataSource {
+export function getAggregatedEntryDataSource(): AggregatedEntryDataSource {
   return singleton(NonWorkingAggregatedEntryDataSource, () => new NonWorkingAggregatedEntryDataSource());
 }
 
-async function getEntrySearchEngine(): Promise<SearchEngine<AggregatedEntry>> {
+export async function getEntrySearchEngine(): Promise<SearchEngine<AggregatedEntry>> {
   return singleton(ElasticsearchSearchEngine, async () => {
     const elasticsearch = await getElasticsearch();
     const converter = getElasticsearchConverter();
@@ -170,7 +188,7 @@ async function getEntrySearchEngine(): Promise<SearchEngine<AggregatedEntry>> {
   });
 }
 
-function getElasticsearchConverter(): Converter {
+export function getElasticsearchConverter(): Converter {
   return singleton(Converter, () => {
     const keywordRewrites = new Set(textTypeFields);
     const sortConverter = new ConvertHandlers.SortConverter(keywordRewrites);
@@ -190,19 +208,19 @@ function getElasticsearchConverter(): Converter {
   });
 }
 
-async function getFilmlistEntrySource(): Promise<FilmlistEntrySource> {
+export async function getFilmlistEntrySource(): Promise<FilmlistEntrySource> {
   return singleton(FilmlistEntrySource, async () => {
     const filmlistProvider = getFilmlistProvider();
     const filmlistImportRepository = await getFilmlistImportRepository();
     const importQueue = await getFilmlistImportQueue();
     const lockProvider = await getLockProvider();
-    const logger = getLogger(FILMLIST_ENTRY_SOURCE);
+    const logger = getLogger(FILMLIST_ENTRY_SOURCE_LOG);
 
     return new FilmlistEntrySource(filmlistProvider, filmlistImportRepository, importQueue, lockProvider, logger);
   });
 }
 
-async function getFilmlistManagerModule(): Promise<FilmlistManagerModule> {
+export async function getFilmlistManagerModule(): Promise<FilmlistManagerModule> {
   return singleton(FilmlistManagerModule, async () => {
     const keyValueStore = await getKeyValueStore<FilmlistManagerKeyValues>(filmlistManagerKeyValueStoreScope);
     const filmlistImportRepository = await getFilmlistImportRepository();

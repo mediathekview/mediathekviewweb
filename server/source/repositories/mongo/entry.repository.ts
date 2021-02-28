@@ -1,20 +1,20 @@
 import type { EntryRepository } from '$repositories/entry.repository';
-import type { Entry } from '$shared/models/core';
+import type { Entry, NewEntry } from '$shared/models/core';
 import { fields } from '$shared/models/core';
 import type { Logger } from '@tstdl/base/logger';
-import { Alphabet, createArray, currentTimestamp, getRandomString } from '@tstdl/base/utils';
+import { Alphabet, currentTimestamp, getRandomString } from '@tstdl/base/utils';
 import type { Collection, FilterQuery, TypedIndexSpecification, UpdateQuery } from '@tstdl/mongo';
-import { MongoEntityRepository, noopTransformer, toMongoDocument } from '@tstdl/mongo';
+import { getNewDocumentId, MongoEntityRepository, noopTransformer } from '@tstdl/mongo';
 
 const indexes: TypedIndexSpecification<Entry>[] = [
-  { key: { [fields.tag]: 1 }, unique: true },
-  { key: { [fields.firstSeen]: 1 } },
-  { key: { [fields.lastSeen]: 1 } },
-  { key: { [fields.indexRequiredSince]: 1 } },
-  { key: { [fields.indexJobTimeout]: 1 } },
-  { key: { [fields.indexJob]: 1 } },
-  { key: { [fields.indexRequiredSince]: 1, [fields.indexJob]: 1 } },
-  { key: { [fields.indexRequiredSince]: 1, [fields.indexJobTimeout]: 1 } }
+  { name: 'source_tag', key: { [fields.source]: 1, [fields.tag]: 1 }, unique: true },
+  { name: 'firstSeen', key: { [fields.firstSeen]: 1 } },
+  { name: 'lastSeen', key: { [fields.lastSeen]: 1 } },
+  { name: 'indexRequiredSince', key: { [fields.indexRequiredSince]: 1 } },
+  { name: 'indexJobTimeout', key: { [fields.indexJobTimeout]: 1 } },
+  { name: 'indexJob', key: { [fields.indexJob]: 1 } },
+  { name: 'indexRequiredSince_indexJob', key: { [fields.indexRequiredSince]: 1, [fields.indexJob]: 1 } },
+  { name: 'indexRequiredSince_indexJobTimeout', key: { [fields.indexRequiredSince]: 1, [fields.indexJobTimeout]: 1 } }
 ];
 
 export class MongoEntryRepository extends MongoEntityRepository<Entry> implements EntryRepository {
@@ -26,19 +26,26 @@ export class MongoEntryRepository extends MongoEntityRepository<Entry> implement
     await this.collection.createIndexes(indexes);
   }
 
-  async save(entry: Entry): Promise<void> {
+  async upsertEntry(entry: NewEntry): Promise<void> {
     const { updateOne: { filter, update, upsert } } = toUpdateOneOperation(entry);
     await this.collection.updateOne(filter, update, { upsert });
   }
 
-  async saveMany(entries: Entry[]): Promise<void> {
-    const operations = entries.map(toUpdateOneOperation);
-    await this.collection.bulkWrite(operations, { ordered: false });
+  async upsertEntries(entries: NewEntry[]): Promise<void> {
+    const bulk = this.baseRepository.bulk();
+
+    for (const entry of entries) {
+      const { updateOne: { filter, update, upsert } } = toUpdateOneOperation(entry);
+
+      bulk.update(filter, update, { upsert });
+    }
+
+    await bulk.execute(false);
   }
 
   async getIndexJob(count: number, timeout: number): Promise<{ jobId: string, entries: Entry[] }> {
-    const indexJob = getRandomString(10, Alphabet.LowerUpperCaseNumbers);
     const timestamp = currentTimestamp();
+    const indexJob = getRandomString(10, Alphabet.LowerUpperCaseNumbers);
 
     const filter: FilterQuery<Entry> = {
       $or: [
@@ -54,8 +61,14 @@ export class MongoEntryRepository extends MongoEntityRepository<Entry> implement
       }
     };
 
-    const operations = createArray(count, () => ({ updateOne: { filter, update } }));
-    await this.baseRepository.collection.bulkWrite(operations);
+    const bulk = this.baseRepository.bulk();
+
+    for (let i = 0; i < count; i++) {
+      bulk.update(filter, update);
+    }
+
+    await bulk.execute();
+
     const entries = await this.baseRepository.loadManyByFilter({ indexJob });
 
     return { jobId: indexJob, entries };
@@ -67,10 +80,10 @@ export class MongoEntryRepository extends MongoEntityRepository<Entry> implement
     };
 
     const update: UpdateQuery<Entry> = {
-      $set: {
-        [fields.indexRequiredSince]: undefined,
-        [fields.indexJobTimeout]: undefined,
-        [fields.indexJob]: undefined
+      $unset: {
+        [fields.indexRequiredSince]: true,
+        [fields.indexJobTimeout]: true,
+        [fields.indexJob]: true
       }
     };
 
@@ -79,21 +92,30 @@ export class MongoEntryRepository extends MongoEntityRepository<Entry> implement
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function toUpdateOneOperation(entry: Entry) {
+function toUpdateOneOperation(entry: NewEntry) {
+  const timestamp = currentTimestamp();
+
   const filter: FilterQuery<Entry> = {
-    _id: entry.id
+    source: entry.source,
+    tag: entry.tag
   };
 
-  const { lastSeen, firstSeen, ...documentWithoutFirstAndLastSeen } = toMongoDocument(entry);
+  const { lastSeen, firstSeen, ...entryWithoutFirstAndLastSeen } = entry;
 
   const update: UpdateQuery<Entry> = {
     $max: { lastSeen },
     $min: { firstSeen },
     $set: {
-      ...documentWithoutFirstAndLastSeen,
-      [fields.indexRequiredSince]: currentTimestamp(),
+      ...entryWithoutFirstAndLastSeen,
+      [fields.indexRequiredSince]: timestamp,
       [fields.indexJob]: undefined,
-      [fields.indexJobTimeout]: undefined
+      [fields.indexJobTimeout]: undefined,
+      updated: timestamp
+    },
+    $setOnInsert: {
+      _id: getNewDocumentId(),
+      created: timestamp,
+      deleted: false
     }
   };
 

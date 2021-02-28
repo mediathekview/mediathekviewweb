@@ -1,13 +1,15 @@
-import type { Entry } from '$shared/models/core';
-import { FilmlistImportJobData, FilmlistImportRecord, FilmlistImportRecordState } from '$shared/models/filmlist';
+import type { NewEntry } from '$shared/models/core';
+import type { FilmlistEntry, FilmlistImportJobData, FilmlistImportRecord } from '$shared/models/filmlist';
+import { FilmlistImportRecordState } from '$shared/models/filmlist';
 import type { LockProvider } from '@tstdl/base/lock';
 import type { Logger } from '@tstdl/base/logger';
 import type { Job, Queue } from '@tstdl/base/queue';
 import { currentTimestamp, Timer } from '@tstdl/base/utils';
 import type { CancellationToken } from '@tstdl/base/utils/cancellation-token';
-import { EntityPatch } from '@tstdl/database';
+import type { EntityPatch } from '@tstdl/database';
 import type { FilmlistImportRepository } from '../../repositories/filmlist-import.repository';
 import type { EntrySource } from '../entry-source';
+import { parseFilmlist } from './filmlist-parser';
 import type { FilmlistProvider } from './provider';
 
 export class FilmlistEntrySource implements EntrySource {
@@ -25,7 +27,7 @@ export class FilmlistEntrySource implements EntrySource {
     this.logger = logger;
   }
 
-  async *getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
+  async *getEntries(cancellationToken: CancellationToken): AsyncIterableIterator<NewEntry[]> {
     const consumer = this.importQueue.getConsumer(cancellationToken);
 
     for await (const job of consumer) {
@@ -43,23 +45,23 @@ export class FilmlistEntrySource implements EntrySource {
   }
 
   // eslint-disable-next-line max-statements, max-lines-per-function
-  private async *processFilmlistImport(job: Job<FilmlistImportJobData>, importQueue: Queue<FilmlistImportJobData>, cancellationToken: CancellationToken): AsyncIterableIterator<Entry[]> {
+  private async *processFilmlistImport(job: Job<FilmlistImportJobData>, importQueue: Queue<FilmlistImportJobData>, cancellationToken: CancellationToken): AsyncIterableIterator<NewEntry[]> {
     const importTimestamp = currentTimestamp();
     const filmlistImportId = job.data.filmlistImportId;
     const filmlistImport = await this.filmlistImportRepository.load(filmlistImportId);
 
-    const filmlist = await this.filmlistProvider.getFromResource(filmlistImport.resource);
-    const { id: filmlistId, timestamp: filmlistTimestamp } = await filmlist.getMetadata();
+    const filmlistStream = await this.filmlistProvider.getFromResource(filmlistImport.resource);
+    const filmlist = await parseFilmlist(filmlistStream);
 
-    const lock = this.lockProvider.get(`filmlist:${filmlistId}`);
+    const lock = this.lockProvider.get(`filmlist:${filmlist.id}`);
 
     let hasFilmlist = false;
     const { success } = await lock.using(30000, false, async () => {
-      hasFilmlist = await this.filmlistImportRepository.hasFilmlistResourceImport(filmlistImport.id, filmlistId);
+      hasFilmlist = await this.filmlistImportRepository.hasFilmlistResourceImport(filmlistImport.id, filmlist.id);
 
       const update: EntityPatch<FilmlistImportRecord> = hasFilmlist
-        ? { state: FilmlistImportRecordState.Duplicate, filmlistId, filmlistTimestamp, importTimestamp }
-        : { filmlistId, filmlistTimestamp, importTimestamp };
+        ? { state: FilmlistImportRecordState.Duplicate, filmlistId: filmlist.id, filmlistTimestamp: filmlist.timestamp, importTimestamp }
+        : { filmlistId: filmlist.id, filmlistTimestamp: filmlist.timestamp, importTimestamp };
 
       await this.filmlistImportRepository.patch(filmlistImport, update);
     });
@@ -70,28 +72,52 @@ export class FilmlistEntrySource implements EntrySource {
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (hasFilmlist) {
-      this.logger.info(`skipping import of filmlist ${filmlistMetadata.id}, because it already is (being) imported`);
+      this.logger.info(`skipping import of filmlist ${filmlist.id}, because it already is (being) imported`);
       await importQueue.acknowledge(job);
       return;
     }
 
-    const date = new Date(filmlistMetadata.timestamp);
-    this.logger.info(`processing filmlist ${filmlistMetadata.id} from ${date.toString()}`);
+    const date = new Date(filmlist.timestamp);
+    this.logger.info(`processing filmlist ${filmlist.id} from ${date.toString()}`);
 
     const timer = new Timer(true);
     let entriesCount = 0;
 
-    for await (const entries of filmlist) {
+    for await (const entries of filmlist.entries) {
       entriesCount += entries.length;
-      yield entries;
+      yield entries.map((entry) => toNewEntry(entry, filmlist.timestamp));
 
       if (cancellationToken.isSet) {
         return;
       }
     }
 
-    const processData: FilmlistImportProcessData = { state: 'ok', filmlistMetadata, importTimestamp, importDuration: timer.milliseconds, entriesCount };
-    await this.filmlistImportRepository.updateState(filmlistImport.id, processData);
+    await this.filmlistImportRepository.patch(filmlistImport, {
+      state: FilmlistImportRecordState.Imported,
+      importTimestamp,
+      importDuration: timer.milliseconds,
+      entriesCount
+    });
+
     await importQueue.acknowledge(job);
   }
+}
+
+function toNewEntry(filmlistEntry: FilmlistEntry, filmlistTimestamp: number): NewEntry {
+  const entry: NewEntry = {
+    source: filmlistEntry.source,
+    tag: filmlistEntry.tag,
+    channel: filmlistEntry.channel,
+    topic: filmlistEntry.topic,
+    title: filmlistEntry.title,
+    timestamp: filmlistEntry.timestamp,
+    duration: filmlistEntry.duration,
+    description: filmlistEntry.description,
+    website: filmlistEntry.website,
+    media: filmlistEntry.media,
+    firstSeen: filmlistTimestamp,
+    lastSeen: filmlistTimestamp
+  };
+
+  return entry;
 }

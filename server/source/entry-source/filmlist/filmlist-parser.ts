@@ -1,291 +1,210 @@
 import { createSubtitle, createVideo } from '$shared/models/core';
 import type { FilmlistEntry } from '$shared/models/filmlist';
-import { AsyncIteratorIterableIterator, isDefined, isUndefined, matchAll, zBase32Encode } from '@tstdl/base/utils';
-import type { NonObjectBufferMode } from '@tstdl/server/utils';
+import { AsyncIteratorIterableIterator, millisecondsPerHour, millisecondsPerMinute, millisecondsPerSecond, zBase32Encode } from '@tstdl/base/utils';
 import { createHash } from '@tstdl/server/utils';
-import type { TypedReadable } from '@tstdl/server/utils/typed-readable';
+import { DateTime } from 'luxon';
+import type { Readable } from 'stream';
 import { StringDecoder } from 'string_decoder';
 import type { FilmlistMetadata } from './filmlist-metadata';
-import type { FilmlistResource } from './filmlist-resource';
 
-/* eslint-disable prefer-named-capture-group */
-const METADATA_REGEX = /\{\s*"Filmliste"\s?:\s?(\[(?:\s?"[^"]*?",?){5}\s?\])/u;
-const METADATA_DATE_REGEX = /(\d+).(\d+).(\d+),\s(\d+):(\d+)/u;
-const ENTRY_REGEX = /(?:"X":(\[(?:"[^"]*?",){16}"(?:\d+|)",(?:"[^"]*?",){2}"(?:false|true)"\])(?:,|}))|(?:"X":(\[(?:"[\w\W]*?",){16}"(?:\d+|)",(?:"[\w\W]*?",){2}"(?:false|true)"\])(?:,|}))|(?:"X"\s:\s(\[(?:\s"[^"]*?",){16}\s"(?:\d+|)"(?:,\s"[^"]*?"){3}\s\])(?:,|\s*}))|(?:"X"\s:\s(\[(?:\s"[\w\W]*?",){16}\s"(?:\d+|)"(?:,\s"[\w\W]*?"){3}\s\])(?:,|\s*}))/ug;
-/* eslint-enable prefer-named-capture-group */
-
-export type FilmlistParseResult = FilmlistMetadataParseResult | EntriesParseResult;
-
-export type FilmlistMetadataParseResult = {
-  filmlistMetadata: FilmlistMetadata,
-  entries: undefined
+export type FilmlistParseResult = {
+  id: string,
+  timestamp: number,
+  entries: AsyncIterableIterator<FilmlistEntry[]>
 };
 
-export type EntriesParseResult = {
-  filmlistMetadata: undefined,
-  entries: FilmlistEntry[]
-};
+// eslint-disable-next-line max-lines-per-function
+export async function parseFilmlist(stream: Readable): Promise<FilmlistParseResult> {
+  const stringDecoder = new StringDecoder('utf8');
+  const iterator = stream[Symbol.asyncIterator]();
+  const streamIterable = new AsyncIteratorIterableIterator(iterator, true);
 
-export class Filmlist implements AsyncIterable<FilmlistEntry[]> {
-  private readonly streamProvider: () => Promise<TypedReadable<NonObjectBufferMode>>;
+  let buffer = '';
+  let metadata: FilmlistMetadata;
 
-  private started: boolean;
-  private parseIterable: AsyncIteratorIterableIterator<FilmlistParseResult> | undefined;
-  private buffer: string;
-  private filmlistMetadata: FilmlistMetadata | undefined;
-  private lastChannel: string;
-  private lastTopic: string;
+  const parseMetadata = (): FilmlistMetadata => {
+    const metadataPrefix = '{"Filmliste":';
+    const metadataSuffix = ',"Filmliste":';
+    const entriesPrefix = ',"X":';
+    const metadataStart = buffer.indexOf(metadataPrefix) + metadataPrefix.length;
+    const metadataEnd = buffer.indexOf(metadataSuffix) - 1;
+    const entriesStart = buffer.indexOf(entriesPrefix) + entriesPrefix.length;
+    const metadataArrayString = buffer.slice(metadataStart, metadataEnd + 1);
+    const filmlistMetadata = parseFilmlistMetadata(metadataArrayString);
 
-  readonly resource: FilmlistResource;
+    buffer = buffer.slice(entriesStart);
 
-  constructor(resource: FilmlistResource, streamProvider: () => Promise<TypedReadable<NonObjectBufferMode>>) {
-    this.resource = resource;
-    this.streamProvider = streamProvider;
+    return filmlistMetadata;
+  };
 
-    this.started = false;
-    this.buffer = '';
-    this.filmlistMetadata = undefined;
-    this.lastChannel = '';
-    this.lastTopic = '';
+
+  for await (const chunk of streamIterable) {
+    buffer += stringDecoder.write(chunk);
+
+    if (buffer.length < 250) {
+      continue;
+    }
+
+    metadata = parseMetadata();
+    break;
   }
 
-  async getMetadata(): Promise<FilmlistMetadata> {
-    if (this.filmlistMetadata != undefined) {
-      return this.filmlistMetadata;
-    }
+  // eslint-disable-next-line max-lines-per-function
+  async function* getEntries(): AsyncIterableIterator<FilmlistEntry[]> {
+    let lastChannel: string;
+    let lastTopic: string;
 
-    const iterable = this.getIterable();
+    const parseEntries = (isLast: boolean = false): FilmlistEntry[] => {
+      const rawEntries = buffer.split(',"X":');
 
-    for await (const item of iterable) {
-      if (item.filmlistMetadata != undefined) {
-        this.filmlistMetadata = item.filmlistMetadata;
-        return this.filmlistMetadata;
+      if (rawEntries.length == 0) {
+        return [];
       }
 
-      if (isUndefined(item.entries)) {
-        throw new Error('this should not happen...');
+      if (!isLast) {
+        buffer = rawEntries.pop()!;
       }
-    }
 
-    throw new Error('could not parse filmlist');
-  }
+      const entries: FilmlistEntry[] = [];
 
-  async *[Symbol.asyncIterator](): AsyncIterator<FilmlistEntry[]> {
-    if (this.started) {
-      throw new Error('already started iteration');
-    }
+      for (const rawEntry of rawEntries) {
+        const entry = parseRawEntry(rawEntry, lastChannel, lastTopic);
 
-    this.started = true;
-    const iterable = this.getIterable();
-    await this.getMetadata();
+        lastChannel = entry.channel;
+        lastTopic = entry.topic;
 
-    for await (const item of iterable) {
-      if (isDefined(item.entries)) {
-        yield item.entries;
+        entries.push(entry);
       }
-      else if (isUndefined(item.filmlistMetadata)) {
-        throw new Error('this should not happen...');
-      }
-    }
-  }
 
-  private getIterable(): AsyncIteratorIterableIterator<FilmlistParseResult> {
-    if (this.parseIterable == undefined) {
-      const iterator = this.parseFilmlist();
-      this.parseIterable = new AsyncIteratorIterableIterator(iterator, true);
-    }
+      return entries;
+    };
 
-    return this.parseIterable;
-  }
+    for await (const chunk of streamIterable) {
+      buffer += stringDecoder.write(chunk);
 
-  private async *parseFilmlist(): AsyncIterableIterator<FilmlistParseResult> {
-    const stringDecoder = new StringDecoder('utf8');
-    const stream = await this.streamProvider();
-
-    for await (const chunk of stream) {
-      this.buffer += stringDecoder.write(chunk);
-
-      if (this.buffer.length < 50000) {
+      if (buffer.length < 250000) {
         continue;
       }
 
-      const result = this.parse();
+      const entries = parseEntries();
 
-      if (result != undefined) {
-        yield result;
+      if (entries.length > 0) {
+        yield entries;
       }
     }
 
-    this.buffer += stringDecoder.end();
-    const result = this.parse();
+    buffer += stringDecoder.end();
+    buffer = buffer.slice(0, -1); // removes trailing '}'
 
-    if (result != undefined) {
-      yield result;
+    const entries = parseEntries(true);
+
+    if (entries.length > 0) {
+      yield entries;
     }
   }
 
-  private parse(): FilmlistParseResult | undefined {
-    if (this.filmlistMetadata == undefined) {
-      const filmlistMetadata = this.parseFilmlistMetadata();
+  return {
+    id: metadata!.id,
+    timestamp: metadata!.timestamp,
+    entries: getEntries()
+  };
+}
 
-      if (filmlistMetadata != undefined) {
-        return { filmlistMetadata, entries: undefined };
-      }
-    }
-    else {
-      const entries = this.parseEntries();
+function parseFilmlistMetadata(metdataArrayString: string): FilmlistMetadata {
+  const [
+    , // date
+    utcDate,
+    version,
+    , // mSearchVersion,
+    id
+  ] = JSON.parse(metdataArrayString) as string[];
 
-      if (entries != undefined) {
-        return { filmlistMetadata: undefined, entries };
-      }
-    }
-
-    return undefined;
+  if (version != '3') {
+    throw new Error(`unsupported filmlist version '${version!}'`);
   }
 
-  // eslint-disable-next-line max-statements
-  private parseFilmlistMetadata(): FilmlistMetadata | undefined {
-    const match = METADATA_REGEX.exec(this.buffer);
+  const dateTime = DateTime.fromFormat(utcDate!, 'dd.MM.yyyy, HH:mm', { zone: 'utc' });
+  const timestamp = dateTime.toMillis();
 
-    if (match == undefined) {
-      if (this.buffer.length > 15000) {
-        throw new Error('failed parsing filmlist');
-      }
+  const metadata: FilmlistMetadata = {
+    id: id!,
+    timestamp
+  };
 
-      return undefined;
-    }
+  return metadata;
+}
 
-    this.buffer = this.buffer.slice(match.index + match[0]!.length);
+// eslint-disable-next-line max-lines-per-function, max-statements
+function parseRawEntry(filmlistEntryString: string, lastChannel: string, lastTopic: string): FilmlistEntry {
+  const parsedFilmlistEntry = JSON.parse(filmlistEntryString) as string[];
 
-    const [
-      , // date
-      utcDate,
-      version,
-      , // mSearchVersion,
-      id
-    ] = JSON.parse(match[1]!) as string[];
+  const [
+    channel,
+    topic,
+    title,
+    , // date,
+    , // time,
+    rawDuration,
+    , // size,
+    description,
+    url,
+    url_website,
+    url_subtitle,
+    , // url_rtmp,
+    url_small,
+    , // url_rtmp_small,
+    url_hd,
+    , // url_rtmp_hd,
+    date_l
+    , // url_history,
+    , // geo,
+    , // is_new
+  ] = parsedFilmlistEntry;
 
-    if (version != '3') {
-      throw new Error(`unknown filmlist version '${version!}'`);
-    }
+  const [hoursString, minutesString, secondsString] = rawDuration!.split(':');
+  const duration = (parseInt(hoursString!, 10) * millisecondsPerHour) + (parseInt(minutesString!, 10) * millisecondsPerMinute) + (parseInt(secondsString!, 10) * millisecondsPerSecond);
+  const timestamp = parseInt(date_l!, 10) * 1000;
 
-    const dateMatch = METADATA_DATE_REGEX.exec(utcDate!);
+  const entry: FilmlistEntry = {
+    source: 'mediathekview-filmlist',
+    tag: '',
+    channel: channel!.length > 0 ? channel! : lastChannel,
+    topic: topic!.length > 0 ? topic! : lastTopic,
+    title: title!,
+    timestamp,
+    duration,
+    description: description!,
+    website: url_website!,
+    media: []
+  };
 
-    if (dateMatch == undefined) {
-      throw new Error('failed parsing filmlist date');
-    }
-
-    const [, day, month, year, hour, minute] = dateMatch;
-
-    const date = new Date(Date.UTC(parseInt(year!, 10), parseInt(month!, 10) - 1, parseInt(day!, 10), parseInt(hour!, 10), parseInt(minute!, 10)));
-    const timestamp = date.getTime();
-
-    const filmlist: FilmlistMetadata = {
-      id: id!,
-      timestamp
-    };
-
-    return filmlist;
+  if (url_small!.length > 0) {
+    const videoUrl = createUrlFromBase(url!, url_small!);
+    const video = createVideo(videoUrl);
+    entry.media.push(video);
   }
 
-  private parseEntries(): FilmlistEntry[] | undefined {
-    const regex = new RegExp(ENTRY_REGEX); // eslint-disable-line require-unicode-regexp
-    const matches = matchAll(regex, this.buffer);
-
-    if (matches.length == 0) {
-      return undefined;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const entries = matches.map((match) => this.filmlistEntryToEntry((match[1] ?? match[2] ?? match[3] ?? match[4])!));
-
-    const lastMatch = matches[matches.length - 1];
-    this.buffer = this.buffer.slice((lastMatch!.index) + lastMatch![0]!.length);
-
-    return entries;
+  if (url!.length > 0) {
+    const video = createVideo(url!);
+    entry.media.push(video);
   }
 
-  /* eslint-disable camelcase */
-  // eslint-disable-next-line max-statements, max-lines-per-function
-  private filmlistEntryToEntry(filmlistEntry: string): FilmlistEntry {
-    const parsedFilmlistEntry = JSON.parse(filmlistEntry) as string[];
-
-    const [
-      channel,
-      topic,
-      title,
-      , // date,
-      , // time,
-      rawDuration,
-      , // size,
-      description,
-      url,
-      url_website,
-      url_subtitle,
-      , // url_rtmp,
-      url_small,
-      , // url_rtmp_small,
-      url_hd,
-      , // url_rtmp_hd,
-      date_l
-      , // url_history,
-      , // geo,
-      , // is_new
-    ] = parsedFilmlistEntry;
-
-    if (channel!.length > 0) {
-      this.lastChannel = channel!;
-    }
-
-    if (topic!.length > 0) {
-      this.lastTopic = topic!;
-    }
-
-    const [hoursString, minutesString, secondsString] = rawDuration!.split(':');
-    const duration = (parseInt(hoursString!, 10) * 3600) + (parseInt(minutesString!, 10) * 60) + parseInt(secondsString!, 10);
-    const timestamp = parseInt(date_l!, 10) * 1000;
-
-    const entry: FilmlistEntry = {
-      tag: '',
-      channel: this.lastChannel,
-      topic: this.lastTopic,
-      title: title!,
-      timestamp,
-      duration,
-      description: description!,
-      website: url_website!,
-      media: []
-    };
-
-    if (url_small!.length > 0) {
-      const videoUrl = createUrlFromBase(url!, url_small!);
-      const video = createVideo(videoUrl);
-      entry.media.push(video);
-    }
-
-    if (url!.length > 0) {
-      const video = createVideo(url!);
-      entry.media.push(video);
-    }
-
-    if (url_hd!.length > 0) {
-      const videoUrl = createUrlFromBase(url!, url_hd!);
-      const video = createVideo(videoUrl);
-      entry.media.push(video);
-    }
-
-    if (url_subtitle!.length > 0) {
-      const subtitle = createSubtitle(url_subtitle!);
-      entry.media.push(subtitle);
-    }
-
-    const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.website].join('-');
-    const idBuffer = createHash('sha1', hashString).toBuffer();
-    entry.tag = zBase32Encode(idBuffer.buffer);
-
-    return entry;
+  if (url_hd!.length > 0) {
+    const videoUrl = createUrlFromBase(url!, url_hd!);
+    const video = createVideo(videoUrl);
+    entry.media.push(video);
   }
-  /* eslint-enable camelcase */
+
+  if (url_subtitle!.length > 0) {
+    const subtitle = createSubtitle(url_subtitle!);
+    entry.media.push(subtitle);
+  }
+
+  const hashString = [entry.channel, entry.topic, entry.title, entry.timestamp, entry.duration, entry.website].join('-');
+  const idBuffer = createHash('sha1', hashString).toBuffer();
+  entry.tag = zBase32Encode(idBuffer.buffer);
+
+  return entry;
 }
 
 function createUrlFromBase(baseUrl: string, newUrl: string): string {

@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   mongodb:
-    image: mongo:4.2
+    image: mongo:4.4
     container_name: mongodb
     tmpfs:
       - /data/db
@@ -10,7 +10,7 @@ services:
       - "27017:27017"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.1
     environment:
       discovery.type: single-node
     container_name: elasticsearch
