@@ -18,7 +18,7 @@
     "elasticsearch": "^16.7.2",
     "express": "^4.17.1",
     "line-reader": "^0.4.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "lzma-native": "^6.0.1",
     "matomo-tracker": "^2.2.4",
     "moment": "^2.29.1",
