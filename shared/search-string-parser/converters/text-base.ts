@@ -24,7 +24,7 @@ export class TextSegmentConverterBase extends SelectorSegmentConverterBase imple
           new TextQueryBuilder()
             .fields(...this.fields)
             .text(segment.value)
-            .operator((segment.type == SegmentType.Quoted) ? Operator.And : Operator.Or)
+            .operator((segment.type == SegmentType.Quoted) ? 'and' : 'or')
         );
 
         break;

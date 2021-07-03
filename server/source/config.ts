@@ -1,4 +1,5 @@
 import { LogLevel } from '@tstdl/base/logger';
+import { boolean, integer, positiveInteger, string } from '@tstdl/base/utils/config-parser';
 
 type Config = {
   verbosity: number,
@@ -21,7 +22,7 @@ type Config = {
     password?: string,
     db: number
   },
-  importer: {
+  filmlistImporter: {
     latestCheckIntervalMinutes: number,
     archiveCheckIntervalMinutes: number,
     archiveRange: number
@@ -55,43 +56,9 @@ export const config: Config = {
     password: string('REDIS_PASSWORD', ''),
     db: integer('REDIS_DATABASE', 0)
   },
-  importer: {
-    latestCheckIntervalMinutes: positiveInteger('FILMLIST_LATEST_CHECK_INTERVAL', 1),
-    archiveCheckIntervalMinutes: positiveInteger('FILMLIST_ARCHIVE_CHECK_INTERVAL', 30),
+  filmlistImporter: {
+    latestCheckIntervalMinutes: positiveInteger('FILMLIST_LATEST_CHECK_INTERVAL', 3),
+    archiveCheckIntervalMinutes: positiveInteger('FILMLIST_ARCHIVE_CHECK_INTERVAL', 60),
     archiveRange: positiveInteger('FILMLIST_ARCHIVE_RANGE', 25)
   }
 };
-
-function boolean(variable: string, defaultValue: boolean): boolean {
-  const stringValue = string(variable, defaultValue ? 'true' : 'false', configValidators.boolean);
-  const value = stringValue.toLowerCase() == 'true';
-
-  return value;
-}
-
-function integer(variable: string, defaultValue: number): number {
-  const stringValue = string(variable, defaultValue.toString(), configValidators.integer);
-  const value = parseInt(stringValue, 10);
-
-  return value;
-}
-
-function positiveInteger(variable: string, defaultValue: number): number {
-  const stringValue = string(variable, defaultValue.toString(), configValidators.positiveInteger);
-  const value = parseInt(stringValue, 10);
-
-  return value;
-}
-
-function string(variable: string, defaultValue: string, validator?: RegExp): string {
-  // eslint-disable-next-line no-process-env
-  const environmentValue = process.env[variable];
-  const value = environmentValue != undefined ? environmentValue : defaultValue;
-  const valid = validator == undefined ? true : validator.test(value);
-
-  if (!valid) {
-    throw new Error(`invalid value for ${variable}`);
-  }
-
-  return value;
-}

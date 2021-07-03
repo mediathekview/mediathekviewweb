@@ -1,5 +1,5 @@
 import { fields } from '$shared/models/core';
-import type { QueryBody } from '../../search-engine/query';
+import type { Query } from '../../search-engine/query';
 import { RangeQueryBuilder, TermQueryBuilder } from '../../search-engine/query/builder';
 import type { Range } from '../parsers/range';
 import { parseRange, RangeType } from '../parsers/range';
@@ -21,7 +21,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
   protected convert(segment: Segment): SegmentConverterResult | undefined {
     const ranges = parseRange(segment.value, rangeInclusive);
 
-    let query: QueryBody | undefined;
+    let query: Query | undefined;
 
     if (ranges == undefined) {
       return undefined;
@@ -39,7 +39,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
     return { group: groupSymbol, filter: [query] };
   }
 
-  private convertSingle(range: Range): QueryBody {
+  private convertSingle(range: Range): Query {
     let queryBuilder: TermQueryBuilder | RangeQueryBuilder;
 
     switch (range.type) {
@@ -66,7 +66,7 @@ export class DurationSegmentConverter extends SelectorSegmentConverterBase imple
     return query;
   }
 
-  private convertFromTo(from: Range, to: Range): QueryBody {
+  private convertFromTo(from: Range, to: Range): Query {
     const rangeQueryBuilder = new RangeQueryBuilder();
     rangeQueryBuilder.field(field);
 

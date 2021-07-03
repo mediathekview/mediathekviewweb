@@ -1,13 +1,11 @@
-import type { QueryBody } from '$shared/search-engine/query';
-import type { QueryBuilder } from '$shared/search-engine/query/builder';
 import type { Segment } from './segment';
 
 export type SegmentConverterResult = {
   group?: symbol | string,
-  must?: (QueryBody | QueryBuilder)[],
-  should?: (QueryBody | QueryBuilder)[],
-  not?: (QueryBody | QueryBuilder)[],
-  filter?: (QueryBody | QueryBuilder)[]
+  must?: (Query | QueryBuilder)[],
+  should?: (Query | QueryBuilder)[],
+  not?: (Query | QueryBuilder)[],
+  filter?: (Query | QueryBuilder)[]
 };
 
 export interface SegmentConverter {

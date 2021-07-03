@@ -1,22 +1,22 @@
 import type { FilmlistManagerKeyValues } from '$root/modules';
 import { EntriesImporterModule, EntriesIndexerModule, FilmlistManagerModule } from '$root/modules';
-import type { AggregatedEntry } from '$shared/models/core';
+import type { IndexedEntry } from '$shared/models/core';
 import type { FilmlistImportJobData } from '$shared/models/filmlist';
-import type { SearchEngine } from '$shared/search-engine';
 import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
-import { disposeAsync } from '@tstdl/base/disposable';
 import { configureBaseInstanceProvider, disposer, getKeyValueStore, getLockProvider, getLogger } from '@tstdl/base/instance-provider';
 import { LogLevel } from '@tstdl/base/logger';
 import type { Queue } from '@tstdl/base/queue';
 import { singleton } from '@tstdl/base/utils';
+import { configureElasticInstanceProvider, getElasticSearchIndex } from '@tstdl/elasticsearch/instance-provider';
 import { configureMongoInstanceProvider, getMongoKeyValueStoreProvider, getMongoLockProvider, getMongoMigrationStateRepository, getMongoQueue, getMongoRepository } from '@tstdl/mongo/instance-provider';
+import type { SearchIndex } from '@tstdl/search-index';
 import { DistributedLoopProvider } from '@tstdl/server/distributed-loop';
 import { configureServerInstanceProvider, connect } from '@tstdl/server/instance-provider';
 import type * as Mongo from 'mongodb';
 import { config } from './config';
 import type { AggregatedEntryDataSource } from './data-sources/aggregated-entry.data-source';
 import { NonWorkingAggregatedEntryDataSource } from './data-sources/non-working-aggregated-entry.data-source';
-import { elasticsearchMapping, elasticsearchSettings, textTypeFields } from './elasticsearch-definitions';
+import { elasticsearchMapping, elasticsearchSettings } from './elasticsearch-definitions';
 import type { FilmlistProvider } from './entry-source/filmlist';
 import { FilmlistEntrySource } from './entry-source/filmlist/filmlist-entry-source';
 import type { S3FilmlistProviderOptions } from './entry-source/filmlist/providers';
@@ -26,9 +26,6 @@ import { mongoQueues, mongoRepositories } from './mongo-configs';
 import type { EntryRepository, FilmlistImportRepository } from './repositories';
 import { MongoEntryRepository } from './repositories/mongo/entry.repository';
 import { MongoFilmlistImportRepository } from './repositories/mongo/filmlist-import.repository';
-import { ElasticsearchSearchEngine } from './search-engine/elasticsearch';
-import { Converter } from './search-engine/elasticsearch/converter';
-import * as ConvertHandlers from './search-engine/elasticsearch/converter/handlers';
 
 const MVW_ARCHIVE_FILMLIST_PROVIDER_INSTANCE_NAME = 'mvw-verteiler';
 const MV_VERTEILER_FILMLIST_PROVIDER_INSTANCE_NAME = 'mv-verteiler';
@@ -37,7 +34,6 @@ const S3_FILMLIST_ARCHIVE_BUCKET = 'verteiler-archiv';
 const S3_LATEST_ENDPOINT = 'https://s3.mvorg.de';
 const S3_LATEST_BUCKET = 'filmlisten';
 const S3_LATEST_OBJECT = 'Filmliste-akt.xz';
-
 
 const mvwArchivOptions: S3FilmlistProviderOptions = {
   url: S3_FILMLIST_ARCHIVE_ENDPOINT,
@@ -96,14 +92,20 @@ configureMongoInstanceProvider({
   mongoKeyValueRepositoryConfig: mongoRepositories.keyValues
 });
 
+configureElasticInstanceProvider({
+  clientOptions: {
+    node: config.elasticsearch.url
+  }
+});
+
 export async function getEntriesIndexerModule(): Promise<EntriesIndexerModule> {
   return singleton(EntriesIndexerModule, async () => {
     const aggregatedEntryDataSource = getAggregatedEntryDataSource();
-    const searchEngine = await getEntrySearchEngine();
+    const searchIndex = await getEntrySearchIndex();
     const entryRepository = await getEntryRepository();
     const logger = getLogger(ENTRIES_INDEXER_MODULE_LOG);
 
-    return new EntriesIndexerModule(entryRepository, aggregatedEntryDataSource, searchEngine, logger);
+    return new EntriesIndexerModule(entryRepository, aggregatedEntryDataSource, searchIndex, logger);
   });
 }
 
@@ -135,7 +137,7 @@ export function getFilmlistProvider(): FilmlistProvider {
     const latest = new S3FilmlistProvider(MV_VERTEILER_FILMLIST_PROVIDER_INSTANCE_NAME, mvVerteilerOptions, logger);
     const provider = new MultiFilmlistProvider();
 
-    provider.registerProvider(archive);
+    // provider.registerProvider(archive);
     provider.registerProvider(latest);
 
     return provider;
@@ -171,41 +173,8 @@ export function getAggregatedEntryDataSource(): AggregatedEntryDataSource {
   return singleton(NonWorkingAggregatedEntryDataSource, () => new NonWorkingAggregatedEntryDataSource());
 }
 
-export async function getEntrySearchEngine(): Promise<SearchEngine<AggregatedEntry>> {
-  return singleton(ElasticsearchSearchEngine, async () => {
-    const elasticsearch = await getElasticsearch();
-    const converter = getElasticsearchConverter();
-    const lockProvider = await getLockProvider();
-    const logger = getLogger(SEARCH_ENGINE_LOG);
-
-    const elasticsearchSearchEngine = new ElasticsearchSearchEngine<AggregatedEntry>(elasticsearch, converter, ELASTICSEARCH_INDEX_NAME, lockProvider, logger, ELASTICSEARCH_INDEX_SETTINGS, ELASTICSEARCH_INDEX_MAPPING);
-
-    disposer.add(async () => elasticsearchSearchEngine[disposeAsync]());
-
-    await elasticsearchSearchEngine.initialize();
-
-    return elasticsearchSearchEngine;
-  });
-}
-
-export function getElasticsearchConverter(): Converter {
-  return singleton(Converter, () => {
-    const keywordRewrites = new Set(textTypeFields);
-    const sortConverter = new ConvertHandlers.SortConverter(keywordRewrites);
-    const converter = new Converter(sortConverter);
-
-    converter.registerHandler(
-      new ConvertHandlers.TextQueryConvertHandler(),
-      new ConvertHandlers.IdsQueryConvertHandler(),
-      new ConvertHandlers.MatchAllQueryConvertHandler(),
-      new ConvertHandlers.RegexQueryConvertHandler(),
-      new ConvertHandlers.TermQueryConvertHandler(),
-      new ConvertHandlers.BoolQueryConvertHandler(converter),
-      new ConvertHandlers.RangeQueryConvertHandler()
-    );
-
-    return converter;
-  });
+export async function getEntrySearchIndex(): Promise<SearchIndex<IndexedEntry>> {
+  return getElasticSearchIndex(Elasticsearch);
 }
 
 export async function getFilmlistEntrySource(): Promise<FilmlistEntrySource> {

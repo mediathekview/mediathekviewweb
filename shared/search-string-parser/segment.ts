@@ -1,7 +1,7 @@
 export enum SegmentType {
-  Normal,
-  Quoted,
-  Pattern
+  Normal = 0,
+  Quoted = 1,
+  Pattern = 2
 }
 
 export type Segment = {

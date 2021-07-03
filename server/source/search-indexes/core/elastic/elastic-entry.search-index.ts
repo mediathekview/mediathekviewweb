@@ -1,9 +1,15 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import type { IndicesPutMapping } from '@elastic/elasticsearch/api/requestParams';
-import type { StringMap } from '@tstdl/base/types';
-import { assertDefinedPass } from '@tstdl/base/utils';
+import type { IndexedEntry } from '$shared/models/core';
+import type { Client } from '@elastic/elasticsearch';
+import type { Logger } from '@tstdl/base/logger';
+import type { ElasticIndexMapping, ElasticIndexSettings } from '@tstdl/elasticsearch';
+import { ElasticSearchIndex } from '@tstdl/elasticsearch';
 
-export const elasticsearchMapping: IndicesPutMapping['body'] = {
+/* eslint-disable @typescript-eslint/naming-convention */
+const settings: ElasticIndexSettings = {
+
+};
+
+const mapping: ElasticIndexMapping<IndexedEntry> = {
   properties: {
     id: {
       type: 'keyword',
@@ -169,10 +175,10 @@ export const elasticsearchMapping: IndicesPutMapping['body'] = {
     }
   }
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
-export const textTypeFields = Object.getOwnPropertyNames(elasticsearchMapping.properties).filter((property) => {
-  const type = assertDefinedPass((elasticsearchMapping.properties as StringMap<{ type: string }>)[property]).type;
-  const isTextType = type == 'text';
-
-  return isTextType;
-});
+export class ElasticEntrySearchIndex extends ElasticSearchIndex<IndexedEntry> {
+  constructor(client: Client, indexName: string, logger: Logger) {
+    super(client, indexName, settings, mapping, new Set(), logger);
+  }
+}

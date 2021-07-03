@@ -16,9 +16,9 @@ import type { FilmlistProvider } from '../entry-source/filmlist/provider';
 import { keys } from '../keys';
 import type { FilmlistImportRepository } from '../repositories/filmlist-import.repository';
 
-const LATEST_CHECK_INTERVAL = config.importer.latestCheckIntervalMinutes * 60 * 1000;
-const ARCHIVE_CHECK_INTERVAL = config.importer.archiveCheckIntervalMinutes * 60 * 1000;
-const MAX_AGE_DAYS = config.importer.archiveRange;
+const LATEST_CHECK_INTERVAL = config.filmlistImporter.latestCheckIntervalMinutes * 60 * 1000;
+const ARCHIVE_CHECK_INTERVAL = config.filmlistImporter.archiveCheckIntervalMinutes * 60 * 1000;
+const MAX_AGE_DAYS = config.filmlistImporter.archiveRange;
 const MAX_AGE_MILLISECONDS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
 export type FilmlistManagerKeyValues = {

@@ -1,6 +1,6 @@
-import type { AggregatedEntry, Entry } from '$shared/models/core';
+import type { IndexedEntry, Entry } from '$shared/models/core';
 
 export interface AggregatedEntryDataSource {
-  aggregate(entry: Entry): Promise<AggregatedEntry>;
-  aggregateMany(entries: Entry[]): Promise<AggregatedEntry[]>;
+  aggregate(entry: Entry): Promise<IndexedEntry>;
+  aggregateMany(entries: Entry[]): Promise<IndexedEntry[]>;
 }

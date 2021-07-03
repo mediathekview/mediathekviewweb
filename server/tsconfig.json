@@ -10,6 +10,7 @@
       "$shared/*": ["shared/*"],
       "$endpoints/*": ["endpoints/*"],
       "$repositories/*": ["repositories/*"],
+      "$search-indexes/*": ["search-indexes/*"],
       "$api/*": ["api/*"],
       "$exposer/*": ["exposer/*"],
       "$root/*": ["*"]

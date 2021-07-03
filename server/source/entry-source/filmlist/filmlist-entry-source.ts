@@ -116,7 +116,10 @@ function toNewEntry(filmlistEntry: FilmlistEntry, filmlistTimestamp: number): Ne
     website: filmlistEntry.website,
     media: filmlistEntry.media,
     firstSeen: filmlistTimestamp,
-    lastSeen: filmlistTimestamp
+    lastSeen: filmlistTimestamp,
+    indexRequiredSince: null,
+    indexJobTimeout: null,
+    indexJob: null
   };
 
   return entry;

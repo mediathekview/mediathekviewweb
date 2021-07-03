@@ -1,24 +1,36 @@
-import type { AggregatedEntry, Entry } from '$shared/models/core';
+import type { IndexedEntry, Entry } from '$shared/models/core';
+import { timestampToNumericDate, timestampToTime } from '@tstdl/base/utils';
 import type { AggregatedEntryDataSource } from './aggregated-entry.data-source';
 
 export class NonWorkingAggregatedEntryDataSource implements AggregatedEntryDataSource {
   // eslint-disable-next-line class-methods-use-this, @typescript-eslint/require-await
-  async aggregate(entry: Entry): Promise<AggregatedEntry> {
+  async aggregate(entry: Entry): Promise<IndexedEntry> {
     return toAggregated(entry);
   }
 
   // eslint-disable-next-line class-methods-use-this, @typescript-eslint/require-await
-  async aggregateMany(entries: Entry[]): Promise<AggregatedEntry[]> {
+  async aggregateMany(entries: Entry[]): Promise<IndexedEntry[]> {
     return entries.map((entry) => toAggregated(entry));
   }
 }
 
-function toAggregated(entry: Entry): AggregatedEntry {
-  const aggregatedEntry = {
-    ...entry,
-    date: getDateTimestamp(entry.timestamp),
-    time: getTime(entry.timestamp),
-
+function toAggregated(entry: Entry): IndexedEntry {
+  const aggregatedEntry: IndexedEntry = {
+    id: entry.id,
+    source: entry.source,
+    tag: entry.tag,
+    channel: entry.channel,
+    topic: entry.topic,
+    title: entry.title,
+    timestamp: entry.timestamp,
+    date: timestampToNumericDate(entry.timestamp),
+    time: timestampToTime(entry.timestamp),
+    duration: entry.duration,
+    description: entry.description,
+    website: entry.website,
+    firstSeen: entry.firstSeen,
+    lastSeen: entry.lastSeen,
+    media: entry.media,
     metadata: {
       downloads: 1234,
       plays: 1234,
@@ -30,15 +42,4 @@ function toAggregated(entry: Entry): AggregatedEntry {
   };
 
   return aggregatedEntry;
-}
-
-function getDateTimestamp(timestamp: number): number {
-  const date = new Date(timestamp * 1000);
-  const dateWithoutTime = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-
-  return Math.floor(dateWithoutTime.valueOf() / 1000);
-}
-
-function getTime(timestamp: number): number {
-  return timestamp % 86400000;
 }

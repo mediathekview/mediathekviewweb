@@ -1,5 +1,5 @@
 import { Enumerable } from '@tstdl/base/enumerable';
-import type { QueryBody } from '../search-engine/query';
+import type { Query } from '../search-engine/query';
 import { BoolQueryBuilder, MatchAllQueryBuilder } from '../search-engine/query/builder';
 import { ChannelSegmentConverter } from './converters/channel';
 import { DefaultSegmentConverter } from './converters/default';
@@ -36,7 +36,7 @@ export class SearchStringParser {
     return segments;
   }
 
-  parse(text: string): QueryBody {
+  parse(text: string): Query {
     const segments = this.segmentize(text);
 
     const groups = Enumerable.from(segments)
@@ -68,7 +68,7 @@ export class SearchStringParser {
   }
 }
 
-function createQuery(groups: [symbol | string | undefined, SegmentConverterResult[]][]): QueryBody {
+function createQuery(groups: [symbol | string | undefined, SegmentConverterResult[]][]): Query {
   const boolQueryBuilder = new BoolQueryBuilder();
 
   for (const [group, results] of groups) {
@@ -76,7 +76,7 @@ function createQuery(groups: [symbol | string | undefined, SegmentConverterResul
 
     if (group != undefined) {
       builder = new BoolQueryBuilder();
-      boolQueryBuilder.should(builder);
+      boolQueryBuilder.must(builder);
     }
 
     for (const result of results) {

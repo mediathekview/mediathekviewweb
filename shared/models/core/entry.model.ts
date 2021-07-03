@@ -1,4 +1,5 @@
-import { dotNotation, dotNotator } from '@tstdl/base/utils';
+import type { TypedOmit } from '@tstdl/base/types';
+import { dotNotate, dotNotateFlat, dotNotator } from '@tstdl/base/utils';
 import type { Entity, NewEntity } from '@tstdl/database';
 import type { EntryMetadata } from './entry-metadata.model';
 
@@ -15,48 +16,41 @@ export type Entry = Entity & {
   firstSeen: number,
   lastSeen: number,
   media: Media[],
-  indexRequiredSince?: number,
-  indexJobTimeout?: number,
-  indexJob?: string
+  indexRequiredSince: number | null,
+  indexJobTimeout: number | null,
+  indexJob: string | null
 };
 
 export type NewEntry = NewEntity<Entry>;
 
-export type AggregatedEntry = Entry & {
+export type IndexedEntry = TypedOmit<Entry, 'indexJob' | 'indexJobTimeout' | 'indexRequiredSince'> & {
   date: number,
   time: number,
   metadata: EntryMetadata
 };
 
-export type PublicEntry = Omit<AggregatedEntry, 'source' | 'indexJob' | 'indexJobTimeout' | 'indexRequiredSince'>;
-
 export const fields = {
-  id: dotNotation<AggregatedEntry>('id'),
-  source: dotNotation<AggregatedEntry>('source'),
-  tag: dotNotation<AggregatedEntry>('tag'),
-  channel: dotNotation<AggregatedEntry>('channel'),
-  topic: dotNotation<AggregatedEntry>('topic'),
-  title: dotNotation<AggregatedEntry>('title'),
-  timestamp: dotNotation<AggregatedEntry>('timestamp'),
-  date: dotNotation<AggregatedEntry>('date'),
-  time: dotNotation<AggregatedEntry>('time'),
-  duration: dotNotation<AggregatedEntry>('duration'),
-  description: dotNotation<AggregatedEntry>('description'),
-  website: dotNotation<AggregatedEntry>('website'),
-  firstSeen: dotNotation<AggregatedEntry>('firstSeen'),
-  lastSeen: dotNotation<AggregatedEntry>('lastSeen'),
-  mediaType: dotNotator<AggregatedEntry>().array('media')('type').notate(),
-  mediaUrl: dotNotator<AggregatedEntry>().array('media')('url').notate(),
-  mediaSize: dotNotator<AggregatedEntry>().array('media')('size').notate(),
-  videoQuality: dotNotator<AggregatedEntry>().array('media').cast<Video>()('quality').notate(),
-  videoResolutionWidth: dotNotator<AggregatedEntry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('resolution')('width').notate(),
-  videoResolutionHeight: dotNotator<AggregatedEntry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('resolution')('height').notate(),
-  videoBitrate: dotNotator<Entry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('bitrate'),
-  audioQuality: dotNotator<AggregatedEntry>().array('media').cast<Audio>()('quality').notate(),
-  audioBitrate: dotNotator<Entry>().array('media').cast<Audio>()('quality').cast<AudioQuality>()('bitrate'),
-  indexRequiredSince: dotNotation<AggregatedEntry>('indexRequiredSince'),
-  indexJobTimeout: dotNotation<AggregatedEntry>('indexJobTimeout'),
-  indexJob: dotNotation<AggregatedEntry>('indexJob')
+  id: dotNotate<IndexedEntry>('id'),
+  source: dotNotate<IndexedEntry>('source'),
+  tag: dotNotate<IndexedEntry>('tag'),
+  channel: dotNotate<IndexedEntry>('channel'),
+  topic: dotNotate<IndexedEntry>('topic'),
+  title: dotNotate<IndexedEntry>('title'),
+  timestamp: dotNotate<IndexedEntry>('timestamp'),
+  date: dotNotate<IndexedEntry>('date'),
+  time: dotNotate<IndexedEntry>('time'),
+  duration: dotNotate<IndexedEntry>('duration'),
+  description: dotNotate<IndexedEntry>('description'),
+  website: dotNotate<IndexedEntry>('website'),
+  firstSeen: dotNotate<IndexedEntry>('firstSeen'),
+  lastSeen: dotNotate<IndexedEntry>('lastSeen'),
+  mediaType: dotNotator<IndexedEntry>().array('media')('type').notate(),
+  mediaUrl: dotNotator<IndexedEntry>().array('media')('url').notate(),
+  mediaSize: dotNotator<IndexedEntry>().array('media')('size').notate(),
+  mediaQuality: dotNotateFlat<IndexedEntry>('media', 'quality'),
+  mediaBitrate: dotNotateFlat<IndexedEntry>('media', 'quality', 'bitrate'),
+  videoResolutionWidth: dotNotator<IndexedEntry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('resolution')('width').notate(),
+  videoResolutionHeight: dotNotator<IndexedEntry>().array('media').cast<Video>()('quality').cast<VideoQuality>()('resolution')('height').notate()
 };
 
 export enum MediaType {

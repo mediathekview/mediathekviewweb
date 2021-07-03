@@ -1,29 +1,25 @@
 import type { EntryRepository } from '$repositories/entry.repository';
 import type { Entry, NewEntry } from '$shared/models/core';
-import { fields } from '$shared/models/core';
 import type { Logger } from '@tstdl/base/logger';
 import { Alphabet, currentTimestamp, getRandomString } from '@tstdl/base/utils';
+import { getNewId } from '@tstdl/database';
 import type { Collection, FilterQuery, TypedIndexSpecification, UpdateQuery } from '@tstdl/mongo';
-import { getNewDocumentId, MongoEntityRepository, noopTransformer } from '@tstdl/mongo';
+import { MongoEntityRepository, noopTransformer } from '@tstdl/mongo';
 
 const indexes: TypedIndexSpecification<Entry>[] = [
-  { name: 'source_tag', key: { [fields.source]: 1, [fields.tag]: 1 }, unique: true },
-  { name: 'firstSeen', key: { [fields.firstSeen]: 1 } },
-  { name: 'lastSeen', key: { [fields.lastSeen]: 1 } },
-  { name: 'indexRequiredSince', key: { [fields.indexRequiredSince]: 1 } },
-  { name: 'indexJobTimeout', key: { [fields.indexJobTimeout]: 1 } },
-  { name: 'indexJob', key: { [fields.indexJob]: 1 } },
-  { name: 'indexRequiredSince_indexJob', key: { [fields.indexRequiredSince]: 1, [fields.indexJob]: 1 } },
-  { name: 'indexRequiredSince_indexJobTimeout', key: { [fields.indexRequiredSince]: 1, [fields.indexJobTimeout]: 1 } }
+  { name: 'source_tag', key: { source: 1, tag: 1 }, unique: true },
+  { name: 'firstSeen', key: { firstSeen: 1 } },
+  { name: 'lastSeen', key: { lastSeen: 1 } },
+  { name: 'indexRequiredSince', key: { indexRequiredSince: 1 } },
+  { name: 'indexJobTimeout', key: { indexJobTimeout: 1 } },
+  { name: 'indexJob', key: { indexJob: 1 } },
+  { name: 'indexRequiredSince_indexJob', key: { indexRequiredSince: 1, indexJob: 1 } },
+  { name: 'indexRequiredSince_indexJobTimeout', key: { indexRequiredSince: 1, indexJobTimeout: 1 } }
 ];
 
 export class MongoEntryRepository extends MongoEntityRepository<Entry> implements EntryRepository {
   constructor(collection: Collection<Entry>, logger: Logger) {
     super(collection, noopTransformer, { indexes, logger });
-  }
-
-  async initialize(): Promise<void> {
-    await this.collection.createIndexes(indexes);
   }
 
   async upsertEntry(entry: NewEntry): Promise<void> {
@@ -43,16 +39,16 @@ export class MongoEntryRepository extends MongoEntityRepository<Entry> implement
     await bulk.execute(false);
   }
 
+  async hasPendingJob(): Promise<boolean> {
+    const filter = getIndexJobFilter();
+    return this.baseRepository.hasByFilter(filter);
+  }
+
   async getIndexJob(count: number, timeout: number): Promise<{ jobId: string, entries: Entry[] }> {
     const timestamp = currentTimestamp();
-    const indexJob = getRandomString(10, Alphabet.LowerUpperCaseNumbers);
+    const indexJob = getRandomString(15, Alphabet.LowerUpperCaseNumbers);
 
-    const filter: FilterQuery<Entry> = {
-      $or: [
-        { indexRequiredSince: { $ne: undefined }, indexJob: undefined },
-        { indexRequiredSince: { $ne: undefined }, indexJobTimeout: { $lte: timestamp } }
-      ]
-    };
+    const filter = getIndexJobFilter();
 
     const update: UpdateQuery<Entry> = {
       $set: {
@@ -80,10 +76,10 @@ export class MongoEntryRepository extends MongoEntityRepository<Entry> implement
     };
 
     const update: UpdateQuery<Entry> = {
-      $unset: {
-        [fields.indexRequiredSince]: true,
-        [fields.indexJobTimeout]: true,
-        [fields.indexJob]: true
+      $set: {
+        indexRequiredSince: null,
+        indexJobTimeout: null,
+        indexJob: null
       }
     };
 
@@ -107,15 +103,12 @@ function toUpdateOneOperation(entry: NewEntry) {
     $min: { firstSeen },
     $set: {
       ...entryWithoutFirstAndLastSeen,
-      [fields.indexRequiredSince]: timestamp,
-      [fields.indexJob]: undefined,
-      [fields.indexJobTimeout]: undefined,
-      updated: timestamp
+      indexRequiredSince: timestamp,
+      indexJob: undefined,
+      indexJobTimeout: undefined
     },
     $setOnInsert: {
-      _id: getNewDocumentId(),
-      created: timestamp,
-      deleted: false
+      _id: getNewId()
     }
   };
 
@@ -128,4 +121,16 @@ function toUpdateOneOperation(entry: NewEntry) {
   };
 
   return operation;
+}
+
+function getIndexJobFilter(): FilterQuery<Entry> {
+  const filter: FilterQuery<Entry> = {
+    indexRequiredSince: { $gte: 0 },
+    $or: [
+      { indexJob: undefined },
+      { indexJobTimeout: { $lte: currentTimestamp() } }
+    ]
+  };
+
+  return filter;
 }

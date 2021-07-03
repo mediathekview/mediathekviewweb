@@ -2,6 +2,7 @@ import { createSubtitle, createVideo } from '$shared/models/core';
 import type { FilmlistEntry } from '$shared/models/filmlist';
 import { AsyncIteratorIterableIterator, millisecondsPerHour, millisecondsPerMinute, millisecondsPerSecond, zBase32Encode } from '@tstdl/base/utils';
 import { createHash } from '@tstdl/server/utils';
+import { debug } from 'console';
 import { DateTime } from 'luxon';
 import type { Readable } from 'stream';
 import { StringDecoder } from 'string_decoder';
