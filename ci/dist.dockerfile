@@ -8,7 +8,7 @@ FROM ${SERVER_DIST_IMAGE} as server
 COPY --from=client /dist /dist/client
 
 
-FROM node:14-alpine
+FROM node:16-alpine
 
 COPY --from=server /dist /mediathekviewweb
 

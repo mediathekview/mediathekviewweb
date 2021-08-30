@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:16-alpine
 
 WORKDIR /server
 COPY server/package.json server/package-lock.json ./
