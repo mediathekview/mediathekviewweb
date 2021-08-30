@@ -9,7 +9,7 @@ cp node_modules/bootstrap/dist/css/bootstrap.min.css dist/static/bootstrap.min.c
 cp node_modules/bootstrap/dist/js/bootstrap.min.js dist/static/bootstrap.min.js && \
 cp node_modules/datatables.net/js/jquery.dataTables.min.js dist/static/jquery.dataTables.min.js && \
 cp node_modules/jquery/dist/jquery.min.js dist/static/jquery.min.js && \
-cp node_modules/js-cookie/src/js.cookie.js dist/static/js.cookie.js && \
+cp node_modules/js-cookie/dist/js.cookie.min.js dist/static/js.cookie.min.js && \
 cp node_modules/lodash/lodash.min.js dist/static/lodash.min.js && \
 cp node_modules/video.js/dist/video.min.js dist/static/video.min.js && \
 cp node_modules/video.js/dist/video-js.min.css dist/static/video-js.min.css && \

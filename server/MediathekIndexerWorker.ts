@@ -183,7 +183,7 @@ function flushOutBuffer() {
       isFlushing = false;
 
       if (bufferFlushPending) {
-        setImmediate(() => flushOutBuffer(), 10);
+        setImmediate(() => flushOutBuffer());
       }
 
       notifyState();

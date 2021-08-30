@@ -11,6 +11,9 @@ interface XMLHttpRequest {
   baseOpen: (method: string, url: string, async?: boolean, user?: string, password?: string) => void;
 }
 
+const allowCookiesKey = 'allowCookies';
+const lastAllowCookiesAskedKey = 'allowCookiesAsked';
+
 const debugResponse = false;
 const socket = io();
 const pv_id = randomString(6);
@@ -493,10 +496,10 @@ function handleQueryResult(result, err) {
 
   createPagination(shownPagesCount);
 
-  const filmlisteTime = formatTime(result.queryInfo.filmlisteTimestamp);
+  const filmlisteTime = `am ${formatDate(result.queryInfo.filmlisteTimestamp)} um ${formatTime(result.queryInfo.filmlisteTimestamp)} Uhr`;
 
-  $('#queryInfoLabel').html('Die Suchmaschine brauchte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
-    ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + ' Treffern.</br>Filmliste zuletzt um ' + filmlisteTime + ' Uhr aktualisiert.');
+  $('#queryInfoLabel').html('Die Suche dauerte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
+    ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + '.</br>Filmliste zuletzt ' + filmlisteTime + ' aktualisiert.');
 }
 
 function createPaginationButton(html, active, enabled, callback) {
@@ -973,7 +976,7 @@ $(() => {
     show: false
   });
 
-  const allowCookies = window.localStorage?.getItem?.('allowCookies') ?? 'false';
+  const allowCookies = window.localStorage?.getItem?.(allowCookiesKey);
 
   if ((allowCookies != 'true') && (allowCookies != 'false')) {
     cookieModal = $('#cookieModal');
@@ -983,13 +986,15 @@ $(() => {
     const cookieDenyButtonElement = document.getElementById('cookieDenyButton');
 
     cookieAcceptButtonElement.addEventListener('click', () => {
-      window.localStorage?.setItem?.('allowCookies', 'true');
+      window.localStorage?.setItem?.(allowCookiesKey, 'true');
+      window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
       cookieModal.modal('hide');
       location.reload();
     });
 
     cookieDenyButtonElement.addEventListener('click', () => {
-      window.localStorage?.setItem?.('allowCookies', 'false');
+      window.localStorage?.setItem?.(allowCookiesKey, 'false');
+      window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
       cookieModal.modal('hide');
     });
   }

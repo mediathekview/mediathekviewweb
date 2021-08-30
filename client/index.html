@@ -25,21 +25,31 @@
   </script>
 
   <script defer src="/static/jquery.min.js"></script>
-  <script defer src="/static/js.cookie.js"></script>
+  <script defer src="/static/js.cookie.min.js"></script>
   <script defer src="/static/bootstrap.min.js"></script>
   <script defer src="/static/socket.io.min.js"></script>
   <script defer src="/static/jquery.dataTables.min.js"></script>
   <script defer src="/static/lodash.min.js"></script>
   <script defer src="/static/video.min.js"></script>
   <script defer src="/static/index.js"></script>
-  <script>
-    if (typeof localStorage != 'undefined' && localStorage.getItem('allowCookies') == 'true') {
-      var adsense = document.createElement("script");
-      adsense.type = "text/javascript";
-      adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
-      adsense.setAttribute('async', 'async');
-      adsense.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
-      document.head.appendChild(adsense);
+  <script type="text/javascript">
+    if (typeof localStorage != 'undefined') {
+      var allowCookies = localStorage.getItem('allowCookies') == 'true';
+      var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') ?? 0;
+      var lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString);
+
+      if (!allowCookies && (lastAllowCookiesAsked == NaN || (lastAllowCookiesAsked < (Date.now() - 7 * 24 * 60 * 60 * 1000)))) {
+        localStorage.removeItem('allowCookies');
+      }
+
+      if (allowCookies) {
+        var adsense = document.createElement("script");
+        adsense.type = "text/javascript";
+        adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
+        adsense.setAttribute('async', 'async');
+        adsense.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+        document.head.appendChild(adsense);
+      }
     }
   </script>
 </head>
