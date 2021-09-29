@@ -15,7 +15,7 @@
   "dependencies": {
     "bootstrap": "3.4",
     "bootswatch": "3.4",
-    "datatables.net": "1.10",
+    "datatables.net": "1.11",
     "jquery": "3.6",
     "js-cookie": "3.0",
     "lodash": "4.17",
