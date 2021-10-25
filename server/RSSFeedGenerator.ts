@@ -59,8 +59,8 @@ export default class RSSFeedGenerator {
       future: urlQuery.future || false,
       duration_min: parsedQuery.duration_min,
       duration_max: parsedQuery.duration_max,
-      offset: 0,
-      size: 50
+      offset: (typeof urlQuery.offset == 'string') ? parseInt(urlQuery.offset) : 0,
+      size: (typeof urlQuery.size == 'string') ? parseInt(urlQuery.size) : 50
     };
 
     this.searchEngine.search(queryObj, (result, err) => {
