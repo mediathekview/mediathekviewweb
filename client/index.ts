@@ -863,10 +863,14 @@ function toggleVideoPause() {
   }
 }
 
-function playVideo(title, url) {
+function playVideo(title, url: string) {
+  if (url.startsWith('http://')) {
+    playVideoInNewWindow(url);
+    return;
+  }
+
   $('#videooverlay').show(200, () => {
     $('#blur').addClass('blur');
-
     const vid = $('<video>', {
       class: 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9',
       id: 'video-player',
@@ -908,6 +912,21 @@ function playVideo(title, url) {
 
   track('play');
   playStartTimestamp = Date.now();
+}
+
+async function playVideoInNewWindow(url: string): Promise<void> {
+  const playerWindow: Window | null = window.open(url);
+  const start = Date.now();
+
+  while (playerWindow?.closed === false) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  const playDuration = Date.now() - start;
+
+  if (playDuration >= 1000 * 30) {
+    location.reload();
+  }
 }
 
 function closeVideo() {
