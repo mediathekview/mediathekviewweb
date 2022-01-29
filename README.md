@@ -68,27 +68,12 @@ Abhilfe schaffen hier entweder der Java Desktop Client [MediathekView](https://m
 
 #### Konvertierung mit VLC
 
-Mit dem VLC-Player bietet sich die Möglichkeit, die Streams mit der
-.m3u8-Endung auf dem Rechner sowohl anzusehen als auch zu speichern.
-Zunächst musst der entsprechende Link in die Zwischenablage kopiert
-werden. Wurde im VLC im Menupunkt Ansicht die "Erweiterte Steuerung"
-aktiviert, so sind zusätzliche Buttons vorhanden, der rote dient zum
-Aufnehmen und Speichern, das funktioniert z. B. auch mit Livestreams.
+Mit dem VLC-Player bietet sich die Möglichkeit, die Streams mit der .m3u8-Endung auf dem Rechner sowohl anzusehen als auch zu speichern. Zunächst musst der entsprechende Link in die Zwischenablage kopiert werden. Wurde im VLC im Menupunkt Ansicht die "Erweiterte Steuerung" aktiviert, so sind zusätzliche Buttons vorhanden, der rote dient zum Aufnehmen und Speichern, das funktioniert z. B. auch mit Livestreams.
 
-Im geöffneten Player kann nun mit CTRL(STRG)-V der Link aus der
-Zwischenablage übernommen werden und mit Klick auf den roten Button die
-Aufnahme gestartet werden, dabei kann der Film auch angesehen werden.
-In diesem Fall muss die Aufnahme nach dem Beenden mit dem entsprechenden
-Dateinamen versehen werden.
+Im geöffneten Player kann nun mit CTRL(STRG)-V der Link aus der Zwischenablage übernommen werden und mit Klick auf den roten Button die Aufnahme gestartet werden, dabei kann der Film auch angesehen werden. In diesem Fall muss die Aufnahme nach dem Beenden mit dem entsprechenden Dateinamen versehen werden.
 
 Eine weitere Möglichkeit der Speicherung bietet sich über folgende Option:
-Medien > Netzwerkstream öffnen > Link aus der Zwischenablage übernehmen
-> neben dem Button Wiedergeben auf den Pfeil klicken und
-Konvertieren/Speichern wählen: Im Feld Zieldatei wählen den Dateinamen
-eingeben und abschicken > Start.
-Diese Prozedur lässt sich durch die Standard-Shortkeys (Achtung, die
-lassen sich ändern) vereinfachen:
-CTRL-N > Link übernehmen > ALT-O > Zieldateinamen eingeben > Start. 
+Medien > Netzwerkstream öffnen > Link aus der Zwischenablage übernehmen > neben dem Button Wiedergeben auf den Pfeil klicken und Konvertieren/Speichern wählen: Im Feld Zieldatei wählen den Dateinamen eingeben und abschicken > Start. Diese Prozedur lässt sich durch die Standard-Shortkeys (Achtung, die lassen sich ändern) vereinfachen: CTRL-N > Link übernehmen > ALT-O > Zieldateinamen eingeben > Start. 
 
 
 ## Verwendete Dienste und Libraries
