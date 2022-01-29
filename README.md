@@ -73,8 +73,9 @@ Mit dem VLC-Player bietet sich die Möglichkeit, die Streams mit der .m3u8-Endun
 Im geöffneten Player kann nun mit CTRL(STRG)-V der Link aus der Zwischenablage übernommen werden und mit Klick auf den roten Button die Aufnahme gestartet werden, dabei kann der Film auch angesehen werden. In diesem Fall muss die Aufnahme nach dem Beenden mit dem entsprechenden Dateinamen versehen werden.
 
 Eine weitere Möglichkeit der Speicherung bietet sich über folgende Option:
-Medien > Netzwerkstream öffnen > Link aus der Zwischenablage übernehmen > neben dem Button Wiedergeben auf den Pfeil klicken und Konvertieren/Speichern wählen: Im Feld Zieldatei wählen den Dateinamen eingeben und abschicken > Start. Diese Prozedur lässt sich durch die Standard-Shortkeys (Achtung, die lassen sich ändern) vereinfachen: CTRL-N > Link übernehmen > ALT-O > Zieldateinamen eingeben > Start. 
+Medien > Netzwerkstream öffnen > Link aus der Zwischenablage übernehmen > neben dem Button Wiedergeben auf den Pfeil klicken und Konvertieren/Speichern wählen: Im Feld Zieldatei wählen den Dateinamen eingeben und abschicken > Start. Diese Prozedur lässt sich durch die Standard-Shortkeys (Achtung, die lassen sich ändern) vereinfachen: CTRL-N > Link übernehmen > ALT-O > Zieldateinamen eingeben > Start.
 
+Bei Benutzung des Aufnahme-Buttons erfolgt die Speicherung im Standard-Video Verzeichnis des Betriebssystems.
 
 ## Verwendete Dienste und Libraries
 ##### (zumindest die wichtigsten, siehe [server package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/server/package.json) und [client package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/client/package.json) für mehr)
