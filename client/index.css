@@ -215,3 +215,21 @@ label {
 .table {
   margin-bottom: 0;
 }
+
+th[data-onclick-sort] {
+  cursor: pointer;
+}
+
+.dataTables_scrollHead tr[data-sort="channel-asc"] > th[data-onclick-sort="channel"]::after,
+.dataTables_scrollHead tr[data-sort="topic-asc"] > th[data-onclick-sort="topic"]::after,
+.dataTables_scrollHead tr[data-sort="timestamp-asc"] > th[data-onclick-sort="timestamp"]::after,
+.dataTables_scrollHead tr[data-sort="duration-asc"] > th[data-onclick-sort="duration"]::after {
+  content: "▲";
+}
+
+.dataTables_scrollHead tr[data-sort="channel-desc"] > th[data-onclick-sort="channel"]::after,
+.dataTables_scrollHead tr[data-sort="topic-desc"] > th[data-onclick-sort="topic"]::after,
+.dataTables_scrollHead tr[data-sort="timestamp-desc"] > th[data-onclick-sort="timestamp"]::after,
+.dataTables_scrollHead tr[data-sort="duration-desc"] > th[data-onclick-sort="duration"]::after {
+  content: "▼";
+}

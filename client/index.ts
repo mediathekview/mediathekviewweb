@@ -34,6 +34,8 @@ let datenschutz = null;
 let donate = null;
 let queryInputClearButtonState = 'hidden';
 let video;
+let sortBy = 'timestamp';
+let sortOrder = 'desc';
 
 const preferedThemeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
 
@@ -439,8 +441,8 @@ const query = _.throttle(() => {
 
   const queryObj = {
     queries: queries,
-    sortBy: 'timestamp',
-    sortOrder: 'desc',
+    sortBy,
+    sortOrder,
     future,
     duration_min: parsedQuery.duration_min,
     duration_max: parsedQuery.duration_max,
@@ -1100,6 +1102,18 @@ $(() => {
     currentPage = 0;
     query();
   };
+
+  $('th[data-onclick-sort]').on('click', (e) => {
+    const sort = $(e.target).attr("data-onclick-sort");
+    if (sort === sortBy && sortOrder) {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortBy = sort;
+      sortOrder = sort === 'timestamp' ? 'desc' : 'asc';
+    }
+    $(e.target).parent().attr("data-sort", sortBy + '-' + sortOrder);
+    newQuery();
+  });
 
   $('#queryInput').on('input', () => {
     const currentQueryString = getQueryString();
