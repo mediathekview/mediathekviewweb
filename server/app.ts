@@ -126,7 +126,7 @@ const impressum = renderImpressum(config.contact);
       if (err) {
         res.status(500).send(err.message);
       } else {
-        res.set('Content-Type', 'application/rss+xml');
+        res.set('Content-Type', 'text/plain');
         res.send(result);
 
         if (!!matomo) {
