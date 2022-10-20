@@ -1,6 +1,6 @@
 import * as Elasticsearch from 'elasticsearch';
 import os from 'os';
-import * as Redis from 'redis';
+import { RedisClientOptions } from 'redis';
 
 interface Config {
   dataDirectory: string;
@@ -8,7 +8,7 @@ interface Config {
   index: boolean;
   workerCount: number;
   workerArgs: string[];
-  redis: Redis.ClientOpts;
+  redis: RedisClientOptions;
   elasticsearch: Elasticsearch.ConfigOptions;
   matomo: {
     enabled: boolean,
@@ -70,6 +70,14 @@ function getIntegerEnvOrDefault(variable: string, defaultValue: number): number 
   return Number.parseInt(value);
 }
 
+const redisHost = getEnvOrDefault('REDIS_HOST', '127.0.0.1');
+const redisPort = getIntegerEnvOrDefault('REDIS_PORT', 6379);
+const redisUser = getEnvOrDefault('REDIS_USER', '');
+const redisPassword = getEnvOrDefault('REDIS_PASSWORD', '');
+
+const redisPasswordPrefix = (redisPassword != undefined) ? `:${redisPassword}` : '';
+const redisAtPrefix = ((redisUser != undefined) || (redisPassword != undefined)) ? '@' : '';
+
 const config: Config = {
   //path for storing data, can be absolute and relative
   dataDirectory: getEnvOrDefault('DATA_DIRECTORY', 'data/'),
@@ -80,10 +88,8 @@ const config: Config = {
   workerArgs: getEnvOrDefault('WORKER_ARGS', ['--optimize_for_size', '--memory-reducer']),
 
   redis: {
-    host: getEnvOrDefault('REDIS_HOST', '127.0.0.1'),
-    port: getIntegerEnvOrDefault('REDIS_PORT', 6379),
-    password: getEnvOrDefault('REDIS_PASSWORD', ''),
-    db: getIntegerEnvOrDefault('REDIS_DB', 2)
+    url: `redis://${redisUser}${redisPasswordPrefix}${redisAtPrefix}${redisHost}:${redisPort}`,
+    database: getIntegerEnvOrDefault('REDIS_DB', 2)
   },
   elasticsearch: {
     host: getEnvOrDefault('ELASTICSEARCH_HOST', 'localhost') + ':' + getEnvOrDefault('ELASTICSEARCH_PORT', '9200')
@@ -104,10 +110,6 @@ const config: Config = {
     mail: getEnvOrDefault('CONTACT_MAIL', 'max@mustermann.tld')
   },
   adsText: getEnvOrDefault('ADS_TEXT', '')
-}
-
-if (config.redis.password.length == 0) {
-  delete config.redis.password;
 }
 
 export default config;

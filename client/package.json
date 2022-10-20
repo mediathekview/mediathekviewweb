@@ -15,12 +15,12 @@
   "dependencies": {
     "bootstrap": "3.4",
     "bootswatch": "3.4",
-    "datatables.net": "1.11",
+    "datatables.net": "1.12",
     "jquery": "3.6",
     "js-cookie": "3.0",
     "lodash": "4.17",
-    "socket.io-client": "4.4",
-    "video.js": "7.17"
+    "socket.io-client": "4.5",
+    "video.js": "7.20"
   },
   "devDependencies": {
     "@types/bootstrap": "3.4",
@@ -29,6 +29,6 @@
     "@types/lodash": "4.14",
     "@types/socket.io-client": "1.4",
     "@types/video.js": "7.3",
-    "typescript": "4.5"
+    "typescript": "4.8"
   }
 }

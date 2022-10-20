@@ -6,13 +6,13 @@ import http from 'http';
 import MatomoTracker from 'matomo-tracker';
 import moment from 'moment';
 import path from 'path';
-import REDIS from 'redis';
 import request from 'request';
 import * as SocketIO from 'socket.io';
 import URL from 'url';
 import config from './config';
 import MediathekManager from './MediathekManager';
 import renderImpressum from './pages/impressum';
+import { getRedisClient, initializeRedis } from './Redis';
 import RSSFeedGenerator from './RSSFeedGenerator';
 import SearchEngine from './SearchEngine';
 import * as utils from './utils';
@@ -20,8 +20,8 @@ import * as utils from './utils';
 const impressum = renderImpressum(config.contact);
 
 (async () => {
-  const redis = REDIS.createClient(config.redis);
-  redis.on('error', (err) => console.error(err));
+  await initializeRedis();
+  const redis = getRedisClient();
 
   let matomo: MatomoTracker | null = null;
 
@@ -126,7 +126,7 @@ const impressum = renderImpressum(config.contact);
       if (err) {
         res.status(500).send(err.message);
       } else {
-        res.set('Content-Type', 'text/plain');
+        res.set('Content-Type', 'text/xml');
         res.send(result);
 
         if (!!matomo) {
@@ -285,7 +285,7 @@ const impressum = renderImpressum(config.contact);
     }
 
     socket.on('getContentLength', (url, callback) => {
-      redis.hget('mvw:contentLengthCache', url, (err, result) => {
+      redis.hGet('mvw:contentLengthCache', url).then((result) => {
         if (result) {
           callback(result);
         } else {
@@ -297,7 +297,7 @@ const impressum = renderImpressum(config.contact);
             }
 
             callback(contentLength);
-            redis.hset('mvw:contentLengthCache', url, contentLength.toString());
+            redis.hSet('mvw:contentLengthCache', url, contentLength.toString());
           });
         }
       });

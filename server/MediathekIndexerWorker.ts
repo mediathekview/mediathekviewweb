@@ -1,15 +1,12 @@
 import crypto from 'crypto';
 import elasticsearch from 'elasticsearch';
-import REDIS from 'redis';
-import config from './config.js';
-import IPC from './IPC.js';
+import config from './config';
+import IPC from './IPC';
+import { getRedisClient, initializeRedis } from './Redis';
 
 const ipc = new IPC(process);
 
-const redis = REDIS.createClient(config.redis);
 const searchClient = new elasticsearch.Client(config.elasticsearch);
-
-redis.on('error', (err) => handleError(err));
 
 const bufferLength = 150,
   fillLength = 50,
@@ -34,20 +31,21 @@ let filmlisteTimestamp = 0;
 function handleError(err) {
   error = true;
   ipc.send('error', err.message);
-  redis.quit();
   setTimeout(() => process.exit(1), 500);
 }
 
-function index() {
+async function index() {
+  await initializeRedis();
+
   fillInBuffer();
-  redis.get('mediathekIndexer:newFilmlisteTimestamp', (err, timestamp) => {
-    if (err) {
-      handleError(err);
-    } else {
+
+  getRedisClient()
+    .get('mediathekIndexer:newFilmlisteTimestamp')
+    .then((timestamp) => {
       filmlisteTimestamp = timestamp as any;
       processEntry();
-    }
-  });
+    })
+    .catch((error) => handleError(error));
 }
 
 function fillInBuffer() {
@@ -55,34 +53,32 @@ function fillInBuffer() {
     return;
   }
 
+  const redis = getRedisClient();
+
   if (noNewAdded == false && addedBuffer.length < fillLength) {
     let addedBufferSpace = bufferLength - addedBuffer.length;
-    redis.spop('mediathekIndexer:addedEntries', addedBufferSpace, (err, result) => {
-      if (err) {
-        handleError(err);
-      } else {
+    redis.sPop('mediathekIndexer:addedEntries', addedBufferSpace)
+      .then((result) => {
         if (result.length > 0) {
           addedBuffer = addedBuffer.concat(result);
         } else if (addedBufferSpace > 0) {
           noNewAdded = true;
         }
-      }
-    });
+      })
+      .catch((error) => handleError(error));
   }
 
   if (noNewRemoved == false && removedBuffer.length < fillLength) {
     let removedBufferSpace = bufferLength - removedBuffer.length;
-    redis.spop('mediathekIndexer:removedEntries', removedBufferSpace, (err, result) => {
-      if (err) {
-        handleError(err);
-      } else {
+    redis.sPop('mediathekIndexer:removedEntries', removedBufferSpace)
+      .then((result) => {
         if (result.length > 0) {
           removedBuffer = removedBuffer.concat(result);
         } else if (removedBufferSpace > 0) {
           noNewRemoved = true;
         }
-      }
-    });
+      })
+      .catch(handleError);
   }
 }
 
@@ -149,7 +145,7 @@ function processEntry() {
 function finalize() {
   flushOutBuffer();
 
-  redis.quit(() => {
+  getRedisClient().quit().then(() => {
     done();
   });
 }

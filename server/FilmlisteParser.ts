@@ -1,23 +1,17 @@
 import fs from 'fs';
 import lineReader from 'line-reader';
-import Redis from 'redis';
-import config from './config';
 import IPC from './IPC';
+import { getRedisClient, initializeRedis } from './Redis';
 
-const redis = Redis.createClient(config.redis);
 const ipc = new IPC(process);
 
 function handleError(err) {
   ipc.send('error', err.message);
-  redis.quit();
   setTimeout(() => process.exit(0), 500);
 }
 
-redis.on('error', (err) => {
-  handleError(err);
-});
-
-ipc.on('parseFilmliste', (options) => {
+ipc.on('parseFilmliste', async (options) => {
+  await initializeRedis();
   parseFilmliste(options.file, options.setKey, options.timestampKey);
 });
 
@@ -95,6 +89,8 @@ const mapListLineToRedis = ({ line, currentChannel, currentTopic }) => {
 }
 
 function parseFilmliste(file, setKey, timestampKey) {
+  const redis = getRedisClient();
+
   fs.open(file, 'r', (err, fd) => {
     if (err) {
       handleError(err);
@@ -132,7 +128,9 @@ function parseFilmliste(file, setKey, timestampKey) {
         }
 
         if (last) {
-          return redis.batch(buffer).exec(() => {
+          const promises = buffer.map((jsonEntry) => redis.sAdd(setKey, jsonEntry));
+          buffer = [];
+          Promise.all(promises).catch((error) => console.error(error)).then(() => {
             ipc.send('state', {
               entries: currentLine - 2,
               progress: 1
@@ -140,6 +138,8 @@ function parseFilmliste(file, setKey, timestampKey) {
             ipc.send('done');
             fs.close(fd, () => setTimeout(() => process.exit(0), 500));
           });
+
+          return;
         }
 
         [currentChannel, currentTopic, entry] = mapListLineToRedis({ line, currentChannel, currentTopic });
@@ -148,12 +148,14 @@ function parseFilmliste(file, setKey, timestampKey) {
 
         if (!blacklisted) {
           const jsonEntry = JSON.stringify(entry);
-          buffer.push(['sadd', setKey, jsonEntry]);
+          buffer.push(jsonEntry);
         }
 
         if (currentLine % 500 == 0) {
-          redis.batch(buffer).exec();
+          const promises = buffer.map((jsonEntry) => redis.sAdd(setKey, jsonEntry));
+          Promise.all(promises).catch((error) => console.error(error));
           buffer = [];
+
           ipc.send('state', {
             entries: currentLine - 2,
             progress: getProgress()

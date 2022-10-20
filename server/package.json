@@ -13,20 +13,20 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "body-parser": "1.19",
+    "body-parser": "1.20",
     "compression": "1.7",
     "elasticsearch": "16.7",
-    "express": "4.17",
+    "express": "4.18",
     "line-reader": "0.4",
     "lodash": "4.17",
     "lzma-native": "8.0",
     "matomo-tracker": "2.2",
     "moment": "2.29",
-    "redis": "3.1",
+    "redis": "4.3",
     "request": "2.88",
     "request-progress": "3.0",
     "rss": "1.2",
-    "socket.io": "4.4"
+    "socket.io": "4.5"
   },
   "devDependencies": {
     "@types/body-parser": "1.19",
@@ -34,10 +34,9 @@
     "@types/elasticsearch": "5.0",
     "@types/express": "4.17",
     "@types/line-reader": "0.0.34",
-    "@types/node": "16.11",
-    "@types/redis": "2.8",
+    "@types/node": "18",
     "@types/request": "2.48",
     "@types/rss": "0.0",
-    "typescript": "4.5"
+    "typescript": "4.8"
   }
 }

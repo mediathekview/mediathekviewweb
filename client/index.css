@@ -225,6 +225,7 @@ th[data-onclick-sort] {
 .dataTables_scrollHead tr[data-sort="timestamp-asc"] > th[data-onclick-sort="timestamp"]::after,
 .dataTables_scrollHead tr[data-sort="duration-asc"] > th[data-onclick-sort="duration"]::after {
   content: "▲";
+  margin-left: 0.25em;
 }
 
 .dataTables_scrollHead tr[data-sort="channel-desc"] > th[data-onclick-sort="channel"]::after,
@@ -232,4 +233,5 @@ th[data-onclick-sort] {
 .dataTables_scrollHead tr[data-sort="timestamp-desc"] > th[data-onclick-sort="timestamp"]::after,
 .dataTables_scrollHead tr[data-sort="duration-desc"] > th[data-onclick-sort="duration"]::after {
   content: "▼";
+  margin-left: 0.25em;
 }

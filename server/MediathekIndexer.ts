@@ -1,14 +1,15 @@
-import EventEmitter from 'events';
 import cp from 'child_process';
-import IPC from './IPC';
-import REDIS from 'redis';
 import Elasticsearch from 'elasticsearch';
-import config from './config.js';
+import EventEmitter from 'events';
+import config from './config';
 import * as elasticsearchDefinitions from './ElasticsearchDefinitions';
-import StateEmitter from './StateEmitter.js';
+import IPC from './IPC';
+import { getRedisClient, RedisClient } from './Redis';
+import StateEmitter from './StateEmitter';
+
 
 export default class MediathekIndexer extends EventEmitter {
-  redis: REDIS.RedisClient;
+  redis: RedisClient;
   searchClient: Elasticsearch.Client;
   stateEmitter: StateEmitter;
 
@@ -18,7 +19,7 @@ export default class MediathekIndexer extends EventEmitter {
     const configClone = JSON.parse(JSON.stringify(elasticsearchOptions));
 
     this.searchClient = new Elasticsearch.Client(configClone);
-    this.redis = REDIS.createClient(config.redis);
+    this.redis = getRedisClient();
     this.stateEmitter = new StateEmitter(this);
   }
 
@@ -67,24 +68,18 @@ export default class MediathekIndexer extends EventEmitter {
       .rename('mediathekIndexer:newFilmlisteTimestamp', 'mediathekIndexer:currentFilmlisteTimestamp')
       .del('mediathekIndexer:addedEntries')
       .del('mediathekIndexer:removedEntries')
-      .exec((err, replies) => {
-        if (err) {
-          return callback(err);
-        }
-        callback(null);
-      });
+      .exec()
+      .then(() => callback(null))
+      .catch((error) => callback(error));
 
     this.emit('done');
     this.stateEmitter.setState('step', 'waiting');
   }
 
   hasCurrentState(callback) {
-    this.redis.exists('mediathekIndexer:currentFilmliste', (err, reply) => {
-      if (err) {
-        return callback(err, null);
-      }
-      callback(null, reply);
-    });
+    this.redis.exists('mediathekIndexer:currentFilmliste')
+      .then((result) => callback(null, result))
+      .catch((error) => callback(error, null));
   }
 
   fullIndexFilmliste(file, callback) {
@@ -182,30 +177,20 @@ export default class MediathekIndexer extends EventEmitter {
     });
   }
 
-  createDelta(newSet, currentSet, callback) {
+  async createDelta(newSet, currentSet, callback) {
     this.stateEmitter.setState('step', 'createDelta');
 
-    let added = 0;
-    let removed = 0;
-    this.redis.multi()
-      .sdiffstore('mediathekIndexer:addedEntries', newSet, currentSet)
-      .sdiffstore('mediathekIndexer:removedEntries', currentSet, newSet)
-      .scard('mediathekIndexer:addedEntries', (err, reply) => {
-        added = reply;
-      })
-      .scard('mediathekIndexer:removedEntries', (err, reply) => {
-        removed = reply;
-      })
-      .exec((err, replies) => {
-        if (err) {
-          return callback(err);
-        }
-        this.stateEmitter.updateState({
-          added: added,
-          removed: removed
-        });
-        callback(null);
-      });
+    const [, , added, removed] = await this.redis.multi()
+      .sDiffStore('mediathekIndexer:addedEntries', [newSet, currentSet])
+      .sDiffStore('mediathekIndexer:removedEntries', [currentSet, newSet])
+      .sCard('mediathekIndexer:addedEntries')
+      .sCard('mediathekIndexer:removedEntries')
+      .exec()
+      .catch((error) => callback(error));
+
+    this.stateEmitter.updateState({ added, removed });
+
+    callback(null);
   }
 
   combineWorkerStates(workerStates) {

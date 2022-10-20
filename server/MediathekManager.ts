@@ -1,15 +1,15 @@
-import lzma from 'lzma-native';
 import EventEmitter from 'events';
-import config from './config.js';
 import fs from 'fs';
+import lzma from 'lzma-native';
 import path from 'path';
 import request from 'request';
-import MediathekIndexer from './MediathekIndexer';
-import REDIS from 'redis';
-import StateEmitter from './StateEmitter.js';
 import requestProgress from 'request-progress';
-import * as utils from './utils';
 import { promisify } from 'util';
+import config from './config';
+import MediathekIndexer from './MediathekIndexer';
+import { getRedisClient, RedisClient } from './Redis';
+import StateEmitter from './StateEmitter';
+import * as utils from './utils';
 
 const open = promisify(fs.open);
 const close = promisify(fs.close);
@@ -18,14 +18,14 @@ const unlink = promisify(fs.unlink);
 export default class MediathekManager extends EventEmitter {
   stateEmitter: StateEmitter;
   mediathekIndexer: MediathekIndexer;
-  redis: REDIS.RedisClient;
+  redis: RedisClient;
 
   constructor() {
     super();
 
     this.stateEmitter = new StateEmitter(this);
     this.mediathekIndexer = new MediathekIndexer(config.elasticsearch);
-    this.redis = REDIS.createClient(config.redis);
+    this.redis = getRedisClient();
 
     this.mediathekIndexer.on('state', (state) => {
       this.stateEmitter.setState(state);
@@ -33,39 +33,14 @@ export default class MediathekManager extends EventEmitter {
   }
 
   getCurrentFilmlisteTimestamp(callback) {
-    this.redis.get('mediathekIndexer:currentFilmlisteTimestamp', (err, reply) => {
-      if (!err) {
-        callback(reply);
-      } else {
-        callback(0);
-      }
-    });
+    this.redis.get('mediathekIndexer:currentFilmlisteTimestamp')
+      .then((reply) => callback(reply))
+      .catch(() => callback(0));
   }
 
   getRandomFilmlisteMirror(callback) {
     this.stateEmitter.setState('step', 'getRandomFilmlisteMirror');
-
     return callback(null, 'https://liste.mediathekview.de/Filmliste-akt.xz');
-
-    request.get('https://res.mediathekview.de/akt.xml', (err, response, body) => {
-      if (err) {
-        callback(err, null);
-      } else if (response.statusCode == 200) {
-        const filmlisteUrlRegex = /<URL>\s*(.*?)\s*<\/URL>/g;
-        const urlMatches = [];
-
-        let match;
-        while ((match = filmlisteUrlRegex.exec(body)) !== null) {
-          urlMatches.push(match);
-        }
-
-        const url = urlMatches[Math.floor(Math.random() * urlMatches.length)][1];
-
-        callback(null, url);
-      } else {
-        callback(new Error('Error statuscode: ' + response.statusCode), null);
-      }
-    });
   }
 
   checkUpdateAvailable(callback, tries = 3) {
