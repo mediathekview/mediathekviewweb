@@ -17,5 +17,5 @@ cp node_modules/lodash/lodash.min.js dist/static/lodash.min.js
 cp node_modules/video.js/dist/video.min.js dist/static/video.min.js
 cp node_modules/video.js/dist/video-js.min.css dist/static/video-js.min.css
 cp node_modules/socket.io-client/dist/socket.io.min.js dist/static/socket.io.min.js
-cp node_modules/bootswatch/lumen/bootstrap.min.css dist/static/bootstrap-lumen.min.css
-cp node_modules/bootswatch/darkly/bootstrap.min.css dist/static/bootstrap-darkly.min.css
+sed '1s/.*/\/*!/' node_modules/bootswatch/lumen/bootstrap.min.css >dist/static/bootstrap-lumen.min.css
+sed '1s/.*/\/*!/' node_modules/bootswatch/darkly/bootstrap.min.css >dist/static/bootstrap-darkly.min.css
