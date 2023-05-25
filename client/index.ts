@@ -582,14 +582,14 @@ function createSubtitleRow(text, url, filename, filesize?) {
   return tableRow;
 }
 
-function createVideoRow(text, url, videoTitle, filename, filesize?) {
+function createVideoRow(text, url, videoTitle, description, filename, filesize?) {
   const tableRow = $('<tr>');
 
   const watchButton = $('<a>', {
     target: '_blank',
     href: url,
     click: () => {
-      playVideo(videoTitle, url);
+      playVideo(videoTitle, description, url);
       return false;
     }
   });
@@ -720,7 +720,7 @@ function createVideoActionButton(entry) {
         button.addClass('text-warning');
         button.children().first().addClass('icon-big');
       } else {
-        playVideo(entry.title, highestQualityUrl);
+        playVideo(entry.title, entry.description, highestQualityUrl);
       }
 
       return false;
@@ -740,7 +740,6 @@ function createVideoActionButton(entry) {
         </thead>`);
 
 
-  const tableHead = $('<thead>');
   const tableBody = $('<tbody>');
 
   const filenamebase = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + formatDate(entry.timestamp) + ' ' + formatTime(entry.timestamp);
@@ -748,15 +747,15 @@ function createVideoActionButton(entry) {
   let lowRow, midRow, highRow, subtitleRow;
 
   if (entry.url_video_hd) {
-    highRow = createVideoRow('Hoch', entry.url_video_hd, entry.title, filenamebase + '.' + entry.url_video_hd.split('.').pop());
+    highRow = createVideoRow('Hoch', entry.url_video_hd, entry.title, entry.description, filenamebase + '.' + entry.url_video_hd.split('.').pop());
     tableBody.append(highRow);
   }
   if (entry.url_video) {
-    midRow = createVideoRow('Mittel', entry.url_video, entry.title, filenamebase + '.' + entry.url_video.split('.').pop(), entry.size);
+    midRow = createVideoRow('Mittel', entry.url_video, entry.title, entry.description, filenamebase + '.' + entry.url_video.split('.').pop(), entry.size);
     tableBody.append(midRow);
   }
   if (entry.url_video_low) {
-    lowRow = createVideoRow('Niedrig', entry.url_video_low, entry.title, filenamebase + '.' + entry.url_video_low.split('.').pop());
+    lowRow = createVideoRow('Niedrig', entry.url_video_low, entry.title, entry.description, filenamebase + '.' + entry.url_video_low.split('.').pop());
     tableBody.append(lowRow);
   }
   if (entry.url_subtitle) {
@@ -865,7 +864,7 @@ function toggleVideoPause() {
   }
 }
 
-function playVideo(title, url: string) {
+function playVideo(title: string, description: string, url: string) {
   if (url.startsWith('http://')) {
     playVideoInNewWindow(url);
     return;
@@ -890,7 +889,16 @@ function playVideo(title, url: string) {
 
     $('#videocontent').append(vid);
 
-    video = (videojs as any as (id: string) => any)('video-player');
+    video = (videojs as any as (id: string, opts: any) => any)('video-player', {
+      plugins: {
+        hotkeys: true
+      }
+    });
+
+    video.titleBar.update({
+      title,
+      description
+    });
 
     vid.dblclick(() => {
       if (isFullscreen()) {
@@ -1156,9 +1164,6 @@ $(() => {
       } else {
         closeVideo();
       }
-      e.preventDefault();
-    } else if (e.key === ' ' || e.keyCode == 32) { /*32 = Space*/
-      toggleVideoPause();
       e.preventDefault();
     }
   });
