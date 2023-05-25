@@ -225,14 +225,14 @@ export default class SearchEngine {
 
 function mapToMp4IfM3u8(entry) {
   if (isWdrM3u8(entry.url_video)) {
-    const mp4s = WdrM3u8ToMp4(entry.url_video);
+    const mp4s = wdrM3u8ToMp4(entry.url_video);
 
     entry.url_video_low = mp4s[0];
     entry.url_video = mp4s[2];
     entry.url_video_hd = mp4s[4];
   }
   else if (isBrM3u8(entry.url_video)) {
-    const mp4s = BrM3u8ToMp4(entry.url_video);
+    const mp4s = brM3u8ToMp4(entry.url_video);
 
     entry.url_video_low = mp4s[2];
     entry.url_video = mp4s[3];
@@ -240,21 +240,21 @@ function mapToMp4IfM3u8(entry) {
   }
 }
 
-const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(\S+?)\/(\S+?)\/(\d+?)\/(\d+?)\/(?:AKA_INT_GOORIGIN\/)?,?([,\d_]+?),?\.mp4.*m3u8/;
+const wdrRegex = /https?:\/\/wdradaptiv-vh.akamaihd.net\/i\/medp\/ondemand\/(?<region>\S+?)\/(?<fsk>\S+?)\/(?<unknownNumber>\d+?)\/(?<id>\d+?)\/(?:AKA_INT_GOORIGIN\/)?,?(?<qualitiesString>[,\d_]+?),?\.mp4.*m3u8/;
 const brRegex = /https?:\/\/cdn-vod-ios.br.de\/i\/(.*?),([a-zA-Z0-9,]+),\.mp4\.csmil/;
 
 function isWdrM3u8(url: string): boolean {
   return wdrRegex.test(url);
 }
 
-function WdrM3u8ToMp4(url: string): string[] {
+function wdrM3u8ToMp4(url: string): string[] {
   const match = wdrRegex.exec(url);
 
   if (match == null) {
     throw new Error('invalid url');
   }
 
-  const [, region, fsk, unknownNumber, id, qualitiesString] = match;
+  const { region, fsk, unknownNumber, id, qualitiesString } = match.groups;
   const qualities = qualitiesString.split(',');
   const mp4s = qualities.map((quality) => `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${quality}.mp4`);
 
@@ -265,7 +265,7 @@ function isBrM3u8(url: string): boolean {
   return brRegex.test(url);
 }
 
-function BrM3u8ToMp4(url: string): string[] {
+function brM3u8ToMp4(url: string): string[] {
   const match = brRegex.exec(url);
 
   if (match == null) {
