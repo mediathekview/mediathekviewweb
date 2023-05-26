@@ -895,11 +895,6 @@ function playVideo(title: string, description: string, url: string) {
       }
     });
 
-    video.titleBar.update({
-      title,
-      description
-    });
-
     vid.dblclick(() => {
       if (isFullscreen()) {
         exitFullscreen();

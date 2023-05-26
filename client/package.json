@@ -20,7 +20,7 @@
     "js-cookie": "3.0",
     "lodash": "4.17",
     "socket.io-client": "4.6",
-    "video.js": "8.3",
+    "video.js": "7.21",
     "videojs-hotkeys": "0.2"
   },
   "devDependencies": {
