@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
-import config from './config';
-import IPC from './IPC';
+import { IPC } from './IPC';
+import { config } from './config';
 
 export type RedisClient = ReturnType<typeof createClient>;
 
@@ -20,7 +20,7 @@ export async function initializeRedis(): Promise<void> {
     });
 
     await client.connect();
-    console.log('connected to redis');
+    console.log(`${process.pid} - connected to redis`);
     _client = client;
   }
   catch (error) {

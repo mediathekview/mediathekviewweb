@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 
-export default class StateEmitter extends EventEmitter {
+export class StateEmitter extends EventEmitter {
   eventEmitter: any;
   state: any;
 

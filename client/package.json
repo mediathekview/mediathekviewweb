@@ -19,7 +19,7 @@
     "jquery": "3.7",
     "js-cookie": "3.0",
     "lodash": "4.17",
-    "socket.io-client": "4.6",
+    "socket.io-client": "4.7",
     "video.js": "7.21",
     "videojs-hotkeys": "0.2"
   },
@@ -30,6 +30,6 @@
     "@types/lodash": "4.14",
     "@types/socket.io-client": "1.4",
     "@types/video.js": "7.3",
-    "typescript": "5.0"
+    "typescript": "5.2"
   }
 }

@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import elasticsearch from 'elasticsearch';
-import config from './config';
-import IPC from './IPC';
+import { IPC } from './IPC';
 import { getRedisClient, initializeRedis } from './Redis';
+import { config } from './config';
 
 const ipc = new IPC(process);
 

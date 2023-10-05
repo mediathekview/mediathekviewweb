@@ -2,7 +2,7 @@
 import Elasticsearch from 'elasticsearch';
 import { arraysHasSameElements, timeout } from './utils';
 
-export default class SearchEngine {
+export class SearchEngine {
   client: Elasticsearch.Client;
 
   constructor(elasticsearchOptions: Elasticsearch.ConfigOptions) {

@@ -1,4 +1,4 @@
-export default function renderImpressum(contact: { name: string, street: string, postcode: string, city: string, mail: string }): string {
+export function renderImpressum(contact: { name: string, street: string, postcode: string, city: string, mail: string }): string {
   const impressum = `<h1>Impressum</h1>
 <h2>Angaben gemäß § 5 TMG:</h2>
 <p>

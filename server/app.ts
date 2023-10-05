@@ -9,13 +9,12 @@ import path from 'path';
 import request from 'request';
 import * as SocketIO from 'socket.io';
 import URL from 'url';
-import config from './config';
-import MediathekManager from './MediathekManager';
-import renderImpressum from './pages/impressum';
+import { MediathekManager } from './MediathekManager';
+import { RSSFeedGenerator } from './RSSFeedGenerator';
 import { getRedisClient, initializeRedis } from './Redis';
-import RSSFeedGenerator from './RSSFeedGenerator';
-import SearchEngine from './SearchEngine';
-import * as utils from './utils';
+import { SearchEngine } from './SearchEngine';
+import { config } from './config';
+import { renderImpressum } from './pages/impressum';
 
 const impressum = renderImpressum(config.contact);
 
@@ -54,7 +53,7 @@ const impressum = renderImpressum(config.contact);
 
   const indexing = false;
   let lastIndexingState;
-  let filmlisteTimestamp = 0;
+  let filmlisteTimestamp = await mediathekManager.getCurrentFilmlisteTimestamp();
 
   mediathekManager.on('state', (state) => {
     if (state == null) {
@@ -64,10 +63,6 @@ const impressum = renderImpressum(config.contact);
     console.log();
     console.log(state);
     console.log();
-  });
-
-  mediathekManager.getCurrentFilmlisteTimestamp((timestamp) => {
-    filmlisteTimestamp = timestamp;
   });
 
   if (matomo != null) {
@@ -330,7 +325,7 @@ const impressum = renderImpressum(config.contact);
     });
 
     function emitNewUid() {
-      socket.emit('uid', utils.randomValueBase64(32));
+      socket.emit('uid', crypto.randomUUID());
     }
 
     socket.on('requestUid', () => {
@@ -437,21 +432,23 @@ const impressum = renderImpressum(config.contact);
     });
   }
 
-  function updateLoop() {
-    mediathekManager.updateFilmlisteIfUpdateAvailable((err) => {
-      if (err) {
-        console.error(err);
-      } else {
-        mediathekManager.getCurrentFilmlisteTimestamp((timestamp) => {
-          filmlisteTimestamp = timestamp;
-        });
-      }
+  async function updateLoop() {
+    try {
+      const updated = await mediathekManager.updateFilmlisteIfUpdateAvailable();
 
-      setTimeout(() => updateLoop(), 5 * 60 * 1000);
-    });
+      if (updated) {
+        filmlisteTimestamp = await mediathekManager.getCurrentFilmlisteTimestamp();
+      }
+    }
+    catch (error) {
+      console.error(error);
+    }
+    finally {
+      setTimeout(updateLoop, 3 * 60 * 1000).unref();
+    }
   }
 
   if (config.index) {
-    setImmediate(() => updateLoop());
+    setImmediate(updateLoop);
   }
 })();

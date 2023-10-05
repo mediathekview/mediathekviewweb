@@ -1,7 +1,8 @@
 import fs from 'fs';
 import lineReader from 'line-reader';
-import IPC from './IPC';
+import { IPC } from './IPC';
 import { getRedisClient, initializeRedis } from './Redis';
+import { formatPercent } from './utils';
 
 const ipc = new IPC(process);
 
@@ -158,7 +159,7 @@ function parseFilmliste(file, setKey, timestampKey) {
 
           ipc.send('state', {
             entries: currentLine - 2,
-            progress: getProgress()
+            progress: formatPercent(getProgress())
           });
         }
         getNext();

@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-export default class IPC extends EventEmitter {
+export class IPC extends EventEmitter {
   process: any;
 
   constructor(process) {

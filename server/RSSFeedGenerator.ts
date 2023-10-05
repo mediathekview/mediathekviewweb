@@ -1,9 +1,9 @@
 import * as querystring from 'querystring';
 import RSS from 'rss';
 import * as URL from 'url';
-import SearchEngine from './SearchEngine';
+import { SearchEngine } from './SearchEngine';
 
-export default class RSSFeedGenerator {
+export class RSSFeedGenerator {
   searchEngine: SearchEngine;
 
   constructor(searchEngine) {

@@ -78,7 +78,7 @@ const redisPassword = getEnvOrDefault('REDIS_PASSWORD', '');
 const redisPasswordPrefix = (redisPassword != undefined) ? `:${redisPassword}` : '';
 const redisAtPrefix = ((redisUser != undefined) || (redisPassword != undefined)) ? '@' : '';
 
-const config: Config = {
+export const config: Config = {
   //path for storing data, can be absolute and relative
   dataDirectory: getEnvOrDefault('DATA_DIRECTORY', 'data/'),
   webserverPort: getIntegerEnvOrDefault('WEBSERVER_PORT', 8000),
@@ -111,5 +111,3 @@ const config: Config = {
   },
   adsText: getEnvOrDefault('ADS_TEXT', '')
 }
-
-export default config;

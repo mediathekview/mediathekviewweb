@@ -1,21 +1,16 @@
 import EventEmitter from 'events';
-import fs from 'fs';
+import fs from 'fs/promises';
 import lzma from 'lzma-native';
 import path from 'path';
 import request from 'request';
 import requestProgress from 'request-progress';
-import { promisify } from 'util';
-import config from './config';
-import MediathekIndexer from './MediathekIndexer';
+import { config } from './config';
+import { MediathekIndexer } from './MediathekIndexer';
 import { getRedisClient, RedisClient } from './Redis';
-import StateEmitter from './StateEmitter';
+import { StateEmitter } from './StateEmitter';
 import * as utils from './utils';
 
-const open = promisify(fs.open);
-const close = promisify(fs.close);
-const unlink = promisify(fs.unlink);
-
-export default class MediathekManager extends EventEmitter {
+export class MediathekManager extends EventEmitter {
   stateEmitter: StateEmitter;
   mediathekIndexer: MediathekIndexer;
   redis: RedisClient;
@@ -32,79 +27,69 @@ export default class MediathekManager extends EventEmitter {
     });
   }
 
-  getCurrentFilmlisteTimestamp(callback) {
-    this.redis.get('mediathekIndexer:currentFilmlisteTimestamp')
-      .then((reply) => callback(reply))
-      .catch(() => callback(0));
+  async getCurrentFilmlisteTimestamp(): Promise<number> {
+    try {
+      const timestamp = await this.redis.get('mediathekIndexer:currentFilmlisteTimestamp')
+      return Number(timestamp);
+    }
+    catch {
+      return 0;
+    }
   }
 
-  getRandomFilmlisteMirror(callback) {
+  async getRandomFilmlisteMirror(): Promise<string> {
     this.stateEmitter.setState('step', 'getRandomFilmlisteMirror');
-    return callback(null, 'https://liste.mediathekview.de/Filmliste-akt.xz');
+    return 'https://liste.mediathekview.de/Filmliste-akt.xz';
   }
 
-  checkUpdateAvailable(callback, tries = 3) {
+  async checkUpdateAvailable(tries = 3): Promise<string | null> {
     this.stateEmitter.setState({
       step: 'checkUpdateAvailable',
       try: 4 - tries
     });
 
-    this.getRandomFilmlisteMirror((err, mirror) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        this.getCurrentFilmlisteTimestamp((filmlisteTimestamp) => {
-          request.head(mirror, (err, response, body) => {
-            if (err) {
-              if (tries > 0) {
-                this.checkUpdateAvailable(callback, tries - 1);
-              } else {
-                callback(err, null);
-              }
-            } else if (response.statusCode == 200 && response.headers['last-modified'] != undefined) {
-              const lastModified = Math.floor(new Date(response.headers['last-modified']).getTime() / 1000);
-              const tolerance = 25 * 60; //25 minutes, as not all mirrors update at same time
-              const hour = Math.floor(lastModified / 3600) % 24;
-              const available = /* (hour % 2 != 0) && */ ((lastModified - filmlisteTimestamp) >= tolerance); //only uneven hours (UTC) because only they contain BR
+    const mirror = await this.getRandomFilmlisteMirror();
+    const filmlisteTimestamp = await this.getCurrentFilmlisteTimestamp();
 
-              this.stateEmitter.setState({
-                step: 'checkUpdateAvailable',
-                try: 4 - tries,
-                available
-              });
+    try {
+      const response = await fetch(mirror, { method: 'HEAD' });
 
-              callback(null, available ? mirror : null);
-            } else if (response.statusCode != 200) {
-              if (tries > 0) {
-                this.checkUpdateAvailable(callback, tries - 1);
-              } else {
-                callback(new Error('Error statuscode: ' + response.statusCode), null);
-              }
-            } else if (response.headers['last-modified'] == undefined) {
-              if (tries > 0) {
-                this.checkUpdateAvailable(callback, tries - 1);
-              } else {
-                callback(new Error('Server-Response had no last-modified header'), null);
-              }
-            }
-          });
-        });
+      if (response.status != 200) {
+        throw new Error('Non 200 status code.');
       }
-    });
+
+      const lastModifiedHeader = response.headers.get('last-modified');
+
+      if (lastModifiedHeader == undefined) {
+        throw new Error('Server-Response had no last-modified header');
+      }
+
+      const lastModified = Math.floor(new Date(lastModifiedHeader).getTime() / 1000);
+      const tolerance = 30 * 60; // 30 minutes, as not all mirrors update at same time
+      const available = ((lastModified - filmlisteTimestamp) >= tolerance);
+
+      this.stateEmitter.setState({ step: 'checkUpdateAvailable', try: 4 - tries, available });
+
+      return available ? mirror : null;
+    }
+    catch (error) {
+      if (tries > 0) {
+        return this.checkUpdateAvailable(tries - 1);
+      }
+
+      throw error;
+    }
   }
 
-  updateFilmlisteIfUpdateAvailable(callback) {
-    this.checkUpdateAvailable((err, mirror) => {
-      if (err) {
-        callback(err, false);
-      } else if (mirror != null) {
-        this.updateFilmliste(mirror)
-          .then(() => callback(null, true))
-          .catch((error) => callback(error, false));
-      } else {
-        callback(null, false);
-      }
-    });
+  async updateFilmlisteIfUpdateAvailable(): Promise<boolean> {
+    const mirror = await this.checkUpdateAvailable();
+    const updateAvailable = mirror != null;
+
+    if (updateAvailable) {
+      await this.updateFilmliste(mirror);
+    }
+
+    return updateAvailable;
   }
 
   async updateFilmliste(mirror): Promise<void> {
@@ -114,14 +99,13 @@ export default class MediathekManager extends EventEmitter {
 
     const file = path.join(config.dataDirectory, filemlisteFilename);
 
-    await this.downloadFilmliste(mirror, file);
-
     try {
+      await this.downloadFilmliste(mirror, file);
       await this.mediathekIndexer.indexFilmliste(file);
     }
     finally {
       try {
-        await unlink(file);
+        await fs.unlink(file);
       }
       catch (error) {
         console.error(error)
@@ -132,13 +116,10 @@ export default class MediathekManager extends EventEmitter {
   async downloadFilmliste(mirror, file): Promise<void> {
     this.stateEmitter.setState('step', 'downloadFilmliste');
 
-    const fd = await open(file, 'w');
+    const fileHandle = await fs.open(file, 'w');
 
     return new Promise<void>((resolve, reject) => {
-      const fileStream = fs.createWriteStream(null, {
-        fd: fd,
-        autoClose: true
-      });
+      const fileStream = fileHandle.createWriteStream({ autoClose: true });
 
       const req = requestProgress(request.get(mirror), {
         throttle: 500
@@ -146,30 +127,31 @@ export default class MediathekManager extends EventEmitter {
 
       fileStream.on('error', (err) => {
         req.abort();
-        fs.close(fd, () => { });
+        void fileHandle.close();
         reject(err);
       });
 
       req.on('error', (err) => {
-        fs.close(fd, () => {
-          reject(err);
-        });
+        fileHandle.close()
+          .then(() => reject(err))
+          .catch(() => reject(err));
       });
 
       req.on('progress', (state) => {
         this.stateEmitter.updateState({
-          progress: state.percent,
+          progress: utils.formatPercent(state.percent),
           speed: utils.formatBytes(state.speed, 2) + '/s',
           transferred: utils.formatBytes(state.size.transferred, 2) + ' / ' + utils.formatBytes(state.size.total, 2),
-          elapsed: state.time.elapsed + ' seconds',
-          remaining: state.time.remaining + ' seconds'
+          elapsed: utils.formatDuration(state.time.elapsed),
+          remaining: utils.formatDuration(state.time.remaining)
         });
       });
 
       const decompressor = lzma.createDecompressor();
+
       req.pipe(decompressor).pipe(fileStream).on('finish', async () => {
         try {
-          await close(fd);
+          await fileHandle.close();
         }
         catch (error) {
           console.error(error);

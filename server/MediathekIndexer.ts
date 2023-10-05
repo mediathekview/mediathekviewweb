@@ -1,14 +1,14 @@
 import cp from 'child_process';
 import Elasticsearch from 'elasticsearch';
 import EventEmitter from 'events';
-import config from './config';
+import { config } from './config';
 import * as elasticsearchDefinitions from './ElasticsearchDefinitions';
-import IPC from './IPC';
+import { IPC } from './IPC';
 import { getRedisClient, RedisClient } from './Redis';
-import StateEmitter from './StateEmitter';
+import { StateEmitter } from './StateEmitter';
 
 
-export default class MediathekIndexer extends EventEmitter {
+export class MediathekIndexer extends EventEmitter {
   redis: RedisClient;
   searchClient: Elasticsearch.Client;
   stateEmitter: StateEmitter;
@@ -260,7 +260,6 @@ export default class MediathekIndexer extends EventEmitter {
 
     let lastState = null;
     let lastStatsUpdate = 0;
-
 
     ipc.on('state', (state) => {
       lastState = state;
