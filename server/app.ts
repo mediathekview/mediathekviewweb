@@ -1,6 +1,7 @@
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import express from 'express';
+import { rateLimit } from 'express-rate-limit';
 import fs from 'fs';
 import http from 'http';
 import MatomoTracker from 'matomo-tracker';
@@ -17,6 +18,13 @@ import { config } from './config';
 import { renderImpressum } from './pages/impressum';
 
 const impressum = renderImpressum(config.contact);
+
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  limit: 100,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false
+});
 
 (async () => {
   await initializeRedis();
@@ -40,6 +48,8 @@ const impressum = renderImpressum(config.contact);
   const app = express();
   const httpServer = new http.Server(app);
   const io = new SocketIO.Server(httpServer);
+
+  app.use(limiter);
 
   app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
