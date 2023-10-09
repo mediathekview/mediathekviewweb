@@ -27,7 +27,7 @@
     "request": "2.88",
     "request-progress": "3.0",
     "rss": "1.2",
-    "socket.io": "4.7"
+    "socket.io": "4.6"
   },
   "devDependencies": {
     "@types/body-parser": "1.19",
