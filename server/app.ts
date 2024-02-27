@@ -333,7 +333,7 @@ const impressum = renderImpressum(config.contact);
     });
 
     socket.on('track', (data) => {
-      if (!data.uid || data.uid.length != 32) {
+      if (!data.uid || data.uid.length != 36) {
         emitNewUid();
         return;
       }
