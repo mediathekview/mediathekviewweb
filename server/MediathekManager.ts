@@ -65,8 +65,8 @@ export class MediathekManager extends EventEmitter {
       }
 
       const lastModified = Math.floor(new Date(lastModifiedHeader).getTime() / 1000);
-      const tolerance = 30 * 60; // 30 minutes, as not all mirrors update at same time
-      const available = ((lastModified - filmlisteTimestamp) >= tolerance);
+      const tolerance = 40 * 60;
+      const available = (lastModified - filmlisteTimestamp) >= tolerance;
 
       this.stateEmitter.setState({ step: 'checkUpdateAvailable', try: 4 - tries, available });
 
