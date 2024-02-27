@@ -37,7 +37,7 @@
   <script type="text/javascript">
     if (typeof localStorage != 'undefined') {
       var allowCookies = localStorage.getItem('allowCookies') == 'true';
-      var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') ?? 0;
+      var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') || 0;
       var lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString);
 
       if (!allowCookies && (lastAllowCookiesAsked == NaN || (lastAllowCookiesAsked < (Date.now() - 7 * 24 * 60 * 60 * 1000)))) {
