@@ -34,7 +34,7 @@ build:server:
       --destination "$SERVER_DIST_IMAGE_SHA"
       --destination "$SERVER_DIST_IMAGE"
   tags:
-    - docker
+    - gitlab-org-docker
 
 build:client:
   stage: build:application
@@ -50,7 +50,7 @@ build:client:
       --destination "$CLIENT_DIST_IMAGE_SHA"
       --destination "$CLIENT_DIST_IMAGE"
   tags:
-    - docker
+    - gitlab-org-docker
 
 pack:dist:
   stage: pack
@@ -68,7 +68,7 @@ pack:dist:
       --destination "$DIST_IMAGE_SHA"
       --destination "$DIST_IMAGE_LATEST"
   tags:
-    - docker
+    - gitlab-org-docker
 
 publish:image:
   stage: publish
@@ -84,7 +84,7 @@ publish:image:
     - skopeo login --username "$DOCKER_HUB_USER" --password "$DOCKER_HUB_PASSWORD" "docker.io"
     - skopeo copy "docker://${DIST_IMAGE_SHA}" "docker://${DIST_IMAGE_DOCKER_HUB}"
   tags:
-    - docker
+    - gitlab-org-docker
 
 publish:image-development:
   stage: publish
@@ -100,4 +100,4 @@ publish:image-development:
     - skopeo login --username "$DOCKER_HUB_USER" --password "$DOCKER_HUB_PASSWORD" "docker.io"
     - skopeo copy "docker://${DIST_IMAGE_SHA}" "docker://${DIST_IMAGE_DOCKER_HUB_DEVELOPMENT}"
   tags:
-    - docker
+    - gitlab-org-docker
