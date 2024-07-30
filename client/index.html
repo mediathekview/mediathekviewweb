@@ -35,24 +35,33 @@
   <script defer src="/static/index.js"></script>
 
   <script type="text/javascript">
-    if (typeof localStorage != 'undefined') {
-      var allowCookies = localStorage.getItem('allowCookies') == 'true';
-      var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') || 0;
-      var lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString);
+    function addAdSense() {
+      var adsense = document.createElement("script");
+      adsense.type = "text/javascript";
+      adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
+      adsense.setAttribute('async', 'async');
+      adsense.setAttribute('crossorigin', 'anonymous');
+      adsense.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+      document.head.appendChild(adsense);
+    }
 
-      if (!allowCookies && (lastAllowCookiesAsked == NaN || (lastAllowCookiesAsked < (Date.now() - 7 * 24 * 60 * 60 * 1000)))) {
-        localStorage.removeItem('allowCookies');
-      }
+    try {
+      if (typeof localStorage != 'undefined') {
+        var allowCookies = localStorage.getItem('allowCookies') == 'true';
+        var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') || 0;
+        var lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString);
 
-      if (allowCookies) {
-        var adsense = document.createElement("script");
-        adsense.type = "text/javascript";
-        adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
-        adsense.setAttribute('async', 'async');
-        adsense.setAttribute('crossorigin', 'anonymous');
-        adsense.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
-        document.head.appendChild(adsense);
+        if (!allowCookies && (lastAllowCookiesAsked == NaN || (lastAllowCookiesAsked < (Date.now() - 7 * 24 * 60 * 60 * 1000)))) {
+          localStorage.removeItem('allowCookies');
+        }
+
+        if (allowCookies) {
+          addAdSense();
+        }
       }
+    }
+    catch {
+      addAdSense()
     }
   </script>
 </head>
