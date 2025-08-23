@@ -53,8 +53,6 @@ const impressum = renderImpressum(config.contact);
   const mediathekManager = new MediathekManager();
   const rssFeedGenerator = new RSSFeedGenerator(searchEngine);
 
-  const indexing = false;
-  let lastIndexingState;
   let filmlisteTimestamp = await mediathekManager.getCurrentFilmlisteTimestamp();
 
   mediathekManager.on('state', (state) => {
@@ -290,10 +288,6 @@ const impressum = renderImpressum(config.contact);
       console.log('client disconnected, ip: ' + clientIp);
     });
 
-    if (indexing && lastIndexingState != null) {
-      socket.emit('indexState', lastIndexingState);
-    }
-
     socket.on('getContentLength', async (url, callback) => {
       try {
         const cachedResult = await valkey.hget('mvw:contentLengthCache', url);
@@ -314,25 +308,12 @@ const impressum = renderImpressum(config.contact);
     });
 
     socket.on('getDescription', (id, callback) => {
-      if (indexing) {
-        callback('cannot get description while indexing');
-        return;
-      }
-
       searchEngine.getDescription(id)
         .then((description) => callback(description))
         .catch((err) => callback(err.message));
     });
 
     socket.on('queryEntries', (query, callback) => {
-      if (indexing) {
-        callback({
-          result: null,
-          err: ['cannot query while indexing']
-        });
-        return;
-      }
-
       queryEntries(query)
         .then((result) => callback({ result, err: null }))
         .catch((err) => callback({ result: null, err: [err.message] }));

@@ -1,10 +1,4 @@
 variables:
-  SERVER_DIST_IMAGE: "$CI_REGISTRY_IMAGE/server-dist:$CI_COMMIT_REF_SLUG"
-  SERVER_DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/server-dist:$CI_COMMIT_SHA"
-
-  CLIENT_DIST_IMAGE: "$CI_REGISTRY_IMAGE/client-dist:$CI_COMMIT_REF_SLUG"
-  CLIENT_DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE/client-dist:$CI_COMMIT_SHA"
-
   DIST_IMAGE_LATEST: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
   DIST_IMAGE_SHA: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
   DIST_IMAGE_DOCKER_HUB: "mediathekview/mediathekviewweb:latest"
@@ -15,13 +9,11 @@ before_script:
   - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
 stages:
-  - build:dependencies
-  - build:application
-  - pack
+  - build
   - publish
 
-build:server:
-  stage: build:application
+build:
+  stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -30,41 +22,7 @@ build:server:
   script:
     - /kaniko/executor --cache=true
       --context "$CI_PROJECT_DIR"
-      --dockerfile "$CI_PROJECT_DIR/ci/server.dockerfile"
-      --destination "$SERVER_DIST_IMAGE_SHA"
-      --destination "$SERVER_DIST_IMAGE"
-  tags:
-    - gitlab-org-docker
-
-build:client:
-  stage: build:application
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  except:
-    - schedules
-  script:
-    - /kaniko/executor --cache=true
-      --context "$CI_PROJECT_DIR"
-      --dockerfile "$CI_PROJECT_DIR/ci/client.dockerfile"
-      --destination "$CLIENT_DIST_IMAGE_SHA"
-      --destination "$CLIENT_DIST_IMAGE"
-  tags:
-    - gitlab-org-docker
-
-pack:dist:
-  stage: pack
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  except:
-    - schedules
-  script:
-    - /kaniko/executor --cache=true
-      --context "$CI_PROJECT_DIR"
-      --dockerfile "$CI_PROJECT_DIR/ci/dist.dockerfile"
-      --build-arg "SERVER_DIST_IMAGE=$SERVER_DIST_IMAGE_SHA"
-      --build-arg "CLIENT_DIST_IMAGE=$CLIENT_DIST_IMAGE_SHA"
+      --dockerfile "$CI_PROJECT_DIR/Containerfile"
       --destination "$DIST_IMAGE_SHA"
       --destination "$DIST_IMAGE_LATEST"
   tags:

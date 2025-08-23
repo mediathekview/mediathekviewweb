@@ -4,7 +4,7 @@
   "description": "Web version of Mediathekview",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bagbag/mediathekviewweb.git"
+    "url": "https://github.com/mediathekview/mediathekviewweb.git"
   },
   "main": "index.js",
   "scripts": {
@@ -13,23 +13,17 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "bootstrap": "3.4",
-    "bootswatch": "3.4",
-    "datatables.net": "1.13",
-    "jquery": "3.7",
+    "@tailwindcss/cli": "4.1",
     "js-cookie": "3.0",
-    "lodash": "4.17",
-    "socket.io-client": "4.7",
+    "socket.io-client": "4.8",
+    "tailwindcss": "4.1",
     "video.js": "7.21",
     "videojs-hotkeys": "0.2"
   },
   "devDependencies": {
-    "@types/bootstrap": "3.4",
-    "@types/datatables.net": "1.10",
-    "@types/jquery": "3.5",
-    "@types/lodash": "4.14",
-    "@types/socket.io-client": "1.4",
+    "@tailwindcss/forms": "0.5",
+    "@tailwindcss/typography": "0.5",
     "@types/video.js": "7.3",
-    "typescript": "5.5"
+    "typescript": "5.9"
   }
 }
