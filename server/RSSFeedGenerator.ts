@@ -10,7 +10,7 @@ export class RSSFeedGenerator {
     this.searchEngine = searchEngine;
   }
 
-  createFeed(requestUrl, callback) {
+  async createFeed(requestUrl): Promise<string> {
     const url = URL.parse(requestUrl);
     const urlQuery = querystring.parse(url.query);
 
@@ -63,61 +63,55 @@ export class RSSFeedGenerator {
       size: (typeof urlQuery.size == 'string') ? parseInt(urlQuery.size) : 50
     };
 
-    this.searchEngine.search(queryObj, (result, err) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        const siteUrl = URL.format({
-          protocol: url.protocol,
-          slashes: url.slashes,
-          auth: url.auth,
-          host: url.host,
-          port: url.port,
-          hostname: url.hostname,
-          hash: url.query,
-          pathname: '/'
-        });
+    const result = await this.searchEngine.search(queryObj);
 
-        const rss = new RSS({
-          title: 'MVW - ' + urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
-          ttl: 75,
-          description: urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
-          feed_url: requestUrl,
-          site_url: siteUrl
-        });
+    const siteUrl = URL.format({
+      protocol: url.protocol,
+      slashes: url.slashes,
+      auth: url.auth,
+      host: url.host,
+      port: url.port,
+      hostname: url.hostname,
+      hash: url.query,
+      pathname: '/'
+    });
 
-        for (let i = 0; i < result.result.length; i++) {
-          const item = result.result[i];
+    const rss = new RSS({
+      title: 'MVW - ' + urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
+      ttl: 75,
+      description: urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
+      feed_url: requestUrl,
+      site_url: siteUrl
+    });
 
-          rss.item({
-            author: item.channel,
-            categories: [item.topic],
-            title: item.title,
-            description: item.description,
-            url: item.url_video_hd || item.url_video,
-            guid: item.id,
-            date: new Date(item.timestamp * 1000),
-            enclosure: {
-              url: item.url_video_hd || item.url_video,
-              size: item.size
-            },
-            custom_elements: [
-              {
-                duration: item.duration
-              },
-              {
-                websiteUrl: item.url_website
-              },
-            ]
-          });
-        }
+    for (let i = 0; i < result.result.length; i++) {
+      const item = result.result[i];
 
-        const feed = rss.xml({
-          indent: true
-        });
+      rss.item({
+        author: item.channel,
+        categories: [item.topic],
+        title: item.title,
+        description: item.description,
+        url: item.url_video_hd || item.url_video,
+        guid: item.id,
+        date: new Date(item.timestamp * 1000),
+        enclosure: {
+          url: item.url_video_hd || item.url_video,
+          size: item.size
+        },
+        custom_elements: [
+          {
+            duration: item.duration
+          },
+          {
+            websiteUrl: item.url_website
+          },
+        ]
+      });
+    }
 
-        callback(null, feed);
-      }
+    return rss.xml({
+      indent: true
     });
   }
 

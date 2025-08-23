@@ -17,7 +17,7 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 ##### Ein Klick auf das Abspielsymbol startet das Video in der gewünschten Qualität. Ein Klick auf das Diskettensymbol startet den Download der Videodatei *(Achtung: dies wird nicht von allen Browsern (z.B. Firefox) unterstützt - hier dann per Rechtsklick -> "Ziel speichern unter" bzw. "Save target as" das Video herunterladen)*.
 
 
-##### Im geöffneten Player das X oben rechts oder Escape drücken, um den Player zu schließen. Dadurch wird auch das Abspielen beendet. 
+##### Im geöffneten Player das X oben rechts oder Escape drücken, um den Player zu schließen. Dadurch wird auch das Abspielen beendet.
 ![Overlay](https://abload.de/img/videooverlayzxqh9.png)
 
 
@@ -82,7 +82,7 @@ Bei Benutzung des Aufnahme-Buttons erfolgt die Speicherung im Standard-Video Ver
 
 ### Serverseitig
 - Node
-- Redis
+- Valkey
 - Elasticsearch
 
 ### Clientseitig

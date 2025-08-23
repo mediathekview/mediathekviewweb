@@ -1,3 +1,6 @@
+import type { Indices_Common } from '@opensearch-project/opensearch/api/_types/index.js';
+import type { Indices_PutMapping_RequestBody } from '@opensearch-project/opensearch/api/index.js';
+
 export const mapping = {
   properties: {
     channel: {
@@ -64,9 +67,8 @@ export const mapping = {
       format: 'epoch_second',
       index: true,
     },
-
   }
-};
+} satisfies Indices_PutMapping_RequestBody;
 
 export const settings = {
   refresh_interval: '3s',
@@ -180,4 +182,4 @@ export const settings = {
       }
     }
   }
-};
+} satisfies Indices_Common.IndexSettings;

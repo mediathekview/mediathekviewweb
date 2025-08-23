@@ -1,7 +1,10 @@
-import fs from 'fs';
+import fs from 'node:fs';
+
+import { Batch } from '@valkey/valkey-glide';
 import lineReader from 'line-reader';
+
 import { IPC } from './IPC';
-import { getRedisClient, initializeRedis } from './Redis';
+import { getValkeyClient, initializeValkey } from './ValKey';
 import { formatPercent } from './utils';
 
 const ipc = new IPC(process);
@@ -12,7 +15,7 @@ function handleError(err) {
 }
 
 ipc.on('parseFilmliste', async (options) => {
-  await initializeRedis();
+  await initializeValkey();
   parseFilmliste(options.file, options.setKey, options.timestampKey);
 });
 
@@ -27,6 +30,11 @@ function createUrlFromBase(baseUrl, newUrl) {
 const handleListMeta = (line: string) => {
   const regex = /".*?","(\d+)\.(\d+)\.(\d+),\s?(\d+):(\d+)"/;
   const match = regex.exec(line);
+
+  if (!match) {
+    return 0;
+  }
+
   return Math.floor(
     Date.UTC(
       parseInt(match[3]),
@@ -38,7 +46,7 @@ const handleListMeta = (line: string) => {
   );
 }
 
-const mapListLineToRedis = ({ line, currentChannel, currentTopic }) => {
+const mapListLineToValkey = ({ line, currentChannel, currentTopic }) => {
   // destruct parsed
   const [
     line_channel,    // 0
@@ -90,7 +98,7 @@ const mapListLineToRedis = ({ line, currentChannel, currentTopic }) => {
 }
 
 function parseFilmliste(file, setKey, timestampKey) {
-  const redis = getRedisClient();
+  const valkey = getValkeyClient();
 
   fs.open(file, 'r', (err, fd) => {
     if (err) {
@@ -104,64 +112,90 @@ function parseFilmliste(file, setKey, timestampKey) {
         return;
       }
 
-      let currentChannel,
-        currentTopic,
-        entry,
-        buffer = [],
-        currentLine = 0;
+      let currentChannel;
+      let currentTopic;
+      let entry;
+      let buffer: string[] = [];
+      let currentLine = 0;
 
       const filesize = stats.size,
         fileStream = fs.createReadStream(null, { fd: fd, autoClose: true }),
         lineReaderSeparator = { separator: /^{"Filmliste":|,"X":|}$/ }
 
       const getProgress = () => {
-        return fileStream.bytesRead / filesize;
+        return filesize > 0 ? fileStream.bytesRead / filesize : 1;
       };
 
       lineReader.eachLine(fileStream as any, lineReaderSeparator, (line, last, getNext) => {
         currentLine++;
+
         if (currentLine === 1) {
-          return getNext();
+          // This is the empty string before the first separator, skip.
         }
-        if (currentLine === 2) {
-          redis.set(timestampKey, handleListMeta(line).toString());
-          return getNext();
+        else if (currentLine === 2) {
+          // This is the metadata line
+          valkey.set(timestampKey, handleListMeta(line).toString());
+        }
+        else {
+          // This is a data line, process it.
+          // An empty line can be passed on the last call, so guard against it.
+          if (line.length > 0) {
+            [currentChannel, currentTopic, entry] = mapListLineToValkey({ line, currentChannel, currentTopic });
+
+            const isBlacklisted = entry.title == 'Wir haben genug - Wirtschaft ohne Wachstum';
+
+            if (!isBlacklisted) {
+              const jsonEntry = JSON.stringify(entry);
+              buffer.push(jsonEntry);
+            }
+          }
         }
 
-        if (last) {
-          const promises = buffer.map((jsonEntry) => redis.sAdd(setKey, jsonEntry));
+        // Flush buffer periodically, or on the last line if the buffer has contents.
+        const shouldFlush = (buffer.length >= 500 && !last) || (last && buffer.length > 0);
+
+        if (shouldFlush) {
+          const batch = new Batch(false);
+
+          for (const jsonEntry of buffer) {
+            batch.sadd(setKey, [jsonEntry]);
+          }
+
           buffer = [];
-          Promise.all(promises).catch((error) => console.error(error)).then(() => {
+
+          valkey.exec(batch, true).then(() => {
             ipc.send('state', {
               entries: currentLine - 2,
-              progress: 1
+              progress: formatPercent(getProgress())
             });
-            ipc.send('done');
-            fs.close(fd, () => setTimeout(() => process.exit(0), 500));
+
+            if (last) {
+              ipc.send('done');
+              fs.close(fd, () => setTimeout(() => process.exit(0), 500));
+            }
+            else {
+              getNext();
+            }
+          }).catch(err => {
+            handleError(err);
+            fs.close(fd, () => process.exit(1));
           });
 
           return;
         }
 
-        [currentChannel, currentTopic, entry] = mapListLineToRedis({ line, currentChannel, currentTopic });
-
-        const blacklisted = entry.title == 'Wir haben genug - Wirtschaft ohne Wachstum';
-
-        if (!blacklisted) {
-          const jsonEntry = JSON.stringify(entry);
-          buffer.push(jsonEntry);
-        }
-
-        if (currentLine % 500 == 0) {
-          const promises = buffer.map((jsonEntry) => redis.sAdd(setKey, jsonEntry));
-          Promise.all(promises).catch((error) => console.error(error));
-          buffer = [];
-
+        if (last) {
+          // This handles the case where the last line is reached but the buffer was empty.
+          // We still need to finalize and close.
           ipc.send('state', {
-            entries: currentLine - 2,
-            progress: formatPercent(getProgress())
+            entries: Math.max(0, currentLine - 2),
+            progress: 1
           });
+          ipc.send('done');
+          fs.close(fd, () => setTimeout(() => process.exit(0), 500));
+          return;
         }
+
         getNext();
       });
     });

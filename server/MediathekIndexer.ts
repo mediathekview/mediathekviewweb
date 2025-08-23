@@ -1,196 +1,108 @@
-import cp from 'child_process';
-import Elasticsearch from 'elasticsearch';
-import EventEmitter from 'events';
-import { config } from './config';
-import * as elasticsearchDefinitions from './ElasticsearchDefinitions';
-import { IPC } from './IPC';
-import { getRedisClient, RedisClient } from './Redis';
-import { StateEmitter } from './StateEmitter';
+import cp from 'node:child_process';
+import EventEmitter from 'node:events';
 
+import { Client, ClientOptions } from '@opensearch-project/opensearch';
+import { Batch } from '@valkey/valkey-glide';
+
+import { config } from './config';
+import { IPC } from './IPC';
+import * as opensearchDefinitions from './OpenSearchDefinitions';
+import { StateEmitter } from './StateEmitter';
+import { getValkeyClient, ValkeyClient } from './ValKey';
 
 export class MediathekIndexer extends EventEmitter {
-  redis: RedisClient;
-  searchClient: Elasticsearch.Client;
+  valkey: ValkeyClient;
+  searchClient: Client;
   stateEmitter: StateEmitter;
 
-  constructor(elasticsearchOptions: Elasticsearch.ConfigOptions) {
+  constructor(opensearchOptions: ClientOptions) {
     super();
 
-    const configClone = JSON.parse(JSON.stringify(elasticsearchOptions));
+    const configClone = JSON.parse(JSON.stringify(opensearchOptions));
 
-    this.searchClient = new Elasticsearch.Client(configClone);
-    this.redis = getRedisClient();
+    this.searchClient = new Client(configClone);
+    this.valkey = getValkeyClient();
     this.stateEmitter = new StateEmitter(this);
   }
 
   async indexFilmliste(file): Promise<void> {
     this.stateEmitter.setState('step', 'indexFilmliste');
 
-    return new Promise<void>((resolve, reject) => {
-      this.hasCurrentState((err, hasCurrentState) => {
-        if (err) {
-          return reject(err);
-        }
+    const hasCurrent = await this.hasCurrentState();
 
-        if (hasCurrentState) {
-          return this.deltaIndexFilmliste(file, (err) => {
-            if (err) {
-              return reject(err);
-            }
-            this.finalize((err) => {
-              if (err) {
-                return reject(err);
-              }
-              resolve(null);
-            });
-          });
-        }
+    if (hasCurrent) {
+      await this.deltaIndexFilmliste(file);
+    }
+    else {
+      await this.fullIndexFilmliste(file);
+    }
 
-        this.fullIndexFilmliste(file, (err) => {
-          if (err) {
-            return reject(err);
-          }
-          this.finalize((err) => {
-            if (err) {
-              return reject(err);
-            }
-            resolve(null);
-          });
-        });
-      });
-    });
+    await this.finalize();
   }
 
-  finalize(callback) {
+  async finalize(): Promise<void> {
     this.stateEmitter.setState('step', 'finalize');
-    this.redis.multi()
+
+    const batch = new Batch(true)
       .rename('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste')
       .rename('mediathekIndexer:newFilmlisteTimestamp', 'mediathekIndexer:currentFilmlisteTimestamp')
-      .del('mediathekIndexer:addedEntries')
-      .del('mediathekIndexer:removedEntries')
-      .exec()
-      .then(() => callback(null))
-      .catch((error) => callback(error));
+      .unlink(['mediathekIndexer:addedEntries', 'mediathekIndexer:removedEntries'])
+
+    await this.valkey.exec(batch, true, { timeout: 10000 });
 
     this.emit('done');
     this.stateEmitter.setState('step', 'waiting');
   }
 
-  hasCurrentState(callback) {
-    this.redis.exists('mediathekIndexer:currentFilmliste')
-      .then((result) => callback(null, result))
-      .catch((error) => callback(error, null));
+  async hasCurrentState(): Promise<boolean> {
+    const result = await this.valkey.exists(['mediathekIndexer:currentFilmliste']);
+    return result == 1;
   }
 
-  fullIndexFilmliste(file, callback) {
+  async fullIndexFilmliste(file: string): Promise<void> {
     this.stateEmitter.setState('step', 'fullIndexFilmliste');
-    this.reCreateESIndex((err) => {
-      if (err) {
-        return callback(err);
-      }
-      this.parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp', (err) => {
-        if (err) {
-          return callback(err);
-        }
-        this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:none', (err) => {
-          if (err) {
-            return callback(err);
-          }
-          this.indexDelta((err) => {
-            if (err) {
-              return callback(err);
-            }
-            callback(null);
-          });
-        });
-      });
-    });
+
+    await this.recreateOSIndex();
+    await this._parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp');
+    await this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:none');
+    await this._indexDelta();
   }
 
-  reCreateESIndex(callback) {
-    this.stateEmitter.setState('step', 'reCreateESIndex');
-    this.searchClient.indices.delete({
-      index: 'filmliste'
-    }, (err, resp, status) => {
-      if (err && err.status != 404) { //404 (index not found) is fine, as we'll create the index in next step.
-        return callback(err);
-      }
-      this.searchClient.indices.create({
-        index: 'filmliste'
-      }, (err, resp, status) => {
-        if (err) {
-          return callback(err);
-        }
-        this.searchClient.indices.close({
-          index: 'filmliste'
-        }, (err, resp, status) => {
-          if (err) {
-            return callback(err);
-          }
-          this.searchClient.indices.putSettings({
-            index: 'filmliste',
-            body: elasticsearchDefinitions.settings
-          }, (err, resp, status) => {
-            if (err) {
-              return callback(err);
-            }
-            this.searchClient.indices.putMapping({
-              index: 'filmliste',
-              type: 'entries',
-              body: elasticsearchDefinitions.mapping
-            }, (err, resp, status) => {
-              if (err) {
-                return callback(err);
-              }
-              this.searchClient.indices.open({
-                index: 'filmliste'
-              }, (err, resp, status) => {
-                if (err) {
-                  return callback(err);
-                }
-                callback(null);
-              });
-            });
-          });
-        });
-      });
+  async recreateOSIndex(): Promise<void> {
+    this.stateEmitter.setState('step', 'recreateOSIndex');
+
+    await this.searchClient.indices.delete({
+      index: 'filmliste',
+      ignore_unavailable: true
     });
+
+    await this.searchClient.indices.create({ index: 'filmliste' });
+    await this.searchClient.indices.close({ index: 'filmliste' });
+    await this.searchClient.indices.putSettings({ index: 'filmliste', body: opensearchDefinitions.settings });
+    await this.searchClient.indices.putMapping({ index: 'filmliste', body: opensearchDefinitions.mapping });
+    await this.searchClient.indices.open({ index: 'filmliste' });
   }
 
-  deltaIndexFilmliste(file, callback) {
+  async deltaIndexFilmliste(file: string): Promise<void> {
     this.stateEmitter.setState('step', 'deltaIndexFilmliste');
-    this.parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp', (err) => {
-      if (err) {
-        return callback(err);
-      }
-      this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste', (err) => {
-        if (err) {
-          return callback(err);
-        }
-        this.indexDelta((err) => {
-          if (err) {
-            return callback(err);
-          }
-          callback(null);
-        });
-      });
-    });
+
+    await this._parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp');
+    await this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste');
+    await this._indexDelta();
   }
 
-  async createDelta(newSet, currentSet, callback) {
+  async createDelta(newSet: string, currentSet: string): Promise<void> {
     this.stateEmitter.setState('step', 'createDelta');
 
-    const [, , added, removed] = await this.redis.multi()
-      .sDiffStore('mediathekIndexer:addedEntries', [newSet, currentSet])
-      .sDiffStore('mediathekIndexer:removedEntries', [currentSet, newSet])
-      .sCard('mediathekIndexer:addedEntries')
-      .sCard('mediathekIndexer:removedEntries')
-      .exec()
-      .catch((error) => callback(error));
+    const batch = new Batch(true)
+      .sdiffstore('mediathekIndexer:addedEntries', [newSet, currentSet])
+      .sdiffstore('mediathekIndexer:removedEntries', [currentSet, newSet])
+      .scard('mediathekIndexer:addedEntries')
+      .scard('mediathekIndexer:removedEntries');
+
+    const [, , added, removed] = await this.valkey.exec(batch, true, { timeout: 10000 });
 
     this.stateEmitter.updateState({ added, removed });
-
-    callback(null);
   }
 
   combineWorkerStates(workerStates) {
@@ -208,6 +120,17 @@ export class MediathekIndexer extends EventEmitter {
       addedEntries: addedEntries,
       removedEntries: removedEntries
     };
+  }
+
+  _indexDelta(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.indexDelta((err) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve();
+      });
+    });
   }
 
   indexDelta(callback) {
@@ -246,6 +169,18 @@ export class MediathekIndexer extends EventEmitter {
         callback(new Error(err));
       });
     }
+  }
+
+  _parseFilmliste(file: string, setKey: string, timestampKey: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.parseFilmliste(file, setKey, timestampKey, (err) => {
+        if (err) {
+          return reject(err);
+        }
+
+        resolve();
+      });
+    });
   }
 
   parseFilmliste(file, setKey, timestampKey, callback) {

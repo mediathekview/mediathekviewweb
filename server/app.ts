@@ -1,17 +1,19 @@
-import bodyParser from 'body-parser';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import URL from 'node:url';
+
 import compression from 'compression';
 import express from 'express';
-import fs from 'fs';
-import http from 'http';
+import got from 'got';
 import MatomoTracker from 'matomo-tracker';
 import moment from 'moment';
-import path from 'path';
-import request from 'request';
 import * as SocketIO from 'socket.io';
-import URL from 'url';
+
 import { MediathekManager } from './MediathekManager';
 import { RSSFeedGenerator } from './RSSFeedGenerator';
-import { getRedisClient, initializeRedis } from './Redis';
+import { getValkeyClient, initializeValkey } from './ValKey';
 import { SearchEngine } from './SearchEngine';
 import { config } from './config';
 import { renderImpressum } from './pages/impressum';
@@ -19,8 +21,8 @@ import { renderImpressum } from './pages/impressum';
 const impressum = renderImpressum(config.contact);
 
 (async () => {
-  await initializeRedis();
-  const redis = getRedisClient();
+  await initializeValkey();
+  const valkey = getValkeyClient();
 
   let matomo: MatomoTracker | null = null;
 
@@ -45,7 +47,7 @@ const impressum = renderImpressum(config.contact);
 
   process.on('SIGTERM', () => httpServer.close(() => process.exit(0)));
 
-  const searchEngine = new SearchEngine(config.elasticsearch);
+  const searchEngine = new SearchEngine(config.opensearch);
   await searchEngine.waitForConnection();
 
   const mediathekManager = new MediathekManager();
@@ -74,9 +76,9 @@ const impressum = renderImpressum(config.contact);
   app.use(compression());
 
   app.use((request, response, next) => {
-    const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.get('host');
-    const orfCdn = 'https://apasfiis.sf.apa.at https://varorfvod.sf.apa.at';
-    const srfCdn = 'https://hdvodsrforigin-f.akamaihd.net http://hdvodsrforigin-f.akamaihd.net https://srfvodhd-vh.akamaihd.net';
+    // const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.get('host');
+    // const orfCdn = 'https://apasfiis.sf.apa.at https://varorfvod.sf.apa.at';
+    // const srfCdn = 'https://hdvodsrforigin-f.akamaihd.net http://hdvodsrforigin-f.akamaihd.net https://srfvodhd-vh.akamaihd.net';
 
     response.set({
       // 'Content-Security-Policy': `default-src 'none'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self' data:; connect-src 'self' ${webSocketSource} ${orfCdn} ${srfCdn}; media-src * blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none';`,
@@ -90,7 +92,7 @@ const impressum = renderImpressum(config.contact);
   });
 
   app.use('/static', express.static(path.join(__dirname, '/client/static')));
-  app.use('/api', bodyParser.text());
+  app.use('/api', express.json(), express.text());
 
   app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, '/client/index.html'));
@@ -116,54 +118,61 @@ const impressum = renderImpressum(config.contact);
     res.send(`Socket.io connections: ${io.sockets.sockets.size}`);
   });
 
-  app.get('/feed', function (req, res) {
-    rssFeedGenerator.createFeed(req.protocol + '://' + req.get('host') + req.originalUrl, (err, result) => {
-      if (err) {
-        res.status(500).send(err.message);
-      } else {
-        res.set('Content-Type', 'text/xml');
-        res.send(result);
+  app.get('/feed', async function (req, res) {
+    try {
+      const result = await rssFeedGenerator.createFeed(req.protocol + '://' + req.get('host') + req.originalUrl);
 
-        if (!!matomo) {
-          matomo.track({
-            token_auth: config.matomo.token_auth,
-            url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
-            uid: 'feed',
-            action_name: 'feed'
-          });
-        }
-      }
-    });
-  });
-
-  app.get('/api/channels', (req, res) => {
-    searchEngine.getChannels((error, channels) => {
-      if (error == undefined) {
-        error = null;
-      }
-
-      res.json({
-        error: error,
-        channels: channels
-      });
+      res.set('Content-Type', 'text/xml');
+      res.send(result);
 
       if (!!matomo) {
         matomo.track({
           token_auth: config.matomo.token_auth,
           url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
-          uid: 'api',
-          action_name: 'api-channels'
+          uid: 'feed',
+          action_name: 'feed'
         });
       }
-    });
+    }
+    catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      res.status(500).send(errorMessage);
+    }
+  });
+
+
+  app.get('/api/channels', async (req, res) => {
+    try {
+      const channels = await searchEngine.getChannels();
+      res.json({
+        error: null,
+        channels: channels
+      });
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({
+        error: errorMessage,
+        channels: null
+      });
+    }
+
+    if (!!matomo) {
+      matomo.track({
+        token_auth: config.matomo.token_auth,
+        url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
+        uid: 'api',
+        action_name: 'api-channels'
+      });
+    }
   });
 
   app.post('/api/entries', async (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
 
     try {
-      const ids = req.body;
-      const entries = searchEngine.getEntries(ids);
+      const ids: string[] = req.body;
+      const entries = await searchEngine.getEntries(ids);
 
       res.status(200).json({
         result: {
@@ -175,9 +184,10 @@ const impressum = renderImpressum(config.contact);
       console.log(moment().format('HH:mm') + ' - entries api used');
     }
     catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(400).json({
         result: null,
-        err: [error.message]
+        err: [errorMessage]
       });
     }
   });
@@ -187,11 +197,13 @@ const impressum = renderImpressum(config.contact);
 
     let query;
     try {
-      query = JSON.parse(req.body);
-    } catch (e) {
+      query = req.body;
+    }
+    catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
       res.status(400).json({
         result: null,
-        err: [e.message]
+        err: [errorMessage]
       });
       return;
     }
@@ -205,10 +217,12 @@ const impressum = renderImpressum(config.contact);
     let query;
     try {
       query = JSON.parse(req.query.query as string);
-    } catch (e) {
+    }
+    catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
       res.status(400).json({
         result: null,
-        err: [e.message]
+        err: [errorMessage]
       });
       return;
     }
@@ -216,25 +230,11 @@ const impressum = renderImpressum(config.contact);
     handleQuery(query, res);
   });
 
-  function handleQuery(query: object, response: express.Response): void {
+  async function handleQuery(query: object, response: express.Response): Promise<void> {
     const begin = process.hrtime();
-    searchEngine.search(query, (result, err) => {
+    try {
+      const result = await searchEngine.search(query);
       const end = process.hrtime(begin);
-
-      if (err) {
-        if (err[0] == 'cannot query while indexing') {
-          response.status(503);
-        } else {
-          response.status(500);
-        }
-
-        response.json({
-          result: result,
-          err: err
-        });
-        return;
-      }
-
       const searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
       const queryInfo = {
@@ -262,12 +262,27 @@ const impressum = renderImpressum(config.contact);
       }
 
       console.log(moment().format('HH:mm') + ' - search api used');
-    });
+
+    }
+    catch (err) {
+      const error = err as Error;
+      if (error.message == 'cannot query while indexing') {
+        response.status(503);
+      }
+      else {
+        response.status(500);
+      }
+
+      response.json({
+        result: null,
+        err: [error.message]
+      });
+    }
   }
 
   io.on('connection', (socket) => {
-    const clientIp = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress.match(/(\d+\.?)+/g)[0];
-    let socketUid = null;
+    const clientIp = socket.request.headers['x-forwarded-for'] || socket.request.socket.remoteAddress?.match(/(\d+\.?)+/g)?.[0] || 'unknown';
+    let socketUid: string | null = null;
 
     console.log('client connected, ip: ' + clientIp);
 
@@ -279,23 +294,23 @@ const impressum = renderImpressum(config.contact);
       socket.emit('indexState', lastIndexingState);
     }
 
-    socket.on('getContentLength', (url, callback) => {
-      redis.hGet('mvw:contentLengthCache', url).then((result) => {
-        if (result) {
-          callback(result);
-        } else {
-          request.head(url, (error, response) => {
-            let contentLength = -1;
+    socket.on('getContentLength', async (url, callback) => {
+      try {
+        const cachedResult = await valkey.hget('mvw:contentLengthCache', url);
 
-            if (!!response && !!response.headers['content-length']) {
-              contentLength = response.headers['content-length'];
-            }
-
-            callback(contentLength);
-            redis.hSet('mvw:contentLengthCache', url, contentLength.toString());
-          });
+        if (cachedResult) {
+          callback(cachedResult);
         }
-      });
+        else {
+          const response = await got.head(url);
+          const contentLength = Number(response.headers['content-length'] || -1);
+          callback(contentLength);
+          await valkey.hset('mvw:contentLengthCache', { url: contentLength.toString() });
+        }
+      }
+      catch (error) {
+        callback(-1);
+      }
     });
 
     socket.on('getDescription', (id, callback) => {
@@ -304,7 +319,9 @@ const impressum = renderImpressum(config.contact);
         return;
       }
 
-      searchEngine.getDescription(id, callback);
+      searchEngine.getDescription(id)
+        .then((description) => callback(description))
+        .catch((err) => callback(err.message));
     });
 
     socket.on('queryEntries', (query, callback) => {
@@ -316,12 +333,9 @@ const impressum = renderImpressum(config.contact);
         return;
       }
 
-      queryEntries(query, (result, err) => {
-        callback({
-          result: result,
-          err: err
-        });
-      });
+      queryEntries(query)
+        .then((result) => callback({ result, err: null }))
+        .catch((err) => callback({ result: null, err: [err.message] }));
     });
 
     function emitNewUid() {
@@ -340,7 +354,8 @@ const impressum = renderImpressum(config.contact);
 
       if (!socketUid) {
         socketUid = data.uid;
-      } else if (data.uid != socketUid) {
+      }
+      else if (data.uid != socketUid) {
         socket.emit('uid', socketUid);
         return;
       }
@@ -380,7 +395,8 @@ const impressum = renderImpressum(config.contact);
       fs.readFile(path.join(__dirname, '/client/donate.html'), 'utf-8', (err, data) => {
         if (err) {
           callback(err.message);
-        } else {
+        }
+        else {
           callback(data);
         }
       });
@@ -394,7 +410,8 @@ const impressum = renderImpressum(config.contact);
       fs.readFile(path.join(__dirname, '/client/datenschutz.html'), 'utf-8', (err, data) => {
         if (err) {
           callback(err.message);
-        } else {
+        }
+        else {
           callback(data);
         }
       });
@@ -406,30 +423,24 @@ const impressum = renderImpressum(config.contact);
     console.log();
   });
 
-  function queryEntries(query, callback) {
+  async function queryEntries(query) {
     const begin = process.hrtime();
-    searchEngine.search(query, (result, err) => {
-      const end = process.hrtime(begin);
+    const result = await searchEngine.search(query);
+    const end = process.hrtime(begin);
 
-      if (err) {
-        callback(result, err);
-        return;
-      }
+    const searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
 
-      const searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
+    const queryInfo = {
+      filmlisteTimestamp: filmlisteTimestamp,
+      searchEngineTime: searchEngineTime,
+      resultCount: result.result.length,
+      totalResults: result.totalResults
+    };
 
-      const queryInfo = {
-        filmlisteTimestamp: filmlisteTimestamp,
-        searchEngineTime: searchEngineTime,
-        resultCount: result.result.length,
-        totalResults: result.totalResults
-      };
-
-      callback({
-        results: result.result,
-        queryInfo: queryInfo
-      }, err);
-    });
+    return {
+      results: result.result,
+      queryInfo: queryInfo
+    };
   }
 
   async function updateLoop() {

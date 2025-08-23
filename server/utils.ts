@@ -30,11 +30,11 @@ export function arraysHasSameElements(array1: any[], array2: any[]) {
     return false;
   }
 
-  array1 = array1.sort();
-  array2 = array2.sort();
+  const sorted1 = array1.toSorted();
+  const sorted2 = array2.toSorted();
 
-  for (let i = 0; i < array1.length; i++) {
-    if (array1[i] !== array2[i]) {
+  for (let i = 0; i < sorted1.length; i++) {
+    if (sorted1[i] !== sorted2[i]) {
       return false;
     }
   }

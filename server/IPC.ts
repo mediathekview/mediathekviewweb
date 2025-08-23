@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 
 export class IPC extends EventEmitter {
   process: any;
@@ -12,10 +12,12 @@ export class IPC extends EventEmitter {
     });
   }
 
-  send(type, data?) {
-    this.process.send({
-      type: type,
-      data: data
-    });
+  send(type: string, data?: any) {
+    if (typeof this.process.send === 'function') {
+      this.process.send({
+        type: type,
+        data: data
+      });
+    }
   }
 }

@@ -1,26 +1,28 @@
-import EventEmitter from 'events';
-import fs from 'fs/promises';
+import EventEmitter from 'node:events';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
+
+import got, { type Progress } from 'got';
 import lzma from 'lzma-native';
-import path from 'path';
-import request from 'request';
-import requestProgress from 'request-progress';
+
 import { config } from './config';
 import { MediathekIndexer } from './MediathekIndexer';
-import { getRedisClient, RedisClient } from './Redis';
 import { StateEmitter } from './StateEmitter';
 import * as utils from './utils';
+import { getValkeyClient, ValkeyClient } from './ValKey';
 
 export class MediathekManager extends EventEmitter {
   stateEmitter: StateEmitter;
   mediathekIndexer: MediathekIndexer;
-  redis: RedisClient;
+  valkey: ValkeyClient;
 
   constructor() {
     super();
 
     this.stateEmitter = new StateEmitter(this);
-    this.mediathekIndexer = new MediathekIndexer(config.elasticsearch);
-    this.redis = getRedisClient();
+    this.mediathekIndexer = new MediathekIndexer(config.opensearch);
+    this.valkey = getValkeyClient();
 
     this.mediathekIndexer.on('state', (state) => {
       this.stateEmitter.setState(state);
@@ -29,8 +31,8 @@ export class MediathekManager extends EventEmitter {
 
   async getCurrentFilmlisteTimestamp(): Promise<number> {
     try {
-      const timestamp = await this.redis.get('mediathekIndexer:currentFilmlisteTimestamp')
-      return Number(timestamp);
+      const timestamp = await this.valkey.get('mediathekIndexer:currentFilmlisteTimestamp');
+      return Number(timestamp) || 0;
     }
     catch {
       return 0;
@@ -54,8 +56,8 @@ export class MediathekManager extends EventEmitter {
     try {
       const response = await fetch(mirror, { method: 'HEAD' });
 
-      if (response.status != 200) {
-        throw new Error('Non 200 status code.');
+      if (!response.ok) {
+        throw new Error(`Non-200 status code: ${response.status}`);
       }
 
       const lastModifiedHeader = response.headers.get('last-modified');
@@ -74,6 +76,7 @@ export class MediathekManager extends EventEmitter {
     }
     catch (error) {
       if (tries > 0) {
+        await utils.timeout(1000);
         return this.checkUpdateAvailable(tries - 1);
       }
 
@@ -92,12 +95,11 @@ export class MediathekManager extends EventEmitter {
     return updateAvailable;
   }
 
-  async updateFilmliste(mirror): Promise<void> {
+  async updateFilmliste(mirror: string): Promise<void> {
     this.stateEmitter.setState('step', 'updateFilmliste');
 
-    var filemlisteFilename = Date.now().toString() + Math.round(Math.random() * 100000).toString();
-
-    const file = path.join(config.dataDirectory, filemlisteFilename);
+    const filmlisteFilename = `${Date.now()}-${Math.round(Math.random() * 100000)}`;
+    const file = path.join(config.dataDirectory, filmlisteFilename);
 
     try {
       await this.downloadFilmliste(mirror, file);
@@ -108,57 +110,66 @@ export class MediathekManager extends EventEmitter {
         await fs.unlink(file);
       }
       catch (error) {
-        console.error(error)
+        console.error(`Failed to delete temporary file: ${file}`, error);
       }
     }
   }
 
-  async downloadFilmliste(mirror, file): Promise<void> {
+  async downloadFilmliste(mirror: string, file: string): Promise<void> {
     this.stateEmitter.setState('step', 'downloadFilmliste');
 
     const fileHandle = await fs.open(file, 'w');
+    const fileStream = fileHandle.createWriteStream({ autoClose: true });
+    const decompressor = lzma.createDecompressor();
+    const downloadStream = got.stream(mirror);
 
-    return new Promise<void>((resolve, reject) => {
-      const fileStream = fileHandle.createWriteStream({ autoClose: true });
+    const startTime = Date.now();
 
-      const req = requestProgress(request.get(mirror), {
-        throttle: 500
-      });
+    let lastStateUpdate = 0;
+    let state = {
+      progress: '0%',
+      speed: '0 B/s',
+      transferred: '0 B / 0 B',
+      elapsed: '0 s',
+      remaining: '0 s'
+    };
 
-      fileStream.on('error', (err) => {
-        req.abort();
-        void fileHandle.close();
-        reject(err);
-      });
+    downloadStream.on('downloadProgress', (progress: Progress) => {
+      const now = Date.now();
+      const total = progress.total ?? 0;
+      const elapsed = (now - startTime) / 1000;
+      const speed = progress.transferred / elapsed;
+      const remainingTime = total ? (total - progress.transferred) / speed : 0;
 
-      req.on('error', (err) => {
-        fileHandle.close()
-          .then(() => reject(err))
-          .catch(() => reject(err));
-      });
+      state = {
+        progress: utils.formatPercent(progress.percent),
+        speed: `${utils.formatBytes(speed, 2)}/s`,
+        transferred: `${utils.formatBytes(progress.transferred, 2)} / ${utils.formatBytes(total, 2)}`,
+        elapsed: utils.formatDuration(elapsed),
+        remaining: utils.formatDuration(remainingTime),
+      };
 
-      req.on('progress', (state) => {
-        this.stateEmitter.updateState({
-          progress: utils.formatPercent(state.percent),
-          speed: utils.formatBytes(state.speed, 2) + '/s',
-          transferred: utils.formatBytes(state.size.transferred, 2) + ' / ' + utils.formatBytes(state.size.total, 2),
-          elapsed: utils.formatDuration(state.time.elapsed),
-          remaining: utils.formatDuration(state.time.remaining)
-        });
-      });
-
-      const decompressor = lzma.createDecompressor();
-
-      req.pipe(decompressor).pipe(fileStream).on('finish', async () => {
-        try {
-          await fileHandle.close();
-        }
-        catch (error) {
-          console.error(error);
-        }
-
-        resolve(null);
-      });
+      if (now - lastStateUpdate > 1000) {
+        lastStateUpdate = now;
+        this.stateEmitter.updateState(state);
+      }
     });
+
+    try {
+      await pipeline(
+        downloadStream,
+        decompressor,
+        fileStream
+      );
+
+      this.stateEmitter.updateState(state);
+    }
+    catch (error) {
+      console.error('Download pipeline failed', error);
+      throw error;
+    }
+    finally {
+      await fileHandle.close().catch(e => console.error("Failed to close file handle on error", e));
+    }
   }
 }

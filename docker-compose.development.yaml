@@ -1,20 +1,28 @@
 version: "3.7"
 
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.23
+  opensearch:
+    image: opensearchproject/opensearch:3
     environment:
       discovery.type: single-node
-    container_name: elasticsearch
-    tmpfs:
-      - /usr/share/elasticsearch/data/
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: MediathekViewWeb01!
+    volumes:
+      - "opensearch:/usr/share/opensearch/data"
     ports:
       - "9200:9200"
 
-  redis:
-    container_name: redis
-    image: redis:6-alpine
-    tmpfs:
-      - /data
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: ["--save 60 1"]
+    volumes:
+      - "valkey:/data"
     ports:
       - "6379:6379"
+
+volumes:
+  valkey:
+  opensearch:

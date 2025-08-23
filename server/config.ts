@@ -1,105 +1,98 @@
-import * as Elasticsearch from 'elasticsearch';
-import os from 'os';
-import { RedisClientOptions } from 'redis';
+import os from 'node:os';
 
-interface Config {
-  dataDirectory: string;
-  webserverPort: number;
-  index: boolean;
-  workerCount: number;
-  workerArgs: string[];
-  redis: RedisClientOptions;
-  elasticsearch: Elasticsearch.ConfigOptions;
+import type { ClientOptions as OpenSearchClientOptions } from '@opensearch-project/opensearch';
+import type { GlideClientConfiguration } from '@valkey/valkey-glide';
+
+type Config = {
+  dataDirectory: string,
+  webserverPort: number,
+  index: boolean,
+  workerCount: number,
+  workerArgs: string[],
+  valkey: GlideClientConfiguration,
+  opensearch: OpenSearchClientOptions,
   matomo: {
     enabled: boolean,
     siteUrl: string,
     matomoUrl: string,
     token_auth: string,
-    siteId: number
+    siteId: number,
   },
   contact: {
     name: string,
     street: string,
     postcode: string,
     city: string,
-    mail: string
+    mail: string,
   },
-  adsText: string
+  adsText: string,
 }
 
 function hasEnv(variable: string): boolean {
-  return (variable in process.env) && (process.env[variable].trim().length > 0);
+  return (variable in process.env) && (process.env[variable]!.trim().length > 0);
 }
 
-function getEnvOrDefault(variable: string, defaultValue: any): any {
-  const has = hasEnv(variable);
-  return has ? process.env[variable] : defaultValue;
-}
-
-function getBooleanEnvOrDefault(variable: string, defaultValue: boolean): boolean {
-  const has = hasEnv(variable);
-
-  if (!has) {
+function getEnvOrDefault<T extends string | number | boolean>(variable: string, defaultValue: T): T {
+  if (!hasEnv(variable)) {
     return defaultValue;
   }
 
-  const value = process.env[variable].trim().toLowerCase();
-  const valid = /^true|false|on|off|0|1$/.test(value);
+  const value = process.env[variable]!;
 
-  if (!valid) {
-    throw new Error(`invalid value "${value}" for ${variable}`)
+  if (typeof defaultValue === 'boolean') {
+    const valid = /^(true|false|on|off|0|1)$/i.test(value);
+
+    if (!valid) {
+      throw new Error(`Invalid boolean value "${value}" for ${variable}`);
+    }
+
+    return (value === 'true' || value === 'on' || value === '1') as T;
   }
 
-  return value == 'true' || value == 'on' || value == '1';
+  if (typeof defaultValue === 'number') {
+    const valid = /^\d+$/.test(value);
+    if (!valid) {
+      throw new Error(`Invalid integer value "${value}" for ${variable}`);
+    }
+
+    return Number.parseInt(value, 10) as T;
+  }
+
+  return value as T;
 }
 
-function getIntegerEnvOrDefault(variable: string, defaultValue: number): number {
-  const has = hasEnv(variable);
-
-  if (!has) {
-    return defaultValue;
-  }
-
-  const value = process.env[variable].trim();
-  const valid = /\d+/.test(value);
-
-  if (!valid) {
-    throw new Error(`invalid value "${value}" for ${variable}`)
-  }
-
-  return Number.parseInt(value);
-}
-
-const redisHost = getEnvOrDefault('REDIS_HOST', '127.0.0.1');
-const redisPort = getIntegerEnvOrDefault('REDIS_PORT', 6379);
-const redisUser = getEnvOrDefault('REDIS_USER', '');
-const redisPassword = getEnvOrDefault('REDIS_PASSWORD', '');
-
-const redisPasswordPrefix = (redisPassword != undefined) ? `:${redisPassword}` : '';
-const redisAtPrefix = ((redisUser != undefined) || (redisPassword != undefined)) ? '@' : '';
 
 export const config: Config = {
   //path for storing data, can be absolute and relative
   dataDirectory: getEnvOrDefault('DATA_DIRECTORY', 'data/'),
-  webserverPort: getIntegerEnvOrDefault('WEBSERVER_PORT', 8000),
-  index: getBooleanEnvOrDefault('INDEX', true),
+  webserverPort: getEnvOrDefault('WEBSERVER_PORT', 8000),
+  index: getEnvOrDefault('INDEX', true),
 
-  workerCount: getIntegerEnvOrDefault('WORKER_COUNT', os.cpus().length),
-  workerArgs: getEnvOrDefault('WORKER_ARGS', ['--optimize_for_size', '--memory-reducer']),
+  workerCount: getEnvOrDefault('WORKER_COUNT', os.cpus().length),
+  workerArgs: getEnvOrDefault('WORKER_ARGS', '').split(',').filter(arg => arg.length > 0),
 
-  redis: {
-    url: `redis://${redisUser}${redisPasswordPrefix}${redisAtPrefix}${redisHost}:${redisPort}`,
-    database: getIntegerEnvOrDefault('REDIS_DB', 2)
+  valkey: {
+    addresses: [
+      {
+        host: getEnvOrDefault('VALKEY_HOST', '127.0.0.1'),
+        port: getEnvOrDefault('VALKEY_PORT', 6379),
+      }
+    ],
+    credentials: {
+      username: getEnvOrDefault('VALKEY_USER', undefined),
+      password: getEnvOrDefault('VALKEY_PASSWORD', undefined),
+    },
+    databaseId: getEnvOrDefault('VALKEY_DB', 2),
   },
-  elasticsearch: {
-    host: getEnvOrDefault('ELASTICSEARCH_HOST', 'localhost') + ':' + getEnvOrDefault('ELASTICSEARCH_PORT', '9200')
+  opensearch: {
+    node: `http://${getEnvOrDefault('OPENSEARCH_HOST', 'localhost')}:${getEnvOrDefault('OPENSEARCH_PORT', '9200')}`,
   },
   matomo: {
-    enabled: getBooleanEnvOrDefault('MATOMO_ENABLED', false),
+    enabled: getEnvOrDefault('MATOMO_ENABLED', false),
     matomoUrl: getEnvOrDefault('MATOMO_URL', 'https://matomo.example.de/piwik.php'),
     siteUrl: getEnvOrDefault('MATOMO_SITE_URL', 'http://domain.tld'),
     token_auth: getEnvOrDefault('MATOMO_AUTH_TOKEN', 'abc123'),
-    siteId: getIntegerEnvOrDefault('MATOMO_SITE_ID', 1)
+    siteId: getEnvOrDefault('MATOMO_SITE_ID', 1),
   },
 
   contact: {
@@ -107,7 +100,7 @@ export const config: Config = {
     street: getEnvOrDefault('CONTACT_STREET', 'Musterstraße 111'),
     postcode: getEnvOrDefault('CONTACT_POSTCODE', '12345'),
     city: getEnvOrDefault('CONTACT_CITY', 'Musterstadt'),
-    mail: getEnvOrDefault('CONTACT_MAIL', 'max@mustermann.tld')
+    mail: getEnvOrDefault('CONTACT_MAIL', 'max@mustermann.tld'),
   },
-  adsText: getEnvOrDefault('ADS_TEXT', '')
-}
+  adsText: getEnvOrDefault('ADS_TEXT', ''),
+};

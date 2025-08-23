@@ -1,52 +1,39 @@
+import type { ClientOptions } from '@opensearch-project/opensearch';
+import { Client } from '@opensearch-project/opensearch';
+import type { Core_Get } from '@opensearch-project/opensearch/api/_types/index.js';
 
-import Elasticsearch from 'elasticsearch';
-import { arraysHasSameElements, timeout } from './utils';
+import type { TermsAggregation } from '@opensearch-project/opensearch/api/_types/_common.aggregations.js';
+import { timeout } from './utils';
 
 export class SearchEngine {
-  client: Elasticsearch.Client;
+  client: Client;
 
-  constructor(elasticsearchOptions: Elasticsearch.ConfigOptions) {
-    const configClone = JSON.parse(JSON.stringify(elasticsearchOptions));
-    this.client = new Elasticsearch.Client(configClone);
+  constructor(opensearchOptions: ClientOptions) {
+    const configClone = structuredClone(opensearchOptions);
+    this.client = new Client(configClone);
   }
 
   async waitForConnection(): Promise<void> {
-    let success = false;
-
-    do {
+    while (true) {
       try {
-        await this.client.ping({ requestTimeout: 250 });
-        success = true;
-        console.info('connected to elasticsearch');
-      } catch (error) {
-        console.warn(`couldn't connect to elasticsearch (${error.message}), trying again...`)
+        await this.client.ping();
+        console.info('Connected to OpenSearch');
+        return;
+      }
+      catch (error) {
+        console.warn(`Could not connect to OpenSearch (${(error as Error).message}), retrying in 2.5s...`);
         await timeout(2500);
       }
-    } while (!success);
+    }
   }
 
-  isBooleanString(str) {
-    if (typeof str != 'string')
-      return false;
-
-    return /^(false|true)$/.test(str);
-  }
-
-  isIntegerString(str) {
-    if (typeof str != 'string')
-      return false;
-
-    return /^\d+$/.test(str);
-  }
-
-  getChannels(callback) {
-    this.client.search({
+  async getChannels(): Promise<string[]> {
+    const response = await this.client.search({
       index: 'filmliste',
-      type: 'entries',
-      size: 100,
+      size: 0,
       body: {
         aggs: {
-          filmliste: {
+          channels: {
             terms: {
               field: "channel.keyword",
               size: 100
@@ -54,44 +41,36 @@ export class SearchEngine {
           }
         }
       }
-    }, (err, response) => {
-      if (err) {
-        callback(err);
-        console.error(response);
-      } else {
-        callback(err, response.aggregations.filmliste.buckets.map((bucket) => bucket.key));
-      }
     });
+
+    return (response.body.aggregations.channels as TermsAggregation).buckets.map((bucket) => String(bucket.key));
   }
 
-  getDescription(id, callback) {
-    this.client.get({
-      index: 'filmliste',
-      type: 'entries',
-      id: id
-    }, (err, response) => {
-      if (err) {
-        callback('error: ' + response);
-        console.error(response);
-      } else if (!response.found) {
-        callback('document not found');
-      } else {
-        callback((response._source as any).description);
+  async getDescription(id: string): Promise<string> {
+    try {
+      const response = await this.client.get({ index: 'filmliste', id });
+      return (response.body._source as any)?.description ?? '';
+    }
+    catch (error) {
+      if (error.statusCode == 404) {
+        throw new Error('Document not found');
       }
-    });
+
+      throw error;
+    }
   }
 
   async getEntries(ids: string[]): Promise<object[]> {
-    const response = await this.client.mget({ index: 'filmliste', type: 'entries', body: { ids } });
-    const entries = response.docs.map((doc) => doc._source as object);
+    const response = await this.client.mget({ index: 'filmliste', body: { ids } });
 
-    return entries;
+    return response.body.docs
+      .filter((doc) => 'found' in doc && doc.found)
+      .map((doc) => (doc as Core_Get.GetResult)._source ?? {});
   }
 
-  search(query, callback) {
-    let elasticQuery = {
+  async search(query: any): Promise<{ result: any[], totalResults: number }> {
+    const opensearchQuery = {
       index: 'filmliste',
-      type: 'entries',
       from: query.offset || 0,
       size: query.size || 15,
       body: {
@@ -105,55 +84,32 @@ export class SearchEngine {
       }
     };
 
-    let queries = query.queries;
+    if (!query.queries || query.queries.length === 0) {
+      opensearchQuery.body.query.bool.must.push({ match_all: {} });
+    }
+    else {
+      const fieldsBasedQueries = new Map<string, any[]>();
 
-    if (queries == undefined) {
-      elasticQuery.body.query.bool.must.push({
-        match_all: {}
-      });
-    } else {
-      let fieldsBasedQueries = [];
+      for (const q of query.queries) {
+        const key = q.fields.slice().sort().join(',');
 
-      for (let i = 0; i < queries.length; i++) {
-        let match = this.createMultiMatch(queries[i].fields, queries[i].query, 'and');
-
-        let found = false;
-        for (let j = 0; j < fieldsBasedQueries.length; j++) {
-          if (arraysHasSameElements(queries[i].fields, fieldsBasedQueries[j].fields)) {
-            fieldsBasedQueries[j].matches.push(match);
-            found = true;
-            break;
-          }
+        if (!fieldsBasedQueries.has(key)) {
+          fieldsBasedQueries.set(key, []);
         }
 
-        if (!found) {
-          fieldsBasedQueries.push({
-            fields: queries[i].fields,
-            matches: [match]
-          });
-        }
+        fieldsBasedQueries.get(key)!.push(this.createMultiMatch(q.fields, q.query, 'and'));
       }
 
-      for (let i = 0; i < fieldsBasedQueries.length; i++) {
-        let boolQuery = {
-          bool: {
-            should: []
-          }
-        };
-
-        for (let j = 0; j < fieldsBasedQueries[i].matches.length; j++) {
-          boolQuery.bool.should.push(fieldsBasedQueries[i].matches[j]);
-        }
-
-        elasticQuery.body.query.bool.must.push(boolQuery);
+      for (const matches of fieldsBasedQueries.values()) {
+        opensearchQuery.body.query.bool.must.push({
+          bool: { should: matches }
+        });
       }
     }
 
     if (query.duration_min != undefined || query.duration_max != undefined) {
-      const durationFilter = {
-        range: {
-          duration: {} as { gt?: number, lt?: number }
-        }
+      const durationFilter: { range: { duration: { gt?: number, lt?: number } } } = {
+        range: { duration: {} }
       };
 
       if (query.duration_min != undefined) {
@@ -163,55 +119,45 @@ export class SearchEngine {
       if (query.duration_max != undefined) {
         durationFilter.range.duration.lt = query.duration_max;
       }
-
-      elasticQuery.body.query.bool.filter.push(durationFilter);
+      opensearchQuery.body.query.bool.filter.push(durationFilter);
     }
 
     if (query.future === false) {
-      let rangeFilter = {
+      opensearchQuery.body.query.bool.filter.push({
         range: {
-          timestamp: {
-            to: 'now+1h/h'
-          }
+          timestamp: { to: 'now+1h/h' }
         }
-      };
-
-      elasticQuery.body.query.bool.filter.push(rangeFilter);
+      });
     }
 
-    if (typeof query.sortBy == 'string' && query.sortBy.length > 0) {
-      let sort = {};
-      sort[query.sortBy] = {
-        order: query.sortOrder
-      };
-
-      elasticQuery.body.sort = sort;
+    if (typeof query.sortBy === 'string' && query.sortBy.length > 0) {
+      opensearchQuery.body.sort = { [query.sortBy]: { order: query.sortOrder } };
     }
 
-    this.client.search(elasticQuery, (error, response) => {
-      if (error) {
-        callback(null, ['Elasticsearch: ' + error.message]);
-      } else {
-        const result = [];
+    try {
+      const response = (await this.client.search(opensearchQuery)).body;
 
-        for (let i = 0; i < response.hits.hits.length; i++) {
-          const entry = response.hits.hits[i]._source as any;
-          entry.id = response.hits.hits[i]._id;
+      const result = response.hits.hits.map((hit) => {
+        const entry = hit._source as any;
+        entry.id = hit._id;
 
-          mapToMp4IfM3u8(entry);
+        mapToMp4IfM3u8(entry);
 
-          result.push(entry);
-        }
+        return entry;
+      });
 
-        callback({
-          result: result,
-          totalResults: response.hits.total
-        }, null);
-      }
-    });
+      const total = response.hits.total;
+      const totalResults = (typeof total == 'number') ? total : (total?.value ?? 0);
+
+      return { result, totalResults };
+    }
+    catch (error) {
+      console.error("OpenSearch search error:", error);
+      throw new Error('Search query failed', { cause: error });
+    }
   }
 
-  createMultiMatch(fields, query, operator) {
+  private createMultiMatch(fields: string[], query: string, operator: 'and' | 'or') {
     return {
       multi_match: {
         query: query,
@@ -223,20 +169,28 @@ export class SearchEngine {
   }
 }
 
-function mapToMp4IfM3u8(entry) {
+function mapToMp4IfM3u8(entry: Record<string, any>): void {
+  if (typeof entry.url_video !== 'string') {
+    return;
+  }
+
   if (isWdrM3u8(entry.url_video)) {
     const mp4s = wdrM3u8ToMp4(entry.url_video);
 
-    entry.url_video_low = mp4s[0];
-    entry.url_video = mp4s[2];
-    entry.url_video_hd = mp4s[4];
+    if (mp4s) {
+      entry.url_video_low = mp4s[0];
+      entry.url_video = mp4s[2];
+      entry.url_video_hd = mp4s[4];
+    }
   }
   else if (isBrM3u8(entry.url_video)) {
     const mp4s = brM3u8ToMp4(entry.url_video);
 
-    entry.url_video_low = mp4s[2];
-    entry.url_video = mp4s[3];
-    entry.url_video_hd = mp4s[4];
+    if (mp4s) {
+      entry.url_video_low = mp4s[2];
+      entry.url_video = mp4s[3];
+      entry.url_video_hd = mp4s[4];
+    }
   }
 }
 
@@ -247,34 +201,36 @@ function isWdrM3u8(url: string): boolean {
   return wdrRegex.test(url);
 }
 
-function wdrM3u8ToMp4(url: string): string[] {
+function wdrM3u8ToMp4(url: string): string[] | null {
   const match = wdrRegex.exec(url);
 
-  if (match == null) {
-    throw new Error('invalid url');
+  if (!match?.groups) {
+    return null;
   }
 
   const { region, fsk, unknownNumber, id, qualitiesString } = match.groups;
-  const qualities = qualitiesString.split(',');
-  const mp4s = qualities.map((quality) => `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${quality}.mp4`);
+  const qualities = qualitiesString
+    .split(',')
+    .map((quality) => `http://wdrmedien-a.akamaihd.net/medp/ondemand/${region}/${fsk}/${unknownNumber}/${id}/${quality}.mp4`);
 
-  return mp4s;
+  return qualities;
 }
 
 function isBrM3u8(url: string): boolean {
   return brRegex.test(url);
 }
 
-function brM3u8ToMp4(url: string): string[] {
+function brM3u8ToMp4(url: string): string[] | null {
   const match = brRegex.exec(url);
 
-  if (match == null) {
-    throw new Error('invalid url');
+  if (match === null) {
+    return null;
   }
 
-  const [, , qualitiesString] = match;
-  const qualities = qualitiesString.split(',');
-  const mp4s = qualities.map((quality) => `http://cdn-storage.br.de/${match[1]}${quality}.mp4`);
+  const [, path, qualitiesString] = match;
+  const qualities = qualitiesString
+    .split(',')
+    .map((quality) => `http://cdn-storage.br.de/${path}${quality}.mp4`);
 
-  return mp4s;
+  return qualities;
 }
