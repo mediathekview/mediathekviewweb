@@ -11,13 +11,6 @@ type Config = {
   workerArgs: string[],
   valkey: GlideClientConfiguration,
   opensearch: OpenSearchClientOptions,
-  matomo: {
-    enabled: boolean,
-    siteUrl: string,
-    matomoUrl: string,
-    token_auth: string,
-    siteId: number,
-  },
   contact: {
     name: string,
     street: string,
@@ -26,6 +19,7 @@ type Config = {
     mail: string,
   },
   adsText: string,
+  injectHtmlPath: string,
 }
 
 function hasEnv(variable: string): boolean {
@@ -87,13 +81,6 @@ export const config: Config = {
   opensearch: {
     node: `http://${getEnvOrDefault('OPENSEARCH_HOST', 'localhost')}:${getEnvOrDefault('OPENSEARCH_PORT', '9200')}`,
   },
-  matomo: {
-    enabled: getEnvOrDefault('MATOMO_ENABLED', false),
-    matomoUrl: getEnvOrDefault('MATOMO_URL', 'https://matomo.example.de/piwik.php'),
-    siteUrl: getEnvOrDefault('MATOMO_SITE_URL', 'http://domain.tld'),
-    token_auth: getEnvOrDefault('MATOMO_AUTH_TOKEN', 'abc123'),
-    siteId: getEnvOrDefault('MATOMO_SITE_ID', 1),
-  },
 
   contact: {
     name: getEnvOrDefault('CONTACT_NAME', 'Max Mustermann'),
@@ -103,4 +90,5 @@ export const config: Config = {
     mail: getEnvOrDefault('CONTACT_MAIL', 'max@mustermann.tld'),
   },
   adsText: getEnvOrDefault('ADS_TEXT', ''),
+  injectHtmlPath: getEnvOrDefault('INJECT_HTML_PATH', ''),
 };

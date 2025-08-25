@@ -37,21 +37,18 @@ const lastAllowCookiesAskedKey = 'allowCookiesAsked';
 
 const debugResponse = false;
 const socket = io();
-const pv_id = randomString(6);
 let itemsPerPage = 5;
 let currentPage = 0;
 let connectingDialog: HTMLDialogElement;
 let contactDialog: HTMLDialogElement;
 let cookieDialog: HTMLDialogElement;
 let videoDialog: HTMLDialogElement;
-let uid;
-let playingInterval;
+let donateDialog: HTMLDialogElement;
 let playStartTimestamp;
 let lastQueryString = null;
 let ignoreNextHashChange = false;
 let impressum = null;
 let datenschutz = null;
-let donate = null;
 let queryInputClearButtonState = 'hidden';
 let video;
 let sortBy = 'timestamp';
@@ -102,16 +99,6 @@ function pad(value: number, size: number) {
     stringValue = "0" + stringValue;
   }
   return stringValue;
-}
-
-function randomString(len) {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-  for (let i = 0; i < len; i++)
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  return text;
 }
 
 function formatDate(epochSeconds: number) {
@@ -222,60 +209,6 @@ function parseQuery(query) {
     generics: generics
   }
 }
-
-function track(action) {
-  const date = new Date();
-  socket.emit('track', {
-    uid: uid,
-    pv_id: pv_id,
-    ua: navigator.userAgent,
-    lang: navigator.language,
-    res: window.screen.width + "x" + window.screen.height,
-    urlref: document.referrer,
-    action_name: action,
-    h: date.getHours(),
-    m: date.getMinutes(),
-    s: date.getSeconds(),
-    rand: randomString(10),
-    href: window.location.href
-  });
-}
-
-uid = window.localStorage?.getItem?.('uid');
-
-if (!!uid) {
-  uid = uid.trim();
-}
-else {
-  uid = Cookies.get('uid');
-  if (!!uid) {
-    uid = uid.trim();
-  }
-}
-if (!!uid && uid.length == 32) {
-  track('index');
-}
-else {
-  socket.on('uid', (_uid) => {
-    window.localStorage?.setItem?.('uid', _uid);
-
-    Cookies.set('uid', _uid, {
-      expires: 99999
-    });
-    uid = _uid;
-
-    track('index');
-  });
-  socket.emit('requestUid');
-}
-
-setInterval(() => {
-  if (socket.connected && !isVideoPlaying()) {
-    track('heartbeat');
-  }
-}, 20 * 60 * 1000); /*every 20 minutes*/
-
-const trackQuery = debounce(() => track('query'), 2000);
 
 function getQueryString() {
   return (document.getElementById('queryInput') as HTMLInputElement).value.toString().trim();
@@ -466,8 +399,6 @@ const query = throttle(() => {
     }
     handleQueryResult(message.result, message.err);
   });
-
-  trackQuery();
 }, 20);
 
 function handleQueryResult(result, err) {
@@ -581,7 +512,6 @@ function createVideoActions(entry) {
     subtitleIcon.className = 'material-icons text-base';
     subtitleIcon.textContent = 'subtitles';
     subtitleLink.appendChild(subtitleIcon);
-    subtitleLink.addEventListener('click', () => track('download-subtitle'));
 
     container.appendChild(subtitleLink);
   }
@@ -824,20 +754,6 @@ function playVideo(title: string, description: string, url: string) {
   });
 
   videoDialog.focus();
-
-  clearInterval(playingInterval); /*in case it wasn't stopped for any reason*/
-  playingInterval = setInterval(() => {
-    if (socket.connected) {
-      if (isVideoPlaying()) {
-        track('playing');
-      }
-      else {
-        track('paused');
-      }
-    }
-  }, 1 * 60 * 1000); /*every minute*/
-
-  track('play');
   playStartTimestamp = Date.now();
 }
 
@@ -872,13 +788,10 @@ function closeVideo() {
   video = null;
   document.getElementById('videocontent')!.innerHTML = '';
   document.getElementById('blur')!.classList.remove('blur');
-
-  clearInterval(playingInterval);
 }
 
 function openContactsModal() {
   contactDialog.showModal();
-  track('contact');
 }
 
 function returnEmptyString() {
@@ -901,6 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
   contactDialog = document.getElementById('contactDialog') as HTMLDialogElement;
   cookieDialog = document.getElementById('cookieDialog') as HTMLDialogElement;
   videoDialog = document.getElementById('videoDialog') as HTMLDialogElement;
+  donateDialog = document.getElementById('donateDialog') as HTMLDialogElement;
 
   const allowCookies = window.localStorage?.getItem?.(allowCookiesKey);
 
@@ -972,7 +886,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('rssFeedButton').addEventListener('click', () => {
     const search = window.location.hash.replace('#', '');
     window.open(window.location.origin + window.location.pathname + 'feed' + (search.length > 0 ? '?' : '') + search, '_blank');
-    track('feed-create');
   });
 
   const newQuery = () => {
@@ -1072,8 +985,11 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     openContactsModal();
   });
-  document.getElementById('githubButton').addEventListener('click', () => track('github'));
-  document.getElementById('forumButton').addEventListener('click', () => track('forum'));
+
+  document.getElementById('donateNavButton').addEventListener('click', (e) => {
+    e.preventDefault();
+    donateDialog.showModal();
+  });
 
   document.getElementById('logo').addEventListener('click', (e) => {
     e.preventDefault();
@@ -1083,27 +999,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return false;
   });
 
-  document.getElementById('donateButton').addEventListener('click', (e) => {
-    e.preventDefault();
-    track('donate');
-
-    document.getElementById('main-view').style.display = 'none';
-    document.getElementById('generic-html-view').classList.remove('hidden');
-
-    if (donate == null) {
-      socket.emit('getDonate', (response) => {
-        donate = response;
-        document.getElementById('genericHtmlContent').innerHTML = response;
-      });
-    }
-    else {
-      document.getElementById('genericHtmlContent').innerHTML = donate;
-    }
-  });
-
   document.getElementById('datenschutzButton').addEventListener('click', (e) => {
     e.preventDefault();
-    track('datenschutz');
 
     document.getElementById('main-view').style.display = 'none';
     document.getElementById('generic-html-view').classList.remove('hidden');
@@ -1121,7 +1018,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('impressumButton').addEventListener('click', (e) => {
     e.preventDefault();
-    track('impressum');
 
     document.getElementById('main-view').style.display = 'none';
     document.getElementById('generic-html-view').classList.remove('hidden');

@@ -30,6 +30,7 @@ services:
       CONTACT_POSTCODE:
       CONTACT_CITY:
       CONTACT_MAIL:
+      INJECT_HTML_PATH:
     volumes:
       - "mediathekviewweb:/data"
     ports:

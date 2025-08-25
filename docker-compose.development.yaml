@@ -10,6 +10,7 @@ services:
       DISABLE_INSTALL_DEMO_CONFIG: "true"
       DISABLE_SECURITY_PLUGIN: "true"
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: MediathekViewWeb01!
+      INJECT_HTML_PATH:
     volumes:
       - "opensearch:/usr/share/opensearch/data"
     ports:

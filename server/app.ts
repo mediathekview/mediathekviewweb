@@ -1,13 +1,10 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
-import URL from 'node:url';
 
 import compression from 'compression';
 import express from 'express';
 import got from 'got';
-import MatomoTracker from 'matomo-tracker';
 import moment from 'moment';
 import * as SocketIO from 'socket.io';
 
@@ -24,24 +21,25 @@ const impressum = renderImpressum(config.contact);
   await initializeValkey();
   const valkey = getValkeyClient();
 
-  let matomo: MatomoTracker | null = null;
-
-  if (config.matomo.enabled) {
-    matomo = new MatomoTracker(config.matomo.siteId, config.matomo.matomoUrl);
-
-    const origTrack = matomo.track.bind(matomo);
-    matomo.track = (options) => {
-      if (options.action_name != 'index') {
-        return;
-      }
-
-      origTrack(options);
-    }
-  }
-
   const app = express();
   const httpServer = new http.Server(app);
   const io = new SocketIO.Server(httpServer);
+
+  const indexHtmlPath = path.join(__dirname, '/client/index.html');
+  let indexHtmlContent: string;
+
+  try {
+    indexHtmlContent = fs.readFileSync(indexHtmlPath, 'utf-8');
+
+    if (config.injectHtmlPath && config.injectHtmlPath.length > 0) {
+      const injectHtml = fs.readFileSync(config.injectHtmlPath, 'utf-8');
+      indexHtmlContent = indexHtmlContent.replace('</head>', `${injectHtml}\n</head>`);
+    }
+  }
+  catch (error) {
+    console.error(`Failed to read or process index.html: ${error}`);
+    process.exit(1);
+  }
 
   app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
@@ -65,12 +63,6 @@ const impressum = renderImpressum(config.contact);
     console.log();
   });
 
-  if (matomo != null) {
-    matomo.on('error', function (err) {
-      console.error('matomo: error tracking request: ', err)
-    });
-  }
-
   app.use(compression());
 
   app.use((request, response, next) => {
@@ -93,11 +85,7 @@ const impressum = renderImpressum(config.contact);
   app.use('/api', express.json(), express.text());
 
   app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, '/client/index.html'));
-  });
-
-  app.get('/donate', function (req, res) {
-    res.sendFile(path.join(__dirname, '/client/donate.html'));
+    res.send(indexHtmlContent);
   });
 
   app.get('/impressum', function (req, res) {
@@ -123,14 +111,6 @@ const impressum = renderImpressum(config.contact);
       res.set('Content-Type', 'text/xml');
       res.send(result);
 
-      if (!!matomo) {
-        matomo.track({
-          token_auth: config.matomo.token_auth,
-          url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
-          uid: 'feed',
-          action_name: 'feed'
-        });
-      }
     }
     catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
@@ -155,14 +135,6 @@ const impressum = renderImpressum(config.contact);
       });
     }
 
-    if (!!matomo) {
-      matomo.track({
-        token_auth: config.matomo.token_auth,
-        url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
-        uid: 'api',
-        action_name: 'api-channels'
-      });
-    }
   });
 
   app.post('/api/entries', async (req, res) => {
@@ -250,15 +222,6 @@ const impressum = renderImpressum(config.contact);
         err: null
       });
 
-      if (!!matomo) {
-        matomo.track({
-          token_auth: config.matomo.token_auth,
-          url: config.matomo.siteUrl + (config.matomo.siteUrl.endsWith('/') ? '' : '/'),
-          uid: 'api',
-          action_name: 'api-query'
-        });
-      }
-
       console.log(moment().format('HH:mm') + ' - search api used');
 
     }
@@ -280,7 +243,6 @@ const impressum = renderImpressum(config.contact);
 
   io.on('connection', (socket) => {
     const clientIp = socket.request.headers['x-forwarded-for'] || socket.request.socket.remoteAddress?.match(/(\d+\.?)+/g)?.[0] || 'unknown';
-    let socketUid: string | null = null;
 
     console.log('client connected, ip: ' + clientIp);
 
@@ -317,70 +279,6 @@ const impressum = renderImpressum(config.contact);
       queryEntries(query)
         .then((result) => callback({ result, err: null }))
         .catch((err) => callback({ result: null, err: [err.message] }));
-    });
-
-    function emitNewUid() {
-      socket.emit('uid', crypto.randomUUID());
-    }
-
-    socket.on('requestUid', () => {
-      emitNewUid();
-    });
-
-    socket.on('track', (data) => {
-      if (!data.uid || data.uid.length != 36) {
-        emitNewUid();
-        return;
-      }
-
-      if (!socketUid) {
-        socketUid = data.uid;
-      }
-      else if (data.uid != socketUid) {
-        socket.emit('uid', socketUid);
-        return;
-      }
-
-      if (!!matomo) {
-        if (!(typeof data.href === 'string' || data.href instanceof String)) {
-          return;
-        }
-
-        const host = URL.parse(data.href).hostname;
-        const siteHost = URL.parse(config.matomo.siteUrl).hostname;
-        if (siteHost != host) {
-          return;
-        }
-
-        matomo.track({
-          token_auth: config.matomo.token_auth,
-          url: data.href,
-          uid: socketUid,
-          cip: clientIp,
-
-          pv_id: data.pv_id,
-          ua: data.ua,
-          lang: data.lang,
-          res: data.res,
-          urlref: data.urlref,
-          action_name: data.action_name,
-          h: data.h,
-          m: data.m,
-          s: data.s,
-          rand: data.rand
-        });
-      }
-    });
-
-    socket.on('getDonate', (callback) => {
-      fs.readFile(path.join(__dirname, '/client/donate.html'), 'utf-8', (err, data) => {
-        if (err) {
-          callback(err.message);
-        }
-        else {
-          callback(data);
-        }
-      });
     });
 
     socket.on('getImpressum', (callback) => {

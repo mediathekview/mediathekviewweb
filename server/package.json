@@ -20,7 +20,6 @@
     "got": "14.4",
     "line-reader": "0.4",
     "lzma-native": "8.0",
-    "matomo-tracker": "2.2",
     "moment": "2.30",
     "rss": "1.2",
     "socket.io": "4.8"

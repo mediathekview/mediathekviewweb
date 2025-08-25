@@ -1,283 +1,377 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head data-cast-api-enabled="true">
+    <title>MediathekViewWeb</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="/static/favicon.png" sizes="96x96" />
 
-<head data-cast-api-enabled="true">
-  <title>MediathekViewWeb</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/png" href="/static/favicon.png" sizes="96x96">
+    <link rel="stylesheet" href="/static/video-js.min.css" />
+    <link rel="stylesheet" href="/static/icons/material-icons.css" />
+    <link rel="stylesheet" href="/static/roboto/roboto.css" />
+    <link rel="stylesheet" href="/static/index.css" />
 
-  <link rel="stylesheet" href="/static/video-js.min.css" />
-  <link rel="stylesheet" href="/static/icons/material-icons.css" />
-  <link rel="stylesheet" href="/static/roboto/roboto.css" />
-  <link rel="stylesheet" href="/static/index.css" />
+    <script defer src="/static/js.cookie.min.js"></script>
+    <script defer src="/static/socket.io.min.js"></script>
+    <script defer src="/static/video.min.js"></script>
+    <script defer src="/static/videojs.hotkeys.min.js"></script>
+    <script defer src="/static/index.js"></script>
 
-  <script defer src="/static/js.cookie.min.js"></script>
-  <script defer src="/static/socket.io.min.js"></script>
-  <script defer src="/static/video.min.js"></script>
-  <script defer src="/static/videojs.hotkeys.min.js"></script>
-  <script defer src="/static/index.js"></script>
-
-  <script type="text/javascript">
-    function addAdSense() {
-      var adsense = document.createElement("script");
-      adsense.type = "text/javascript";
-      adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
-      adsense.setAttribute('async', 'async');
-      adsense.setAttribute('crossorigin', 'anonymous');
-      adsense.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
-      document.head.appendChild(adsense);
-    }
-
-    try {
-      if (typeof localStorage != 'undefined') {
-        var allowCookies = localStorage.getItem('allowCookies') == 'true';
-        var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') || 0;
-        var lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString);
-
-        if (!allowCookies && (lastAllowCookiesAsked == NaN || (lastAllowCookiesAsked < (Date.now() - 7 * 24 * 60 * 60 * 1000)))) {
-          localStorage.removeItem('allowCookies');
-        }
-
-        if (allowCookies) {
-          addAdSense();
-        }
+    <script type="text/javascript">
+      function addAdSense() {
+        var adsense = document.createElement('script');
+        adsense.type = 'text/javascript';
+        adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
+        adsense.async = true;
+        adsense.crossOrigin = 'anonymous';
+        adsense.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+        document.head.appendChild(adsense);
       }
-    }
-    catch {
-      addAdSense()
-    }
-  </script>
-</head>
 
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
-  <dialog id="videoDialog" class="p-0 m-0 bg-transparent max-w-none max-h-none w-full h-full backdrop:bg-black/85 z-[100000]">
-    <button id="videocloseButton" class="absolute top-4 right-4 text-white z-10 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
-      <i class="material-icons text-4xl">close</i>
-    </button>
-    <div class="absolute inset-0 flex items-center justify-center">
-        <div class="w-11/12 md:w-5/6 lg:w-3/4">
-            <div id="videocontent"></div>
-        </div>
-    </div>
-  </dialog>
+      try {
+        if (typeof localStorage != 'undefined') {
+          var allowCookies = localStorage.getItem('allowCookies') == 'true';
+          var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') || '0';
+          var lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString, 10);
 
-  <div id="blur" class="no-filter">
-    <nav class="bg-white dark:bg-gray-800 not-dark:shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between py-4">
-          <a id="logo" class="text-gray-900 dark:text-white text-xl font-bold" href="#">MediathekViewWeb</a>
-          <div class="md:hidden">
-            <button id="navbar-toggle" class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" type="button" aria-controls="navbar-menu" aria-expanded="false">
-              <i class="material-icons">menu</i>
-            </button>
-          </div>
-          <div id="navbar-menu" class="hidden md:flex md:items-center">
-            <ul class="flex flex-col md:flex-row items-center md:space-x-4 ml-auto mt-4 md:mt-0">
-              <li><a class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BDVH46DLCM7E8&source=url" target="_blank">Spenden</a></li>
-              <li><a id="forumButton" class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium" target="_blank" href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb">Forum</a></li>
-              <li><a id="contactButton" class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium" href="#">Kontakt</a></li>
-              <li><a id="githubButton" class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium" target="_blank" href="https://github.com/mediathekview/mediathekviewweb">GitHub</a></li>
-              <li>
-                <button class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center" type="button" id="aboutDropdownButton" popovertarget="aboutDropdownMenu">
-                  Über <i class="material-icons text-base">arrow_drop_down</i>
-                </button>
-                <ul id="aboutDropdownMenu" popover class="w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1" aria-labelledby="aboutDropdownButton">
-                  <li><a id="donateButton" class="dropdown-item block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600" href="/donate">Spenden</a></li>
-                  <li><a id="impressumButton" class="dropdown-item block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600" href="/impressum">Impressum</a></li>
-                  <li><a id="datenschutzButton" class="dropdown-item block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600" href="/datenschutz">Datenschutz</a></li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </nav>
-    <script>
-      document.getElementById('navbar-toggle').addEventListener('click', function() {
-        var menu = document.getElementById('navbar-menu');
-        var isExpanded = this.getAttribute('aria-expanded') === 'true';
-        menu.classList.toggle('hidden');
-        this.setAttribute('aria-expanded', !isExpanded);
-      });
+          // Re-ask for consent after 7 days if it was denied previously.
+          if (!allowCookies && (isNaN(lastAllowCookiesAsked) || lastAllowCookiesAsked < Date.now() - 7 * 24 * 60 * 60 * 1000)) {
+            localStorage.removeItem('allowCookies');
+          }
+
+          // Only add AdSense script if consent was given.
+          // The value of 'allowCookies' is from before the potential removal, which is correct
+          // because we only want to load ads if consent was already given on a previous visit.
+          if (allowCookies) {
+            addAdSense();
+          }
+        }
+      } catch (error) {
+        console.warn('Could not access localStorage. Ads will not be shown.', error);
+      }
     </script>
+  </head>
 
-    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <div id="browserWarning" class="showafter1s border-2 border-red-500 p-4 rounded-md mb-6">
-        <span><span class="underline text-red-700 dark:text-red-500">Dein Browser wird nicht unterstützt</span> oder Javascript ist deaktiviert</span>
+  <body class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
+    <dialog id="videoDialog" class="p-0 m-0 bg-transparent max-w-none max-h-none w-full h-full backdrop:bg-black/85 z-[100000]">
+      <button id="videocloseButton" class="absolute top-4 right-4 text-white z-10 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+        <i class="material-icons text-4xl">close</i>
+      </button>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="w-11/12 md:w-5/6 lg:w-3/4">
+          <div id="videocontent"></div>
+        </div>
       </div>
+    </dialog>
 
-      <div id="main-view">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-sm dark:shadow-none">
-          <div class="flex flex-wrap items-center gap-4" id="queryParameters">
-            <div class="relative flex-grow min-w-[250px]">
-              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none" title="Selektoren: !Sender</br>#Thema</br>+Titel</br>*Beschreibung</br>&lt;x (in minuten)</br>&gt;x (in minuten)">
-                <i id="searchSpan" class="material-icons text-gray-600 dark:text-gray-300">search</i>
+    <div id="blur" class="no-filter">
+      <nav class="bg-white dark:bg-gray-800 not-dark:shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between py-4">
+            <a id="logo" class="text-gray-900 dark:text-white text-xl font-bold" href="#">MediathekViewWeb</a>
+            <div class="md:hidden">
+              <button
+                id="navbar-toggle"
+                class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                type="button"
+                aria-controls="navbar-menu"
+                aria-expanded="false">
+                <i class="material-icons">menu</i>
+              </button>
+            </div>
+            <div id="navbar-menu" class="hidden md:flex md:items-center">
+              <ul class="flex flex-col md:flex-row items-center md:space-x-4 ml-auto mt-4 md:mt-0">
+                <li>
+                  <a
+                    id="donateNavButton"
+                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    href="#">
+                    Spenden
+                  </a>
+                </li>
+                <li>
+                  <a
+                    id="forumButton"
+                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    target="_blank"
+                    href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb">
+                    Forum
+                  </a>
+                </li>
+                <li>
+                  <a
+                    id="contactButton"
+                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    href="#">
+                    Kontakt
+                  </a>
+                </li>
+                <li>
+                  <a
+                    id="githubButton"
+                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    target="_blank"
+                    href="https://github.com/mediathekview/mediathekviewweb">
+                    GitHub
+                  </a>
+                </li>
+                <li>
+                  <button
+                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    type="button"
+                    id="aboutDropdownButton"
+                    popovertarget="aboutDropdownMenu">
+                    Über <i class="material-icons text-base">arrow_drop_down</i>
+                  </button>
+                  <ul id="aboutDropdownMenu" popover class="w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1" aria-labelledby="aboutDropdownButton">
+                    <li>
+                      <a id="impressumButton" class="dropdown-item block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600" href="/impressum">Impressum</a>
+                    </li>
+                    <li>
+                      <a id="datenschutzButton" class="dropdown-item block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600" href="/datenschutz">
+                        Datenschutz
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <script>
+        document.getElementById('navbar-toggle').addEventListener('click', () => {
+          var menu = document.getElementById('navbar-menu');
+          var isExpanded = this.getAttribute('aria-expanded') === 'true';
+          menu.classList.toggle('hidden');
+          this.setAttribute('aria-expanded', !isExpanded);
+        });
+      </script>
+
+      <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div id="browserWarning" class="showafter1s border-2 border-red-500 p-4 rounded-md mb-6">
+          <span><span class="underline text-red-700 dark:text-red-500">Dein Browser wird nicht unterstützt</span> oder Javascript ist deaktiviert</span>
+        </div>
+
+        <div id="main-view">
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-sm dark:shadow-none">
+            <div class="flex flex-wrap items-center gap-4" id="queryParameters">
+              <div class="relative flex-grow min-w-[250px]">
+                <div
+                  class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
+                  title="Selektoren: !Sender</br>#Thema</br>+Titel</br>*Beschreibung</br>&lt;x (in minuten)</br>&gt;x (in minuten)">
+                  <i id="searchSpan" class="material-icons text-gray-600 dark:text-gray-300">search</i>
+                </div>
+                <input
+                  id="queryInput"
+                  type="text"
+                  class="w-full bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md py-2 pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-300 dark:focus:ring-blue-500"
+                  placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80"
+                  autofocus />
+                <a tabindex="-1"><i id="queryInputClearButton" class="material-icons text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">clear</i></a>
               </div>
-              <input id="queryInput" type="text" class="w-full bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md py-2 pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-300 dark:focus:ring-blue-500" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" autofocus>
-              <a tabIndex="-1"><i id="queryInputClearButton" class="material-icons text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">clear</i></a>
-            </div>
-            <div class="flex items-center">
-              <input id="everywhereCheckbox" type="checkbox" name="everywhere" class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-              <label for="everywhereCheckbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Überall</label>
-            </div>
-            <div class="flex items-center">
-              <input id="futureCheckbox" type="checkbox" name="future" checked class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-              <label for="futureCheckbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Zukünftige</label>
-            </div>
-            <div class="flex items-center gap-2 md:ml-auto">
-              <div class="relative">
-                <button id="sortDropdownButton" class="flex items-center gap-1 p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md" type="button" title="Sortieren nach: Datum (neuste)">
-                  <i class="material-icons text-gray-600 dark:text-gray-300">sort</i>
-                  <span id="sortDropdownButtonText" class="text-sm font-medium text-gray-900 dark:text-gray-300 hidden md:inline">Datum (neuste)</span>
+              <div class="flex items-center">
+                <input
+                  id="everywhereCheckbox"
+                  type="checkbox"
+                  name="everywhere"
+                  class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                <label for="everywhereCheckbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Überall</label>
+              </div>
+              <div class="flex items-center">
+                <input
+                  id="futureCheckbox"
+                  type="checkbox"
+                  name="future"
+                  checked
+                  class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                <label for="futureCheckbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Zukünftige</label>
+              </div>
+              <div class="flex items-center gap-2 md:ml-auto">
+                <div class="relative">
+                  <button
+                    id="sortDropdownButton"
+                    class="flex items-center gap-1 p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md"
+                    type="button"
+                    title="Sortieren nach: Datum (neuste)">
+                    <i class="material-icons text-gray-600 dark:text-gray-300">sort</i>
+                    <span id="sortDropdownButtonText" class="text-sm font-medium text-gray-900 dark:text-gray-300 hidden md:inline">Datum (neuste)</span>
+                  </button>
+                  <select id="sortSelect" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer dark:bg-gray-700 dark:text-gray-300">
+                    <option value="timestamp_desc">Datum (neuste)</option>
+                    <option value="timestamp_asc">Datum (älteste)</option>
+                    <option value="duration_desc">Dauer (längste)</option>
+                    <option value="duration_asc">Dauer (kürzeste)</option>
+                    <option value="channel_asc">Sender (A-Z)</option>
+                    <option value="channel_desc">Sender (Z-A)</option>
+                    <option value="topic_asc">Thema (A-Z)</option>
+                    <option value="topic_desc">Thema (Z-A)</option>
+                    <option value="title_asc">Titel (A-Z)</option>
+                    <option value="title_desc">Titel (Z-A)</option>
+                  </select>
+                </div>
+                <button id="rssFeedButton" class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md" type="button" title="RSS-Feed">
+                  <i class="material-icons text-gray-600 dark:text-gray-300">rss_feed</i>
                 </button>
-                <select id="sortSelect" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer dark:bg-gray-700 dark:text-gray-300">
-                  <option value="timestamp_desc">Datum (neuste)</option>
-                  <option value="timestamp_asc">Datum (älteste)</option>
-                  <option value="duration_desc">Dauer (längste)</option>
-                  <option value="duration_asc">Dauer (kürzeste)</option>
-                  <option value="channel_asc">Sender (A-Z)</option>
-                  <option value="channel_desc">Sender (Z-A)</option>
-                  <option value="topic_asc">Thema (A-Z)</option>
-                  <option value="topic_desc">Thema (Z-A)</option>
-                  <option value="title_asc">Titel (A-Z)</option>
-                  <option value="title_desc">Titel (Z-A)</option>
-                </select>
-              </div>
-              <button id="rssFeedButton" class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md" type="button" title="RSS-Feed"><i class="material-icons text-gray-600 dark:text-gray-300">rss_feed</i></button>
-              <button id="helpButton" class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md" type="button" title="Hilfe"><i class="material-icons text-gray-600 dark:text-gray-300">help_outline</i></button>
-            </div>
-          </div>
-        </div>
-
-        <div id="mediathekContainer">
-          <div id="mediathekGrid" class="grid grid-cols-1 gap-4">
-            <!-- Grid items will be inserted here -->
-          </div>
-
-          <div id="noResults" class="text-center p-5 text-gray-600 dark:text-gray-400 hidden">
-            Keine Einträge vorhanden
-          </div>
-
-          <footer class="flex justify-between items-center flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <div>
-              <p id="queryInfoLabel" class="mb-0 text-gray-600 dark:text-gray-500 text-sm"></p>
-            </div>
-            <div class="flex items-center gap-4">
-              <nav id="pagination" class="flex items-center space-x-1">
-              </nav>
-              <div class="relative">
-                <button class="flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 px-4 py-2 rounded-md text-sm font-medium" type="button" id="pageSizeDropdownButton">
-                  Pro Seite: 5
-                  <i class="material-icons text-base ml-1">arrow_drop_down</i>
+                <button id="helpButton" class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md" type="button" title="Hilfe">
+                  <i class="material-icons text-gray-600 dark:text-gray-300">help_outline</i>
                 </button>
-                <select id="pageSizeSelect" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer dark:bg-gray-700 dark:text-gray-300">
-                  <option value="5">5</option>
-                  <option value="10">10</option>
-                  <option value="15">15</option>
-                  <option value="20">20</option>
-                  <option value="25">25</option>
-                </select>
               </div>
             </div>
-          </footer>
-        </div>
-      </div>
+          </div>
 
-      <div id="generic-html-view" class="hidden">
-        <button id="genericHtmlViewBackButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white font-bold py-2 px-4 rounded mb-4" type="button">Zurück</button>
-        <div id="genericHtmlContent" class="prose dark:prose-invert max-w-none"></div>
-      </div>
+          <div id="mediathekContainer">
+            <div id="mediathekGrid" class="grid grid-cols-1 gap-4">
+              <!-- Grid items will be inserted here -->
+            </div>
 
-      <dialog id="connectingDialog" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-md p-0 backdrop:bg-black/50">
-        <div class="border-b border-gray-200 dark:border-gray-700 p-4">
-          <h4 class="text-xl font-semibold">Keine Verbindung</h4>
-        </div>
-        <div class="p-4 flex items-center">
-          <i class="material-icons spin-left text-4xl mr-4">sync</i>
-          <span class="text-lg">Verbinde...</span>
-        </div>
-      </dialog>
+            <div id="noResults" class="text-center p-5 text-gray-600 dark:text-gray-400 hidden">Keine Einträge vorhanden</div>
 
-      <dialog id="contactDialog" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
-        <form method="dialog" class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
-          <h4 class="text-xl font-semibold">Kontakt</h4>
-          <button type="submit" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" aria-label="Close">
-            <i class="material-icons">close</i>
+            <footer class="flex justify-between items-center flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div>
+                <p id="queryInfoLabel" class="mb-0 text-gray-600 dark:text-gray-500 text-sm"></p>
+              </div>
+              <div class="flex items-center gap-4">
+                <nav id="pagination" class="flex items-center space-x-1"></nav>
+                <div class="relative">
+                  <button
+                    class="flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 px-4 py-2 rounded-md text-sm font-medium"
+                    type="button"
+                    id="pageSizeDropdownButton">
+                    Pro Seite: 5
+                    <i class="material-icons text-base ml-1">arrow_drop_down</i>
+                  </button>
+                  <select id="pageSizeSelect" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer dark:bg-gray-700 dark:text-gray-300">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                  </select>
+                </div>
+              </div>
+            </footer>
+          </div>
+        </div>
+
+        <div id="generic-html-view" class="hidden">
+          <button
+            id="genericHtmlViewBackButton"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white font-bold py-2 px-4 rounded mb-4"
+            type="button">
+            Zurück
           </button>
-        </form>
-        <div class="p-4 prose dark:prose-invert max-w-none">
-          <p>Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die <a target="_blank" href="https://github.com/mediathekview/mediathekviewweb/issues">Issues auf GitHub.</a></p>
-          <p>Für fehlende Sendungen gibt es Hilfe <a target="_blank" href="https://forum.mediathekview.de/">im Forum</a>.</p>
-          <p>Für alles andere oder im Fall, dass du kein GitHub Account hast/willst, schreibe mir eine Mail: <a target="_blank" href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a>. Bitte keine Anfragen zu fehlenden Sendungen per Mail!</p>
+          <div id="genericHtmlContent" class="prose dark:prose-invert max-w-none"></div>
         </div>
-      </dialog>
+      </main>
+    </div>
 
-      <dialog id="cookieDialog" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
-        <div class="border-b border-gray-200 dark:border-gray-700 p-4">
-          <h4 class="text-xl font-semibold">Cookies</h4>
-        </div>
-        <div class="p-4 prose dark:prose-invert max-w-none">
-          <p>
-            Diese Website verwendet Cookies für die Darstellung von Werbung. Hierbei werden Daten an Google übertragen. Nähere Informationen dazu finden Sie in unserer
-            <a target="_blank" href="datenschutz">Datenschutzerklärung</a>.
-            Klicken Sie auf „Akzeptieren“, um Cookies zu akzeptieren und direkt unsere Website besuchen zu können.
-          </p>
-          <p><a target="_blank" href="impressum">Impressum aufrufen</a></p>
-          <p>
-            Sollten Sie mit den Werbe-Cookies nicht einverstanden sein, bitten wir Sie über eine
-            <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BDVH46DLCM7E8&source=url" target="_blank">Spende</a>
-            nachzudenken, um den Weiterbetrieb der Website zu ermöglichen.
-          </p>
-          <div class="flex gap-4 mt-4">
-            <button id="cookieDenyButton" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white rounded-md" type="button">Ablehnen</button>
-            <button id="cookieAcceptButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md" type="button">Akzeptieren</button>
-          </div>
-        </div>
-      </dialog>
-    </main>
-  </div>
+    <dialog id="connectingDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-md p-0 backdrop:bg-black/50">
+      <div class="border-b border-gray-200 dark:border-gray-700 p-4">
+        <h4 class="text-xl font-semibold">Keine Verbindung</h4>
+      </div>
+      <div class="p-4 flex items-center">
+        <i class="material-icons spin-left text-4xl mr-4">sync</i>
+        <span class="text-lg">Verbinde...</span>
+      </div>
+    </dialog>
 
-  <template id="result-card-template">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 grid grid-rows-[1fr_auto] shadow-sm dark:shadow-none">
+    <dialog id="contactDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
+      <form method="dialog" class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
+        <h4 class="text-xl font-semibold">Kontakt</h4>
+        <button type="submit" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" aria-label="Close">
+          <i class="material-icons">close</i>
+        </button>
+      </form>
+      <div class="p-4 prose dark:prose-invert max-w-none">
+        <p>Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die <a target="_blank" href="https://github.com/mediathekview/mediathekviewweb/issues">Issues auf GitHub.</a></p>
+        <p>Für fehlende Sendungen gibt es Hilfe <a target="_blank" href="https://forum.mediathekview.de/">im Forum</a>.</p>
+        <p>
+          Für alles andere oder im Fall, dass du kein GitHub Account hast/willst, schreibe mir eine Mail: <a target="_blank" href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a>.
+          Bitte keine Anfragen zu fehlenden Sendungen per Mail!
+        </p>
+      </div>
+    </dialog>
+
+    <dialog id="donateDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
+      <form method="dialog" class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
+        <h4 class="text-xl font-semibold">Spenden</h4>
+        <button type="submit" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" aria-label="Close">
+          <i class="material-icons">close</i>
+        </button>
+      </form>
+      <div class="p-4 prose dark:prose-invert max-w-none">
+        <h4>Du möchtest dem Entwickler von MediathekView<b>Web</b> danken und ihm eine Pizza zahlen?</h4>
+        <p>
+          Geld <a target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BDVH46DLCM7E8&source=url">per PayPal senden</a>.<br />
+          Überweisung auf Anfrage per E-Mail an <a href="mailto:kontakt@mediathekviewweb.de">kontakt@mediathekviewweb.de</a> verfügbar.
+        </p>
+      </div>
+    </dialog>
+
+    <dialog id="cookieDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
+      <div class="border-b border-gray-200 dark:border-gray-700 p-4">
+        <h4 class="text-xl font-semibold">Cookies</h4>
+      </div>
+      <div class="p-4 prose dark:prose-invert max-w-none">
+        <p>
+          Diese Website verwendet Cookies für die Darstellung von Werbung. Hierbei werden Daten an Google übertragen. Nähere Informationen dazu finden Sie in unserer
+          <a target="_blank" href="datenschutz">Datenschutzerklärung</a>. Klicken Sie auf „Akzeptieren“, um Cookies zu akzeptieren und direkt unsere Website besuchen zu können.
+        </p>
+        <p><a target="_blank" href="impressum">Impressum aufrufen</a></p>
+        <p>
+          Sollten Sie mit den Werbe-Cookies nicht einverstanden sein, bitten wir Sie über eine
+          <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BDVH46DLCM7E8&source=url" target="_blank">Spende</a>
+          nachzudenken, um den Weiterbetrieb der Website zu ermöglichen.
+        </p>
+        <div class="flex gap-4 mt-4">
+          <button id="cookieDenyButton" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white rounded-md" type="button">Ablehnen</button>
+          <button id="cookieAcceptButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md" type="button">Akzeptieren</button>
+        </div>
+      </div>
+    </dialog>
+
+    <template id="result-card-template">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 grid grid-rows-[1fr_auto] shadow-sm dark:shadow-none">
         <div>
-            <div class="grid grid-cols-[1fr_auto] items-start gap-4">
-                <div class="min-w-0">
-                    <h2 data-id="title" class="text-lg font-semibold text-gray-900 dark:text-white truncate"></h2>
-                    <p data-id="description" class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2"></p>
-                </div>
-                <div class="text-right text-sm text-gray-500 dark:text-gray-400">
-                    <p data-id="datetime" class="mb-0"></p>
-                    <p data-id="duration" class="mb-0"></p>
-                </div>
+          <div class="grid grid-cols-[1fr_auto] items-start gap-4">
+            <div class="min-w-0">
+              <h2 data-id="title" class="text-lg font-semibold text-gray-900 dark:text-white truncate"></h2>
+              <p data-id="description" class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2"></p>
             </div>
+            <div class="text-right text-sm text-gray-500 dark:text-gray-400">
+              <p data-id="datetime" class="mb-0"></p>
+              <p data-id="duration" class="mb-0"></p>
+            </div>
+          </div>
         </div>
         <div class="mt-4 grid grid-cols-[1fr_auto] items-end gap-2">
-            <div class="flex items-center min-w-0">
-                <span data-id="channel" class="inline-block text-xs font-medium mr-2 px-2.5 py-0.5 rounded"></span>
-                <span data-id="topic" class="text-gray-500 dark:text-gray-400 text-sm truncate"></span>
-            </div>
-            <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <span data-id="size"></span>
-                <div data-id="actions"></div>
-            </div>
+          <div class="flex items-center min-w-0">
+            <span data-id="channel" class="inline-block text-xs font-medium mr-2 px-2.5 py-0.5 rounded"></span>
+            <span data-id="topic" class="text-gray-500 dark:text-gray-400 text-sm truncate"></span>
+          </div>
+          <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <span data-id="size"></span>
+            <div data-id="actions"></div>
+          </div>
         </div>
-    </div>
-  </template>
+      </div>
+    </template>
 
-  <template id="pagination-button-template">
+    <template id="pagination-button-template">
       <a href="#" class="flex items-center justify-center px-4 py-2 leading-tight rounded-md transition-colors duration-150"></a>
-  </template>
+    </template>
 
-  <template id="video-action-template">
-    <span class="inline-flex items-center px-2 py-1 bg-gray-200 dark:bg-gray-700 text-xs font-bold rounded">
-      <span data-id="quality" class="mr-1"></span>
-      <a data-id="play-link" href="#" title="" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-          <i class="material-icons text-base">play_arrow</i>
+    <template id="video-action-template">
+      <a
+        data-id="play-link"
+        href="#"
+        title=""
+        class="inline-flex items-center px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-xs font-bold rounded">
+        <span data-id="quality" class="mr-1"></span>
+        <i class="material-icons text-base">play_arrow</i>
+        <i data-id="help-icon" class="material-icons text-base hidden text-gray-700 dark:text-gray-300">help_outline</i>
       </a>
-      <i data-id="help-icon" class="material-icons text-base hidden text-gray-700 dark:text-gray-300">help_outline</i>
-    </span>
-  </template>
-</body>
-
+    </template>
+  </body>
 </html>

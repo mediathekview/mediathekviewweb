@@ -5,20 +5,18 @@ MediathekViewWeb ist eine einfache Browser-Oberfläche für den Zugriff auf die 
 Im Gegensatz zu MediathekView muss bei MediathekViewWeb weder ein Programm installiert noch eine Filmliste heruntergeladen werden, die Suche steht deshalb augenblicklich im Browser zur Verfügung.
 Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endgerät (Browser) minimal sind, und weil kein Java installiert werden muss, lässt sich die Website auch auf Smartphones und Tablets nutzen.
 
-![MediathekViewWeb](https://abload.de/img/mediathekviewwebnqrq7.png)
+![Benutzeroberfläche von MediathekViewWeb](https://abload.de/img/mediathekviewwebnqrq7.png)
 
 
 ## Anleitung
 
-##### 1. In die Suchliste eintippen, was man anschauen möchte.
-##### 2. Doppelklick auf das Videosymbol, um die Sendung sofort in der besten verfügbaren Qualität zu starten, oder mit der Maus drübergehen, um das Menü zu öffnen.
+##### 1. In die Suchleiste eintippen, was man anschauen möchte.
+##### 2. In den Suchergebnissen finden sich verschiedene Aktionen. Ein Klick auf das Abspielsymbol mit der gewünschten Qualität (z.B. HD, SD) startet das Video direkt im Browser.
 
-![Popover](https://abload.de/img/popoverx1ojl.png)
-##### Ein Klick auf das Abspielsymbol startet das Video in der gewünschten Qualität. Ein Klick auf das Diskettensymbol startet den Download der Videodatei *(Achtung: dies wird nicht von allen Browsern (z.B. Firefox) unterstützt - hier dann per Rechtsklick -> "Ziel speichern unter" bzw. "Save target as" das Video herunterladen)*.
+Um ein Video herunterzuladen, kann per Rechtsklick auf das Abspielsymbol und "Link speichern unter..." (oder eine ähnliche Option) die Videodatei gespeichert werden.
 
-
-##### Im geöffneten Player das X oben rechts oder Escape drücken, um den Player zu schließen. Dadurch wird auch das Abspielen beendet.
-![Overlay](https://abload.de/img/videooverlayzxqh9.png)
+##### 3. Im geöffneten Player das X oben rechts oder die Escape-Taste drücken, um den Player zu schließen. Dadurch wird auch das Abspielen beendet.
+![Video Player Overlay](https://abload.de/img/videooverlayzxqh9.png)
 
 
 
@@ -58,6 +56,14 @@ Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endge
 
 - Wenn "Überall" aktiviert ist, werden alle Begriffe, die **kein** !, #, + oder * davor haben in **allen** Feldern gesucht. Zusätzlich kann man jedoch auch hier noch nach Sender, Thema, Titel und Beschreibung filtern.
 
+### Weitere Funktionen
+
+##### Sortierung
+Die Suchergebnisse lassen sich über das Sortieren-Symbol nach verschiedenen Kriterien ordnen, z.B. nach Datum (neuste/älteste zuerst), Dauer, Sender oder Titel.
+
+##### RSS-Feed
+Jede Suche kann zudem über das RSS-Symbol als [RSS-Feed](https://de.wikipedia.org/wiki/RSS_(Web-Feed)) abonniert werden, um über neue Ergebnisse auf dem Laufenden zu bleiben.
+
 
 ## FAQ
 
@@ -77,17 +83,16 @@ Medien > Netzwerkstream öffnen > Link aus der Zwischenablage übernehmen > nebe
 
 Bei Benutzung des Aufnahme-Buttons erfolgt die Speicherung im Standard-Video Verzeichnis des Betriebssystems.
 
-## Verwendete Dienste und Libraries
-##### (zumindest die wichtigsten, siehe [server package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/server/package.json) und [client package.json](https://github.com/mediathekview/mediathekviewweb/blob/master/client/package.json) für mehr)
+## Verwendete Technologien
 
 ### Serverseitig
-- Node
-- Valkey
-- Elasticsearch
+- **Node.js**: Die Laufzeitumgebung für den Server, die auf der V8-Engine von Chrome aufbaut.
+- **Express**: Minimalistisches und flexibles Web-Framework für die Erstellung der API und das Ausliefern der Webseiten.
+- **Socket.IO**: Ermöglicht die Echtzeit-Kommunikation zwischen Client und Server, die z.B. für die Suchanfragen genutzt wird.
+- **Valkey**: Ein Fork von Redis, der als performanter In-Memory-Datenspeicher für Caching und temporäre Daten (z.B. während der Indexierung) genutzt wird.
+- **OpenSearch**: Eine auf Apache Lucene basierende Such- und Analyse-Engine, die für die schnelle und komplexe Suche in der Filmliste verantwortlich ist.
 
 ### Clientseitig
-- Bootstrap 3
-- jQuery
-
-### Auf beiden Seiten
-- Socket.IO
+- **Tailwind CSS**: Ein Utility-First-CSS-Framework für ein modernes und responsives UI-Design. Es ersetzt das frühere Bootstrap-Styling.
+- **Video.js**: Ein erweiterbarer HTML5-Videoplayer für die Wiedergabe der Medieninhalte.
+- **Socket.IO Client**: Das Gegenstück zum Server, um die Echtzeit-Verbindung herzustellen.
