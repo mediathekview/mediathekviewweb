@@ -31,7 +31,7 @@ function getEnvOrDefault<T extends string | number | boolean>(variable: string, 
     return defaultValue;
   }
 
-  const value = process.env[variable]!;
+  const value = process.env[variable]!.trim();
 
   if (typeof defaultValue === 'boolean') {
     const valid = /^(true|false|on|off|0|1)$/i.test(value);
@@ -62,7 +62,7 @@ export const config: Config = {
   webserverPort: getEnvOrDefault('WEBSERVER_PORT', 8000),
   index: getEnvOrDefault('INDEX', true),
 
-  workerCount: getEnvOrDefault('WORKER_COUNT', os.cpus().length),
+  workerCount: getEnvOrDefault('WORKER_COUNT', Math.min(4, os.cpus().length)),
   workerArgs: getEnvOrDefault('WORKER_ARGS', '').split(',').filter(arg => arg.length > 0),
 
   valkey: {
