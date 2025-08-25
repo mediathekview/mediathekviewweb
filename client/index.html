@@ -16,40 +16,6 @@
     <script defer src="/static/video.min.js"></script>
     <script defer src="/static/videojs.hotkeys.min.js"></script>
     <script defer src="/static/index.js"></script>
-
-    <script type="text/javascript">
-      function addAdSense() {
-        var adsense = document.createElement('script');
-        adsense.type = 'text/javascript';
-        adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
-        adsense.async = true;
-        adsense.crossOrigin = 'anonymous';
-        adsense.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-        document.head.appendChild(adsense);
-      }
-
-      try {
-        if (typeof localStorage != 'undefined') {
-          var allowCookies = localStorage.getItem('allowCookies') == 'true';
-          var lastAllowCookiesAskedString = localStorage.getItem('allowCookiesAsked') || '0';
-          var lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString, 10);
-
-          // Re-ask for consent after 7 days if it was denied previously.
-          if (!allowCookies && (isNaN(lastAllowCookiesAsked) || lastAllowCookiesAsked < Date.now() - 7 * 24 * 60 * 60 * 1000)) {
-            localStorage.removeItem('allowCookies');
-          }
-
-          // Only add AdSense script if consent was given.
-          // The value of 'allowCookies' is from before the potential removal, which is correct
-          // because we only want to load ads if consent was already given on a previous visit.
-          if (allowCookies) {
-            addAdSense();
-          }
-        }
-      } catch (error) {
-        console.warn('Could not access localStorage. Ads will not be shown.', error);
-      }
-    </script>
   </head>
 
   <body class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300">

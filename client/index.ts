@@ -4,8 +4,49 @@
 declare const Cookies;
 declare const io: any;
 
+declare const umami: {
+  track: (event_name: string, data?: object) => void;
+  identify: (unique_id: string) => void;
+};
+
 interface XMLHttpRequest {
   baseOpen: (method: string, url: string, async?: boolean, user?: string, password?: string) => void;
+}
+
+function addAdSense() {
+  const adsense = document.createElement('script');
+  adsense.type = 'text/javascript';
+  adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
+  adsense.async = true;
+  adsense.crossOrigin = 'anonymous';
+  adsense.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+  document.head.appendChild(adsense);
+}
+
+function initializeAnalytics() {
+  if (typeof umami == 'undefined' || typeof umami.identify != 'function') {
+    return;
+  }
+
+  try {
+    const umamiIdKey = 'mvw_uuid';
+    let uniqueId = localStorage.getItem(umamiIdKey);
+
+    if (!uniqueId) {
+      uniqueId = crypto.randomUUID();
+      localStorage.setItem(umamiIdKey, uniqueId);
+    }
+
+    umami.identify(uniqueId);
+  } catch (e) {
+    console.warn('Could not initialize analytics with unique ID.', e);
+  }
+}
+
+function trackEvent(eventName: string, data?: object) {
+  if (typeof umami != 'undefined' && typeof umami.track == 'function') {
+    umami.track(eventName, data);
+  }
 }
 
 function debounce<F extends (...args: any[]) => void>(func: F, waitFor: number) {
@@ -61,7 +102,8 @@ function updateQueryInputClearButton() {
   if (currentQueryString.length === 0 && queryInputClearButtonState === 'shown') {
     clearButton.style.opacity = '0';
     queryInputClearButtonState = 'hidden';
-  } else if (currentQueryString.length > 0 && queryInputClearButtonState === 'hidden') {
+  }
+  else if (currentQueryString.length > 0 && queryInputClearButtonState === 'hidden') {
     clearButton.style.opacity = '1';
     queryInputClearButtonState = 'shown';
   }
@@ -78,7 +120,8 @@ updateTheme(preferedThemeMediaQuery?.matches ?? false);
 function updateTheme(dark: boolean): void {
   if (dark) {
     document.documentElement.classList.add('dark');
-  } else {
+  }
+  else {
     document.documentElement.classList.remove('dark');
   }
 }
@@ -247,7 +290,8 @@ function setQueryFromURIHash() {
   if (props['sortBy'] && props['sortOrder']) {
     sortBy = props['sortBy'];
     sortOrder = props['sortOrder'];
-  } else {
+  }
+  else {
     sortBy = 'timestamp';
     sortOrder = 'desc';
   }
@@ -302,6 +346,10 @@ function createURIHash(elements) {
 
   return props.join('&');
 }
+
+const trackSearch = debounce((data: Record<string, any>) => {
+  trackEvent('Search', data);
+}, 2500);
 
 const query = throttle(() => {
   const queryString = getQueryString();
@@ -397,7 +445,17 @@ const query = throttle(() => {
     if (debugResponse) {
       console.log(message);
     }
+
     handleQueryResult(message.result, message.err);
+  });
+
+  trackSearch({
+    query: queryString,
+    everywhere,
+    future,
+    sortBy,
+    itemsPerPage,
+    page: currentPage + 1
   });
 }, 20);
 
@@ -481,10 +539,11 @@ function createVideoActions(entry) {
       playLinkEl.title = `${quality} abspielen`;
       playLinkEl.addEventListener('click', (e) => {
         e.preventDefault();
-        playVideo(entry.title, entry.description, playUrl);
+        playVideo(entry.channel, entry.topic, entry.title, playUrl, quality);
       });
       helpIconEl.remove();
-    } else {
+    }
+    else {
       playLinkEl.remove();
       helpIconEl.classList.remove('hidden');
     }
@@ -602,11 +661,13 @@ function createPaginationButton(html, active, enabled, callback) {
 
   if (active) {
     linkClasses += ' bg-blue-600 text-white font-bold cursor-default';
-  } else {
+  }
+  else {
     linkClasses += ' bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-400';
     if (enabled) {
       linkClasses += ' hover:bg-gray-300 dark:hover:bg-gray-700';
-    } else {
+    }
+    else {
       linkClasses += ' cursor-not-allowed opacity-50';
     }
   }
@@ -618,7 +679,8 @@ function createPaginationButton(html, active, enabled, callback) {
       callback();
       query();
     });
-  } else {
+  }
+  else {
     pageLink.addEventListener('click', e => e.preventDefault());
   }
 
@@ -711,11 +773,18 @@ function toggleVideoPause() {
   }
 }
 
-function playVideo(title: string, description: string, url: string) {
+function playVideo(channel: string, topic: string, title: string, url: string, quality: string) {
   if (url.startsWith('http://')) {
     playVideoInNewWindow(url);
     return;
   }
+
+  trackEvent('Play Video', {
+    channel,
+    topic,
+    title,
+    quality,
+  });
 
   videoDialog.showModal();
   document.getElementById('blur')!.classList.add('blur');
@@ -772,24 +841,6 @@ async function playVideoInNewWindow(url: string): Promise<void> {
   }
 }
 
-function closeVideo() {
-  if (!videoDialog.open) return; // Already closing/closed
-
-  const playDuration = Date.now() - playStartTimestamp;
-  if (playDuration >= 1000 * 30) {
-    location.reload();
-    return; // reload will stop execution
-  }
-
-  videoDialog.close();
-  if (video && !video.isDisposed()) {
-    video.dispose();
-  }
-  video = null;
-  document.getElementById('videocontent')!.innerHTML = '';
-  document.getElementById('blur')!.classList.remove('blur');
-}
-
 function openContactsModal() {
   contactDialog.showModal();
 }
@@ -808,6 +859,8 @@ function copyToClipboard(text) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initializeAnalytics();
+
   document.getElementById('browserWarning')?.remove();
 
   connectingDialog = document.getElementById('connectingDialog') as HTMLDialogElement;
@@ -816,25 +869,42 @@ document.addEventListener('DOMContentLoaded', () => {
   videoDialog = document.getElementById('videoDialog') as HTMLDialogElement;
   donateDialog = document.getElementById('donateDialog') as HTMLDialogElement;
 
-  const allowCookies = window.localStorage?.getItem?.(allowCookiesKey);
+  try {
+    let allowCookies = window.localStorage?.getItem?.(allowCookiesKey);
+    const lastAllowCookiesAskedString = window.localStorage?.getItem?.(lastAllowCookiesAskedKey) || '0';
+    const lastAllowCookiesAsked = parseInt(lastAllowCookiesAskedString, 10);
 
-  if ((allowCookies != 'true') && (allowCookies != 'false')) {
-    cookieDialog.showModal();
-    const cookieAcceptButtonElement = document.getElementById('cookieAcceptButton');
-    const cookieDenyButtonElement = document.getElementById('cookieDenyButton');
+    // Re-ask for consent after 7 days if it was denied previously.
+    if (allowCookies == 'false' && (isNaN(lastAllowCookiesAsked) || (lastAllowCookiesAsked < (Date.now() - 7 * 24 * 60 * 60 * 1000)))) {
+      window.localStorage?.removeItem(allowCookiesKey);
+      allowCookies = null;
+    }
 
-    cookieAcceptButtonElement.addEventListener('click', () => {
-      window.localStorage?.setItem?.(allowCookiesKey, 'true');
-      window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
-      cookieDialog.close();
-      location.reload();
-    });
+    if (allowCookies == 'true') {
+      addAdSense();
+    }
+    else if (allowCookies != 'false') {
+      cookieDialog.showModal();
+      const cookieAcceptButtonElement = document.getElementById('cookieAcceptButton');
+      const cookieDenyButtonElement = document.getElementById('cookieDenyButton');
 
-    cookieDenyButtonElement.addEventListener('click', () => {
-      window.localStorage?.setItem?.(allowCookiesKey, 'false');
-      window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
-      cookieDialog.close();
-    });
+      cookieAcceptButtonElement.addEventListener('click', () => {
+        trackEvent('Cookie Consent', { consent: 'accept' });
+        window.localStorage?.setItem?.(allowCookiesKey, 'true');
+        window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
+        cookieDialog.close();
+        addAdSense();
+      });
+
+      cookieDenyButtonElement.addEventListener('click', () => {
+        trackEvent('Cookie Consent', { consent: 'deny' });
+        window.localStorage?.setItem?.(allowCookiesKey, 'false');
+        window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
+        cookieDialog.close();
+      });
+    }
+  } catch (error) {
+    console.warn('Could not access localStorage. Ads will not be shown.', error);
   }
 
   let connectingDialogTimeout: number | null = null;
@@ -884,6 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('rssFeedButton').addEventListener('click', () => {
+    trackEvent('Click RSS Feed');
     const search = window.location.hash.replace('#', '');
     window.open(window.location.origin + window.location.pathname + 'feed' + (search.length > 0 ? '?' : '') + search, '_blank');
   });
@@ -913,6 +984,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    trackEvent('Change Page Size', { size: newSize });
     itemsPerPage = newSize;
     window.localStorage?.setItem?.('pageSize', newSize.toString());
 
@@ -930,6 +1002,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sortBy = newSortBy;
     sortOrder = newSortOrder;
+
+    trackEvent('Change Sort', { by: sortBy, order: sortOrder });
 
     const button = document.getElementById('sortDropdownButton') as HTMLButtonElement;
     const buttonText = document.getElementById('sortDropdownButtonText') as HTMLSpanElement;
@@ -959,7 +1033,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('#queryParameters input[type=checkbox]').forEach(el => el.addEventListener('change', () => newQuery()));
 
   document.getElementById('videocloseButton').addEventListener('click', () => {
-    closeVideo();
+    if (videoDialog.open) {
+      videoDialog.close();
+    }
   });
 
   videoDialog.addEventListener('cancel', (e) => {
@@ -970,7 +1046,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   videoDialog.addEventListener('close', () => {
-    closeVideo();
+    const playDuration = Date.now() - playStartTimestamp;
+
+    if (playDuration >= 1000 * 3) {
+      trackEvent('Close Video', { playDuration: Math.floor(playDuration / 1000) });
+    }
+
+    if (playDuration >= 1000 * 30) {
+      location.reload();
+      return;
+    }
+
+    if (video && !video.isDisposed()) {
+      video.dispose();
+    }
+
+    video = null;
+    document.getElementById('videocontent')!.innerHTML = '';
+    document.getElementById('blur')!.classList.remove('blur');
   });
 
 
@@ -983,11 +1076,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('contactButton').addEventListener('click', (e) => {
     e.preventDefault();
+    trackEvent('Open Contact Modal');
     openContactsModal();
   });
 
   document.getElementById('donateNavButton').addEventListener('click', (e) => {
     e.preventDefault();
+    trackEvent('Open Donate Modal');
     donateDialog.showModal();
   });
 
@@ -1001,6 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('datenschutzButton').addEventListener('click', (e) => {
     e.preventDefault();
+    trackEvent('View Datenschutz');
 
     document.getElementById('main-view').style.display = 'none';
     document.getElementById('generic-html-view').classList.remove('hidden');
@@ -1018,6 +1114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('impressumButton').addEventListener('click', (e) => {
     e.preventDefault();
+    trackEvent('View Impressum');
 
     document.getElementById('main-view').style.display = 'none';
     document.getElementById('generic-html-view').classList.remove('hidden');
@@ -1052,7 +1149,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Basic tooltip functionality could be enhanced here if needed
   });
 
+  const forumButton = document.getElementById('forumButton');
+  if (forumButton) {
+    forumButton.addEventListener('click', () => {
+      trackEvent('Click Forum Link');
+    });
+  }
+
+  const githubButton = document.getElementById('githubButton');
+  if (githubButton) {
+    githubButton.addEventListener('click', () => {
+      trackEvent('Click GitHub Link');
+    });
+  }
+
   document.getElementById('helpButton').addEventListener('click', () => {
+    trackEvent('Click Help Link');
     window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md', '_blank');
   });
 
