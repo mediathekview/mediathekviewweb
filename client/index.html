@@ -154,6 +154,14 @@
                 <label for="futureCheckbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Zukünftige</label>
               </div>
               <div class="flex items-center gap-2 md:ml-auto">
+                <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md p-0.5 space-x-0.5">
+                  <button id="viewGridButton" class="p-1.5 rounded-md" type="button" title="Kartenansicht">
+                    <i class="material-icons text-base text-gray-600 dark:text-gray-300">view_module</i>
+                  </button>
+                  <button id="viewListButton" class="p-1.5 rounded-md" type="button" title="Listenansicht">
+                    <i class="material-icons text-base text-gray-600 dark:text-gray-300">view_list</i>
+                  </button>
+                </div>
                 <div class="relative">
                   <button
                     id="sortDropdownButton"
@@ -187,6 +195,15 @@
           </div>
 
           <div id="mediathekContainer">
+            <div id="mediathekTableHeader" class="hidden text-sm font-bold text-gray-600 dark:text-gray-400 px-4 py-2">
+              <span>Titel</span>
+              <span>Datum</span>
+              <span>Dauer</span>
+              <span>Sender</span>
+              <span>Thema</span>
+              <span>Größe</span>
+              <span>Aktionen</span>
+            </div>
             <div id="mediathekGrid" class="grid grid-cols-1 gap-4">
               <!-- Grid items will be inserted here -->
             </div>
@@ -321,6 +338,30 @@
             <div data-id="actions"></div>
           </div>
         </div>
+      </div>
+    </template>
+
+    <template id="result-row-template">
+      <div class="bg-white dark:bg-gray-800 p-4 items-center result-row">
+        <div class="min-w-0">
+          <p data-id="title" class="font-semibold text-gray-900 dark:text-white truncate"></p>
+        </div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          <p data-id="datetime" class="mb-0"></p>
+        </div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          <p data-id="duration" class="mb-0"></p>
+        </div>
+        <div class="min-w-0">
+          <span data-id="channel" class="inline-block text-xs font-medium px-2.5 py-0.5 rounded"></span>
+        </div>
+        <div class="min-w-0">
+          <span data-id="topic" class="text-gray-500 dark:text-gray-400 text-sm truncate"></span>
+        </div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          <span data-id="size"></span>
+        </div>
+        <div data-id="actions" class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400"></div>
       </div>
     </template>
 

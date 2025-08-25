@@ -75,6 +75,7 @@ function throttle<F extends (...args: any[]) => void>(func: F, limit: number) {
 
 const allowCookiesKey = 'allowCookies';
 const lastAllowCookiesAskedKey = 'allowCookiesAsked';
+const viewModeKey = 'viewMode';
 
 const debugResponse = false;
 const socket = io();
@@ -94,6 +95,11 @@ let queryInputClearButtonState = 'hidden';
 let video;
 let sortBy = 'timestamp';
 let sortOrder = 'desc';
+let lastResult = null;
+let currentView: 'grid' | 'list' = 'grid';
+let viewGridButton: HTMLButtonElement;
+let viewListButton: HTMLButtonElement;
+
 
 function updateQueryInputClearButton() {
   const currentQueryString = getQueryString();
@@ -459,7 +465,7 @@ const query = throttle(() => {
   });
 }, 20);
 
-function handleQueryResult(result, err) {
+function renderResults() {
   const grid = document.getElementById('mediathekGrid');
   const noResults = document.getElementById('noResults');
   const queryInfoLabel = document.getElementById('queryInfoLabel');
@@ -468,34 +474,27 @@ function handleQueryResult(result, err) {
   if (!grid || !noResults || !queryInfoLabel || !pagination) return;
 
   grid.innerHTML = '';
+  pagination.innerHTML = '';
   grid.style.display = 'none';
   noResults.classList.remove('hidden');
 
-  if (err) {
-    queryInfoLabel.innerHTML = 'Fehler:<br/>' + err.join('<br/>');
-    pagination.innerHTML = '';
-    return;
-  }
-
-  if (!result) {
+  if (!lastResult) {
     queryInfoLabel.innerHTML = '';
-    pagination.innerHTML = '';
     return;
   }
 
-  const filmlisteTime = `am ${formatDate(result.queryInfo.filmlisteTimestamp)} um ${formatTime(result.queryInfo.filmlisteTimestamp)} Uhr`;
+  const filmlisteTime = `am ${formatDate(lastResult.queryInfo.filmlisteTimestamp)} um ${formatTime(lastResult.queryInfo.filmlisteTimestamp)} Uhr`;
 
-  if (result.results.length === 0) {
-    pagination.innerHTML = '';
-    queryInfoLabel.innerHTML = `Die Suche dauerte ${result.queryInfo.searchEngineTime.toString().replace('.', ',')} ms. Keine Treffer gefunden.<br/>Filmliste zuletzt ${filmlisteTime} aktualisiert.`;
+  if (lastResult.results.length === 0) {
+    queryInfoLabel.innerHTML = `Die Suche dauerte ${lastResult.queryInfo.searchEngineTime.toString().replace('.', ',')} ms. Keine Treffer gefunden.<br/>Filmliste zuletzt ${filmlisteTime} aktualisiert.`;
     return;
   }
 
   grid.style.display = 'grid';
   noResults.classList.add('hidden');
 
-  for (let i = 0; i < result.results.length; i++) {
-    const data = result.results[i];
+  for (let i = 0; i < lastResult.results.length; i++) {
+    const data = lastResult.results[i];
 
     if (data.timestamp == 0) {
       data.dateString = data.timeString = '?';
@@ -507,17 +506,39 @@ function handleQueryResult(result, err) {
 
     data.durationString = isNaN(data.duration) ? '?' : formatDuration(data.duration);
 
-    const card = createResultCard(data);
-    grid.appendChild(card);
+    const element = currentView === 'grid' ? createResultCard(data) : createResultTableRow(data);
+    grid.appendChild(element);
   }
 
-  const actualPagesCount = Math.ceil(result.queryInfo.totalResults / itemsPerPage);
+  const actualPagesCount = Math.ceil(lastResult.queryInfo.totalResults / itemsPerPage);
   const shownPagesCount = Math.min(actualPagesCount, Math.floor(10000 / itemsPerPage));
 
   createPagination(shownPagesCount);
 
-  queryInfoLabel.innerHTML = 'Die Suche dauerte ' + result.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(result.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
-    ' bis ' + Math.min(result.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + result.queryInfo.totalResults + '.</br>Filmliste zuletzt ' + filmlisteTime + ' aktualisiert.';
+  queryInfoLabel.innerHTML = 'Die Suche dauerte ' + lastResult.queryInfo.searchEngineTime.toString().replace('.', ',') + ' ms. Zeige Treffer ' + Math.min(lastResult.queryInfo.totalResults, (currentPage * itemsPerPage + 1)) +
+    ' bis ' + Math.min(lastResult.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + lastResult.queryInfo.totalResults + '.</br>Filmliste zuletzt ' + filmlisteTime + ' aktualisiert.';
+}
+
+function handleQueryResult(result, err) {
+  const queryInfoLabel = document.getElementById('queryInfoLabel');
+  const pagination = document.getElementById('pagination');
+  const grid = document.getElementById('mediathekGrid');
+  const noResults = document.getElementById('noResults');
+
+  if (err) {
+    lastResult = null;
+    if (grid) {
+      grid.innerHTML = '';
+      grid.style.display = 'none';
+    }
+    if (noResults) noResults.classList.remove('hidden');
+    if (queryInfoLabel) queryInfoLabel.innerHTML = 'Fehler:<br/>' + err.join('<br/>');
+    if (pagination) pagination.innerHTML = '';
+    return;
+  }
+
+  lastResult = result;
+  renderResults();
 }
 
 function createVideoActions(entry) {
@@ -607,6 +628,42 @@ function getChannelColorClasses(channel: string): string {
   }
 
   return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+}
+
+function createResultTableRow(data) {
+  const template = document.getElementById('result-row-template') as HTMLTemplateElement;
+  const row = template.content.cloneNode(true) as DocumentFragment;
+  const rowElement = row.firstElementChild as HTMLElement;
+
+  const titleEl = row.querySelector<HTMLParagraphElement>('[data-id="title"]');
+  titleEl.textContent = data.title;
+  titleEl.title = data.title;
+
+  const channelEl = row.querySelector<HTMLSpanElement>('[data-id="channel"]');
+  channelEl.textContent = data.channel;
+  channelEl.className += ' ' + getChannelColorClasses(data.channel);
+
+  const topicEl = row.querySelector<HTMLSpanElement>('[data-id="topic"]');
+  topicEl.textContent = data.topic;
+  topicEl.title = data.topic;
+
+  row.querySelector('[data-id="datetime"]').textContent = `${data.dateString}, ${data.timeString} Uhr`;
+  row.querySelector('[data-id="duration"]').textContent = data.durationString;
+
+  const sizeElement = row.querySelector('[data-id="size"]');
+  sizeElement.textContent = ''; // Clear it first
+
+  const urlForSize = data.url_video_hd ?? data.url_video ?? data.url_video_low;
+
+  if (urlForSize != undefined) {
+    socket.emit('getContentLength', urlForSize, (length) => {
+      sizeElement.textContent = (length > 0) ? formatBytes(length, 2) : '';
+    });
+  }
+
+  row.querySelector('[data-id="actions"]').appendChild(createVideoActions(data));
+
+  return rowElement;
 }
 
 function createResultCard(data) {
@@ -858,6 +915,37 @@ function copyToClipboard(text) {
   document.body.removeChild(dummy);
 }
 
+function setViewMode(mode: 'grid' | 'list', fromUser = false) {
+  if (currentView === mode && !fromUser) return;
+
+  currentView = mode;
+  window.localStorage?.setItem?.(viewModeKey, mode);
+
+  const grid = document.getElementById('mediathekGrid');
+  const tableHeader = document.getElementById('mediathekTableHeader');
+  const activeClasses = ['bg-gray-200', 'dark:bg-gray-600'];
+
+  if (mode === 'list') {
+    viewGridButton.classList.remove(...activeClasses);
+    viewListButton.classList.add(...activeClasses);
+    grid.classList.remove('grid-cols-1', 'gap-4');
+    grid.classList.add('table-view');
+    tableHeader.classList.remove('hidden');
+    tableHeader.classList.add('grid');
+  } else { // grid
+    viewListButton.classList.remove(...activeClasses);
+    viewGridButton.classList.add(...activeClasses);
+    grid.classList.remove('table-view');
+    grid.classList.add('grid-cols-1', 'gap-4');
+    tableHeader.classList.add('hidden');
+    tableHeader.classList.remove('grid');
+  }
+
+  if (fromUser) {
+    renderResults();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initializeAnalytics();
 
@@ -1060,7 +1148,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (video && !video.isDisposed()) {
       video.dispose();
     }
-
     video = null;
     document.getElementById('videocontent')!.innerHTML = '';
     document.getElementById('blur')!.classList.remove('blur');
@@ -1167,6 +1254,19 @@ document.addEventListener('DOMContentLoaded', () => {
     trackEvent('Click Help Link');
     window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md', '_blank');
   });
+
+  viewGridButton = document.getElementById('viewGridButton') as HTMLButtonElement;
+  viewListButton = document.getElementById('viewListButton') as HTMLButtonElement;
+
+  const storedViewMode = window.localStorage?.getItem?.(viewModeKey);
+  if (storedViewMode === 'list') {
+      setViewMode('list');
+  } else {
+      setViewMode('grid'); // Default
+  }
+
+  viewGridButton.addEventListener('click', () => setViewMode('grid', true));
+  viewListButton.addEventListener('click', () => setViewMode('list', true));
 
   setQueryFromURIHash();
   query();
