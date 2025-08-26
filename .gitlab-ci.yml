@@ -31,7 +31,7 @@ build:
 publish:image:
   stage: publish
   when: manual
-  image: alpine:3.18
+  image: alpine:3.22
   only:
     - master
   except:
@@ -47,7 +47,7 @@ publish:image:
 publish:image-development:
   stage: publish
   when: manual
-  image: alpine:3.18
+  image: alpine:3.22
   only:
     - development
   except:
