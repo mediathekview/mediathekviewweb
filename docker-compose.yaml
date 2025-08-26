@@ -52,7 +52,7 @@ services:
 
   valkey:
     container_name: valkey
-    image: valkey:8-alpine
+    image: valkey/valkey:8-alpine
     restart: always
     command: ["--save", "60", "1", "--loglevel", "info"]
     volumes:

@@ -111,7 +111,7 @@ const lastAllowCookiesAskedKey = 'allowCookiesAsked';
 const viewModeKey = 'viewMode';
 
 const debugResponse: boolean = false;
-let itemsPerPage: number = 5;
+let itemsPerPage: number = 15;
 let currentPage: number = 0;
 let connectingDialog: HTMLDialogElement;
 let contactDialog: HTMLDialogElement;
