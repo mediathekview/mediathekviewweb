@@ -21,8 +21,7 @@
     "line-reader": "0.4",
     "lzma-native": "8.0",
     "moment": "2.30",
-    "rss": "1.2",
-    "socket.io": "4.8"
+    "rss": "1.2"
   },
   "devDependencies": {
     "@types/compression": "1.8",

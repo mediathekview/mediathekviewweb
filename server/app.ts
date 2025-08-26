@@ -1,12 +1,10 @@
 import fs from 'node:fs';
-import http from 'node:http';
 import path from 'node:path';
 
 import compression from 'compression';
 import express from 'express';
 import got from 'got';
 import moment from 'moment';
-import * as SocketIO from 'socket.io';
 
 import { MediathekManager } from './MediathekManager';
 import { RSSFeedGenerator } from './RSSFeedGenerator';
@@ -22,8 +20,6 @@ const impressum = renderImpressum(config.contact);
   const valkey = getValkeyClient();
 
   const app = express();
-  const httpServer = new http.Server(app);
-  const io = new SocketIO.Server(httpServer);
 
   const indexHtmlPath = path.join(__dirname, '/client/index.html');
   let indexHtmlContent: string;
@@ -42,8 +38,6 @@ const impressum = renderImpressum(config.contact);
   }
 
   app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
-
-  process.on('SIGTERM', () => httpServer.close(() => process.exit(0)));
 
   const searchEngine = new SearchEngine(config.opensearch);
   await searchEngine.waitForConnection();
@@ -101,7 +95,7 @@ const impressum = renderImpressum(config.contact);
   });
 
   app.get('/stats', function (req, res) {
-    res.send(`Socket.io connections: ${io.sockets.sockets.size}`);
+    res.send('Server is up and running.');
   });
 
   app.get('/feed', async function (req, res) {
@@ -134,7 +128,32 @@ const impressum = renderImpressum(config.contact);
         channels: null
       });
     }
+  });
 
+  app.get('/api/content-length', async (req, res) => {
+    const url = req.query.url as string;
+
+    if (!url) {
+      res.status(400).send('URL parameter is missing');
+      return;
+    }
+
+    try {
+      const cachedResult = await valkey.hget('mvw:contentLengthCache', url);
+
+      if (cachedResult) {
+        res.send(cachedResult);
+      }
+      else {
+        const response = await got.head(url);
+        const contentLength = Number(response.headers['content-length'] || -1);
+        res.send(contentLength.toString());
+        await valkey.hset('mvw:contentLengthCache', { [url]: contentLength.toString() });
+      }
+    }
+    catch (error) {
+      res.send('-1');
+    }
   });
 
   app.post('/api/entries', async (req, res) => {
@@ -241,86 +260,12 @@ const impressum = renderImpressum(config.contact);
     }
   }
 
-  io.on('connection', (socket) => {
-    const clientIp = socket.request.headers['x-forwarded-for'] || socket.request.socket.remoteAddress?.match(/(\d+\.?)+/g)?.[0] || 'unknown';
-
-    console.log('client connected, ip: ' + clientIp);
-
-    socket.on('disconnect', () => {
-      console.log('client disconnected, ip: ' + clientIp);
-    });
-
-    socket.on('getContentLength', async (url, callback) => {
-      try {
-        const cachedResult = await valkey.hget('mvw:contentLengthCache', url);
-
-        if (cachedResult) {
-          callback(cachedResult);
-        }
-        else {
-          const response = await got.head(url);
-          const contentLength = Number(response.headers['content-length'] || -1);
-          callback(contentLength);
-          await valkey.hset('mvw:contentLengthCache', { url: contentLength.toString() });
-        }
-      }
-      catch (error) {
-        callback(-1);
-      }
-    });
-
-    socket.on('getDescription', (id, callback) => {
-      searchEngine.getDescription(id)
-        .then((description) => callback(description))
-        .catch((err) => callback(err.message));
-    });
-
-    socket.on('queryEntries', (query, callback) => {
-      queryEntries(query)
-        .then((result) => callback({ result, err: null }))
-        .catch((err) => callback({ result: null, err: [err.message] }));
-    });
-
-    socket.on('getImpressum', (callback) => {
-      callback(impressum);
-    });
-
-    socket.on('getDatenschutz', (callback) => {
-      fs.readFile(path.join(__dirname, '/client/datenschutz.html'), 'utf-8', (err, data) => {
-        if (err) {
-          callback(err.message);
-        }
-        else {
-          callback(data);
-        }
-      });
-    });
-  });
-
-  httpServer.listen(config.webserverPort, () => {
+  const httpServer = app.listen(config.webserverPort, () => {
     console.log('server listening on *:' + config.webserverPort);
     console.log();
   });
 
-  async function queryEntries(query) {
-    const begin = process.hrtime();
-    const result = await searchEngine.search(query);
-    const end = process.hrtime(begin);
-
-    const searchEngineTime = (end[0] * 1e3 + end[1] / 1e6).toFixed(2);
-
-    const queryInfo = {
-      filmlisteTimestamp: filmlisteTimestamp,
-      searchEngineTime: searchEngineTime,
-      resultCount: result.result.length,
-      totalResults: result.totalResults
-    };
-
-    return {
-      results: result.result,
-      queryInfo: queryInfo
-    };
-  }
+  process.on('SIGTERM', () => httpServer.close(() => process.exit(0)));
 
   async function updateLoop() {
     try {

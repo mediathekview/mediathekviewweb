@@ -1,19 +1,52 @@
-/// <reference types="socket.io-client" />
 /// <reference types="video.js" />
-
-declare const Cookies;
-declare const io: any;
 
 declare const umami: {
   track: (event_name: string, data?: object) => void;
   identify: (unique_id: string) => void;
 };
 
-interface XMLHttpRequest {
-  baseOpen: (method: string, url: string, async?: boolean, user?: string, password?: string) => void;
+interface ParsedQuery {
+  channels: string[][];
+  topics: string[][];
+  titles: string[][];
+  descriptions: string[][];
+  generics: string[];
+  duration_min: number | undefined;
+  duration_max: number | undefined;
 }
 
-function addAdSense() {
+interface ResultEntry {
+  id: string;
+  channel: string;
+  topic: string;
+  title: string;
+  description: string;
+  timestamp: number;
+  duration: number;
+  size: number;
+  url_website: string;
+  url_subtitle: string;
+  url_video: string;
+  url_video_low: string;
+  url_video_hd: string;
+  // added by client
+  dateString?: string;
+  timeString?: string;
+  durationString?: string;
+}
+
+interface QueryResult {
+  results: ResultEntry[];
+  queryInfo: {
+    filmlisteTimestamp: number;
+    searchEngineTime: string;
+    totalResults: number;
+    resultCount: number;
+  };
+}
+
+
+function addAdSense(): void {
   const adsense = document.createElement('script');
   adsense.type = 'text/javascript';
   adsense.setAttribute('data-ad-client', 'ca-pub-2430783446079517');
@@ -23,7 +56,7 @@ function addAdSense() {
   document.head.appendChild(adsense);
 }
 
-function initializeAnalytics() {
+function initializeAnalytics(): void {
   if (typeof umami == 'undefined' || typeof umami.identify != 'function') {
     return;
   }
@@ -43,13 +76,13 @@ function initializeAnalytics() {
   }
 }
 
-function trackEvent(eventName: string, data?: object) {
+function trackEvent(eventName: string, data?: object): void {
   if (typeof umami != 'undefined' && typeof umami.track == 'function') {
     umami.track(eventName, data);
   }
 }
 
-function debounce<F extends (...args: any[]) => void>(func: F, waitFor: number) {
+function debounce<F extends (...args: any[]) => void>(func: F, waitFor: number): (...args: Parameters<F>) => void {
   let timeout: number | null = null;
 
   return (...args: Parameters<F>): void => {
@@ -61,7 +94,7 @@ function debounce<F extends (...args: any[]) => void>(func: F, waitFor: number) 
   };
 }
 
-function throttle<F extends (...args: any[]) => void>(func: F, limit: number) {
+function throttle<F extends (...args: any[]) => void>(func: F, limit: number): (this: any, ...args: Parameters<F>) => void {
   let inThrottle = false;
 
   return function (this: any, ...args: Parameters<F>) {
@@ -77,30 +110,35 @@ const allowCookiesKey = 'allowCookies';
 const lastAllowCookiesAskedKey = 'allowCookiesAsked';
 const viewModeKey = 'viewMode';
 
-const debugResponse = false;
-const socket = io();
-let itemsPerPage = 5;
-let currentPage = 0;
+const debugResponse: boolean = false;
+let itemsPerPage: number = 5;
+let currentPage: number = 0;
 let connectingDialog: HTMLDialogElement;
 let contactDialog: HTMLDialogElement;
 let cookieDialog: HTMLDialogElement;
 let videoDialog: HTMLDialogElement;
 let donateDialog: HTMLDialogElement;
-let playStartTimestamp;
-let lastQueryString = null;
-let ignoreNextHashChange = false;
-let impressum = null;
-let datenschutz = null;
-let queryInputClearButtonState = 'hidden';
-let video;
-let sortBy = 'timestamp';
-let sortOrder = 'desc';
-let lastResult = null;
+let playStartTimestamp: number;
+let lastQueryString: string | null = null;
+let ignoreNextHashChange: boolean = false;
+let queryInputClearButtonState: 'hidden' | 'shown' = 'hidden';
+let video: videojs.default.Player | null;
+let sortBy: string = 'timestamp';
+let sortOrder: 'desc' | 'asc' = 'desc';
+let lastResult: QueryResult | null = null;
 let currentView: 'grid' | 'list' = 'grid';
 let viewModeButton: HTMLButtonElement;
 
+const htmlContentCache: Record<string, string> = {};
 
-function updateSortButton(select: HTMLSelectElement) {
+let gridView: HTMLElement;
+let tableView: HTMLElement;
+let tableBody: HTMLElement;
+let noResults: HTMLElement;
+let queryInfoLabel: HTMLElement;
+let pagination: HTMLElement;
+
+function updateSortButton(select: HTMLSelectElement): void {
   const button = document.getElementById('sortDropdownButton') as HTMLButtonElement;
   const buttonText = document.getElementById('sortDropdownButtonText') as HTMLSpanElement;
   if (!button || !buttonText || !select) return;
@@ -111,14 +149,14 @@ function updateSortButton(select: HTMLSelectElement) {
   const value = select.value;
   const [, newSortOrder] = value.split('_');
 
-  const sortText = selectedOption.textContent.split('(')[0].trim();
+  const sortText = selectedOption.textContent?.split('(')[0].trim();
   const iconName = newSortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward';
 
   button.title = `Sortieren nach: ${selectedOption.textContent}`;
   buttonText.innerHTML = `${sortText} <i class="material-icons text-sm ml-1 align-middle">${iconName}</i>`;
 }
 
-function updateQueryInputClearButton() {
+function updateQueryInputClearButton(): void {
   const currentQueryString = getQueryString();
   const clearButton = document.getElementById('queryInputClearButton');
   if (!clearButton) return;
@@ -134,7 +172,7 @@ function updateQueryInputClearButton() {
 
 const preferedThemeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
 
-preferedThemeMediaQuery?.addEventListener?.('change', (event) => {
+preferedThemeMediaQuery?.addEventListener?.('change', (event: MediaQueryListEvent) => {
   updateTheme(event.matches);
 });
 
@@ -149,25 +187,17 @@ function updateTheme(dark: boolean): void {
   }
 }
 
-XMLHttpRequest.prototype.baseOpen = XMLHttpRequest.prototype.open;
+const baseOpen = XMLHttpRequest.prototype.open;
 
-XMLHttpRequest.prototype.open = function (this: XMLHttpRequest, method: string, url: string, async?: boolean, user?: string, password?: string) {
+XMLHttpRequest.prototype.open = function (this: XMLHttpRequest, method: string, url: string, async?: boolean, user?: string, password?: string): void {
   if (url.startsWith('http://srfvodhd-vh.akamaihd.net') || url.startsWith('http://hdvodsrforigin-f.akamaihd.net')) {
     url = 'https' + url.slice(4);
   }
 
-  this.baseOpen(method, url, async, user, password);
+  baseOpen.call(this, method, url, async, user, password);
 }
 
-function pad(value: number, size: number) {
-  let stringValue = value.toString();
-  while (stringValue.length < (size || 2)) {
-    stringValue = "0" + stringValue;
-  }
-  return stringValue;
-}
-
-function formatDate(epochSeconds: number) {
+function formatDate(epochSeconds: number): string {
   return new Date(epochSeconds * 1000).toLocaleDateString('de', {
     year: 'numeric',
     month: '2-digit',
@@ -175,20 +205,20 @@ function formatDate(epochSeconds: number) {
   });
 }
 
-function formatTime(epochSeconds: number) {
+function formatTime(epochSeconds: number): string {
   return new Date(epochSeconds * 1000).toLocaleTimeString('de', {
     hour: '2-digit',
     minute: '2-digit'
   });
 }
 
-function formatDuration(seconds: number) {
-  return pad(Math.floor(seconds / 60), 2) + ':' + pad(seconds % 60, 2);
+function formatDuration(seconds: number): string {
+  return Math.floor(seconds / 60).toString().padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
 }
 
-function formatBytes(bytes, decimals) {
-  if (!(parseInt(bytes) >= 0)) return '?';
-  else if (bytes == 0) return '0 Byte';
+function formatBytes(bytes: number, decimals: number): string {
+  if (bytes < 0) return '?';
+  if (bytes === 0) return '0 Byte';
 
   const k = 1000;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
@@ -196,68 +226,58 @@ function formatBytes(bytes, decimals) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
 }
 
-function parseQuery(query) {
-  const channels = [];
-  const topics = [];
-  const titles = [];
-  const descriptions = [];
-  let generics = [];
-  let duration_min = undefined;
-  let duration_max = undefined;
+function parseQuery(query: string): ParsedQuery {
+  const channels: string[][] = [];
+  const topics: string[][] = [];
+  const titles: string[][] = [];
+  const descriptions: string[][] = [];
+  let generics: string[] = [];
+  let duration_min: number | undefined = undefined;
+  let duration_max: number | undefined = undefined;
 
-  const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
-    return (split.length > 0);
-  });
+  const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => split.length > 0);
 
   for (let i = 0; i < splits.length; i++) {
     const split = splits[i];
 
     if (split[0] == '!') {
-      const c = split.slice(1, split.length).split(',').filter((split) => {
-        return (split.length > 0);
-      });
+      const c = split.slice(1, split.length).split(',').filter((split) => split.length > 0);
       if (c.length > 0) {
         channels.push(c);
       }
     }
     else if (split[0] == '#') {
-      const t = split.slice(1, split.length).split(',').filter((split) => {
-        return (split.length > 0);
-      });
+      const t = split.slice(1, split.length).split(',').filter((split) => split.length > 0);
       if (t.length > 0) {
         topics.push(t);
       }
     }
     else if (split[0] == '+') {
-      const t = split.slice(1, split.length).split(',').filter((split) => {
-        return (split.length > 0);
-      });
+      const t = split.slice(1, split.length).split(',').filter((split) => split.length > 0);
       if (t.length > 0) {
         titles.push(t);
       }
     }
     else if (split[0] == '*') {
-      const d = split.slice(1, split.length).split(',').filter((split) => {
-        return (split.length > 0);
-      });
+      const d = split.slice(1, split.length).split(',').filter((split) => split.length > 0);
       if (d.length > 0) {
         descriptions.push(d);
       }
     }
     else if (split[0] == '>') {
-      const d = split.slice(1, split.length).split(',').filter((split) => {
-        return (split.length > 0);
-      });
-      if (d.length > 0 && !isNaN(d[0])) {
-        duration_min = d[0] * 60;
+      const d = split.slice(1, split.length).split(',').filter((split) => split.length > 0);
+      const d_min = Number(d[0]);
+
+      if (d.length > 0 && !isNaN(d_min)) {
+        duration_min = d_min * 60;
       }
     }
     else if (split[0] == '<') {
-      const d = split.slice(1, split.length).split(',').filter((split) => {
-        return (split.length > 0);
-      });
-      if (d.length > 0 && !isNaN(d[0])) {
-        duration_max = d[0] * 60;
+      const d = split.slice(1, split.length).split(',').filter((split) => split.length > 0);
+      const d_max = Number(d[0]);
+
+      if (d.length > 0 && !isNaN(d_max)) {
+        duration_max = d_max * 60;
       }
     }
     else {
@@ -276,12 +296,12 @@ function parseQuery(query) {
   }
 }
 
-function getQueryString() {
+function getQueryString(): string {
   return (document.getElementById('queryInput') as HTMLInputElement).value.toString().trim();
 }
 
-function setQueryFromURIHash() {
-  const props = parseURIHash(window.location.hash);
+function setQueryFromURIHash(): void {
+  const props: Record<string, any> = parseURIHash(window.location.hash);
   const queryInput = document.getElementById('queryInput') as HTMLInputElement;
   const everywhereCheckbox = document.getElementById('everywhereCheckbox') as HTMLInputElement;
   const futureCheckbox = document.getElementById('futureCheckbox') as HTMLInputElement;
@@ -310,12 +330,17 @@ function setQueryFromURIHash() {
     futureCheckbox.checked = true;
   }
 
-  if (props['sortBy'] && props['sortOrder']) {
+  if (props['sortBy']) {
     sortBy = props['sortBy'];
-    sortOrder = props['sortOrder'];
   }
   else {
     sortBy = 'timestamp';
+  }
+
+  if (props['sortOrder'] === 'asc' || props['sortOrder'] === 'desc') {
+    sortOrder = props['sortOrder'];
+  }
+  else {
     sortOrder = 'desc';
   }
 
@@ -334,13 +359,13 @@ function setQueryFromURIHash() {
   }
 }
 
-function parseURIHash(hash) {
+function parseURIHash(hash: string): Record<string, string> {
   if (hash[0] == '#') {
     hash = hash.slice(1);
   }
 
   const props = hash.split('&');
-  const elements = {};
+  const elements: Record<string, string> = {};
 
   for (let i = 0; i < props.length; i++) {
     const element = props[i].split('=');
@@ -350,7 +375,7 @@ function parseURIHash(hash) {
   return elements;
 }
 
-function createURIHash(elements) {
+function createURIHash(elements: Record<string, any>): string {
   const props = [];
 
   for (const prop in elements) {
@@ -364,13 +389,30 @@ const trackSearch = debounce((data: Record<string, any>) => {
   trackEvent('Search', data);
 }, 2500);
 
+const updateUrlHash = debounce((elements: Record<string, any>) => {
+  let oldHash = window.location.hash;
+  if (oldHash[0] == '#') {
+    oldHash = oldHash.slice(1);
+  }
+
+  const newHash = createURIHash(elements);
+
+  if (oldHash !== newHash) {
+    const url = new URL(window.location.toString());
+    url.hash = newHash;
+    history.replaceState(undefined, '', url.toString());
+
+    ignoreNextHashChange = true;
+  }
+}, 2500);
+
 const query = throttle(() => {
   const queryString = getQueryString();
   const future = !!(document.getElementById('futureCheckbox') as HTMLInputElement).checked;
   const everywhere = !!(document.getElementById('everywhereCheckbox') as HTMLInputElement).checked;
   currentPage = Math.min(currentPage, Math.floor(10000 / itemsPerPage - 1));
 
-  const elements = {};
+  const elements: Record<string, any> = {};
 
   if (queryString.length > 0) {
     elements['query'] = queryString;
@@ -390,20 +432,7 @@ const query = throttle(() => {
     elements['sortOrder'] = sortOrder;
   }
 
-  let oldHash = window.location.hash;
-  if (oldHash[0] == '#') {
-    oldHash = oldHash.slice(1);
-  }
-
-  const newHash = createURIHash(elements);
-
-  if (oldHash !== newHash) {
-    const url = new URL(window.location.toString());
-    url.hash = newHash;
-    history.replaceState(undefined, '', url.toString());
-
-    ignoreNextHashChange = true;
-  }
+  updateUrlHash(elements);
 
   const parsedQuery = parseQuery(queryString);
   const queries = [];
@@ -454,13 +483,27 @@ const query = throttle(() => {
     size: itemsPerPage
   };
 
-  socket.emit('queryEntries', queryObj, (message) => {
-    if (debugResponse) {
-      console.log(message);
-    }
+  fetch('/api/query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(queryObj),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
 
-    handleQueryResult(message.result, message.err);
-  });
+      return res.json();
+    })
+    .then((message) => {
+      if (debugResponse) {
+        console.log(message);
+      }
+      handleQueryResult(message.result, message.err);
+    })
+    .catch((err) => {
+      handleQueryResult(null, [err.message]);
+    });
 
   trackSearch({
     query: queryString,
@@ -472,14 +515,7 @@ const query = throttle(() => {
   });
 }, 20);
 
-function renderResults() {
-  const gridView = document.getElementById('mediathekGridView');
-  const tableView = document.getElementById('mediathekTableView');
-  const tableBody = document.getElementById('mediathekTableBody');
-  const noResults = document.getElementById('noResults');
-  const queryInfoLabel = document.getElementById('queryInfoLabel');
-  const pagination = document.getElementById('pagination');
-
+function renderResults(): void {
   if (!gridView || !tableView || !tableBody || !noResults || !queryInfoLabel || !pagination) return;
 
   gridView.innerHTML = '';
@@ -503,14 +539,15 @@ function renderResults() {
 
   if (currentView === 'grid') {
     gridView.classList.remove('hidden');
-  } else {
+  }
+  else {
     tableView.classList.remove('hidden');
   }
   noResults.classList.add('hidden');
 
   const container = currentView === 'grid' ? gridView : tableBody;
   for (let i = 0; i < lastResult.results.length; i++) {
-    const data = lastResult.results[i];
+    const data: ResultEntry = lastResult.results[i];
 
     if (data.timestamp == 0) {
       data.dateString = data.timeString = '?';
@@ -523,7 +560,9 @@ function renderResults() {
     data.durationString = isNaN(data.duration) ? '?' : formatDuration(data.duration);
 
     const element = currentView === 'grid' ? createResultCard(data) : createResultTableRow(data);
-    container.appendChild(element);
+    if (element) {
+      container.appendChild(element);
+    }
   }
 
   const actualPagesCount = Math.ceil(lastResult.queryInfo.totalResults / itemsPerPage);
@@ -535,14 +574,7 @@ function renderResults() {
     ' bis ' + Math.min(lastResult.queryInfo.totalResults, ((currentPage + 1) * itemsPerPage)) + ' von insgesamt ' + lastResult.queryInfo.totalResults + '.</br>Filmliste zuletzt ' + filmlisteTime + ' aktualisiert.';
 }
 
-function handleQueryResult(result, err) {
-  const queryInfoLabel = document.getElementById('queryInfoLabel');
-  const pagination = document.getElementById('pagination');
-  const gridView = document.getElementById('mediathekGridView');
-  const tableView = document.getElementById('mediathekTableView');
-  const tableBody = document.getElementById('mediathekTableBody');
-  const noResults = document.getElementById('noResults');
-
+function handleQueryResult(result: QueryResult | null, err: string[] | null): void {
   if (err) {
     lastResult = null;
     if (gridView) {
@@ -563,15 +595,15 @@ function handleQueryResult(result, err) {
   renderResults();
 }
 
-function createVideoActions(entry) {
+function createVideoActions(entry: ResultEntry): HTMLDivElement {
   const container = document.createElement('div');
   container.className = 'flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400';
-  const filenamebase = entry.channel + ' - ' + entry.topic + ' - ' + entry.title + ' - ' + formatDate(entry.timestamp) + ' ' + formatTime(entry.timestamp);
+  const filenamebase = `${entry.channel} - ${entry.topic} - ${entry.title} - ${formatDate(entry.timestamp)} ${formatTime(entry.timestamp)}`;
   const actionTemplate = (document.getElementById('video-action-template') as HTMLTemplateElement).content;
 
-  const createActionTag = (quality, playUrl) => {
+  const createActionTag = (quality: string, playUrl: string): DocumentFragment => {
     const tag = actionTemplate.cloneNode(true) as DocumentFragment;
-    const qualityEl = tag.querySelector('[data-id="quality"]');
+    const qualityEl = tag.querySelector('[data-id="quality"]')!;
     const playLinkEl = tag.querySelector('[data-id="play-link"]') as HTMLAnchorElement;
     const helpIconEl = tag.querySelector('[data-id="help-icon"]') as HTMLElement;
 
@@ -593,15 +625,18 @@ function createVideoActions(entry) {
     return tag;
   };
 
-  if (entry.url_video_hd) {
-    container.appendChild(createActionTag('HD', entry.url_video_hd));
-  }
-  if (entry.url_video) {
-    container.appendChild(createActionTag('SD', entry.url_video));
-  }
-  if (entry.url_video_low) {
-    container.appendChild(createActionTag('LQ', entry.url_video_low));
-  }
+  const qualities = [
+    { key: 'url_video_hd', name: 'HD' },
+    { key: 'url_video', name: 'SD' },
+    { key: 'url_video_low', name: 'LQ' }
+  ] as const;
+
+  qualities.forEach((quality) => {
+    if (entry[quality.key]) {
+      container.appendChild(createActionTag(quality.name, entry[quality.key]));
+    }
+  });
+
   if (entry.url_subtitle) {
     const subtitleLink = document.createElement('a');
     const subtitleIcon = document.createElement('i');
@@ -652,103 +687,87 @@ function getChannelColorClasses(channel: string): string {
   return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 }
 
-function createResultTableRow(data) {
-  const template = document.getElementById('result-row-template') as HTMLTemplateElement;
-  const row = template.content.cloneNode(true) as DocumentFragment;
-  const rowElement = row.firstElementChild as HTMLElement;
-  rowElement.classList.add('table-row-grid');
-
-  const titleEl = row.querySelector<HTMLParagraphElement>('[data-id="title"]');
-  titleEl.textContent = data.title;
-  titleEl.title = data.title;
-
-  const channelEl = row.querySelector<HTMLAnchorElement>('[data-id="channel"]');
-  channelEl.textContent = data.channel;
-  channelEl.className += ' ' + getChannelColorClasses(data.channel);
-
-  if (data.url_website) {
-    channelEl.href = data.url_website;
-    channelEl.target = '_blank';
-    channelEl.rel = 'noopener noreferrer';
-    channelEl.title = `Website von ${data.channel} besuchen`;
+function populateResultData(element: DocumentFragment, data: ResultEntry): void {
+  const titleEl = element.querySelector<HTMLElement>('[data-id="title"]');
+  if (titleEl) {
+    titleEl.textContent = data.title;
+    titleEl.title = data.title;
   }
 
-  const topicEl = row.querySelector<HTMLSpanElement>('[data-id="topic"]');
-  topicEl.textContent = data.topic;
-  topicEl.title = data.topic;
+  const topicEl = element.querySelector<HTMLElement>('[data-id="topic"]');
+  if (topicEl) {
+    topicEl.textContent = data.topic;
+    topicEl.title = data.topic;
+  }
 
-  row.querySelector('[data-id="date"]').textContent = data.dateString;
-  row.querySelector('[data-id="time"]').textContent = data.timeString;
-  row.querySelector('[data-id="duration"]').textContent = data.durationString;
+  const channelEl = element.querySelector<HTMLAnchorElement>('[data-id="channel"]');
 
-  const sizeElement = row.querySelector('[data-id="size"]');
+  if (channelEl) {
+    channelEl.textContent = data.channel;
+    channelEl.className += ' ' + getChannelColorClasses(data.channel);
 
-  if (sizeElement) {
-    sizeElement.textContent = ''; // Clear it first
-
-    const urlForSize = data.url_video_hd ?? data.url_video ?? data.url_video_low;
-
-    if (urlForSize != undefined) {
-      socket.emit('getContentLength', urlForSize, (length) => {
-        sizeElement.textContent = (length > 0) ? formatBytes(length, 2) : '';
-      });
+    if (data.url_website) {
+      channelEl.href = data.url_website;
+      channelEl.target = '_blank';
+      channelEl.rel = 'noopener noreferrer';
+      channelEl.title = `Website von ${data.channel} besuchen`;
     }
   }
 
-  row.querySelector('[data-id="actions"]').appendChild(createVideoActions(data));
+  const actionsContainer = element.querySelector<HTMLElement>('[data-id="actions"]');
+  if (actionsContainer) {
+    actionsContainer.appendChild(createVideoActions(data));
+  }
 
-  return rowElement;
+  const sizeElement = element.querySelector<HTMLElement>('[data-id="size"]');
+  if (sizeElement) {
+    sizeElement.textContent = '';
+    const urlForSize = data.url_video_hd ?? data.url_video ?? data.url_video_low;
+
+    if (urlForSize) {
+      fetch(`/api/content-length?url=${encodeURIComponent(urlForSize)}`)
+        .then((res) => res.text())
+        .then((lengthStr) => {
+          const length = parseInt(lengthStr, 10);
+          if (!isNaN(length) && document.body.contains(sizeElement)) {
+            sizeElement.textContent = (length > 0) ? formatBytes(length, 2) : '';
+          }
+        });
+    }
+  }
 }
 
-function createResultCard(data) {
+function createResultTableRow(data: ResultEntry): Element | null {
+  const template = document.getElementById('result-row-template') as HTMLTemplateElement;
+  const row = template.content.cloneNode(true) as DocumentFragment;
+
+  populateResultData(row, data);
+
+  // Table-row specific content
+  row.querySelector('[data-id="date"]')!.textContent = data.dateString!;
+  row.querySelector('[data-id="time"]')!.textContent = data.timeString!;
+  row.querySelector('[data-id="duration"]')!.textContent = data.durationString!;
+
+  return row.firstElementChild;
+}
+
+function createResultCard(data: ResultEntry): Element | null {
   const template = document.getElementById('result-card-template') as HTMLTemplateElement;
   const card = template.content.cloneNode(true) as DocumentFragment;
-  const cardElement = card.firstElementChild as HTMLElement;
 
-  const titleEl = card.querySelector<HTMLHeadingElement>('[data-id="title"]');
-  titleEl.textContent = data.title;
-  titleEl.title = data.title;
+  populateResultData(card, data);
 
-  const descriptionEl = card.querySelector<HTMLParagraphElement>('[data-id="description"]');
+  const descriptionEl = card.querySelector<HTMLParagraphElement>('[data-id="description"]')!;
   descriptionEl.textContent = data.description || 'Keine Beschreibung verfügbar.';
   descriptionEl.title = data.description;
 
-  const channelEl = card.querySelector<HTMLAnchorElement>('[data-id="channel"]');
-  channelEl.textContent = data.channel;
-  channelEl.className += ' ' + getChannelColorClasses(data.channel);
+  card.querySelector('[data-id="datetime"]')!.textContent = `${data.dateString}, ${data.timeString} Uhr`;
+  card.querySelector('[data-id="duration"]')!.textContent = `Dauer: ${data.durationString}`;
 
-  if (data.url_website) {
-    channelEl.href = data.url_website;
-    channelEl.target = '_blank';
-    channelEl.rel = 'noopener noreferrer';
-    channelEl.title = `Website von ${data.channel} besuchen`;
-  }
-
-  const topicEl = card.querySelector<HTMLSpanElement>('[data-id="topic"]');
-  topicEl.textContent = data.topic;
-  topicEl.title = data.topic;
-
-  card.querySelector('[data-id="datetime"]').textContent = `${data.dateString}, ${data.timeString} Uhr`;
-  card.querySelector('[data-id="duration"]').textContent = `Dauer: ${data.durationString}`;
-
-  const sizeElement = card.querySelector('[data-id="size"]');
-  sizeElement.textContent = '';
-
-  const urlForSize = data.url_video_hd ?? data.url_video ?? data.url_video_low;
-
-  if (urlForSize != undefined) {
-    socket.emit('getContentLength', urlForSize, (length) => {
-      sizeElement.textContent = (length > 0) ? formatBytes(length, 2) : '';
-    });
-  }
-
-  card.querySelector('[data-id="actions"]').appendChild(createVideoActions(data));
-
-  return cardElement;
+  return card.firstElementChild;
 }
 
-
-function createPaginationButton(html, active, enabled, callback) {
+function createPaginationButton(html: string, active: boolean, enabled: boolean, callback: () => void): HTMLAnchorElement {
   const template = (document.getElementById('pagination-button-template') as HTMLTemplateElement).content;
   const pageItemFragment = template.cloneNode(true) as DocumentFragment;
   const pageLink = pageItemFragment.firstElementChild as HTMLAnchorElement;
@@ -786,8 +805,7 @@ function createPaginationButton(html, active, enabled, callback) {
   return pageLink;
 }
 
-function createPagination(totalPages) {
-  const pagination = document.getElementById('pagination');
+function createPagination(totalPages: number): void {
   if (!pagination) return;
 
   pagination.innerHTML = '';
@@ -820,44 +838,8 @@ function createPagination(totalPages) {
   pagination.appendChild(nextButton);
 }
 
-function isFullscreen() {
-  return (document as any).fullscreenElement
-    || (document as any).webkitFullscreenElement
-    || (document as any).mozFullScreenElement
-    || (document as any).msFullscreenElement;
-}
 
-function requestFullscreen(element) {
-  if (element.requestFullscreen) {
-    element.requestFullscreen();
-  }
-  else if (element.webkitRequestFullScreen) {
-    element.webkitRequestFullScreen();
-  }
-  else if (element.mozRequestFullScreen) {
-    element.mozRequestFullScreen();
-  }
-  else if (element.msRequestFullscreen) {
-    element.msRequestFullscreen();
-  }
-}
-
-function exitFullscreen() {
-  if ((document as any).exitFullscreen) {
-    (document as any).exitFullscreen();
-  }
-  else if ((document as any).webkitExitFullscreen) {
-    (document as any).webkitExitFullscreen();
-  }
-  else if ((document as any).mozCancelFullScreen) {
-    (document as any).mozCancelFullScreen();
-  }
-  else if ((document as any).msExitFullscreen) {
-    (document as any).msExitFullscreen();
-  }
-}
-
-function isVideoPlaying() {
+function isVideoPlaying(): boolean {
   if (!video) {
     return false;
   }
@@ -866,13 +848,13 @@ function isVideoPlaying() {
   }
 }
 
-function toggleVideoPause() {
+function toggleVideoPause(): void {
   if (video) {
     video.paused() ? video.play() : video.pause();
   }
 }
 
-function playVideo(channel: string, topic: string, title: string, url: string, quality: string) {
+function playVideo(channel: string, topic: string, title: string, url: string, quality: string): void {
   if (url.startsWith('http://')) {
     playVideoInNewWindow(url);
     return;
@@ -905,18 +887,16 @@ function playVideo(channel: string, topic: string, title: string, url: string, q
 
   document.getElementById('videocontent')!.appendChild(vid);
 
-  video = (videojs as any as (id: string, opts: any) => any)('video-player', {
-    plugins: {
-      hotkeys: true
-    }
-  });
+  video = (videojs as unknown as typeof videojs.default)('video-player');
 
   vid.addEventListener('dblclick', () => {
-    if (isFullscreen()) {
-      exitFullscreen();
-    }
-    else {
-      requestFullscreen(video);
+    if (video) {
+      if (video.isFullscreen()) {
+        video.exitFullscreen();
+      }
+      else {
+        video.requestFullscreen();
+      }
     }
   });
 
@@ -939,15 +919,15 @@ async function playVideoInNewWindow(url: string): Promise<void> {
   }
 }
 
-function openContactsModal() {
+function openContactsModal(): void {
   contactDialog.showModal();
 }
 
-function returnEmptyString() {
+function returnEmptyString(): string {
   return '';
 }
 
-function copyToClipboard(text) {
+function copyToClipboard(text: string): void {
   const dummy = document.createElement('textarea');
   document.body.appendChild(dummy);
   dummy.value = text;
@@ -956,37 +936,70 @@ function copyToClipboard(text) {
   document.body.removeChild(dummy);
 }
 
-function setViewMode(mode: 'grid' | 'list', fromUser = false) {
+const viewModes = {
+  list: { icon: 'view_module', title: 'Kartenansicht', add: 'max-w-screen-2xl', remove: 'max-w-7xl', show: 'mediathekTableView', hide: 'mediathekGridView' },
+  grid: { icon: 'view_list', title: 'Listenansicht', add: 'max-w-7xl', remove: 'max-w-screen-2xl', show: 'mediathekGridView', hide: 'mediathekTableView' }
+};
+
+function setViewMode(mode: 'grid' | 'list', fromUser: boolean = false): void {
   if (currentView === mode && !fromUser) return;
 
   currentView = mode;
   window.localStorage?.setItem?.(viewModeKey, mode);
 
-  const gridView = document.getElementById('mediathekGridView');
-  const tableView = document.getElementById('mediathekTableView');
+  const settings = viewModes[mode];
   const viewModeIcon = document.getElementById('viewModeIcon') as HTMLElement;
   const mainElement = document.querySelector('main');
+  const navContainer = document.getElementById('nav-container');
+  const showView = document.getElementById(settings.show);
+  const hideView = document.getElementById(settings.hide);
 
-  if (!gridView || !tableView || !viewModeButton || !viewModeIcon || !mainElement) return;
+  if (!viewModeButton || !viewModeIcon || !mainElement || !navContainer || !showView || !hideView) return;
 
-  if (mode === 'list') {
-    viewModeIcon.textContent = 'view_module';
-    viewModeButton.title = 'Kartenansicht';
-    gridView.classList.add('hidden');
-    tableView.classList.remove('hidden');
-    mainElement.classList.remove('max-w-7xl');
-    mainElement.classList.add('max-w-screen-2xl');
-  } else { // grid
-    viewModeIcon.textContent = 'view_list';
-    viewModeButton.title = 'Listenansicht';
-    gridView.classList.remove('hidden');
-    tableView.classList.add('hidden');
-    mainElement.classList.add('max-w-7xl');
-    mainElement.classList.remove('max-w-screen-2xl');
-  }
+  viewModeIcon.textContent = settings.icon;
+  viewModeButton.title = settings.title;
+  showView.classList.remove('hidden');
+  hideView.classList.add('hidden');
+  mainElement.classList.add(settings.add);
+  mainElement.classList.remove(settings.remove);
+  navContainer.classList.add(settings.add);
+  navContainer.classList.remove(settings.remove);
 
   if (fromUser) {
     renderResults();
+  }
+}
+
+function showGenericHtmlView(url: string, cacheKey: string, eventName: string): void {
+  trackEvent(eventName);
+
+  document.getElementById('main-view')!.classList.add('hidden');
+  const genericView = document.getElementById('generic-html-view')!;
+  genericView.classList.remove('hidden');
+
+  const contentElement = document.getElementById('genericHtmlContent')!;
+  if (htmlContentCache[cacheKey]) {
+    contentElement.innerHTML = htmlContentCache[cacheKey];
+  }
+  else {
+    fetch(url)
+      .then((res) => res.text())
+      .then((html) => {
+        htmlContentCache[cacheKey] = html;
+        contentElement.innerHTML = html;
+      });
+  }
+}
+
+function setupTrackedButton(elementId: string, eventName: string, action?: (e: MouseEvent) => void): void {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.addEventListener('click', (e) => {
+      trackEvent(eventName);
+      if (action) {
+        action(e);
+      }
+    });
   }
 }
 
@@ -995,6 +1008,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('browserWarning')?.remove();
 
+  gridView = document.getElementById('mediathekGridView')!;
+  tableView = document.getElementById('mediathekTableView')!;
+  tableBody = document.getElementById('mediathekTableBody')!;
+  noResults = document.getElementById('noResults')!;
+  queryInfoLabel = document.getElementById('queryInfoLabel')!;
+  pagination = document.getElementById('pagination')!;
   connectingDialog = document.getElementById('connectingDialog') as HTMLDialogElement;
   contactDialog = document.getElementById('contactDialog') as HTMLDialogElement;
   cookieDialog = document.getElementById('cookieDialog') as HTMLDialogElement;
@@ -1017,10 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     else if (allowCookies != 'false') {
       cookieDialog.showModal();
-      const cookieAcceptButtonElement = document.getElementById('cookieAcceptButton');
-      const cookieDenyButtonElement = document.getElementById('cookieDenyButton');
-
-      cookieAcceptButtonElement.addEventListener('click', () => {
+      document.getElementById('cookieAcceptButton')!.addEventListener('click', () => {
         trackEvent('Cookie Consent', { consent: 'accept' });
         window.localStorage?.setItem?.(allowCookiesKey, 'true');
         window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
@@ -1028,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addAdSense();
       });
 
-      cookieDenyButtonElement.addEventListener('click', () => {
+      document.getElementById('cookieDenyButton')!.addEventListener('click', () => {
         trackEvent('Cookie Consent', { consent: 'deny' });
         window.localStorage?.setItem?.(allowCookiesKey, 'false');
         window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
@@ -1039,58 +1055,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('Could not access localStorage. Ads will not be shown.', error);
   }
 
-  let connectingDialogTimeout: number | null = null;
-  if (socket.disconnected) {
-    connectingDialogTimeout = window.setTimeout(() => {
-      if (!connectingDialog.open) {
-        connectingDialog.showModal();
-      }
-    }, 500);
-  }
-
-  socket.on('connect', () => {
-    console.log('connected');
-    if (connectingDialogTimeout) {
-      clearTimeout(connectingDialogTimeout);
-      connectingDialogTimeout = null;
-    }
-    connectingDialog.close();
-  });
-
-  socket.on('disconnect', () => {
-    console.log('disconnected');
-    if (!connectingDialog.open) {
-      connectingDialog.showModal();
-    }
-    socket.connect();
-  });
-
-  socket.on('reconnect', (attemptNumber) => {
-    console.log('reconnected', attemptNumber);
-  });
-
-  socket.on('reconnect_attempt', (attemptNumber) => {
-    console.log('attempting reconnect', attemptNumber);
-  });
-
-  socket.on('reconnect_failed', () => {
-    console.log('reconnect failed');
-  });
-
-  socket.on('reconnect_error', (error) => {
-    console.error('reconnect_error', error);
-  });
-
-  socket.on('connect_error', (error) => {
-    console.error('connect_error', error);
-  });
-
-  document.getElementById('rssFeedButton').addEventListener('click', () => {
-    trackEvent('Click RSS Feed');
-    const search = window.location.hash.replace('#', '');
-    window.open(window.location.origin + window.location.pathname + 'feed' + (search.length > 0 ? '?' : '') + search, '_blank');
-  });
-
   const newQuery = () => {
     currentPage = 0;
     query();
@@ -1100,7 +1064,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const pageSizeSelect = document.getElementById('pageSizeSelect') as HTMLSelectElement;
   const storedPageSize = window.localStorage?.getItem?.('pageSize');
 
-  if (storedPageSize && ['5', '10', '15', '20', '25'].includes(storedPageSize)) {
+  if (storedPageSize && ['5', '10', '15', '20', '25', '50'].includes(storedPageSize)) {
     itemsPerPage = parseInt(storedPageSize, 10);
   }
 
@@ -1129,11 +1093,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('sortSelect')?.addEventListener('change', (e) => {
     const select = e.target as HTMLSelectElement;
-    const value = select.value;
-    const [newSortBy, newSortOrder] = value.split('_');
+    const [newSortBy, newSortOrder] = select.value.split('_');
 
     sortBy = newSortBy;
-    sortOrder = newSortOrder;
+    sortOrder = newSortOrder as 'desc' | 'asc';
 
     trackEvent('Change Sort', { by: sortBy, order: sortOrder });
     updateSortButton(select);
@@ -1141,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  document.getElementById('queryInput').addEventListener('input', () => {
+  document.getElementById('queryInput')!.addEventListener('input', () => {
     const currentQueryString = getQueryString();
 
     if (currentQueryString != lastQueryString) {
@@ -1154,16 +1117,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('#queryParameters input[type=checkbox]').forEach(el => el.addEventListener('change', () => newQuery()));
 
-  document.getElementById('videocloseButton').addEventListener('click', () => {
+  document.getElementById('videocloseButton')!.addEventListener('click', () => {
     if (videoDialog.open) {
       videoDialog.close();
     }
   });
 
-  videoDialog.addEventListener('cancel', (e) => {
-    if (isFullscreen()) {
+  videoDialog.addEventListener('cancel', (e: Event) => {
+    if (video && video.isFullscreen()) {
       e.preventDefault();
-      exitFullscreen();
+      video.exitFullscreen();
     }
   });
 
@@ -1182,78 +1145,58 @@ document.addEventListener('DOMContentLoaded', () => {
     if (video && !video.isDisposed()) {
       video.dispose();
     }
+
     video = null;
     document.getElementById('videocontent')!.innerHTML = '';
     document.getElementById('blur')!.classList.remove('blur');
   });
 
-
-  document.getElementById('queryInputClearButton').addEventListener('click', function () {
+  document.getElementById('queryInputClearButton')!.addEventListener('click', function () {
     const queryInput = document.getElementById('queryInput') as HTMLInputElement;
     queryInput.value = '';
     queryInput.dispatchEvent(new Event('input'));
     queryInput.focus();
   });
 
-  document.getElementById('contactButton').addEventListener('click', (e) => {
+  document.getElementById('logo')!.addEventListener('click', (e: MouseEvent) => {
     e.preventDefault();
-    trackEvent('Open Contact Modal');
-    openContactsModal();
-  });
-
-  document.getElementById('donateNavButton').addEventListener('click', (e) => {
-    e.preventDefault();
-    trackEvent('Open Donate Modal');
-    donateDialog.showModal();
-  });
-
-  document.getElementById('logo').addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('generic-html-view').classList.add('hidden');
-    document.getElementById('main-view').classList.remove('hidden');
-
+    document.getElementById('generic-html-view')!.classList.add('hidden');
+    document.getElementById('main-view')!.classList.remove('hidden');
     return false;
   });
 
-  document.getElementById('datenschutzButton').addEventListener('click', (e) => {
+  setupTrackedButton('contactButton', 'Open Contact Modal', (e: MouseEvent) => {
     e.preventDefault();
-    trackEvent('View Datenschutz');
-
-    document.getElementById('main-view').classList.add('hidden');
-    document.getElementById('generic-html-view').classList.remove('hidden');
-
-    if (datenschutz == null) {
-      socket.emit('getDatenschutz', (response) => {
-        datenschutz = response;
-        document.getElementById('genericHtmlContent').innerHTML = response;
-      });
-    }
-    else {
-      document.getElementById('genericHtmlContent').innerHTML = datenschutz;
-    }
+    openContactsModal();
   });
 
-  document.getElementById('impressumButton').addEventListener('click', (e) => {
+  setupTrackedButton('donateNavButton', 'Open Donate Modal', (e: MouseEvent) => {
     e.preventDefault();
-    trackEvent('View Impressum');
-
-    document.getElementById('main-view').classList.add('hidden');
-    document.getElementById('generic-html-view').classList.remove('hidden');
-
-    if (impressum == null) {
-      socket.emit('getImpressum', (response) => {
-        impressum = response;
-        document.getElementById('genericHtmlContent').innerHTML = response;
-      });
-    }
-    else {
-      document.getElementById('genericHtmlContent').innerHTML = impressum;
-    }
+    donateDialog.showModal();
   });
 
-  document.getElementById('genericHtmlViewBackButton').addEventListener('click', () => {
-    document.getElementById('generic-html-view').classList.add('hidden');
-    document.getElementById('main-view').classList.remove('hidden');
+  setupTrackedButton('datenschutzButton', 'View Datenschutz', (e: MouseEvent) => {
+    e.preventDefault();
+    showGenericHtmlView('/datenschutz', 'datenschutz', 'View Datenschutz');
+  });
+
+  setupTrackedButton('impressumButton', 'View Impressum', (e: MouseEvent) => {
+    e.preventDefault();
+    showGenericHtmlView('/impressum', 'impressum', 'View Impressum');
+  });
+
+  setupTrackedButton('rssFeedButton', 'Click RSS Feed', () => {
+    const search = window.location.hash.replace('#', '');
+    window.open(`${window.location.origin}${window.location.pathname}feed${search.length > 0 ? '?' : ''}${search}`, '_blank');
+  });
+
+  setupTrackedButton('forumButton', 'Click Forum Link');
+  setupTrackedButton('githubButton', 'Click GitHub Link');
+  setupTrackedButton('helpButton', 'Click Help Link');
+
+  document.getElementById('genericHtmlViewBackButton')!.addEventListener('click', () => {
+    document.getElementById('generic-html-view')!.classList.add('hidden');
+    document.getElementById('main-view')!.classList.remove('hidden');
   });
 
   window.addEventListener("hashchange", () => {
@@ -1266,37 +1209,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, false);
 
-  document.querySelectorAll('[title]').forEach(el => {
-    // Basic tooltip functionality could be enhanced here if needed
-  });
-
-  const forumButton = document.getElementById('forumButton');
-  if (forumButton) {
-    forumButton.addEventListener('click', () => {
-      trackEvent('Click Forum Link');
-    });
-  }
-
-  const githubButton = document.getElementById('githubButton');
-  if (githubButton) {
-    githubButton.addEventListener('click', () => {
-      trackEvent('Click GitHub Link');
-    });
-  }
-
-  document.getElementById('helpButton').addEventListener('click', () => {
-    trackEvent('Click Help Link');
-    window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md', '_blank');
-  });
-
   viewModeButton = document.getElementById('viewModeButton') as HTMLButtonElement;
-
-  const storedViewMode = window.localStorage?.getItem?.(viewModeKey);
-  if (storedViewMode === 'list') {
-    setViewMode('list');
-  } else {
-    setViewMode('grid'); // Default
-  }
+  const storedViewMode = window.localStorage?.getItem?.(viewModeKey) as 'grid' | 'list' | null;
+  const defaultView = window.innerWidth >= 1024 ? 'list' : 'grid';
+  setViewMode(storedViewMode ?? defaultView);
 
   viewModeButton.addEventListener('click', () => {
     const newMode = currentView === 'grid' ? 'list' : 'grid';
@@ -1305,4 +1221,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setQueryFromURIHash();
   query();
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    // Only act when the video dialog is open and a video is present.
+    if (!videoDialog.open || !video || video.isDisposed()) {
+      return;
+    }
+
+    // Do not trigger hotkeys if Ctrl, Alt or Meta keys are pressed, to avoid conflicts with browser shortcuts.
+    if (e.altKey || e.ctrlKey || e.metaKey) {
+      return;
+    }
+
+    const target = e.target as HTMLElement;
+    // Prevent seeking when a text input field is focused.
+    if (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        video.currentTime(video.currentTime() - 10);
+        break;
+
+      case 'ArrowRight':
+        e.preventDefault();
+        video.currentTime(video.currentTime() + 10);
+        break;
+    }
+  });
 });

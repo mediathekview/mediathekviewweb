@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     /* Basic Options */
-    "target": "es2022",
+    "target": "es2024",
     "module": "nodenext",
     "lib": ["esnext", "dom"],
     "outDir": "./dist",

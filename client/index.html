@@ -11,10 +11,7 @@
     <link rel="stylesheet" href="/static/roboto/roboto.css" />
     <link rel="stylesheet" href="/static/index.css" />
 
-    <script defer src="/static/js.cookie.min.js"></script>
-    <script defer src="/static/socket.io.min.js"></script>
     <script defer src="/static/video.min.js"></script>
-    <script defer src="/static/videojs.hotkeys.min.js"></script>
     <script defer src="/static/index.js"></script>
   </head>
 
@@ -32,13 +29,13 @@
 
     <div id="blur" class="no-filter">
       <nav class="bg-white dark:bg-gray-800 not-dark:shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div id="nav-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between py-4">
             <a id="logo" class="text-gray-900 dark:text-white text-xl font-bold" href="#">MediathekViewWeb</a>
             <div class="md:hidden">
               <button
                 id="navbar-toggle"
-                class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white cursor-pointer"
                 type="button"
                 aria-controls="navbar-menu"
                 aria-expanded="false">
@@ -148,9 +145,15 @@
                 <button id="rssFeedButton" class="icon-btn" type="button" title="RSS-Feed">
                   <i class="material-icons text-gray-600 dark:text-gray-300">rss_feed</i>
                 </button>
-                <button id="helpButton" class="icon-btn" type="button" title="Hilfe">
+                <a
+                  id="helpButton"
+                  href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="icon-btn"
+                  title="Hilfe">
                   <i class="material-icons text-gray-600 dark:text-gray-300">help_outline</i>
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -187,7 +190,7 @@
                 <nav id="pagination" class="flex items-stretch space-x-1"></nav>
                 <div class="relative">
                   <button
-                    class="flex items-center bg-gray-200 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 pl-4 pr-2 py-2 rounded-md text-sm font-medium"
+                    class="flex items-center bg-gray-200 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 pl-4 pr-2 py-2 rounded-md text-sm font-medium cursor-pointer"
                     type="button"
                     id="pageSizeDropdownButton">
                     Pro Seite: 5
@@ -199,6 +202,7 @@
                     <option value="15">15</option>
                     <option value="20">20</option>
                     <option value="25">25</option>
+                    <option value="50">50</option>
                   </select>
                 </div>
               </div>
@@ -209,7 +213,7 @@
         <div id="generic-html-view" class="hidden">
           <button
             id="genericHtmlViewBackButton"
-            class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white font-bold py-2 px-4 rounded mb-4"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white font-bold py-2 px-4 rounded mb-4 cursor-pointer"
             type="button">
             Zurück
           </button>
@@ -231,7 +235,7 @@
     <dialog id="contactDialog" class="dialog-panel max-w-lg">
       <form method="dialog" class="dialog-header">
         <h4 class="dialog-title">Kontakt</h4>
-        <button type="submit" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" aria-label="Close">
+        <button type="submit" class="dialog-close-btn" aria-label="Close">
           <i class="material-icons">close</i>
         </button>
       </form>
@@ -248,7 +252,7 @@
     <dialog id="donateDialog" class="dialog-panel max-w-lg">
       <form method="dialog" class="dialog-header">
         <h4 class="dialog-title">Spenden</h4>
-        <button type="submit" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" aria-label="Close">
+        <button type="submit" class="dialog-close-btn" aria-label="Close">
           <i class="material-icons">close</i>
         </button>
       </form>
@@ -277,8 +281,8 @@
           nachzudenken, um den Weiterbetrieb der Website zu ermöglichen.
         </p>
         <div class="flex gap-4 mt-4">
-          <button id="cookieDenyButton" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white rounded-md" type="button">Ablehnen</button>
-          <button id="cookieAcceptButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md" type="button">Akzeptieren</button>
+          <button id="cookieDenyButton" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white rounded-md cursor-pointer" type="button">Ablehnen</button>
+          <button id="cookieAcceptButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md cursor-pointer" type="button">Akzeptieren</button>
         </div>
       </div>
     </dialog>

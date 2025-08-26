@@ -8,7 +8,7 @@ html * {
 
 /* Component Styles */
 .nav-link {
-  @apply rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white;
+  @apply rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white cursor-pointer;
 }
 
 .dropdown-item {
@@ -16,7 +16,7 @@ html * {
 }
 
 .icon-btn {
-  @apply rounded-md bg-gray-100 p-2 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600;
+  @apply rounded-md bg-gray-100 p-2 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 cursor-pointer;
 }
 
 .search-input {
@@ -47,6 +47,10 @@ html * {
   @apply prose max-w-none p-4 dark:prose-invert;
 }
 
+.dialog-close-btn {
+  @apply text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white cursor-pointer;
+}
+
 .channel-tag {
   @apply inline-block rounded px-2.5 py-0.5 text-xs font-medium;
 }
@@ -57,30 +61,19 @@ html * {
 
 /* Animations & Effects */
 .spin-left {
-  animation: spinleft 2s infinite linear;
+  animation: spin 2s infinite linear reverse;
 }
 
 .spin-right {
-  animation: spinright 2s infinite linear;
+  animation: spin 2s infinite linear;
 }
 
-@keyframes spinleft {
+@keyframes spin {
   from {
-    transform: scale(1) rotate(360deg);
+    transform: rotate(0deg);
   }
-
   to {
-    transform: scale(1) rotate(0deg);
-  }
-}
-
-@keyframes spinright {
-  from {
-    transform: scale(1) rotate(0deg);
-  }
-
-  to {
-    transform: scale(1) rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 
