@@ -21,7 +21,7 @@
   <body class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
     <dialog id="videoDialog" class="p-0 m-0 bg-transparent max-w-none max-h-none w-full h-full backdrop:bg-black/85 z-[100000]">
       <button id="videocloseButton" class="absolute top-4 right-4 text-white z-10 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
-        <i class="material-icons text-4xl">close</i>
+        <i class="material-icons !text-4xl">close</i>
       </button>
       <div class="absolute inset-0 flex items-center justify-center">
         <div class="w-11/12 md:w-5/6 lg:w-3/4">
@@ -48,55 +48,25 @@
             <div id="navbar-menu" class="hidden md:flex md:items-center">
               <ul class="flex flex-col md:flex-row items-center md:space-x-4 ml-auto mt-4 md:mt-0">
                 <li>
-                  <a
-                    id="donateNavButton"
-                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    href="#">
-                    Spenden
-                  </a>
+                  <a id="donateNavButton" class="nav-link" href="#"> Spenden </a>
                 </li>
                 <li>
-                  <a
-                    id="forumButton"
-                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    target="_blank"
-                    href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb">
-                    Forum
-                  </a>
+                  <a id="forumButton" class="nav-link" target="_blank" href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb"> Forum </a>
                 </li>
                 <li>
-                  <a
-                    id="contactButton"
-                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    href="#">
-                    Kontakt
-                  </a>
+                  <a id="contactButton" class="nav-link" href="#"> Kontakt </a>
                 </li>
                 <li>
-                  <a
-                    id="githubButton"
-                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    target="_blank"
-                    href="https://github.com/mediathekview/mediathekviewweb">
-                    GitHub
-                  </a>
+                  <a id="githubButton" class="nav-link" target="_blank" href="https://github.com/mediathekview/mediathekviewweb"> GitHub </a>
                 </li>
                 <li>
-                  <button
-                    class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
-                    type="button"
-                    id="aboutDropdownButton"
-                    popovertarget="aboutDropdownMenu">
-                    Über <i class="material-icons text-base">arrow_drop_down</i>
-                  </button>
+                  <button class="nav-link flex items-center" type="button" id="aboutDropdownButton" popovertarget="aboutDropdownMenu">Über <i class="material-icons">arrow_drop_down</i></button>
                   <ul id="aboutDropdownMenu" popover class="w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1" aria-labelledby="aboutDropdownButton">
                     <li>
-                      <a id="impressumButton" class="dropdown-item block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600" href="/impressum">Impressum</a>
+                      <a id="impressumButton" class="dropdown-item" href="/impressum">Impressum</a>
                     </li>
                     <li>
-                      <a id="datenschutzButton" class="dropdown-item block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600" href="/datenschutz">
-                        Datenschutz
-                      </a>
+                      <a id="datenschutzButton" class="dropdown-item" href="/datenschutz"> Datenschutz </a>
                     </li>
                   </ul>
                 </li>
@@ -128,48 +98,39 @@
                   title="Selektoren: !Sender</br>#Thema</br>+Titel</br>*Beschreibung</br>&lt;x (in minuten)</br>&gt;x (in minuten)">
                   <i id="searchSpan" class="material-icons text-gray-600 dark:text-gray-300">search</i>
                 </div>
-                <input
-                  id="queryInput"
-                  type="text"
-                  class="w-full bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md py-2 pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-300 dark:focus:ring-blue-500"
-                  placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80"
-                  autofocus />
-                <a tabindex="-1"><i id="queryInputClearButton" class="material-icons text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">clear</i></a>
+                <input id="queryInput" type="text" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" autofocus />
+                <a tabindex="-1">
+                  <i id="queryInputClearButton" class="material-icons text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-opacity">clear</i>
+                </a>
               </div>
-              <div class="flex items-center">
+              <div class="checkbox-wrapper">
                 <input
                   id="everywhereCheckbox"
                   type="checkbox"
                   name="everywhere"
                   class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                <label for="everywhereCheckbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Überall</label>
+                <label for="everywhereCheckbox" class="checkbox-label">Überall</label>
               </div>
-              <div class="flex items-center">
+              <div class="checkbox-wrapper">
                 <input
                   id="futureCheckbox"
                   type="checkbox"
                   name="future"
                   checked
                   class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                <label for="futureCheckbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Zukünftige</label>
+                <label for="futureCheckbox" class="checkbox-label">Zukünftige</label>
               </div>
               <div class="flex items-center gap-2 md:ml-auto">
-                <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md p-0.5 space-x-0.5">
-                  <button id="viewGridButton" class="p-1.5 rounded-md" type="button" title="Kartenansicht">
-                    <i class="material-icons text-base text-gray-600 dark:text-gray-300">view_module</i>
-                  </button>
-                  <button id="viewListButton" class="p-1.5 rounded-md" type="button" title="Listenansicht">
-                    <i class="material-icons text-base text-gray-600 dark:text-gray-300">view_list</i>
-                  </button>
-                </div>
+                <button id="viewModeButton" class="icon-btn" type="button" title="Listenansicht">
+                  <i id="viewModeIcon" class="material-icons text-gray-600 dark:text-gray-300">view_list</i>
+                </button>
                 <div class="relative">
-                  <button
-                    id="sortDropdownButton"
-                    class="flex items-center gap-1 p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md"
-                    type="button"
-                    title="Sortieren nach: Datum (neuste)">
+                  <button id="sortDropdownButton" class="icon-btn flex items-center gap-1" type="button" title="Sortieren nach: Datum (neuste)">
                     <i class="material-icons text-gray-600 dark:text-gray-300">sort</i>
-                    <span id="sortDropdownButtonText" class="text-sm font-medium text-gray-900 dark:text-gray-300 hidden md:inline">Datum (neuste)</span>
+                    <span id="sortDropdownButtonText" class="text-sm font-medium text-gray-900 dark:text-gray-300 hidden md:inline">
+                      Datum
+                      <i class="material-icons ml-1 align-middle">arrow_downward</i>
+                    </span>
                   </button>
                   <select id="sortSelect" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer dark:bg-gray-700 dark:text-gray-300">
                     <option value="timestamp_desc">Datum (neuste)</option>
@@ -184,10 +145,10 @@
                     <option value="title_desc">Titel (Z-A)</option>
                   </select>
                 </div>
-                <button id="rssFeedButton" class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md" type="button" title="RSS-Feed">
+                <button id="rssFeedButton" class="icon-btn" type="button" title="RSS-Feed">
                   <i class="material-icons text-gray-600 dark:text-gray-300">rss_feed</i>
                 </button>
-                <button id="helpButton" class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md" type="button" title="Hilfe">
+                <button id="helpButton" class="icon-btn" type="button" title="Hilfe">
                   <i class="material-icons text-gray-600 dark:text-gray-300">help_outline</i>
                 </button>
               </div>
@@ -195,34 +156,42 @@
           </div>
 
           <div id="mediathekContainer">
-            <div id="mediathekTableHeader" class="hidden text-sm font-bold text-gray-600 dark:text-gray-400 px-4 py-2">
-              <span>Titel</span>
-              <span>Datum</span>
-              <span>Dauer</span>
-              <span>Sender</span>
-              <span>Thema</span>
-              <span>Größe</span>
-              <span>Aktionen</span>
-            </div>
-            <div id="mediathekGrid" class="grid grid-cols-1 gap-4">
+            <div id="mediathekGridView" class="grid grid-cols-1 gap-4">
               <!-- Grid items will be inserted here -->
+            </div>
+
+            <div id="mediathekTableView" class="hidden">
+              <div class="table-grid">
+                <div id="mediathekTableHeader" class="col-span-full grid grid-cols-subgrid px-4 text-sm font-semibold text-gray-700 dark:text-gray-300 py-2 bg-white dark:bg-gray-800 rounded-md shadow">
+                  <span>Sender</span>
+                  <span>Thema</span>
+                  <span>Titel</span>
+                  <span>Datum</span>
+                  <span>Zeit</span>
+                  <span>Dauer</span>
+                  <span>Aktionen</span>
+                </div>
+                <div id="mediathekTableBody" class="col-span-full grid grid-cols-subgrid table-view rounded-md overflow-clip shadow">
+                  <!-- Table rows will be inserted here -->
+                </div>
+              </div>
             </div>
 
             <div id="noResults" class="text-center p-5 text-gray-600 dark:text-gray-400 hidden">Keine Einträge vorhanden</div>
 
             <footer class="flex justify-between items-center flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               <div>
-                <p id="queryInfoLabel" class="mb-0 text-gray-600 dark:text-gray-500 text-sm"></p>
+                <p id="queryInfoLabel" class="mb-0 text-gray-600 dark:text-gray-400 text-sm"></p>
               </div>
               <div class="flex items-center gap-4">
-                <nav id="pagination" class="flex items-center space-x-1"></nav>
+                <nav id="pagination" class="flex items-stretch space-x-1"></nav>
                 <div class="relative">
                   <button
-                    class="flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 px-4 py-2 rounded-md text-sm font-medium"
+                    class="flex items-center bg-gray-200 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 pl-4 pr-2 py-2 rounded-md text-sm font-medium"
                     type="button"
                     id="pageSizeDropdownButton">
                     Pro Seite: 5
-                    <i class="material-icons text-base ml-1">arrow_drop_down</i>
+                    <i class="material-icons !text-base ml-1">arrow_drop_down</i>
                   </button>
                   <select id="pageSizeSelect" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer dark:bg-gray-700 dark:text-gray-300">
                     <option value="5">5</option>
@@ -249,24 +218,24 @@
       </main>
     </div>
 
-    <dialog id="connectingDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-md p-0 backdrop:bg-black/50">
-      <div class="border-b border-gray-200 dark:border-gray-700 p-4">
-        <h4 class="text-xl font-semibold">Keine Verbindung</h4>
+    <dialog id="connectingDialog" class="dialog-panel max-w-md">
+      <div class="dialog-header">
+        <h4 class="dialog-title">Keine Verbindung</h4>
       </div>
       <div class="p-4 flex items-center">
-        <i class="material-icons spin-left text-4xl mr-4">sync</i>
+        <i class="material-icons !spin-left text-4xl mr-4">sync</i>
         <span class="text-lg">Verbinde...</span>
       </div>
     </dialog>
 
-    <dialog id="contactDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
-      <form method="dialog" class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
-        <h4 class="text-xl font-semibold">Kontakt</h4>
+    <dialog id="contactDialog" class="dialog-panel max-w-lg">
+      <form method="dialog" class="dialog-header">
+        <h4 class="dialog-title">Kontakt</h4>
         <button type="submit" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" aria-label="Close">
           <i class="material-icons">close</i>
         </button>
       </form>
-      <div class="p-4 prose dark:prose-invert max-w-none">
+      <div class="dialog-content">
         <p>Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die <a target="_blank" href="https://github.com/mediathekview/mediathekviewweb/issues">Issues auf GitHub.</a></p>
         <p>Für fehlende Sendungen gibt es Hilfe <a target="_blank" href="https://forum.mediathekview.de/">im Forum</a>.</p>
         <p>
@@ -276,14 +245,14 @@
       </div>
     </dialog>
 
-    <dialog id="donateDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
-      <form method="dialog" class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
-        <h4 class="text-xl font-semibold">Spenden</h4>
+    <dialog id="donateDialog" class="dialog-panel max-w-lg">
+      <form method="dialog" class="dialog-header">
+        <h4 class="dialog-title">Spenden</h4>
         <button type="submit" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" aria-label="Close">
           <i class="material-icons">close</i>
         </button>
       </form>
-      <div class="p-4 prose dark:prose-invert max-w-none">
+      <div class="dialog-content">
         <h4>Du möchtest dem Entwickler von MediathekView<b>Web</b> danken und ihm eine Pizza zahlen?</h4>
         <p>
           Geld <a target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BDVH46DLCM7E8&source=url">per PayPal senden</a>.<br />
@@ -292,11 +261,11 @@
       </div>
     </dialog>
 
-    <dialog id="cookieDialog" class="m-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-lg shadow-xl w-full max-w-lg p-0 backdrop:bg-black/50">
-      <div class="border-b border-gray-200 dark:border-gray-700 p-4">
-        <h4 class="text-xl font-semibold">Cookies</h4>
+    <dialog id="cookieDialog" class="dialog-panel max-w-lg">
+      <div class="dialog-header">
+        <h4 class="dialog-title">Cookies</h4>
       </div>
-      <div class="p-4 prose dark:prose-invert max-w-none">
+      <div class="dialog-content">
         <p>
           Diese Website verwendet Cookies für die Darstellung von Werbung. Hierbei werden Daten an Google übertragen. Nähere Informationen dazu finden Sie in unserer
           <a target="_blank" href="datenschutz">Datenschutzerklärung</a>. Klicken Sie auf „Akzeptieren“, um Cookies zu akzeptieren und direkt unsere Website besuchen zu können.
@@ -330,7 +299,7 @@
         </div>
         <div class="mt-4 grid grid-cols-[1fr_auto] items-end gap-2">
           <div class="flex items-center min-w-0">
-            <span data-id="channel" class="inline-block text-xs font-medium mr-2 px-2.5 py-0.5 rounded"></span>
+            <a data-id="channel" class="channel-tag mr-2"></a>
             <span data-id="topic" class="text-gray-500 dark:text-gray-400 text-sm truncate"></span>
           </div>
           <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
@@ -342,26 +311,14 @@
     </template>
 
     <template id="result-row-template">
-      <div class="bg-white dark:bg-gray-800 p-4 items-center result-row">
-        <div class="min-w-0">
-          <p data-id="title" class="font-semibold text-gray-900 dark:text-white truncate"></p>
-        </div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
-          <p data-id="datetime" class="mb-0"></p>
-        </div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
-          <p data-id="duration" class="mb-0"></p>
-        </div>
-        <div class="min-w-0">
-          <span data-id="channel" class="inline-block text-xs font-medium px-2.5 py-0.5 rounded"></span>
-        </div>
-        <div class="min-w-0">
-          <span data-id="topic" class="text-gray-500 dark:text-gray-400 text-sm truncate"></span>
-        </div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
-          <span data-id="size"></span>
-        </div>
-        <div data-id="actions" class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400"></div>
+      <div class="col-span-full grid grid-cols-subgrid items-center text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 px-2 py-1 result-row">
+        <a data-id="channel" class="channel-tag justify-self-start"></a>
+        <div data-id="topic" class="truncate"></div>
+        <p data-id="title" class="truncate"></p>
+        <p data-id="date" class="truncate"></p>
+        <p data-id="time" class="truncate"></p>
+        <p data-id="duration" class="truncate"></p>
+        <div data-id="actions" class="flex items-center space-x-2 text-gray-500"></div>
       </div>
     </template>
 
@@ -370,14 +327,10 @@
     </template>
 
     <template id="video-action-template">
-      <a
-        data-id="play-link"
-        href="#"
-        title=""
-        class="inline-flex items-center px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-xs font-bold rounded">
+      <a data-id="play-link" href="#" title="" class="video-action-link">
         <span data-id="quality" class="mr-1"></span>
-        <i class="material-icons text-base">play_arrow</i>
-        <i data-id="help-icon" class="material-icons text-base hidden text-gray-700 dark:text-gray-300">help_outline</i>
+        <i class="material-icons !text-base -mx-0.5">play_arrow</i>
+        <i data-id="help-icon" class="material-icons !text-base hidden text-gray-700 dark:text-gray-300">help_outline</i>
       </a>
     </template>
   </body>

@@ -97,20 +97,37 @@ let sortBy = 'timestamp';
 let sortOrder = 'desc';
 let lastResult = null;
 let currentView: 'grid' | 'list' = 'grid';
-let viewGridButton: HTMLButtonElement;
-let viewListButton: HTMLButtonElement;
+let viewModeButton: HTMLButtonElement;
 
+
+function updateSortButton(select: HTMLSelectElement) {
+  const button = document.getElementById('sortDropdownButton') as HTMLButtonElement;
+  const buttonText = document.getElementById('sortDropdownButtonText') as HTMLSpanElement;
+  if (!button || !buttonText || !select) return;
+
+  const selectedOption = select.options[select.selectedIndex];
+  if (!selectedOption) return;
+
+  const value = select.value;
+  const [, newSortOrder] = value.split('_');
+
+  const sortText = selectedOption.textContent.split('(')[0].trim();
+  const iconName = newSortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward';
+
+  button.title = `Sortieren nach: ${selectedOption.textContent}`;
+  buttonText.innerHTML = `${sortText} <i class="material-icons text-sm ml-1 align-middle">${iconName}</i>`;
+}
 
 function updateQueryInputClearButton() {
   const currentQueryString = getQueryString();
   const clearButton = document.getElementById('queryInputClearButton');
   if (!clearButton) return;
   if (currentQueryString.length === 0 && queryInputClearButtonState === 'shown') {
-    clearButton.style.opacity = '0';
+    clearButton.classList.remove('opacity-100');
     queryInputClearButtonState = 'hidden';
   }
   else if (currentQueryString.length > 0 && queryInputClearButtonState === 'hidden') {
-    clearButton.style.opacity = '1';
+    clearButton.classList.add('opacity-100');
     queryInputClearButtonState = 'shown';
   }
 }
@@ -303,20 +320,10 @@ function setQueryFromURIHash() {
   }
 
   const sortSelect = document.getElementById('sortSelect') as HTMLSelectElement;
-  const sortButton = document.getElementById('sortDropdownButton') as HTMLButtonElement;
-  const sortButtonText = document.getElementById('sortDropdownButtonText') as HTMLSpanElement;
 
   if (sortSelect) {
     sortSelect.value = `${sortBy}_${sortOrder}`;
-
-    const sortOption = sortSelect.options[sortSelect.selectedIndex];
-    if (sortButton && sortOption) {
-      const sortText = sortOption.textContent;
-      sortButton.title = `Sortieren nach: ${sortText}`;
-      if (sortButtonText) {
-        sortButtonText.textContent = sortText;
-      }
-    }
+    updateSortButton(sortSelect);
   }
 
   if (!isNaN(parseInt(props['page']))) {
@@ -466,16 +473,20 @@ const query = throttle(() => {
 }, 20);
 
 function renderResults() {
-  const grid = document.getElementById('mediathekGrid');
+  const gridView = document.getElementById('mediathekGridView');
+  const tableView = document.getElementById('mediathekTableView');
+  const tableBody = document.getElementById('mediathekTableBody');
   const noResults = document.getElementById('noResults');
   const queryInfoLabel = document.getElementById('queryInfoLabel');
   const pagination = document.getElementById('pagination');
 
-  if (!grid || !noResults || !queryInfoLabel || !pagination) return;
+  if (!gridView || !tableView || !tableBody || !noResults || !queryInfoLabel || !pagination) return;
 
-  grid.innerHTML = '';
+  gridView.innerHTML = '';
+  tableBody.innerHTML = '';
   pagination.innerHTML = '';
-  grid.style.display = 'none';
+  gridView.classList.add('hidden');
+  tableView.classList.add('hidden');
   noResults.classList.remove('hidden');
 
   if (!lastResult) {
@@ -490,9 +501,14 @@ function renderResults() {
     return;
   }
 
-  grid.style.display = 'grid';
+  if (currentView === 'grid') {
+    gridView.classList.remove('hidden');
+  } else {
+    tableView.classList.remove('hidden');
+  }
   noResults.classList.add('hidden');
 
+  const container = currentView === 'grid' ? gridView : tableBody;
   for (let i = 0; i < lastResult.results.length; i++) {
     const data = lastResult.results[i];
 
@@ -507,7 +523,7 @@ function renderResults() {
     data.durationString = isNaN(data.duration) ? '?' : formatDuration(data.duration);
 
     const element = currentView === 'grid' ? createResultCard(data) : createResultTableRow(data);
-    grid.appendChild(element);
+    container.appendChild(element);
   }
 
   const actualPagesCount = Math.ceil(lastResult.queryInfo.totalResults / itemsPerPage);
@@ -522,14 +538,20 @@ function renderResults() {
 function handleQueryResult(result, err) {
   const queryInfoLabel = document.getElementById('queryInfoLabel');
   const pagination = document.getElementById('pagination');
-  const grid = document.getElementById('mediathekGrid');
+  const gridView = document.getElementById('mediathekGridView');
+  const tableView = document.getElementById('mediathekTableView');
+  const tableBody = document.getElementById('mediathekTableBody');
   const noResults = document.getElementById('noResults');
 
   if (err) {
     lastResult = null;
-    if (grid) {
-      grid.innerHTML = '';
-      grid.style.display = 'none';
+    if (gridView) {
+      gridView.innerHTML = '';
+      gridView.classList.add('hidden');
+    }
+    if (tableView) {
+      if (tableBody) tableBody.innerHTML = '';
+      tableView.classList.add('hidden');
     }
     if (noResults) noResults.classList.remove('hidden');
     if (queryInfoLabel) queryInfoLabel.innerHTML = 'Fehler:<br/>' + err.join('<br/>');
@@ -634,31 +656,43 @@ function createResultTableRow(data) {
   const template = document.getElementById('result-row-template') as HTMLTemplateElement;
   const row = template.content.cloneNode(true) as DocumentFragment;
   const rowElement = row.firstElementChild as HTMLElement;
+  rowElement.classList.add('table-row-grid');
 
   const titleEl = row.querySelector<HTMLParagraphElement>('[data-id="title"]');
   titleEl.textContent = data.title;
   titleEl.title = data.title;
 
-  const channelEl = row.querySelector<HTMLSpanElement>('[data-id="channel"]');
+  const channelEl = row.querySelector<HTMLAnchorElement>('[data-id="channel"]');
   channelEl.textContent = data.channel;
   channelEl.className += ' ' + getChannelColorClasses(data.channel);
+
+  if (data.url_website) {
+    channelEl.href = data.url_website;
+    channelEl.target = '_blank';
+    channelEl.rel = 'noopener noreferrer';
+    channelEl.title = `Website von ${data.channel} besuchen`;
+  }
 
   const topicEl = row.querySelector<HTMLSpanElement>('[data-id="topic"]');
   topicEl.textContent = data.topic;
   topicEl.title = data.topic;
 
-  row.querySelector('[data-id="datetime"]').textContent = `${data.dateString}, ${data.timeString} Uhr`;
+  row.querySelector('[data-id="date"]').textContent = data.dateString;
+  row.querySelector('[data-id="time"]').textContent = data.timeString;
   row.querySelector('[data-id="duration"]').textContent = data.durationString;
 
   const sizeElement = row.querySelector('[data-id="size"]');
-  sizeElement.textContent = ''; // Clear it first
 
-  const urlForSize = data.url_video_hd ?? data.url_video ?? data.url_video_low;
+  if (sizeElement) {
+    sizeElement.textContent = ''; // Clear it first
 
-  if (urlForSize != undefined) {
-    socket.emit('getContentLength', urlForSize, (length) => {
-      sizeElement.textContent = (length > 0) ? formatBytes(length, 2) : '';
-    });
+    const urlForSize = data.url_video_hd ?? data.url_video ?? data.url_video_low;
+
+    if (urlForSize != undefined) {
+      socket.emit('getContentLength', urlForSize, (length) => {
+        sizeElement.textContent = (length > 0) ? formatBytes(length, 2) : '';
+      });
+    }
   }
 
   row.querySelector('[data-id="actions"]').appendChild(createVideoActions(data));
@@ -679,9 +713,16 @@ function createResultCard(data) {
   descriptionEl.textContent = data.description || 'Keine Beschreibung verfügbar.';
   descriptionEl.title = data.description;
 
-  const channelEl = card.querySelector<HTMLSpanElement>('[data-id="channel"]');
+  const channelEl = card.querySelector<HTMLAnchorElement>('[data-id="channel"]');
   channelEl.textContent = data.channel;
   channelEl.className += ' ' + getChannelColorClasses(data.channel);
+
+  if (data.url_website) {
+    channelEl.href = data.url_website;
+    channelEl.target = '_blank';
+    channelEl.rel = 'noopener noreferrer';
+    channelEl.title = `Website von ${data.channel} besuchen`;
+  }
 
   const topicEl = card.querySelector<HTMLSpanElement>('[data-id="topic"]');
   topicEl.textContent = data.topic;
@@ -721,6 +762,7 @@ function createPaginationButton(html, active, enabled, callback) {
   }
   else {
     linkClasses += ' bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-400';
+
     if (enabled) {
       linkClasses += ' hover:bg-gray-300 dark:hover:bg-gray-700';
     }
@@ -847,11 +889,10 @@ function playVideo(channel: string, topic: string, title: string, url: string, q
   document.getElementById('blur')!.classList.add('blur');
 
   const vid = document.createElement('video');
-  vid.className = 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9';
+  vid.className = 'video-js vjs-default-skin vjs-big-play-centered vjs-16-9 w-full';
   vid.id = 'video-player';
   vid.setAttribute('preload', 'auto');
   vid.setAttribute('controls', '');
-  vid.style.width = '100%';
 
   const source = document.createElement('source');
   source.src = url;
@@ -921,24 +962,27 @@ function setViewMode(mode: 'grid' | 'list', fromUser = false) {
   currentView = mode;
   window.localStorage?.setItem?.(viewModeKey, mode);
 
-  const grid = document.getElementById('mediathekGrid');
-  const tableHeader = document.getElementById('mediathekTableHeader');
-  const activeClasses = ['bg-gray-200', 'dark:bg-gray-600'];
+  const gridView = document.getElementById('mediathekGridView');
+  const tableView = document.getElementById('mediathekTableView');
+  const viewModeIcon = document.getElementById('viewModeIcon') as HTMLElement;
+  const mainElement = document.querySelector('main');
+
+  if (!gridView || !tableView || !viewModeButton || !viewModeIcon || !mainElement) return;
 
   if (mode === 'list') {
-    viewGridButton.classList.remove(...activeClasses);
-    viewListButton.classList.add(...activeClasses);
-    grid.classList.remove('grid-cols-1', 'gap-4');
-    grid.classList.add('table-view');
-    tableHeader.classList.remove('hidden');
-    tableHeader.classList.add('grid');
+    viewModeIcon.textContent = 'view_module';
+    viewModeButton.title = 'Kartenansicht';
+    gridView.classList.add('hidden');
+    tableView.classList.remove('hidden');
+    mainElement.classList.remove('max-w-7xl');
+    mainElement.classList.add('max-w-screen-2xl');
   } else { // grid
-    viewListButton.classList.remove(...activeClasses);
-    viewGridButton.classList.add(...activeClasses);
-    grid.classList.remove('table-view');
-    grid.classList.add('grid-cols-1', 'gap-4');
-    tableHeader.classList.add('hidden');
-    tableHeader.classList.remove('grid');
+    viewModeIcon.textContent = 'view_list';
+    viewModeButton.title = 'Listenansicht';
+    gridView.classList.remove('hidden');
+    tableView.classList.add('hidden');
+    mainElement.classList.add('max-w-7xl');
+    mainElement.classList.remove('max-w-screen-2xl');
   }
 
   if (fromUser) {
@@ -1092,17 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sortOrder = newSortOrder;
 
     trackEvent('Change Sort', { by: sortBy, order: sortOrder });
-
-    const button = document.getElementById('sortDropdownButton') as HTMLButtonElement;
-    const buttonText = document.getElementById('sortDropdownButtonText') as HTMLSpanElement;
-    if (button) {
-      const selectedOption = select.options[select.selectedIndex];
-      const sortText = selectedOption.textContent;
-      button.title = `Sortieren nach: ${sortText}`;
-      if (buttonText) {
-        buttonText.textContent = sortText;
-      }
-    }
+    updateSortButton(select);
     newQuery();
   });
 
@@ -1176,7 +1210,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logo').addEventListener('click', (e) => {
     e.preventDefault();
     document.getElementById('generic-html-view').classList.add('hidden');
-    document.getElementById('main-view').style.display = 'block';
+    document.getElementById('main-view').classList.remove('hidden');
 
     return false;
   });
@@ -1185,7 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     trackEvent('View Datenschutz');
 
-    document.getElementById('main-view').style.display = 'none';
+    document.getElementById('main-view').classList.add('hidden');
     document.getElementById('generic-html-view').classList.remove('hidden');
 
     if (datenschutz == null) {
@@ -1203,7 +1237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     trackEvent('View Impressum');
 
-    document.getElementById('main-view').style.display = 'none';
+    document.getElementById('main-view').classList.add('hidden');
     document.getElementById('generic-html-view').classList.remove('hidden');
 
     if (impressum == null) {
@@ -1219,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('genericHtmlViewBackButton').addEventListener('click', () => {
     document.getElementById('generic-html-view').classList.add('hidden');
-    document.getElementById('main-view').style.display = 'block';
+    document.getElementById('main-view').classList.remove('hidden');
   });
 
   window.addEventListener("hashchange", () => {
@@ -1255,18 +1289,19 @@ document.addEventListener('DOMContentLoaded', () => {
     window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md', '_blank');
   });
 
-  viewGridButton = document.getElementById('viewGridButton') as HTMLButtonElement;
-  viewListButton = document.getElementById('viewListButton') as HTMLButtonElement;
+  viewModeButton = document.getElementById('viewModeButton') as HTMLButtonElement;
 
   const storedViewMode = window.localStorage?.getItem?.(viewModeKey);
   if (storedViewMode === 'list') {
-      setViewMode('list');
+    setViewMode('list');
   } else {
-      setViewMode('grid'); // Default
+    setViewMode('grid'); // Default
   }
 
-  viewGridButton.addEventListener('click', () => setViewMode('grid', true));
-  viewListButton.addEventListener('click', () => setViewMode('list', true));
+  viewModeButton.addEventListener('click', () => {
+    const newMode = currentView === 'grid' ? 'list' : 'grid';
+    setViewMode(newMode, true);
+  });
 
   setQueryFromURIHash();
   query();
