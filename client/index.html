@@ -87,37 +87,26 @@
         </div>
 
         <div id="main-view">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-sm dark:shadow-none">
+          <div class="panel mb-6">
             <div class="flex flex-wrap items-center gap-4" id="queryParameters">
-              <div class="relative flex-grow min-w-[250px]">
-                <div
-                  class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
-                  title="Selektoren: !Sender</br>#Thema</br>+Titel</br>*Beschreibung</br>&lt;x (in minuten)</br>&gt;x (in minuten)">
+              <div class="search-input-wrapper flex-grow min-w-[250px]">
+                <div class="search-input-icon" title="Selektoren: !Sender</br>#Thema</br>+Titel</br>*Beschreibung</br>&lt;x (in minuten)</br>&gt;x (in minuten)">
                   <i id="searchSpan" class="material-icons text-gray-600 dark:text-gray-300">search</i>
                 </div>
                 <input id="queryInput" type="text" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" autofocus />
                 <a tabindex="-1">
-                  <i id="queryInputClearButton" class="material-icons text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-opacity">clear</i>
+                  <i id="queryInputClearButton" class="material-icons search-input-clear">clear</i>
                 </a>
               </div>
               <div class="checkbox-wrapper">
-                <input
-                  id="everywhereCheckbox"
-                  type="checkbox"
-                  name="everywhere"
-                  class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                <input id="everywhereCheckbox" type="checkbox" name="everywhere" class="form-checkbox" />
                 <label for="everywhereCheckbox" class="checkbox-label">Überall</label>
               </div>
               <div class="checkbox-wrapper">
-                <input
-                  id="futureCheckbox"
-                  type="checkbox"
-                  name="future"
-                  checked
-                  class="form-checkbox h-4 w-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                <input id="futureCheckbox" type="checkbox" name="future" checked class="form-checkbox" />
                 <label for="futureCheckbox" class="checkbox-label">Zukünftige</label>
               </div>
-              <div class="flex items-center gap-2 md:ml-auto">
+              <div class="flex items-stretch gap-2 md:ml-auto">
                 <button id="viewModeButton" class="icon-btn" type="button" title="Listenansicht">
                   <i id="viewModeIcon" class="material-icons text-gray-600 dark:text-gray-300">view_list</i>
                 </button>
@@ -145,13 +134,7 @@
                 <button id="rssFeedButton" class="icon-btn" type="button" title="RSS-Feed">
                   <i class="material-icons text-gray-600 dark:text-gray-300">rss_feed</i>
                 </button>
-                <a
-                  id="helpButton"
-                  href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="icon-btn"
-                  title="Hilfe">
+                <a id="helpButton" href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md" target="_blank" rel="noopener noreferrer" class="icon-btn" title="Hilfe">
                   <i class="material-icons text-gray-600 dark:text-gray-300">help_outline</i>
                 </a>
               </div>
@@ -163,18 +146,19 @@
               <!-- Grid items will be inserted here -->
             </div>
 
-            <div id="mediathekTableView" class="hidden">
-              <div class="table-grid">
-                <div id="mediathekTableHeader" class="col-span-full grid grid-cols-subgrid px-4 text-sm font-semibold text-gray-700 dark:text-gray-300 py-2 bg-white dark:bg-gray-800 rounded-md shadow">
+            <div id="mediathekTableView" class="hidden overflow-x-auto">
+              <div class="table-grid min-w-[100ch]">
+                <div id="mediathekTableHeader" class="table-header">
                   <span>Sender</span>
                   <span>Thema</span>
                   <span>Titel</span>
+                  <span></span>
                   <span>Datum</span>
                   <span>Zeit</span>
                   <span>Dauer</span>
-                  <span>Aktionen</span>
+                  <span>Abspielen</span>
                 </div>
-                <div id="mediathekTableBody" class="col-span-full grid grid-cols-subgrid table-view rounded-md overflow-clip shadow">
+                <div id="mediathekTableBody" class="table-body">
                   <!-- Table rows will be inserted here -->
                 </div>
               </div>
@@ -186,11 +170,11 @@
               <div>
                 <p id="queryInfoLabel" class="mb-0 text-gray-600 dark:text-gray-400 text-sm"></p>
               </div>
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-4 flex-wrap">
                 <nav id="pagination" class="flex items-stretch space-x-1"></nav>
                 <div class="relative">
                   <button
-                    class="flex items-center bg-gray-200 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 pl-4 pr-2 py-2 rounded-md text-sm font-medium cursor-pointer"
+                    class="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 pl-4 pr-2 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors duration-150"
                     type="button"
                     id="pageSizeDropdownButton">
                     Pro Seite: 5
@@ -211,12 +195,7 @@
         </div>
 
         <div id="generic-html-view" class="hidden">
-          <button
-            id="genericHtmlViewBackButton"
-            class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white font-bold py-2 px-4 rounded mb-4 cursor-pointer"
-            type="button">
-            Zurück
-          </button>
+          <button id="genericHtmlViewBackButton" class="btn btn-secondary mb-4" type="button">Zurück</button>
           <div id="genericHtmlContent" class="prose dark:prose-invert max-w-none"></div>
         </div>
       </main>
@@ -281,19 +260,19 @@
           nachzudenken, um den Weiterbetrieb der Website zu ermöglichen.
         </p>
         <div class="flex gap-4 mt-4">
-          <button id="cookieDenyButton" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white rounded-md cursor-pointer" type="button">Ablehnen</button>
-          <button id="cookieAcceptButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md cursor-pointer" type="button">Akzeptieren</button>
+          <button id="cookieDenyButton" class="btn btn-secondary" type="button">Ablehnen</button>
+          <button id="cookieAcceptButton" class="btn btn-success" type="button">Akzeptieren</button>
         </div>
       </div>
     </dialog>
 
     <template id="result-card-template">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 grid grid-rows-[1fr_auto] shadow-sm dark:shadow-none">
+      <div class="result-card">
         <div>
           <div class="grid grid-cols-[1fr_auto] items-start gap-4">
             <div class="min-w-0">
               <h2 data-id="title" class="text-lg font-semibold text-gray-900 dark:text-white truncate"></h2>
-              <p data-id="description" class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2"></p>
+              <p data-id="description" class="!text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2"></p>
             </div>
             <div class="text-right text-sm text-gray-500 dark:text-gray-400">
               <p data-id="datetime" class="mb-0"></p>
@@ -306,36 +285,50 @@
             <a data-id="channel" class="channel-tag mr-2"></a>
             <span data-id="topic" class="text-gray-500 dark:text-gray-400 text-sm truncate"></span>
           </div>
-          <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+          <div class="flex items-stretch gap-x-2 text-sm text-gray-500 dark:text-gray-400">
             <span data-id="size"></span>
-            <div data-id="actions"></div>
+            <div data-id="actions" class="flex items-center space-x-2"></div>
           </div>
         </div>
       </div>
     </template>
 
     <template id="result-row-template">
-      <div class="col-span-full grid grid-cols-subgrid items-center text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 px-2 py-1 result-row">
+      <div class="table-row">
         <a data-id="channel" class="channel-tag justify-self-start"></a>
         <div data-id="topic" class="truncate"></div>
-        <p data-id="title" class="truncate"></p>
-        <p data-id="date" class="truncate"></p>
-        <p data-id="time" class="truncate"></p>
-        <p data-id="duration" class="truncate"></p>
-        <div data-id="actions" class="flex items-center space-x-2 text-gray-500"></div>
+        <div data-id="title" class="truncate"></div>
+        <div data-id="description-cell" class="text-center"></div>
+        <div data-id="date" class="truncate"></div>
+        <div data-id="time" class="truncate"></div>
+        <div data-id="duration" class="truncate"></div>
+        <div data-id="actions" class="grid grid-cols-[repeat(4,1fr)] gap-x-2 items-center text-gray-500">
+          <a data-id="play-hd-link" href="#" title="" class="video-action-link text-xs col-start-1 hidden">HD</a>
+          <a data-id="play-sd-link" href="#" title="" class="video-action-link text-xs col-start-2 hidden">SD</a>
+          <a data-id="play-lq-link" href="#" title="" class="video-action-link text-xs col-start-3 hidden">LQ</a>
+          <a data-id="subtitle-link" href="#" title="" class="video-action-link text-xs col-start-4 hidden"></a>
+        </div>
+        <div data-id="details-row" class="col-span-full drawer">
+          <div class="drawer-content px-2 py-4">
+            <div data-id="details-content" class="cursor-default p-4 bg-neutral-500/15 rounded-md not-dark:shadow-sm">
+              <p data-id="description-content"></p>
+              <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-x-4">
+                <h4 class="text-sm font-semibold">Abspielen:</h4>
+                <div data-id="actions-drawer" class="flex items-stretch gap-x-2">
+                  <a data-id="play-hd-link-drawer" href="#" class="video-action-link hidden h-8">HD<span data-id="play-hd-size-drawer" class="ml-1 font-normal"></span></a>
+                  <a data-id="play-sd-link-drawer" href="#" class="video-action-link hidden h-8">SD<span data-id="play-sd-size-drawer" class="ml-1 font-normal"></span></a>
+                  <a data-id="play-lq-link-drawer" href="#" class="video-action-link hidden h-8">LQ<span data-id="play-lq-size-drawer" class="ml-1 font-normal"></span></a>
+                  <a data-id="subtitle-link-drawer" href="#" class="video-action-link hidden h-8"><i class="material-icons !text-base">subtitles</i></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
     <template id="pagination-button-template">
-      <a href="#" class="flex items-center justify-center px-4 py-2 leading-tight rounded-md transition-colors duration-150"></a>
-    </template>
-
-    <template id="video-action-template">
-      <a data-id="play-link" href="#" title="" class="video-action-link">
-        <span data-id="quality" class="mr-1"></span>
-        <i class="material-icons !text-base -mx-0.5">play_arrow</i>
-        <i data-id="help-icon" class="material-icons !text-base hidden text-gray-700 dark:text-gray-300">help_outline</i>
-      </a>
+      <a href="#" class="pagination-link"></a>
     </template>
   </body>
 </html>

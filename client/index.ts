@@ -1,49 +1,61 @@
 /// <reference types="video.js" />
 
 declare const umami: {
-  track: (event_name: string, data?: object) => void;
+  track: (event_name: string, data?: Record<string, any>) => void;
   identify: (unique_id: string) => void;
 };
 
-interface ParsedQuery {
-  channels: string[][];
-  topics: string[][];
-  titles: string[][];
-  descriptions: string[][];
-  generics: string[];
-  duration_min: number | undefined;
-  duration_max: number | undefined;
+type VideoQuality = 'HD' | 'SD' | 'LQ';
+type SortBy = 'timestamp' | 'duration' | 'channel' | 'topic' | 'title';
+type SortOrder = 'asc' | 'desc';
+
+function isSortBy(value: any): value is SortBy {
+  return typeof value === 'string' && ['timestamp', 'duration', 'channel', 'topic', 'title'].includes(value);
 }
 
-interface ResultEntry {
-  id: string;
-  channel: string;
-  topic: string;
-  title: string;
-  description: string;
-  timestamp: number;
-  duration: number;
-  size: number;
-  url_website: string;
-  url_subtitle: string;
-  url_video: string;
-  url_video_low: string;
-  url_video_hd: string;
+function isSortOrder(value: any): value is SortOrder {
+  return value === 'asc' || value === 'desc';
+}
+
+type ParsedQuery = {
+  channels: string[][],
+  topics: string[][],
+  titles: string[][],
+  descriptions: string[][],
+  generics: string[],
+  duration_min?: number,
+  duration_max?: number,
+};
+
+type ResultEntry = {
+  id: string,
+  channel: string,
+  topic: string,
+  title: string,
+  description: string,
+  timestamp: number,
+  duration: number,
+  size: number,
+  url_website: string,
+  url_subtitle: string,
+  url_video: string,
+  url_video_low: string,
+  url_video_hd: string,
   // added by client
-  dateString?: string;
-  timeString?: string;
-  durationString?: string;
-}
+  dateString?: string,
+  timeString?: string,
+  durationString?: string,
+};
 
-interface QueryResult {
-  results: ResultEntry[];
+type QueryResult = {
+  results: ResultEntry[],
   queryInfo: {
-    filmlisteTimestamp: number;
-    searchEngineTime: string;
-    totalResults: number;
-    resultCount: number;
-  };
-}
+    filmlisteTimestamp: number,
+    searchEngineTime: number,
+    totalResults: number,
+    resultCount: number,
+  },
+};
 
 
 function addAdSense(): void {
@@ -76,7 +88,7 @@ function initializeAnalytics(): void {
   }
 }
 
-function trackEvent(eventName: string, data?: object): void {
+function trackEvent(eventName: string, data?: Record<string, any>): void {
   if (typeof umami != 'undefined' && typeof umami.track == 'function') {
     umami.track(eventName, data);
   }
@@ -123,8 +135,8 @@ let lastQueryString: string | null = null;
 let ignoreNextHashChange: boolean = false;
 let queryInputClearButtonState: 'hidden' | 'shown' = 'hidden';
 let video: videojs.default.Player | null;
-let sortBy: string = 'timestamp';
-let sortOrder: 'desc' | 'asc' = 'desc';
+let sortBy: SortBy = 'timestamp';
+let sortOrder: SortOrder = 'desc';
 let lastResult: QueryResult | null = null;
 let currentView: 'grid' | 'list' = 'grid';
 let viewModeButton: HTMLButtonElement;
@@ -330,14 +342,14 @@ function setQueryFromURIHash(): void {
     futureCheckbox.checked = true;
   }
 
-  if (props['sortBy']) {
+  if (props['sortBy'] && isSortBy(props['sortBy'])) {
     sortBy = props['sortBy'];
   }
   else {
     sortBy = 'timestamp';
   }
 
-  if (props['sortOrder'] === 'asc' || props['sortOrder'] === 'desc') {
+  if (props['sortOrder'] && isSortOrder(props['sortOrder'])) {
     sortOrder = props['sortOrder'];
   }
   else {
@@ -518,21 +530,24 @@ const query = throttle(() => {
 function renderResults(): void {
   if (!gridView || !tableView || !tableBody || !noResults || !queryInfoLabel || !pagination) return;
 
+  // Clear previous results and state
   gridView.innerHTML = '';
   tableBody.innerHTML = '';
   pagination.innerHTML = '';
   gridView.classList.add('hidden');
   tableView.classList.add('hidden');
-  noResults.classList.remove('hidden');
+  noResults.classList.add('hidden');
+  queryInfoLabel.innerHTML = '';
 
   if (!lastResult) {
-    queryInfoLabel.innerHTML = '';
+    noResults.classList.remove('hidden');
     return;
   }
 
   const filmlisteTime = `am ${formatDate(lastResult.queryInfo.filmlisteTimestamp)} um ${formatTime(lastResult.queryInfo.filmlisteTimestamp)} Uhr`;
 
   if (lastResult.results.length === 0) {
+    noResults.classList.remove('hidden');
     queryInfoLabel.innerHTML = `Die Suche dauerte ${lastResult.queryInfo.searchEngineTime.toString().replace('.', ',')} ms. Keine Treffer gefunden.<br/>Filmliste zuletzt ${filmlisteTime} aktualisiert.`;
     return;
   }
@@ -543,7 +558,6 @@ function renderResults(): void {
   else {
     tableView.classList.remove('hidden');
   }
-  noResults.classList.add('hidden');
 
   const container = currentView === 'grid' ? gridView : tableBody;
   for (let i = 0; i < lastResult.results.length; i++) {
@@ -577,17 +591,8 @@ function renderResults(): void {
 function handleQueryResult(result: QueryResult | null, err: string[] | null): void {
   if (err) {
     lastResult = null;
-    if (gridView) {
-      gridView.innerHTML = '';
-      gridView.classList.add('hidden');
-    }
-    if (tableView) {
-      if (tableBody) tableBody.innerHTML = '';
-      tableView.classList.add('hidden');
-    }
-    if (noResults) noResults.classList.remove('hidden');
+    renderResults(); // Display empty state
     if (queryInfoLabel) queryInfoLabel.innerHTML = 'Fehler:<br/>' + err.join('<br/>');
-    if (pagination) pagination.innerHTML = '';
     return;
   }
 
@@ -595,65 +600,95 @@ function handleQueryResult(result: QueryResult | null, err: string[] | null): vo
   renderResults();
 }
 
-function createVideoActions(entry: ResultEntry): HTMLDivElement {
-  const container = document.createElement('div');
-  container.className = 'flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400';
+function createVideoActions(entry: ResultEntry, container: HTMLElement): void {
+  const isTableView = !!container.querySelector('[data-id="play-hd-link"]');
   const filenamebase = `${entry.channel} - ${entry.topic} - ${entry.title} - ${formatDate(entry.timestamp)} ${formatTime(entry.timestamp)}`;
-  const actionTemplate = (document.getElementById('video-action-template') as HTMLTemplateElement).content;
 
-  const createActionTag = (quality: string, playUrl: string): DocumentFragment => {
-    const tag = actionTemplate.cloneNode(true) as DocumentFragment;
-    const qualityEl = tag.querySelector('[data-id="quality"]')!;
-    const playLinkEl = tag.querySelector('[data-id="play-link"]') as HTMLAnchorElement;
-    const helpIconEl = tag.querySelector('[data-id="help-icon"]') as HTMLElement;
+  if (isTableView) {
+    // Table view logic: update existing links from template
+    const qualities: { key: keyof ResultEntry; name: VideoQuality; dataId: string }[] = [
+      { key: 'url_video_hd', name: 'HD', dataId: 'play-hd-link' },
+      { key: 'url_video', name: 'SD', dataId: 'play-sd-link' },
+      { key: 'url_video_low', name: 'LQ', dataId: 'play-lq-link' },
+    ];
 
-    qualityEl.textContent = quality;
+    qualities.forEach((q) => {
+      const url = entry[q.key] as string;
+      const link = container.querySelector<HTMLAnchorElement>(`[data-id="${q.dataId}"]`);
+      if (link && url) {
+        link.textContent = q.name;
+        link.href = url;
+        link.title = `${q.name} abspielen`;
+        link.classList.remove('hidden');
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          playVideo(entry.channel, entry.topic, entry.title, url, q.name);
+        });
+      }
+    });
 
-    if (playUrl) {
+    if (entry.url_subtitle) {
+      const subtitleLink = container.querySelector<HTMLAnchorElement>('[data-id="subtitle-link"]');
+      if (subtitleLink) {
+        subtitleLink.href = entry.url_subtitle;
+        subtitleLink.title = 'Untertitel herunterladen';
+        subtitleLink.setAttribute('download', filenamebase + '.' + entry.url_subtitle.split('.').pop());
+        subtitleLink.classList.remove('hidden');
+
+        const icon = document.createElement('i');
+        icon.className = 'material-icons !text-base leading-none';
+        icon.textContent = 'subtitles';
+        subtitleLink.innerHTML = '';
+        subtitleLink.appendChild(icon);
+      }
+    }
+  }
+  else {
+    // Card view logic: create links dynamically
+    container.innerHTML = '';
+
+    const createActionTag = (quality: VideoQuality, playUrl: string): HTMLAnchorElement => {
+      const playLinkEl = document.createElement('a');
+      playLinkEl.className = 'video-action-link';
+      playLinkEl.textContent = quality;
       playLinkEl.href = playUrl;
       playLinkEl.title = `${quality} abspielen`;
       playLinkEl.addEventListener('click', (e) => {
         e.preventDefault();
         playVideo(entry.channel, entry.topic, entry.title, playUrl, quality);
       });
-      helpIconEl.remove();
+      return playLinkEl;
+    };
+
+    const qualities: { key: keyof ResultEntry; name: VideoQuality }[] = [
+      { key: 'url_video_hd', name: 'HD' },
+      { key: 'url_video', name: 'SD' },
+      { key: 'url_video_low', name: 'LQ' },
+    ];
+
+    qualities.forEach((quality) => {
+      const url = entry[quality.key] as string;
+      if (url) {
+        container.appendChild(createActionTag(quality.name, url));
+      }
+    });
+
+    if (entry.url_subtitle) {
+      const subtitleLink = document.createElement('a');
+      const subtitleIcon = document.createElement('i');
+
+      subtitleLink.href = entry.url_subtitle;
+      subtitleLink.title = 'Untertitel herunterladen';
+      subtitleLink.className = 'video-action-link';
+      subtitleLink.setAttribute('download', filenamebase + '.' + entry.url_subtitle.split('.').pop());
+
+      subtitleIcon.className = 'material-icons !text-base leading-none';
+      subtitleIcon.textContent = 'subtitles';
+      subtitleLink.appendChild(subtitleIcon);
+
+      container.appendChild(subtitleLink);
     }
-    else {
-      playLinkEl.remove();
-      helpIconEl.classList.remove('hidden');
-    }
-    return tag;
-  };
-
-  const qualities = [
-    { key: 'url_video_hd', name: 'HD' },
-    { key: 'url_video', name: 'SD' },
-    { key: 'url_video_low', name: 'LQ' }
-  ] as const;
-
-  qualities.forEach((quality) => {
-    if (entry[quality.key]) {
-      container.appendChild(createActionTag(quality.name, entry[quality.key]));
-    }
-  });
-
-  if (entry.url_subtitle) {
-    const subtitleLink = document.createElement('a');
-    const subtitleIcon = document.createElement('i');
-
-    subtitleLink.href = entry.url_subtitle;
-    subtitleLink.title = 'Untertitel herunterladen';
-    subtitleLink.className = 'inline-flex items-center px-2 py-1 bg-gray-200 dark:bg-gray-700 text-xs font-bold rounded';
-    subtitleLink.setAttribute('download', filenamebase + '.' + entry.url_subtitle.split('.').pop());
-
-    subtitleIcon.className = 'material-icons text-base';
-    subtitleIcon.textContent = 'subtitles';
-    subtitleLink.appendChild(subtitleIcon);
-
-    container.appendChild(subtitleLink);
   }
-
-  return container;
 }
 
 function getChannelColorClasses(channel: string): string {
@@ -661,30 +696,30 @@ function getChannelColorClasses(channel: string): string {
 
   // Orange & White: ZDF family, KiKA, PHOENIX
   if (channelUpper.includes('ZDF') || channelUpper.includes('KIKA') || channelUpper.includes('PHOENIX')) {
-    return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300';
+    return 'bg-orange-100 hover:bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:hover:bg-orange-800/50 dark:text-orange-300';
   }
 
   // Red & White: SRF, SWR, 3Sat, ORF, RBB, rbtv, Radio Bremen
   if (channelUpper.includes('SRF') || channelUpper.includes('SWR') || channelUpper.includes('3SAT') || channelUpper.includes('ORF') || channelUpper.includes('RBB') || channelUpper.includes('RBTV') || channelUpper.includes('RADIO BREMEN TV')) {
-    return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
+    return 'bg-red-100 hover:bg-red-200 text-red-800 dark:bg-red-900/50 dark:hover:bg-red-800/50 dark:text-red-200';
   }
 
   // Blue & White: ARD family
   if (channelUpper.includes('ARD') || channelUpper.includes('ERSTE') || channelUpper.includes('NDR') || channelUpper.includes('BR') || channelUpper === 'SR' || channelUpper.includes('WDR') || channelUpper.includes('DW') || channelUpper.includes('HR') || channelUpper.includes('TAGESSCHAU24') || channelUpper.includes('ONE')) {
-    return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
+    return 'bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:hover:bg-blue-800/50 dark:text-blue-200';
   }
 
   // Green & White: MDR
   if (channelUpper.includes('MDR')) {
-    return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+    return 'bg-green-100 hover:bg-green-200 text-green-800 dark:bg-green-900/50 dark:hover:bg-green-800/50 dark:text-green-300';
   }
 
   // Black & White / Dark theme: ARTE, Funk
   if (channelUpper.includes('ARTE') || channelUpper.includes('FUNK.NET')) {
-    return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+    return 'bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200';
   }
 
-  return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  return 'bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300';
 }
 
 function populateResultData(element: DocumentFragment, data: ResultEntry): void {
@@ -716,7 +751,7 @@ function populateResultData(element: DocumentFragment, data: ResultEntry): void 
 
   const actionsContainer = element.querySelector<HTMLElement>('[data-id="actions"]');
   if (actionsContainer) {
-    actionsContainer.appendChild(createVideoActions(data));
+    createVideoActions(data, actionsContainer);
   }
 
   const sizeElement = element.querySelector<HTMLElement>('[data-id="size"]');
@@ -737,18 +772,126 @@ function populateResultData(element: DocumentFragment, data: ResultEntry): void 
   }
 }
 
-function createResultTableRow(data: ResultEntry): Element | null {
-  const template = document.getElementById('result-row-template') as HTMLTemplateElement;
-  const row = template.content.cloneNode(true) as DocumentFragment;
+function fetchAndSetSize(url: string, sizeElement: HTMLElement): void {
+  if (!url || !sizeElement) return;
 
-  populateResultData(row, data);
+  fetch(`/api/content-length?url=${encodeURIComponent(url)}`)
+    .then((res) => res.text())
+    .then((lengthStr) => {
+      const length = parseInt(lengthStr, 10);
+      if (!isNaN(length) && document.body.contains(sizeElement)) {
+        sizeElement.textContent = (length > 0) ? `(${formatBytes(length, 2)})` : '';
+      }
+    });
+}
+
+function createResultTableRow(data: ResultEntry): DocumentFragment | null {
+  const template = document.getElementById('result-row-template') as HTMLTemplateElement;
+  const fragment = template.content.cloneNode(true) as DocumentFragment;
+  const resultRow = fragment.querySelector<HTMLDivElement>('.table-row');
+
+  populateResultData(fragment, data);
 
   // Table-row specific content
-  row.querySelector('[data-id="date"]')!.textContent = data.dateString!;
-  row.querySelector('[data-id="time"]')!.textContent = data.timeString!;
-  row.querySelector('[data-id="duration"]')!.textContent = data.durationString!;
+  fragment.querySelector('[data-id="date"]')!.textContent = data.dateString!;
+  fragment.querySelector('[data-id="time"]')!.textContent = data.timeString!;
+  fragment.querySelector('[data-id="duration"]')!.textContent = data.durationString!;
 
-  return row.firstElementChild;
+  const descriptionCell = fragment.querySelector<HTMLDivElement>('[data-id="description-cell"]');
+  const descriptionRow = fragment.querySelector<HTMLDivElement>('[data-id="details-row"]');
+  const descriptionContent = fragment.querySelector<HTMLDivElement>('[data-id="description-content"]');
+  const detailsContent = fragment.querySelector<HTMLDivElement>('[data-id="details-content"]');
+
+  if (descriptionCell && descriptionRow && descriptionContent && data.description) {
+    descriptionContent.textContent = data.description;
+
+    const iconButton = document.createElement('button');
+    iconButton.className = 'table-row-toggle';
+    iconButton.innerHTML = `<i class="material-icons table-row-toggle-icon">keyboard_arrow_down</i>`;
+    iconButton.title = 'Beschreibung anzeigen';
+    iconButton.tabIndex = -1;
+
+    if (resultRow) {
+      resultRow.addEventListener('click', (e) => {
+        // Do not toggle if a link inside the row was clicked
+        if ((e.target as HTMLElement).closest('a')) {
+          return;
+        }
+
+        const isOpen = descriptionRow.classList.contains('open');
+
+        if (!isOpen) {
+          document.querySelectorAll('.table-row .drawer.open').forEach((openRow: Element) => {
+            if (openRow !== descriptionRow) {
+              openRow.classList.remove('open');
+              const btnIcon = openRow.parentElement?.querySelector('[data-id="description-cell"] i');
+              btnIcon?.classList.remove('rotate-180');
+            }
+          });
+
+          descriptionRow.classList.add('open');
+          iconButton.querySelector('i')?.classList.add('rotate-180');
+        }
+        else {
+          descriptionRow.classList.remove('open');
+          iconButton.querySelector('i')?.classList.remove('rotate-180');
+        }
+      });
+    }
+    descriptionCell.appendChild(iconButton);
+
+    if (detailsContent) {
+      const filenamebase = `${data.channel} - ${data.topic} - ${data.title} - ${formatDate(data.timestamp)} ${formatTime(data.timestamp)}`;
+      const qualities: { key: keyof ResultEntry; name: VideoQuality; linkDataId: string; sizeDataId: string }[] = [
+        { key: 'url_video_hd', name: 'HD', linkDataId: 'play-hd-link-drawer', sizeDataId: 'play-hd-size-drawer' },
+        { key: 'url_video', name: 'SD', linkDataId: 'play-sd-link-drawer', sizeDataId: 'play-sd-size-drawer' },
+        { key: 'url_video_low', name: 'LQ', linkDataId: 'play-lq-link-drawer', sizeDataId: 'play-lq-size-drawer' },
+      ];
+
+      qualities.forEach(q => {
+        const url = data[q.key] as string;
+        const link = detailsContent.querySelector<HTMLAnchorElement>(`[data-id="${q.linkDataId}"]`);
+        const sizeEl = detailsContent.querySelector<HTMLElement>(`[data-id="${q.sizeDataId}"]`);
+
+        if (!url) {
+          return;
+        }
+
+        if (!link) {
+          throw new Error(`Link not found for ${q.name}`);
+        }
+
+        if (!sizeEl) {
+          throw new Error(`Size element not found for ${q.name}`);
+        }
+
+        link.href = url;
+        link.title = `${q.name} abspielen`;
+        link.classList.remove('hidden');
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          playVideo(data.channel, data.topic, data.title, url, q.name);
+        });
+        fetchAndSetSize(url, sizeEl);
+      });
+
+      if (data.url_subtitle) {
+        const subtitleLink = detailsContent.querySelector<HTMLAnchorElement>('[data-id="subtitle-link-drawer"]');
+        if (subtitleLink) {
+          subtitleLink.href = data.url_subtitle;
+          subtitleLink.title = 'Untertitel herunterladen';
+          subtitleLink.setAttribute('download', filenamebase + '.' + data.url_subtitle.split('.').pop());
+          subtitleLink.classList.remove('hidden');
+        }
+      }
+    }
+  }
+  else if (descriptionCell) {
+    descriptionCell.innerHTML = '';
+  }
+
+  return fragment;
 }
 
 function createResultCard(data: ResultEntry): Element | null {
@@ -774,22 +917,12 @@ function createPaginationButton(html: string, active: boolean, enabled: boolean,
 
   pageLink.innerHTML = html;
 
-  let linkClasses = pageLink.className;
-
   if (active) {
-    linkClasses += ' bg-blue-600 text-white font-bold cursor-default';
+    pageLink.classList.add('active');
   }
-  else {
-    linkClasses += ' bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-400';
-
-    if (enabled) {
-      linkClasses += ' hover:bg-gray-300 dark:hover:bg-gray-700';
-    }
-    else {
-      linkClasses += ' cursor-not-allowed opacity-50';
-    }
+  if (!enabled) {
+    pageLink.classList.add('disabled');
   }
-  pageLink.className = linkClasses;
 
   if (enabled && !active) {
     pageLink.addEventListener('click', (e) => {
@@ -813,9 +946,7 @@ function createPagination(totalPages: number): void {
   const backButton = createPaginationButton('<i class="material-icons text-base">keyboard_arrow_left</i>', false, currentPage > 0, () => {
     currentPage--;
   });
-  backButton.classList.add('p-2');
-  backButton.classList.remove('px-4');
-
+  backButton.classList.add('pagination-link-arrow');
   pagination.appendChild(backButton);
 
   const pagingBegin = Math.max(0, currentPage - 2 - (2 - Math.min(2, totalPages - (currentPage + 1))));
@@ -832,9 +963,7 @@ function createPagination(totalPages: number): void {
   const nextButton = createPaginationButton('<i class="material-icons text-base">keyboard_arrow_right</i>', false, currentPage < (totalPages - 1), () => {
     currentPage++;
   });
-  nextButton.classList.add('p-2');
-  nextButton.classList.remove('px-4');
-
+  nextButton.classList.add('pagination-link-arrow');
   pagination.appendChild(nextButton);
 }
 
@@ -854,7 +983,7 @@ function toggleVideoPause(): void {
   }
 }
 
-function playVideo(channel: string, topic: string, title: string, url: string, quality: string): void {
+function playVideo(channel: string, topic: string, title: string, url: string, quality: VideoQuality): void {
   if (url.startsWith('http://')) {
     playVideoInNewWindow(url);
     return;
@@ -970,12 +1099,16 @@ function setViewMode(mode: 'grid' | 'list', fromUser: boolean = false): void {
   }
 }
 
+function toggleGenericView(show: boolean): void {
+  const mainView = document.getElementById('main-view')!;
+  const genericView = document.getElementById('generic-html-view')!;
+  mainView.classList.toggle('hidden', show);
+  genericView.classList.toggle('hidden', !show);
+}
+
 function showGenericHtmlView(url: string, cacheKey: string, eventName: string): void {
   trackEvent(eventName);
-
-  document.getElementById('main-view')!.classList.add('hidden');
-  const genericView = document.getElementById('generic-html-view')!;
-  genericView.classList.remove('hidden');
+  toggleGenericView(true);
 
   const contentElement = document.getElementById('genericHtmlContent')!;
   if (htmlContentCache[cacheKey]) {
@@ -1000,6 +1133,20 @@ function setupTrackedButton(elementId: string, eventName: string, action?: (e: M
         action(e);
       }
     });
+  }
+}
+
+function handleCookieConsent(accepted: boolean): void {
+  const consent = accepted ? 'accept' : 'deny';
+  trackEvent('Cookie Consent', { consent });
+
+  window.localStorage?.setItem?.(allowCookiesKey, String(accepted));
+  window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
+
+  cookieDialog.close();
+
+  if (accepted) {
+    addAdSense();
   }
 }
 
@@ -1036,20 +1183,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     else if (allowCookies != 'false') {
       cookieDialog.showModal();
-      document.getElementById('cookieAcceptButton')!.addEventListener('click', () => {
-        trackEvent('Cookie Consent', { consent: 'accept' });
-        window.localStorage?.setItem?.(allowCookiesKey, 'true');
-        window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
-        cookieDialog.close();
-        addAdSense();
-      });
-
-      document.getElementById('cookieDenyButton')!.addEventListener('click', () => {
-        trackEvent('Cookie Consent', { consent: 'deny' });
-        window.localStorage?.setItem?.(allowCookiesKey, 'false');
-        window.localStorage?.setItem?.(lastAllowCookiesAskedKey, Date.now().toString());
-        cookieDialog.close();
-      });
+      document.getElementById('cookieAcceptButton')!.addEventListener('click', () => handleCookieConsent(true));
+      document.getElementById('cookieDenyButton')!.addEventListener('click', () => handleCookieConsent(false));
     }
   } catch (error) {
     console.warn('Could not access localStorage. Ads will not be shown.', error);
@@ -1095,8 +1230,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const select = e.target as HTMLSelectElement;
     const [newSortBy, newSortOrder] = select.value.split('_');
 
+    if (!isSortBy(newSortBy) || !isSortOrder(newSortOrder)) {
+      console.error('Invalid sort value selected:', select.value);
+      return;
+    }
+
     sortBy = newSortBy;
-    sortOrder = newSortOrder as 'desc' | 'asc';
+    sortOrder = newSortOrder;
 
     trackEvent('Change Sort', { by: sortBy, order: sortOrder });
     updateSortButton(select);
@@ -1160,8 +1300,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('logo')!.addEventListener('click', (e: MouseEvent) => {
     e.preventDefault();
-    document.getElementById('generic-html-view')!.classList.add('hidden');
-    document.getElementById('main-view')!.classList.remove('hidden');
+    toggleGenericView(false);
     return false;
   });
 
@@ -1195,8 +1334,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTrackedButton('helpButton', 'Click Help Link');
 
   document.getElementById('genericHtmlViewBackButton')!.addEventListener('click', () => {
-    document.getElementById('generic-html-view')!.classList.add('hidden');
-    document.getElementById('main-view')!.classList.remove('hidden');
+    toggleGenericView(false);
   });
 
   window.addEventListener("hashchange", () => {
