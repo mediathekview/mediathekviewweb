@@ -33,10 +33,10 @@
 <div class="panel mb-6">
   <div class="flex flex-wrap items-center gap-4">
     <div class="search-input-wrapper flex-grow min-w-[250px]">
-      <div class="search-input-icon" title="Selektoren: !Sender&#13;#Thema&#13;+Titel&#13;*Beschreibung&#13;&lt;x (in minuten)&#13;&gt;x (in minuten)">
+      <div class="search-input-icon">
         <Icon icon="search" class="text-gray-600 dark:text-gray-300" />
       </div>
-      <input type="text" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" bind:value={appState.query} />
+      <input type="text" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" title="Selektoren:&#13;!Sender&#13;#Thema&#13;+Titel&#13;*Beschreibung&#13;&lt;x (in minuten)&#13;&gt;x (in minuten)" bind:value={appState.query} />
       <button tabindex="-1" class="search-input-clear {appState.query.length > 0 ? 'opacity-100' : 'opacity-0'}" onclick={() => (appState.query = '')}>
         <Icon icon="x-lg" />
       </button>

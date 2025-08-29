@@ -8,9 +8,10 @@
 
   const variantClasses = $derived(
     {
+      default: '',
       secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 focus:ring-gray-500',
-      success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    }[variant ?? ''] ?? '',
+      success: 'bg-green-600 hover:bg-green-500 dark:bg-green-700 dark:hover:bg-green-600 text-white focus:ring-green-500',
+    }[variant ?? 'default'] ?? '',
   );
 </script>
 

@@ -10,7 +10,7 @@
     isDetailsOpen = false,
   } = $props<{
     entry: ResultEntry;
-    view: 'card' | 'table-inline' | 'table-drawer';
+    view: 'table-inline' | 'drawer';
     onPlayVideo: (payload: VideoPayload) => void;
     isDetailsOpen?: boolean;
   }>();
@@ -41,7 +41,7 @@
   }
 
   $effect(() => {
-    if (view === 'table-drawer' && isDetailsOpen && !sizesFetched) {
+    if (view === 'drawer' && isDetailsOpen && !sizesFetched) {
       qualities.forEach((q) => fetchSize(q.name, entry[q.key] as string));
       if (entry.url_subtitle) {
         fetchSize('subtitle', entry.url_subtitle);
@@ -105,22 +105,6 @@
   }
 </script>
 
-{#if view === 'card'}
-  <div class="flex items-center space-x-2">
-    {#each qualities as q}
-      {@const url = entry[q.key] as string}
-      {#if url}
-        <button class="video-action-link" title={`${q.name} abspielen`} onclick={(e) => play(e, q.name, url)}>{q.name}</button>
-      {/if}
-    {/each}
-    {#if entry.url_subtitle}
-      <a href={entry.url_subtitle} title="Untertitel herunterladen" class="video-action-link">
-        <Icon icon="badge-cc" size="base" class="leading-none" />
-      </a>
-    {/if}
-  </div>
-{/if}
-
 {#if view === 'table-inline'}
   {#each qualities as q}
     {@const url = entry[q.key] as string}
@@ -132,107 +116,90 @@
   {/each}
 {/if}
 
-{#if view === 'table-drawer'}
-  <div class="inline-grid grid-cols-[repeat(5,auto)] items-center gap-4">
-    <!-- Row 1: Quality Labels -->
-    <div class="pr-4 text-right text-sm font-semibold">Qualität:</div>
-    {#each qualities as q}
-      {@const url = entry[q.key] as string}
-      <div class="text-center text-sm font-semibold">
-        {#if url}
-          <div>{q.name}</div>
-          {#if sizes[q.name] !== '? MB'}
-            <div class="text-xs font-normal">({sizes[q.name]})</div>
+{#if view === 'drawer'}
+  <div class="flex flex-wrap justify-between gap-x-12 gap-y-8">
+    <div>
+      <h4 class="font-semibold mb-3">Qualität</h4>
+      <div class="grid grid-cols-[repeat(2,auto)] space-y-2 text-sm">
+        {#each qualities as q}
+          {#if entry[q.key]}
+            <span class="font-medium">{q.name}</span>
+            <span class="ml-1 font-normal"> - {sizes[q.name]}</span>
           {/if}
+        {/each}
+        {#if entry.url_subtitle}
+          <span class="font-medium">CC</span>
+          <span class="ml-1 font-normal"> - {sizes.subtitle}</span>
         {/if}
       </div>
-    {/each}
-    <div class="text-center text-sm font-semibold">
-      {#if entry.url_subtitle}
-        CC
-        {#if sizes.subtitle !== '? MB'}
-          <span class="ml-1 text-xs font-normal">({sizes.subtitle})</span>
-        {/if}
-      {/if}
     </div>
-
-    <!-- Row 2: Play Buttons -->
-    <div class="pr-4 text-right text-sm font-semibold">Abspielen:</div>
-    {#each qualities as q}
-      {@const url = entry[q.key] as string}
-      <div class="flex justify-center">
-        {#if url}
-          <button class="video-action-link w-16 h-8" onclick={(e) => play(e, q.name, url)} title={`${q.name} abspielen`}>
-            <Icon icon="play-fill" size="lg" />
-          </button>
-        {:else}
-          <div class="w-16 h-8"></div>
-        {/if}
-      </div>
-    {/each}
-    <div class="flex justify-center">
-      <div class="w-16 h-8"></div>
-      <!-- Placeholder for subtitle play button -->
-    </div>
-
-    <!-- Row 3: Download Buttons -->
-    <div class="pr-4 text-right text-sm font-semibold">Download:</div>
-    {#each qualities as q}
-      {@const url = entry[q.key] as string}
-      <div class="flex justify-center">
-        {#if url}
-          <a href={url} download class="video-action-link w-16 h-8" onclick={() => trackDownload(q.name)} title={`Download ${q.name}`}>
-            <Icon icon="download" size="base" />
-          </a>
-        {:else}
-          <div class="w-16 h-8"></div>
-        {/if}
-      </div>
-    {/each}
-    <div class="flex justify-center">
-      {#if entry.url_subtitle}
-        <a href={entry.url_subtitle} download class="video-action-link w-16 h-8" title="Untertitel herunterladen">
-          <Icon icon="badge-cc" size="base" />
-        </a>
-      {:else}
-        <div class="w-16 h-8"></div>
-      {/if}
-    </div>
-
-    <!-- Row 4: Copy URL Buttons -->
-    <div class="pr-4 text-right text-sm font-semibold">URL kopieren:</div>
-    {#each qualities as q}
-      {@const url = entry[q.key] as string}
-      <div class="flex justify-center">
-        {#if url}
-          <button class="video-action-link w-16 h-8" onclick={() => copyToClipboard(q.name, url)} title={`URL kopieren ${q.name}`}>
-            {#if copyStatus[q.name] === 'idle'}
-              <Icon icon="clipboard" size="base" />
-            {:else if copyStatus[q.name] === 'copied'}
-              <Icon icon="check-lg" size="base" />
-            {:else}
-              <Icon icon="x-lg" size="base" />
+    <div class="flex flex-wrap items-start gap-x-12 gap-y-8">
+      <div>
+        <h4 class="flex items-center gap-4 font-semibold mb-3">
+          Abspielen
+          <Icon icon="play-fill" size="xl" />
+        </h4>
+        <div class="flex gap-x-2 font-bold">
+          {#each qualities as q, i}
+            {@const url = entry[q.key] as string}
+            {#if url}
+              <button class="action-btn" title={`${q.name} abspielen`} onclick={(e) => play(e, q.name, url)}>{q.name}</button>
             {/if}
-          </button>
-        {:else}
-          <div class="w-16 h-8"></div>
-        {/if}
+          {/each}
+        </div>
       </div>
-    {/each}
-    <div class="flex justify-center">
-      {#if entry.url_subtitle}
-        <button class="video-action-link w-16 h-8" onclick={() => copyToClipboard('subtitle', entry.url_subtitle as string)} title="Untertitel-URL kopieren">
-          {#if copyStatus.subtitle === 'idle'}
-            <Icon icon="clipboard" size="base" />
-          {:else if copyStatus.subtitle === 'copied'}
-            <Icon icon="check-lg" size="base" />
-          {:else}
-            <Icon icon="x-lg" size="base" />
+      <div>
+        <h4 class="flex items-center gap-4 font-semibold mb-3">
+          Download
+          <Icon icon="download" size="lg" />
+        </h4>
+        <div class="flex gap-x-2 font-bold">
+          {#each qualities as q}
+            {@const url = entry[q.key] as string}
+            {#if url}
+              <a href={url} download class="action-btn" onclick={() => trackDownload(q.name)} title={`Download ${q.name}`}>{q.name}</a>
+            {/if}
+          {/each}
+          {#if entry.url_subtitle}
+            <a href={entry.url_subtitle} download class="action-btn" title="Untertitel herunterladen">
+              <Icon icon="cc-square" size="lg" />
+            </a>
           {/if}
-        </button>
-      {:else}
-        <div class="w-16 h-8"></div>
-      {/if}
+        </div>
+      </div>
+      <div>
+        <h4 class="flex items-center gap-4 font-semibold mb-3">
+          URL kopieren
+          <Icon icon="clipboard" size="lg" />
+        </h4>
+        <div class="flex gap-x-2 font-bold">
+          {#each qualities as q}
+            {@const url = entry[q.key] as string}
+            {#if url}
+              <button class="action-btn" onclick={() => copyToClipboard(q.name, url)} title={`URL kopieren ${q.name}`}>
+                {#if copyStatus[q.name] === 'idle'}
+                  {q.name}
+                {:else if copyStatus[q.name] === 'copied'}
+                  <Icon icon="check-lg" size="lg" />
+                {:else}
+                  <Icon icon="x-lg" size="lg" />
+                {/if}
+              </button>
+            {/if}
+          {/each}
+          {#if entry.url_subtitle}
+            <button class="action-btn" onclick={() => copyToClipboard('subtitle', entry.url_subtitle as string)} title="Untertitel-URL kopieren">
+              {#if copyStatus.subtitle === 'idle'}
+                <Icon icon="cc-square" size="lg" />
+              {:else if copyStatus.subtitle === 'copied'}
+                <Icon icon="check-lg" size="lg" />
+              {:else}
+                <Icon icon="x-lg" size="lg" />
+              {/if}
+            </button>
+          {/if}
+        </div>
+      </div>
     </div>
   </div>
 {/if}
@@ -241,6 +208,10 @@
   @reference "../../app.css";
 
   .video-action-link {
-    @apply inline-flex items-center justify-center rounded bg-gray-200 px-2 py-1 font-bold text-gray-700 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300 dark:hover:text-white cursor-pointer;
+    @apply inline-flex items-center justify-center rounded bg-gray-200 px-2 py-1 font-bold text-gray-700 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-100 dark:hover:text-white cursor-pointer;
+  }
+
+  .action-btn {
+    @apply inline-flex items-center justify-center p-3 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors;
   }
 </style>

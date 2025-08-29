@@ -2,6 +2,7 @@
   import ContactDialog from '$lib/components/ContactDialog.svelte';
   import CookieDialog from '$lib/components/CookieDialog.svelte';
   import Datenschutz from '$lib/components/Datenschutz.svelte';
+  import Dialog from '$lib/components/Dialog.svelte';
   import DonateDialog from '$lib/components/DonateDialog.svelte';
   import Header from '$lib/components/Header.svelte';
   import Impressum from '$lib/components/Impressum.svelte';
@@ -18,6 +19,7 @@
   let contactDialog: ContactDialog;
   let donateDialog: DonateDialog;
   let mainElement: HTMLElement;
+  let legalDialog: Dialog;
 
   let videoToPlay = $state<VideoPayload | null>(null);
   let pageToView = $state<'datenschutz' | 'impressum' | null>(null);
@@ -45,6 +47,22 @@
     appState.currentPage;
     mainElement?.scrollIntoView({ behavior: 'smooth' });
   });
+
+  $effect(() => {
+    if (pageToView) {
+      legalDialog?.show();
+    } else {
+      legalDialog?.close();
+    }
+  });
+
+  function showImpressum() {
+    pageToView = 'impressum';
+  }
+
+  function showDatenschutz() {
+    pageToView = 'datenschutz';
+  }
 
   onMount(() => {
     // Remove the browser warning now that JS is running
@@ -103,26 +121,32 @@
 </script>
 
 <div class:blur={!!videoToPlay}>
-  <Header showContact={() => contactDialog.show()} showDonate={() => donateDialog.show()} showImpressum={() => (pageToView = 'impressum')} showDatenschutz={() => (pageToView = 'datenschutz')} />
+  <Header showContact={() => contactDialog.show()} showDonate={() => donateDialog.show()} {showImpressum} {showDatenschutz} />
 
   <main bind:this={mainElement} class="mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    {#if pageToView === 'impressum'}
-      <Impressum onBack={() => (pageToView = null)} />
-    {:else if pageToView === 'datenschutz'}
-      <Datenschutz onBack={() => (pageToView = null)} />
-    {:else}
-      <div>
-        <SearchBar />
-        <ResultsContainer onPlayVideo={(payload) => (videoToPlay = payload)} />
-      </div>
-    {/if}
+    <div>
+      <SearchBar />
+      <ResultsContainer onPlayVideo={(payload) => (videoToPlay = payload)} />
+    </div>
   </main>
 </div>
 
 <VideoPlayer videoPayload={videoToPlay} onClose={() => (videoToPlay = null)} />
-<CookieDialog bind:this={cookieDialog} onConsent={handleCookieConsent} />
+<CookieDialog bind:this={cookieDialog} onConsent={handleCookieConsent} {showImpressum} {showDatenschutz} />
 <ContactDialog bind:this={contactDialog} />
 <DonateDialog bind:this={donateDialog} />
+
+{#if pageToView}
+  <Dialog bind:this={legalDialog} limitWidth={false} title={pageToView === 'impressum' ? 'Impressum' : 'Datenschutzerklärung'} icon={pageToView === 'impressum' ? 'person-lines-fill' : 'shield-shaded'} onclose={() => (pageToView = null)} class="max-w-4xl">
+    <div class="max-h-[70vh] overflow-y-auto -mx-6 -my-8 md:-mx-8 p-6 md:p-8">
+      {#if pageToView === 'impressum'}
+        <Impressum onBack={() => (pageToView = null)} />
+      {:else if pageToView === 'datenschutz'}
+        <Datenschutz onBack={() => (pageToView = null)} />
+      {/if}
+    </div>
+  </Dialog>
+{/if}
 
 <style>
   @reference "./app.css";

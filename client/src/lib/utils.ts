@@ -71,48 +71,36 @@ export function formatTime(epochSeconds: number): string {
 }
 
 export function formatDuration(seconds: number): string {
-  if (isNaN(seconds)) return '?';
-  return Math.floor(seconds / 60).toString().padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+  if (isNaN(seconds) || seconds < 0) return '?';
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (minutes > 0) {
+    let result = `${minutes}m`;
+
+    if (remainingSeconds > 0) {
+      result += ` ${remainingSeconds}s`;
+    }
+
+    return result;
+  }
+
+  return `${remainingSeconds}s`;
 }
 
-export function formatBytes(bytes: number, decimals: number = 0): string {
+export function formatBytes(bytes: number, precision: number = 3): string {
   if (bytes < 0) return '?';
   if (bytes === 0) return '0 Bytes';
   const k = 1000;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
-}
-
-const channelColorRules = [
-  {
-    keywords: ['ZDF', 'KIKA', 'PHOENIX'],
-    classes: 'bg-orange-100 hover:bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:hover:bg-orange-800/50 dark:text-orange-300'
-  },
-  {
-    keywords: ['SRF', 'SWR', '3SAT', 'ORF', 'RBB', 'RBTV', 'RADIO BREMEN TV'],
-    classes: 'bg-red-100 hover:bg-red-200 text-red-800 dark:bg-red-900/50 dark:hover:bg-red-800/50 dark:text-red-200'
-  },
-  {
-    keywords: ['ARD', 'ERSTE', 'NDR', 'BR', 'SR', 'WDR', 'DW', 'HR', 'TAGESSCHAU24', 'ONE'],
-    classes: 'bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:hover:bg-blue-800/50 dark:text-blue-200'
-  },
-  {
-    keywords: ['MDR'],
-    classes: 'bg-green-100 hover:bg-green-200 text-green-800 dark:bg-green-900/50 dark:hover:bg-green-800/50 dark:text-green-300'
-  },
-  {
-    keywords: ['ARTE', 'FUNK.NET'],
-    classes: 'bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200'
-  }
-];
-
-const defaultChannelClasses = 'bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300';
-
-export function getChannelColorClasses(channel: string): string {
-  const channelUpper = channel.toUpperCase();
-  const rule = channelColorRules.find(r => r.keywords.some(k => channelUpper.includes(k)));
-  return rule ? rule.classes : defaultChannelClasses;
+  return parseFloat((bytes / Math.pow(k, i)).toPrecision(precision)) + ' ' + sizes[i];
 }
 
 export function parseURIHash(hash: string): Record<string, string> {

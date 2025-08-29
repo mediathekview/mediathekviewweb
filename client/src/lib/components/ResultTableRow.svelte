@@ -2,6 +2,7 @@
   import type { ResultEntry, VideoPayload } from '$lib/types';
   import { formatDate, formatDuration, formatTime } from '$lib/utils';
   import ChannelTag from './ChannelTag.svelte';
+  import Drawer from './Drawer.svelte';
   import Icon from './Icon.svelte';
   import VideoActions from './VideoActions.svelte';
 
@@ -31,8 +32,8 @@
 
 <tr class="result-row" role="button" tabindex="0" onclick={toggleDetails} onkeydown={toggleDetails}>
   <td class="p-2 text-nowrap"><ChannelTag href={entry.url_website} target="_blank" rel="noopener noreferrer" channel={entry.channel} /></td>
-  <td class="p-2 max-w-[30ch] truncate" title={entry.topic}>{entry.topic}</td>
-  <td class="p-2 max-w-[75ch] truncate" title={entry.title}>{entry.title}</td>
+  <td class="p-2 max-w-[20vw] truncate" title={entry.topic}>{entry.topic}</td>
+  <td class="p-2 max-w-[30vw] truncate" title={entry.title}>{entry.title}</td>
   <td class="p-2 text-center">
     <div class="result-details-row-toggle">
       <Icon icon="chevron-down" title="Aufklappen" class="transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
@@ -40,7 +41,7 @@
   </td>
   <td class="p-2">{formatDate(entry.timestamp)}</td>
   <td class="p-2">{formatTime(entry.timestamp)}</td>
-  <td class="p-2">{formatDuration(entry.duration)}</td>
+  <td class="p-2 text-nowrap">{formatDuration(entry.duration)}</td>
   <td class="p-2">
     <div class="grid grid-cols-[repeat(3,1fr)] gap-x-2">
       <VideoActions {entry} {onPlayVideo} view="table-inline" />
@@ -49,20 +50,22 @@
 </tr>
 <tr class="group result-details-row">
   <td colspan="8" class="p-0 align-top">
-    <div class="drawer" class:open={isDetailsOpen}>
-      <div class="drawer-content p-4">
-        <div class="cursor-default p-4 bg-neutral-500/5 dark:bg-neutral-500/15 rounded-md not-dark:shadow-md">
-          <div class="text-lg font-semibold">{entry.title}</div>
-          <div class="mb-4 font-semibold text-neutral-900/70 dark:text-neutral-50/70">{entry.topic}</div>
+    <Drawer isOpen={isDetailsOpen}>
+      {#snippet children()}
+        <div class="p-4">
+          <div class="cursor-default p-4 bg-gray-500/5 dark:bg-gray-500/15 rounded-md not-dark:shadow-md">
+            <div class="text-neutral-900/80 dark:text-neutral-50/90">{entry.topic}</div>
+            <div class="mb-4 text-lg font-bold">{entry.title}</div>
 
-          <div class="font-semibold mb-2">Beschreibung</div>
-          <p>{entry.description}</p>
-          <div class="mt-4 pt-4 border-t border-gray-500/50">
-            <VideoActions {entry} {onPlayVideo} view="table-drawer" {isDetailsOpen} />
+            <div class="mb-2 text-lg font-semibold">Beschreibung</div>
+            <p class="text-neutral-900/80 dark:text-neutral-50/80">{entry.description}</p>
+            <div class="mt-4 pt-4 border-t border-gray-500/50">
+              <VideoActions {entry} {onPlayVideo} view="drawer" {isDetailsOpen} />
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      {/snippet}
+    </Drawer>
   </td>
 </tr>
 
@@ -109,36 +112,5 @@
 
   .result-details-row-toggle {
     @apply cursor-pointer text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white;
-  }
-
-  .drawer {
-    display: grid;
-    grid-template-rows: 0fr;
-    overflow: hidden;
-    transition: grid-template-rows 250ms;
-  }
-
-  .drawer.open {
-    grid-template-rows: 1fr;
-  }
-
-  .drawer .drawer-content {
-    min-height: 0;
-    transition:
-      visibility 250ms,
-      opacity 250ms,
-      padding 250ms;
-    visibility: hidden;
-    overflow: hidden;
-  }
-
-  .drawer:not(.open) .drawer-content {
-    opacity: 0;
-    padding: 0;
-  }
-
-  .drawer.open .drawer-content {
-    visibility: visible;
-    opacity: 1;
   }
 </style>

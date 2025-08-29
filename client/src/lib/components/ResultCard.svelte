@@ -1,44 +1,64 @@
 <script lang="ts">
   import type { ResultEntry, VideoPayload } from '$lib/types';
-  import { formatDate, formatTime, formatDuration } from '$lib/utils';
+  import { formatDate, formatDuration, formatTime } from '$lib/utils';
   import ChannelTag from './ChannelTag.svelte';
+  import Drawer from './Drawer.svelte';
   import VideoActions from './VideoActions.svelte';
 
-  let { entry, onPlayVideo } = $props<{ entry: ResultEntry; onPlayVideo: (payload: VideoPayload) => void }>();
+  let { entry, onPlayVideo, isDetailsOpen, onToggleDetails, index } = $props<{
+    entry: ResultEntry;
+    onPlayVideo: (payload: VideoPayload) => void;
+    isDetailsOpen: boolean;
+    onToggleDetails: (id: string) => void;
+    index: number;
+  }>();
 
-  const { title, description, timestamp, duration, channel, topic, url_website } = entry;
+  const { topic, title, timestamp, duration, channel, url_website } = entry;
+
+  function handleClick(event: MouseEvent | KeyboardEvent) {
+    if (event instanceof KeyboardEvent && !['Enter', ' '].includes(event.key)) {
+      return;
+    }
+
+    if (event instanceof KeyboardEvent && event.key === ' ') {
+      event.preventDefault();
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest('a') || target.closest('button')) {
+      return;
+    }
+    onToggleDetails(entry.id);
+  }
 </script>
 
-<div class="result-card">
-  <div>
-    <div class="grid grid-cols-[1fr_auto] items-start gap-4">
-      <div class="min-w-0">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white truncate" {title}>{title}</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2" title={description}>
-          {description || 'Keine Beschreibung verfügbar.'}
-        </p>
-      </div>
-      <div class="text-right text-sm text-gray-500 dark:text-gray-400">
-        <p class="mb-0">{formatDate(timestamp)}, {formatTime(timestamp)} Uhr</p>
-        <p class="mb-0">Dauer: {formatDuration(duration)}</p>
-      </div>
+<div class="result-card" role="button" tabindex="0" onclick={handleClick} onkeydown={handleClick}>
+  <div class="p-3">
+    <div class="flex justify-between items-start">
+      <h3 class="text-sm font-semibold text-gray-900/75 dark:text-gray-300 truncate" {topic}>{topic}</h3>
+      <ChannelTag href={url_website} target="_blank" rel="noopener noreferrer" {channel} class="-mt-0.5 -mr-0.5" />
     </div>
+
+    <h2 class="mt-1 font-semibold text-gray-900 dark:text-white" {title}>{title}</h2>
+    <div class="mt-1 text-sm text-gray-500 dark:text-gray-300/85">{formatDate(timestamp)} · {formatTime(timestamp)} Uhr · {formatDuration(duration)}</div>
   </div>
-  <div class="mt-4 grid grid-cols-[1fr_auto] items-end gap-2">
-    <div class="flex items-center min-w-0">
-      <ChannelTag href={url_website} target="_blank" rel="noopener noreferrer" {channel} class="mr-2" />
-      <span class="text-gray-500 dark:text-gray-400 text-sm truncate" {topic}>{topic}</span>
-    </div>
-    <div class="flex items-stretch gap-x-2 text-sm text-gray-500 dark:text-gray-400">
-      <VideoActions {entry} {onPlayVideo} view="card" />
-    </div>
-  </div>
+  <Drawer isOpen={isDetailsOpen}>
+    {#snippet children()}
+      <div class="p-3 rounded-md not-dark:shadow-md cursor-default" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+        <div class="mb-2 font-semibold">Beschreibung</div>
+        <p class="text-sm text-gray-900/80 dark:text-gray-300">{entry.description}</p>
+        <div class="mt-4 pt-4 border-t border-gray-500/50">
+          <VideoActions {entry} {onPlayVideo} view="drawer" {isDetailsOpen} />
+        </div>
+      </div>
+    {/snippet}
+  </Drawer>
 </div>
 
 <style>
   @reference "../../app.css";
 
   .result-card {
-    @apply bg-white dark:bg-gray-800 rounded-lg p-4 grid grid-rows-[1fr_auto] shadow-sm dark:shadow-none;
+    @apply bg-white dark:bg-gray-800 hover:bg-gray-200/70 hover:dark:bg-gray-700/60 rounded-lg shadow-sm dark:shadow-none cursor-pointer transition-colors duration-250;
   }
 </style>

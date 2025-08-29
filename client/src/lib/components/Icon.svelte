@@ -33,7 +33,7 @@
   let { icon, size, svgPath = '/assets/bootstrap-icons.svg', class: extraClass = '', ...rest }: Props = $props();
 
   const url = $derived(`${svgPath}#${icon}`);
-  const sizeClass = $derived(size ? sizeMap[size] : 'text-base');
+  const sizeClass = $derived(size ? sizeMap[size] : '');
 </script>
 
 <!--

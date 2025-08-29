@@ -6,11 +6,13 @@
     children: Snippet; // Main content
     header?: Snippet;
     title?: string;
+    icon?: string;
+    limitWidth?: boolean;
     onclose?: () => void;
     class?: string;
   }
 
-  let { children, header, title, onclose, class: extraClass = '' }: Props = $props();
+  let { children, header, title, icon, onclose, class: extraClass = '', limitWidth = true }: Props = $props();
   let dialog: HTMLDialogElement;
 
   export function show() {
@@ -21,33 +23,30 @@
   }
 </script>
 
-<dialog bind:this={dialog} class="dialog-panel {extraClass}">
+<dialog bind:this={dialog} class:max-w-xl={limitWidth} class:md:max-w-2xl={limitWidth} class="m-auto w-full rounded-2xl bg-white p-0 shadow-lg backdrop:bg-black/50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 {extraClass}">
   {#if header || title}
-    <div class="dialog-header">
-      {#if header}
-        {@render header()}
-      {:else if title}
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+    <div class="flex items-center justify-between p-6 md:p-8">
+      {#if title}
+        <div class="flex items-center gap-4">
+          {#if icon}
+            <Icon {icon} class="text-2xl " />
+          {/if}
+          <h1 class="text-2xl font-semibold">{title}</h1>
+        </div>
+
         {#if onclose}
-          <button onclick={onclose} class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white" aria-label="Close">
-            <Icon icon="x-lg" />
+          <button onclick={onclose} class="text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 cursor-pointer" aria-label="Close">
+            <Icon icon="x-lg" size="lg" />
           </button>
         {/if}
       {/if}
     </div>
   {/if}
-  <div class="p-6 md:p-8">
+  <div class="p-6 md:p-8 pt-0 md:pt-0">
     {@render children()}
   </div>
 </dialog>
 
 <style>
   @reference "../../app.css";
-
-  .dialog-panel {
-    @apply m-auto w-full max-w-lg rounded-2xl bg-white p-0 shadow-lg backdrop:bg-black/50 dark:bg-slate-800;
-  }
-  .dialog-header {
-    @apply flex items-center justify-between border-b border-slate-200 p-6 dark:border-slate-700;
-  }
 </style>
