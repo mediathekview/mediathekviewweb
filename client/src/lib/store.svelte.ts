@@ -26,10 +26,23 @@ function createAppState() {
 
     const parsedQuery = parseQuery(query);
     const queries = [];
-    if (parsedQuery.channels.length > 0) queries.push({ fields: ['channel'], query: parsedQuery.channels.map((c) => c.join(' ')).join(' ') });
-    if (parsedQuery.topics.length > 0) queries.push({ fields: ['topic'], query: parsedQuery.topics.map((t) => t.join(' ')).join(' ') });
-    if (parsedQuery.titles.length > 0) queries.push({ fields: ['title'], query: parsedQuery.titles.map((t) => t.join(' ')).join(' ') });
-    if (parsedQuery.descriptions.length > 0) queries.push({ fields: ['description'], query: parsedQuery.descriptions.map((d) => d.join(' ')).join(' ') });
+
+    for (const channel of parsedQuery.channels) {
+      queries.push({ fields: ['channel'], query: channel.join(' ') });
+    }
+
+    for (const topic of parsedQuery.topics) {
+      queries.push({ fields: ['topic'], query: topic.join(' ') });
+    }
+
+    for (const title of parsedQuery.titles) {
+      queries.push({ fields: ['title'], query: title.join(' ') });
+    }
+
+    for (const description of parsedQuery.descriptions) {
+      queries.push({ fields: ['description'], query: description.join(' ') });
+    }
+
     if (parsedQuery.generics.length > 0) {
       queries.push({
         fields: everywhere ? ['channel', 'topic', 'title', 'description'] : parsedQuery.topics.length === 0 ? ['topic', 'title'] : ['title'],
@@ -118,7 +131,8 @@ function createAppState() {
       const storedViewMode = localStorage.getItem('viewMode');
       if (storedViewMode === 'grid' || storedViewMode === 'list') {
         viewMode = storedViewMode;
-      } else {
+      }
+      else {
         viewMode = window.innerWidth >= 1024 ? 'list' : 'grid';
       }
       const storedPageSize = localStorage.getItem('pageSize');
@@ -239,17 +253,43 @@ function parseQuery(query: string) {
   const splits = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 
   for (const split of splits) {
-    if (split.startsWith('!')) channels.push(split.slice(1).split(',').filter(Boolean));
-    else if (split.startsWith('#')) topics.push(split.slice(1).split(',').filter(Boolean));
-    else if (split.startsWith('+')) titles.push(split.slice(1).split(',').filter(Boolean));
-    else if (split.startsWith('*')) descriptions.push(split.slice(1).split(',').filter(Boolean));
+    if (split.startsWith('!')) {
+      const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+
+      if (parts.length > 0) {
+        channels.push(parts);
+      }
+    }
+    else if (split.startsWith('#')) {
+      const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+
+      if (parts.length > 0) {
+        topics.push(parts);
+      }
+    }
+    else if (split.startsWith('+')) {
+      const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+
+      if (parts.length > 0) {
+        titles.push(parts);
+      }
+    }
+    else if (split.startsWith('*')) {
+      const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+
+      if (parts.length > 0) {
+        descriptions.push(parts);
+      }
+    }
     else if (split.startsWith('>')) {
       const d_min = Number(split.slice(1));
       if (!isNaN(d_min)) duration_min = d_min * 60;
-    } else if (split.startsWith('<')) {
+    }
+    else if (split.startsWith('<')) {
       const d_max = Number(split.slice(1));
       if (!isNaN(d_max)) duration_max = d_max * 60;
-    } else {
+    }
+    else {
       generics.push(split);
     }
   }

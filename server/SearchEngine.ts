@@ -1,8 +1,8 @@
 import type { ClientOptions } from '@opensearch-project/opensearch';
 import { Client } from '@opensearch-project/opensearch';
+import type { TermsAggregation } from '@opensearch-project/opensearch/api/_types/_common.aggregations.js';
 import type { Core_Get } from '@opensearch-project/opensearch/api/_types/index.js';
 
-import type { TermsAggregation } from '@opensearch-project/opensearch/api/_types/_common.aggregations.js';
 import { timeout } from './utils';
 
 export class SearchEngine {
@@ -77,7 +77,7 @@ export class SearchEngine {
         query: {
           bool: {
             must: [],
-            filter: []
+            filter: [],
           }
         },
         sort: {}
