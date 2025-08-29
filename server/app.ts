@@ -11,9 +11,6 @@ import { RSSFeedGenerator } from './RSSFeedGenerator';
 import { getValkeyClient, initializeValkey } from './ValKey';
 import { SearchEngine } from './SearchEngine';
 import { config } from './config';
-import { renderImpressum } from './pages/impressum';
-
-const impressum = renderImpressum(config.contact);
 
 (async () => {
   await initializeValkey();
@@ -75,23 +72,15 @@ const impressum = renderImpressum(config.contact);
     next();
   });
 
-  app.use('/static', express.static(path.join(__dirname, '/client/static')));
+  app.use('/assets', express.static(path.join(__dirname, '/client/assets')));
   app.use('/api', express.json(), express.text());
 
   app.get('/', function (req, res) {
     res.send(indexHtmlContent);
   });
 
-  app.get('/impressum', function (req, res) {
-    res.send(impressum);
-  });
-
   app.get('/ads.txt', function (req, res) {
     res.send(config.adsText);
-  });
-
-  app.get('/datenschutz', function (req, res) {
-    res.sendFile(path.join(__dirname, '/client/datenschutz.html'));
   });
 
   app.get('/stats', function (req, res) {
@@ -112,6 +101,9 @@ const impressum = renderImpressum(config.contact);
     }
   });
 
+  app.get('/api/contact-info', (req, res) => {
+    res.json(config.contact);
+  });
 
   app.get('/api/channels', async (req, res) => {
     try {
@@ -186,7 +178,7 @@ const impressum = renderImpressum(config.contact);
 
     let query;
     try {
-      query = req.body;
+      query = (typeof req.body == 'string') ? JSON.parse(req.body) : req.body;
     }
     catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
@@ -287,3 +279,8 @@ const impressum = renderImpressum(config.contact);
     setImmediate(updateLoop);
   }
 })();
+
+process.on('SIGINT', function () {
+  console.log("Caught SIGINT - exiting...");
+  process.exit(0);
+});

@@ -1,22 +1,7 @@
 {
-  "compilerOptions": {
-    "target": "es2020",
-    "module": "preserve",
-    "moduleResolution": "bundler",
-    "lib": [
-      "esnext",
-      "dom"
-    ],
-    "outDir": "./dist/static",
-    "allowJs": false,
-    "strict": false,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
-  },
-  "exclude": [
-    "static",
-    "node_modules",
-    "dist"
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
   ]
 }

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="256"
+   height="256"
+   viewBox="0 0 100 98.461538"
+   font-family="system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
+   version="1.1"
+   id="svg5"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs5" />
+  <!-- Background with rounded corners -->
+  <rect
+     width="100"
+     height="100"
+     rx="16"
+     ry="16"
+     fill="#537089"
+     id="rect1"
+     x="0"
+     y="-0.78125" />
+  <!-- White foreground elements -->
+  <g
+     fill="#ffffff"
+     stroke="#ffffff"
+     id="g5"
+     transform="translate(0,-0.78125)">
+    <!-- Play Icon (Circle with gaps + Triangle) -->
+    <g
+       transform="translate(50,40)"
+       id="g1">
+      <!-- The circle is created with a stroke and a dash pattern to make the gaps -->
+      <!-- Change: Added stroke-linecap="round" to make the dash ends round -->
+      <circle
+         fill="none"
+         stroke-width="6"
+         stroke-dasharray="31.5, 12"
+         stroke-linecap="round"
+         id="circle1"
+         cx="0"
+         cy="0"
+         r="22" />
+      <!-- The inner play triangle, now with rounded corners -->
+      <path
+         d="M -7,-10 11,0 -7,10 Z"
+         stroke-linejoin="round"
+         stroke-width="5"
+         id="path1" />
+    </g>
+    <!-- Text block (MVW + Symbol) -->
+    <g
+       id="g2">
+      <path
+         d="M 16.84668,92 V 73.811523 h 4.907226 l 3.45459,9.387207 q 0.183106,0.53711 0.415039,1.403809 0.244141,0.854492 0.488281,1.843262 0.244141,0.976562 0.451661,1.879883 0.207519,-0.891114 0.45166,-1.867676 0.24414,-0.98877 0.476074,-1.843262 0.244141,-0.866699 0.415039,-1.416016 l 3.417969,-9.387207 h 4.919433 V 92 h -3.24707 v -9.179688 q 0,-0.683593 0.01221,-1.68457 0.02441,-1.013183 0.04883,-2.148437 0.03662,-1.135254 0.04883,-2.22168 -0.305175,1.171875 -0.646972,2.331543 -0.341797,1.159668 -0.646973,2.13623 -0.305176,0.976563 -0.524902,1.586914 L 27.930664,92 h -2.770996 l -3.405762,-9.179688 q -0.219726,-0.585937 -0.524902,-1.538085 -0.292969,-0.952149 -0.634766,-2.09961 -0.32959,-1.147461 -0.671386,-2.319336 0.02441,1.025391 0.04883,2.148438 0.03662,1.11084 0.04883,2.111816 0.02441,1.000977 0.02441,1.696777 V 92 Z m 29.320312,0 -6.481933,-18.188477 h 3.57666 l 3.222656,9.448243 q 0.390625,1.208496 0.817871,2.734375 0.439453,1.525879 0.952149,3.405761 0.964355,-3.735351 1.721191,-6.140136 l 3.125,-9.448243 h 3.564453 L 50.292969,92 Z m 17.61377,0 -4.907227,-18.188477 h 3.503418 l 2.368164,9.680176 q 0.280762,1.23291 0.524903,2.612305 0.24414,1.367187 0.476074,2.722168 0.24414,-1.354981 0.500488,-2.722168 0.268555,-1.379395 0.57373,-2.612305 l 2.465821,-9.680176 h 3.45459 l 2.453613,9.680176 q 0.305176,1.220703 0.561523,2.575684 0.268555,1.35498 0.512696,2.697754 0.231933,-1.342774 0.476074,-2.697754 0.256348,-1.354981 0.537109,-2.575684 l 2.355957,-9.680176 H 83.15332 L 78.233887,92 H 74.498535 L 71.849609,81.953613 q -0.24414,-0.952148 -0.45166,-2.026367 -0.207519,-1.074219 -0.402832,-2.246094 -0.183105,1.135254 -0.378418,2.197266 -0.183105,1.062012 -0.45166,2.075195 L 67.516113,92 Z"
+         id="text1"
+         style="font-weight:600;font-size:25px;font-family:Inter;-inkscape-font-specification:'Inter, Semi-Bold';letter-spacing:1;text-anchor:middle"
+         aria-label="MVW" />
+      <g
+         transform="rotate(45,-37.376162,138.51829)"
+         stroke-width="2.2"
+         stroke-linecap="round"
+         fill="none"
+         id="g3"
+         style="display:inline">
+        <path
+           d="M 0,5 Q 2.5,2.5 5,5"
+           id="path2" />
+        <path
+           d="M -2,3 Q 2.5,-1.5 7,3"
+           id="path3" />
+      </g>
+    </g>
+  </g>
+</svg>
