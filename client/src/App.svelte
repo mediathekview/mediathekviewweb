@@ -45,7 +45,7 @@
   $effect(() => {
     // Scroll to top when changing the pagination page.
     appState.currentPage;
-    mainElement?.scrollIntoView({ behavior: 'smooth' });
+    mainElement?.scrollIntoView({ behavior: 'instant' });
   });
 
   $effect(() => {
