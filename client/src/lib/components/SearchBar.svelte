@@ -71,7 +71,7 @@
 
   .icon-btn {
     @apply inline-flex items-center justify-center rounded-md px-3 cursor-pointer transition-colors duration-250;
-    @apply bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 group-hover:bg-gray-200 dark:group-hover:bg-gray-600;
+    @apply bg-gray-200/75 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 group-hover:bg-gray-200 dark:group-hover:bg-gray-600;
   }
 
   .search-input-wrapper {
