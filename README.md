@@ -25,109 +25,111 @@ Tippe einfach einen Suchbegriff in die Suchleiste ein. Standardmäßig wird in d
 
 Für präzisere Ergebnisse kannst du spezielle Selektoren verwenden. Ein Selektor besteht aus einem Symbol, gefolgt von deinem Suchbegriff (ohne Leerzeichen).
 
-| Selektor | Feld             | Beispiel      | Beschreibung                                               |
-| :------- | :--------------- | :------------ | :--------------------------------------------------------- |
-| `!`      | Sender           | `!ARD`        | Findet Inhalte des Senders "ARD".                          |
-| `#`      | Thema            | `#Tatort`     | Findet Inhalte mit dem Thema "Tatort".                     |
-| `+`      | Titel            | `+Schokolade` | Findet Inhalte mit "Schokolade" im Titel.                  |
-| `*`      | Beschreibung     | `*Berlin`     | Findet Inhalte mit "Berlin" in der Beschreibung.           |
-| `>`      | Dauer            | `>80`         | Findet Inhalte, die länger als 80 Minuten sind.            |
-| `<`      | Dauer            | `<10`         | Findet Inhalte, die kürzer als 10 Minuten sind.            |
-| (keiner) | Allgemeine Suche | `Nachrichten` | Sucht standardmäßig nach "Nachrichten" in Thema und Titel. |
+| Selektor | Feld               | Beispiel      | Beschreibung                                               |
+| :------- | :----------------- | :------------ | :--------------------------------------------------------- |
+| `!`      | Sender             | `!ARD`        | Findet Inhalte des Senders "ARD".                          |
+| `#`      | Thema              | `#Tatort`     | Findet Inhalte mit dem Thema "Tatort".                     |
+| `+`      | Titel              | `+Schokolade` | Findet Inhalte mit "Schokolade" im Titel.                  |
+| `*`      | Beschreibung       | `*Berlin`     | Findet Inhalte mit "Berlin" in der Beschreibung.           |
+| `>`      | Dauer (länger als) | `>80`         | Findet Inhalte, die länger als 80 Minuten sind.            |
+| `<`      | Dauer (kürzer als) | `<10`         | Findet Inhalte, die kürzer als 10 Minuten sind.            |
+| (keiner) | Allgemeine Suche   | `Nachrichten` | Sucht standardmäßig nach "Nachrichten" in Thema und Titel. |
 
-#### Selektoren kombinieren
+---
+
+### Suchlogik anwenden
+
+**1. Selektoren kombinieren**
 
 Du kannst mehrere Selektoren kombinieren, um deine Suche weiter zu verfeinern.
 
-**Beispiel:** `!ARD #Tatort`
+- **Beispiel:** `!ARD #Tatort`
+- **Ergebnis:** alle "Tatort"-Folgen des Senders ARD.
 
-Findet alle "Tatort"-Folgen des Senders ARD.
-
-#### Mehrere Werte pro Selektor (ODER-Suche)
+**2. Mehrere Werte pro Selektor (ODER-Suche)**
 
 Wenn du denselben Selektor mehrmals verwendest, werden die Werte mit **ODER** verknüpft.
 
-**Beispiel:** `!ARD !ZDF #Reportage`
+- **Beispiel:** `!ARD !ZDF #Reportage`
+- **Ergebnis:** alle Reportagen, die auf **ARD** _oder_ **ZDF** liefen.
 
-Findet alle Reportagen, die entweder auf ARD **oder** ZDF liefen.
-
-#### Mehrere Wörter pro Wert (UND-Suche)
+**3. Mehrere Wörter pro Wert (UND-Suche)**
 
 Um nach Inhalten zu suchen, die mehrere Wörter enthalten müssen, trenne diese mit einem Komma (`,`). Dies funktioniert für die Selektoren `!`, `#`, `+` und `*`.
 
-**Beispiel:** `#Olympia,Tokio`
+- **Beispiel:** `#Olympia,Tokio`
+- **Ergebnis:** Inhalte, die im Thema "Olympia" _und_ "Tokio" enthalten.
 
-Findet Inhalte, die im Thema "Olympia" **und** "Tokio" enthalten.
+---
 
-### Weitere Beispiele
+### Praxisbeispiele für die Suche
 
 1.  **Finde alle Tatort-Folgen von ARD oder WDR, die länger als 80 Minuten sind:**
 
-    ```
-    !ARD !WDR #Tatort >80
+    ```plaintext
+    !ard !wdr #tatort >80
     ```
 
-2.  **Finde Dokumentationen über das Weltall und das Universum auf ZDFinfo**
+2.  **Finde Dokumentationen über das Weltall und das Universum auf ZDFinfo, die länger als 30 Minuten sind:**
 
-    ```
-    !ZDFinfo #weltall #universum >30
+    ```plaintext
+    !zdfinfo #weltall #universum >30
     ```
 
 3.  **Finde einzelne Beiträge von Tagesschau24, die kürzer als 10 Minuten sind:**
 
-    ```
-    #tagesschau24 <10
+    ```plaintext
+    !tagesschau24 <10
     ```
 
 4.  **Finde Inhalte zu "Sturm der Liebe" _und_ "Rote Rosen" von ARD _und_ NDR:**
-
-    ```
+    ```plaintext
     !ard !ndr #sturm,der,liebe #rote,rosen
     ```
 
-### Weitere Funktionen
+## Weitere Funktionen
 
-#### Der "Überall"-Schalter
+### Der "Überall"-Schalter
 
-Wenn dieser Schalter aktiviert ist, sucht ein allgemeiner Begriff (ohne Selektor) in **allen** Feldern: Sender, Thema, Titel und Beschreibung. Das ist nützlich für eine breitere Suche.
+Wenn dieser Schalter aktiviert ist, sucht ein allgemeiner Begriff (ohne Selektor) in **allen** Feldern: Sender, Thema, Titel und Beschreibung. Das ist nützlich für eine breitere, unspezifische Suche.
 
-#### Sortierung
+### Sortierung
 
-Die Suchergebnisse können nach verschiedenen Kriterien wie Datum, Dauer oder Sender auf- und absteigend sortiert werden.
+Die Suchergebnisse können nach verschiedenen Kriterien wie **Datum**, **Dauer** oder **Sender** auf- und absteigend sortiert werden.
 
-#### RSS-Feed
+### RSS-Feed
 
-Jede Suchanfrage kann als [RSS-Feed](<https://de.wikipedia.org/wiki/RSS_(Web-Feed)>) abonniert werden. Klicke dazu auf das RSS-Symbol, um den Feed-Link zu erhalten. So wirst du automatisch über neue Ergebnisse informiert.
+Jede Suchanfrage kann als [RSS-Feed](<https://de.wikipedia.org/wiki/RSS_(Web-Feed)>) abonniert werden. Klicke dazu auf das **RSS-Symbol**, um den Feed-Link zu erhalten. So wirst du automatisch über neue Ergebnisse zu deiner Suche informiert.
 
 ## FAQ
 
 ### Warum kann ich SRF- und ORF-Beiträge nicht direkt herunterladen?
 
-Die Sender ORF und SRF stellen ihre Inhalte oft nur als HLS-Streams zur Verfügung, nicht als einzelne Videodatei. Diese Streams können zwar direkt auf der Webseite abgespielt werden, der Download liefert aber nur eine `.m3u8`-Playlist-Datei.
+Die Sender ORF und SRF stellen ihre Inhalte oft nur als **HLS-Streams** zur Verfügung, nicht als einzelne Videodatei. Diese Streams können zwar direkt auf der Webseite abgespielt werden, der Download liefert aber nur eine `.m3u8`-Playlist-Datei, die keine Videodaten enthält.
 
-Um diese Streams dennoch herunterzuladen, empfehlen wir Desktop-Client [MediathekView](https://mediathekview.de/) oder spezialisierte Tools wie [yt-dlp](https://yt-dlp.org/) oder den VLC Media Player.
+Um diese Streams dennoch herunterzuladen, empfehlen wir den Desktop-Client [**MediathekView**](https://mediathekview.de/) oder spezialisierte Kommandozeilen-Tools wie [**yt-dlp**](https://yt-dlp.org/). Alternativ funktioniert es auch mit dem VLC Media Player.
 
-### Wie kann ich Streams mit VLC speichern?
+### Wie kann ich Streams mit dem VLC Media Player speichern?
 
-#### Voraussetzung
+#### Voraussetzungen
 
-- [VLC Media Player](https://www.videolan.org/vlc/) ist installiert.
-- Der Link zum `.m3u8`-Stream befindet sich in der Zwischenablage (aus MediathekViewWeb kopiert).
+- Der [**VLC Media Player**](https://www.videolan.org/vlc/) ist installiert.
+- Der Link zum `.m3u8`-Stream ist aus MediathekViewWeb in die Zwischenablage kopiert.
 
 #### Konvertierung
 
-1.  Öffne VLC.
-2.  Öffne den Dialog "Medien" über das Menü: `Medien` > `Netzwerkstream öffnen...`
+1.  Öffne den VLC Media Player.
+2.  Öffne den Netzwerkstream-Dialog: **Medien** → **Netzwerkstream öffnen...** (oder `Strg+N`).
 3.  Füge den `.m3u8`-Link aus der Zwischenablage in das Adressfeld ein.
-4.  Klicke neben "Wiedergeben" auf den Pfeil und wähle "Konvertieren".
-5.  Wähle im neuen Fenster ein **Profil** aus (z.B. `Video - H.264 + MP3 (MP4)`).
-6.  (Optional - Empfohlen) Originalqualität beibehalten und Zeit sparen
-    1.  Öffne die Bearbeitung für das Profil (Schraubenschlüssel).
-    2.  Klicke auf den Reiter Videocodec und aktiviere `Originalvideospur beibehalten`.
-    3.  Klicke auf den Reiter "Audiocodec" und aktiviere dort `Originalaudiospur beibehalten`.
-    4.  Klick auf speichern.
-7.  Gib über **"Durchsuchen"** eine **Zieldatei** an.
-8.  Klicke auf **"Start"**.
+4.  Klicke unten auf den kleinen Pfeil neben "Wiedergeben" und wähle **Konvertieren** aus (oder `Alt+O`).
+5.  Wähle im neuen Fenster ein **Profil** aus, z.B. `Video - H.264 + MP3 (MP4)`.
+6.  **(Optional, aber empfohlen)** Um die Originalqualität beizubehalten und Zeit zu sparen:
+    - Klicke auf das **Werkzeug-Symbol** (Schraubenschlüssel) neben dem Profil.
+    - Wähle den Reiter **Videocodec** und aktiviere die Option `Originalvideospur beibehalten`.
+    - Wähle den Reiter **Audiocodec** und aktiviere die Option `Originalaudiospur beibehalten`.
+    - Klicke auf **Speichern**.
+7.  Wähle über **Durchsuchen** eine **Zieldatei** aus.
+8.  Klicke auf **Start**, um den Speichervorgang zu beginnen. Der Fortschrittsbalken in VLC zeigt den Download-Status an.
 
 ## Für Entwickler
 
