@@ -43,7 +43,7 @@
   - `text-base` provides a default size, which can be overridden by the `size` prop.
   - Any additional classes are passed through.
 -->
-<span class={`inline-flex items-center text-inherit ${sizeClass} ${extraClass}`} {...rest}>
+<span class={`inline-flex items-center text-inherit leading-none ${sizeClass} ${extraClass}`} {...rest}>
   <!--
     The SVG element's dimensions are set to `1em`, so it scales relative to the
     font-size of the parent <span>.

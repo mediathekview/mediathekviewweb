@@ -10,7 +10,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
   },
   "dependencies": {
-    "@fontsource/inter": "^5.2.6",
+    "@fontsource/inter": "5.2",
     "@tailwindcss/forms": "0.5",
     "@tailwindcss/typography": "0.5",
     "bootstrap-icons": "1.13",
@@ -27,7 +27,7 @@
     "prettier-plugin-svelte": "3.4",
     "prettier-plugin-tailwindcss": "0.6",
     "svelte": "5.38",
-    "svelte-check": "4.3.1",
+    "svelte-check": "4.3",
     "typescript": "5.9",
     "vite": "7.1",
     "vite-plugin-devtools-json": "1.0"

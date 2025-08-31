@@ -36,7 +36,7 @@
   <td class="p-2 max-w-[30vw] truncate" title={entry.title}>{entry.title}</td>
   <td class="p-2 text-center">
     <div class="result-details-row-toggle">
-      <Icon icon="chevron-down" title="Aufklappen" class="transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
+      <Icon icon="chevron-down" title="Aufklappen" class="relative top-0.5 transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
     </div>
   </td>
   <td class="p-2">{formatDate(entry.timestamp)}</td>

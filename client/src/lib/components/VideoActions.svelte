@@ -109,7 +109,14 @@
   {#each qualities as q}
     {@const url = entry[q.key] as string}
     {#if url}
-      <button class="video-action-link -my-1" title={`${q.name} abspielen`} onclick={(e) => play(e, q.name, url)}>{q.name}</button>
+      <a
+        href={url}
+        class="video-action-link -my-1"
+        title={`${q.name} abspielen`}
+        onclick={(e) => {
+          e.preventDefault();
+          play(e, q.name, url);
+        }}>{q.name}</a>
     {:else}
       <span></span>
     {/if}
@@ -135,43 +142,46 @@
     </div>
     <div class="flex flex-wrap items-start gap-x-12 gap-y-8">
       <div>
-        <h4 class="flex items-center gap-4 font-semibold mb-3">
-          Abspielen
-          <Icon icon="play-fill" size="xl" />
-        </h4>
+        <h4 class="flex items-center gap-4 font-semibold mb-3">Abspielen</h4>
         <div class="flex gap-x-2 font-bold">
           {#each qualities as q, i}
             {@const url = entry[q.key] as string}
             {#if url}
-              <button class="action-btn" title={`${q.name} abspielen`} onclick={(e) => play(e, q.name, url)}>{q.name}</button>
+              <a
+                href={url}
+                class="action-btn"
+                title={`${q.name} abspielen`}
+                onclick={(e) => {
+                  e.preventDefault();
+                  play(e, q.name, url);
+                }}>{q.name}</a>
             {/if}
           {/each}
         </div>
       </div>
       <div>
-        <h4 class="flex items-center gap-4 font-semibold mb-3">
+        <h4 class="flex items-center gap-2 font-semibold mb-3">
           Download
-          <Icon icon="download" size="lg" />
+          <span class="cursor-help" title="Zum Herunterladen je nach Browser 'Rechtsklick -> Speichern unter...' nötig.">
+            <Icon icon="info-circle" />
+          </span>
         </h4>
         <div class="flex gap-x-2 font-bold">
           {#each qualities as q}
             {@const url = entry[q.key] as string}
             {#if url}
-              <a href={url} download class="action-btn" onclick={() => trackDownload(q.name)} title={`Download ${q.name}`}>{q.name}</a>
+              <a href={url} download target="_blank" rel="noopener noreferrer" class="action-btn" onclick={() => trackDownload(q.name)} title={`Download ${q.name}`}>{q.name}</a>
             {/if}
           {/each}
           {#if entry.url_subtitle}
-            <a href={entry.url_subtitle} download class="action-btn" title="Untertitel herunterladen">
+            <a href={entry.url_subtitle} download target="_blank" rel="noopener noreferrer" class="action-btn" title="Untertitel herunterladen">
               <Icon icon="cc-square" size="lg" />
             </a>
           {/if}
         </div>
       </div>
       <div>
-        <h4 class="flex items-center gap-4 font-semibold mb-3">
-          URL kopieren
-          <Icon icon="clipboard" size="lg" />
-        </h4>
+        <h4 class="flex items-center gap-4 font-semibold mb-3">URL kopieren</h4>
         <div class="flex gap-x-2 font-bold">
           {#each qualities as q}
             {@const url = entry[q.key] as string}

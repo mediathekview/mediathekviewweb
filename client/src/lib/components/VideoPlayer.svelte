@@ -5,6 +5,7 @@
 
   import type { VideoPayload } from '$lib/types';
   import { trackEvent } from '$lib/utils';
+  import ChannelTag from './ChannelTag.svelte';
   import Icon from './Icon.svelte';
 
   let { videoPayload, onClose } = $props<{ videoPayload: VideoPayload | null; onClose: () => void }>();
@@ -42,8 +43,14 @@
       // Handle number keys 0-9 for jumping to a percentage of the video
       if (e.key >= '0' && e.key <= '9') {
         e.preventDefault();
+
         const percentage = parseInt(e.key) / 10;
-        player.currentTime(player.duration() * percentage);
+        const duration = player.duration();
+
+        if (duration != undefined) {
+          player.currentTime(duration * percentage);
+        }
+
         return;
       }
 
@@ -54,42 +61,59 @@
           player.paused() ? player.play() : player.pause();
           break;
 
-        case 'arrowleft':
+        case 'arrowleft': {
           e.preventDefault();
-          player.currentTime(player.currentTime() - 10);
-          break;
+          const currentTime = player.currentTime();
 
-        case 'arrowright':
+          if (currentTime != undefined) {
+            player.currentTime(currentTime - 10);
+          }
+
+          break;
+        }
+
+        case 'arrowright': {
           e.preventDefault();
-          player.currentTime(player.currentTime() + 10);
-          break;
+          const currentTime = player.currentTime();
 
-        case 'arrowup':
+          if (currentTime != undefined) {
+            player.currentTime(currentTime + 10);
+          }
+
+          break;
+        }
+
+        case 'arrowup': {
           e.preventDefault();
-          player.volume(Math.min(1, player.volume() + 0.1));
-          break;
 
-        case 'arrowdown':
+          const currentVolume = player.volume();
+
+          if (currentVolume != undefined) {
+            player.volume(Math.min(1, currentVolume + 0.1));
+          }
+
+          break;
+        }
+
+        case 'arrowdown': {
           e.preventDefault();
-          player.volume(Math.max(0, player.volume() - 0.1));
-          break;
 
-        case 'm':
+          const currentVolume = player.volume();
+
+          if (currentVolume != undefined) {
+            player.volume(Math.max(0, currentVolume - 0.1));
+          }
+
+          break;
+        }
+
+        case 'm': {
           player.muted(!player.muted());
           break;
+        }
 
-        case 'f':
+        case 'f': {
           player.isFullscreen() ? player.exitFullscreen() : player.requestFullscreen();
-          break;
-
-        case 'c': {
-          const tracks = player.textTracks();
-          for (let i = 0; i < tracks.length; i++) {
-            const track = tracks[i];
-            if (track.kind === 'captions' || track.kind === 'subtitles') {
-              track.mode = track.mode === 'showing' ? 'disabled' : 'showing';
-            }
-          }
           break;
         }
       }
@@ -98,11 +122,6 @@
     window.addEventListener('keydown', handleKeydown);
 
     dialog.addEventListener('close', () => {
-      if (player) {
-        player.dispose();
-        player = null;
-      }
-
       const playDuration = Date.now() - playStartTimestamp;
 
       if (playDuration >= 3000) {
@@ -128,34 +147,53 @@
   });
 
   $effect(() => {
-    if (videoPayload && videoElement && !player) {
-      player = videojs(videoElement, {
+    if (videoPayload && videoElement) {
+      const p = videojs(videoElement, {
         controls: true,
         preload: 'auto',
         fluid: true,
+        autoplay: true,
+        enableSmoothSeeking: true,
+        skipButtons: true,
       });
-      player.src({ src: videoPayload.url, type: videoPayload.url.endsWith('m3u8') ? 'application/x-mpegURL' : undefined });
+
+      player = p;
+
+      p.src({ src: videoPayload.url, type: videoPayload.url.endsWith('m3u8') ? 'application/x-mpegURL' : undefined });
+
+      return () => {
+        if (p && !p.isDisposed()) {
+          p.dispose();
+        }
+
+        player = null;
+      };
     }
   });
 </script>
 
-<dialog bind:this={dialog} class="p-0 m-0 bg-transparent max-w-none max-h-none w-full h-full backdrop:bg-black/85 z-[100000]">
+<dialog bind:this={dialog} class="px-[4vw] bg-transparent max-w-none max-h-none w-full h-full backdrop:bg-black/85">
   <button onclick={() => dialog.close()} class="absolute top-8 right-8 text-white z-10 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
     <Icon icon="x-lg" size="3xl" />
   </button>
-  <div class="absolute inset-0 flex items-center justify-center">
-    <div class="w-11/12 md:w-5/6 lg:w-3/4">
-      {#if videoPayload}
-        <!-- key={videoPayload.url} ensures the video element is re-created when the source changes -->
-        {#key videoPayload.url}
-          <!-- svelte-ignore a11y_media_has_caption -->
-          <video bind:this={videoElement} class="video-js vjs-default-skin vjs-big-play-centered vjs-16-9 w-full">
-            {#if videoPayload.url_subtitle}
-              <track kind="captions" src={videoPayload.url_subtitle} default />
-            {/if}
-          </video>
-        {/key}
-      {/if}
+
+  {#if videoPayload}
+    <div class="flex flex-col items-start justify-center gap-8 max-w-[100rem] h-full m-auto">
+      <div class="-mt-8">
+        <ChannelTag href={videoPayload.url_website} target="_blank" rel="noopener noreferrer" channel={videoPayload.channel} class="text-base!" />
+        <div class="mt-4 text-gray-50/80">{videoPayload.topic}</div>
+        <div class="text-lg font-semibold">{videoPayload.title}</div>
+      </div>
+
+      <!-- key={videoPayload.url} ensures the video element is re-created when the source changes -->
+      {#key videoPayload.url}
+        <!-- svelte-ignore a11y_media_has_caption -->
+        <video-js bind:this={videoElement} class="vjs-big-play-centered w-full rounded-lg overflow-clip">
+          {#if videoPayload.url_subtitle}
+            <track kind="captions" src={videoPayload.url_subtitle} default />
+          {/if}
+        </video-js>
+      {/key}
     </div>
-  </div>
+  {/if}
 </dialog>
