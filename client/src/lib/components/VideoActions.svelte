@@ -127,7 +127,7 @@
   <div class="flex flex-wrap justify-between gap-x-12 gap-y-8">
     <div>
       <h4 class="font-semibold mb-3">Qualität</h4>
-      <div class="grid grid-cols-[repeat(2,auto)] space-y-2 text-sm">
+      <div class="grid grid-cols-[repeat(2,auto)] gap-y-2 text-sm">
         {#each qualities as q}
           {#if entry[q.key]}
             <span class="font-medium">{q.name}</span>

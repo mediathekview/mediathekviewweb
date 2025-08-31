@@ -1,98 +1,147 @@
 # MediathekViewWeb → [mediathekviewweb.de](https://mediathekviewweb.de/)
 
-MediathekViewWeb ist eine einfache Browser-Oberfläche für den Zugriff auf die Filmliste des [MediathekView Projekts](https://mediathekview.de/).
+MediathekViewWeb ist eine Web-Oberfläche für den schnellen und einfachen Zugriff auf die Filmliste des [MediathekView Projekts](https://mediathekview.de/).
 
-Im Gegensatz zu MediathekView muss bei MediathekViewWeb weder ein Programm installiert noch eine Filmliste heruntergeladen werden, die Suche steht deshalb augenblicklich im Browser zur Verfügung.
-Da die Abfrage auf dem Server durchgeführt wird, die Anforderungen an das Endgerät (Browser) minimal sind, und weil kein Java installiert werden muss, lässt sich die Website auch auf Smartphones und Tablets nutzen.
+Im Gegensatz zur Desktop-Anwendung MediathekView muss bei MediathekViewWeb weder ein Programm installiert noch eine Filmliste manuell geladen werden. Die Suche steht augenblicklich im Browser zur Verfügung – auch auf Smartphones und Tablets.
 
-![Benutzeroberfläche von MediathekViewWeb](https://abload.de/img/mediathekviewwebnqrq7.png)
+![Benutzeroberfläche von MediathekViewWeb](./images/website.png)
 
+## Features im Überblick
 
-## Anleitung
+- **Keine Installation:** Einfach im Browser öffnen und lossuchen.
+- **Blitzschnelle Suche:** Suchanfragen werden direkt auf dem Server verarbeitet.
+- **Leistungsstarke Suchsyntax:** Filtere präzise nach Sender, Thema, Titel, Dauer und mehr.
+- **Mobilfreundlich:** Das responsive Design funktioniert auf Desktops, Tablets und Smartphones.
+- **Integrierter Videoplayer:** Viele Inhalte können direkt auf der Website abgespielt werden.
+- **RSS-Feeds:** Abonniere deine Suchen und bleibe über neue Inhalte auf dem Laufenden.
 
-##### 1. In die Suchleiste eintippen, was man anschauen möchte.
-##### 2. In den Suchergebnissen finden sich verschiedene Aktionen. Ein Klick auf das Abspielsymbol mit der gewünschten Qualität (z.B. HD, SD) startet das Video direkt im Browser.
+## Bedienung & Suchsyntax
 
-Um ein Video herunterzuladen, kann per Rechtsklick auf das Abspielsymbol und "Link speichern unter..." (oder eine ähnliche Option) die Videodatei gespeichert werden.
+### Grundlagen
 
-##### 3. Im geöffneten Player das X oben rechts oder die Escape-Taste drücken, um den Player zu schließen. Dadurch wird auch das Abspielen beendet.
-![Video Player Overlay](https://abload.de/img/videooverlayzxqh9.png)
+Tippe einfach einen Suchbegriff in die Suchleiste ein. Standardmäßig wird in den Feldern **Thema** und **Titel** gesucht. In den Ergebnissen kannst du Videos direkt abspielen oder herunterladen.
 
+### Erweiterte Suche mit Selektoren
 
+Für präzisere Ergebnisse kannst du spezielle Selektoren verwenden. Ein Selektor besteht aus einem Symbol, gefolgt von deinem Suchbegriff (ohne Leerzeichen).
 
-### Erweiterte Suche
-##### Die Suchzeile unterstützt das Durchsuchen nach Sender, Thema, Titel und Beschreibung. Hier einige Beispiele:
+| Selektor | Feld             | Beispiel      | Beschreibung                                               |
+| :------- | :--------------- | :------------ | :--------------------------------------------------------- |
+| `!`      | Sender           | `!ARD`        | Findet Inhalte des Senders "ARD".                          |
+| `#`      | Thema            | `#Tatort`     | Findet Inhalte mit dem Thema "Tatort".                     |
+| `+`      | Titel            | `+Schokolade` | Findet Inhalte mit "Schokolade" im Titel.                  |
+| `*`      | Beschreibung     | `*Berlin`     | Findet Inhalte mit "Berlin" in der Beschreibung.           |
+| `>`      | Dauer            | `>80`         | Findet Inhalte, die länger als 80 Minuten sind.            |
+| `<`      | Dauer            | `<10`         | Findet Inhalte, die kürzer als 10 Minuten sind.            |
+| (keiner) | Allgemeine Suche | `Nachrichten` | Sucht standardmäßig nach "Nachrichten" in Thema und Titel. |
 
-- "!ard" zeigt alle Beiträge der ARD.
+#### Selektoren kombinieren
 
-- "#sport" zeigt alle Beiträge aller Sender zum Thema "Sport".
+Du kannst mehrere Selektoren kombinieren, um deine Suche weiter zu verfeinern.
 
-- "+gebärdensprache" zeigt alle Beiträge, die "Gebärdensprache" im Titel enthalten.
+**Beispiel:** `!ARD #Tatort`
 
-- "\*norwegen" zeigt alle Beiträge aller Sender, die "Norwegen" in der Beschreibung enthalten.
+Findet alle "Tatort"-Folgen des Senders ARD.
 
-- "!ard #wetter" zeigt alle Beiträge von ARD zum Thema "Wetter".
+#### Mehrere Werte pro Selektor (ODER-Suche)
 
-- "#doku +weltall" zeigt alle Beiträge aller Sender im Thema "Doku", die im Titel "Weltall" enhalten.
+Wenn du denselben Selektor mehrmals verwendest, werden die Werte mit **ODER** verknüpft.
 
-- "#tagesschau \*klima" zeigt alle Beiträge der "Tagesschau", die "Klima" in der Beschreibung enthalten.
+**Beispiel:** `!ARD !ZDF #Reportage`
 
-- ">60" zeigt Beiträge, die länger als 60 Minuten dauern. Der Operator "<" wird analog unterstützt.
+Findet alle Reportagen, die entweder auf ARD **oder** ZDF liefen.
 
+#### Mehrere Wörter pro Wert (UND-Suche)
 
-##### Das Komma ist der "und" Operator
+Um nach Inhalten zu suchen, die mehrere Wörter enthalten müssen, trenne diese mit einem Komma (`,`). Dies funktioniert für die Selektoren `!`, `#`, `+` und `*`.
 
-- "\*diane,kruger" zeigt alle Beiträge, die "Diane" und "Kruger" in der Beschreibung enthalten.
+**Beispiel:** `#Olympia,Tokio`
 
-##### Es lassen sich auch gleichzeitig mehrere Sender, Themen, Titel oder Beschreibungen angeben:
+Findet Inhalte, die im Thema "Olympia" **und** "Tokio" enthalten.
 
-- "!ard !ndr #sturm,der,liebe #rote,rosen" zeigt Themen "Sturm der Liebe" und "Rote Rosen" von ARD und NDR.
+### Weitere Beispiele
 
-##### In den *allermeisten* Fällen reicht die Eingabe aussagekräftiger Begriffe aus Titel oder Thema:
+1.  **Finde alle Tatort-Folgen von ARD oder WDR, die länger als 80 Minuten sind:**
 
-- "planet wissen" zeigt alle Beiträge, in denen "Planet" und "Wissen" im Titel oder im Thema vorkommen.
+    ```
+    !ARD !WDR #Tatort >80
+    ```
 
-##### Überall suchen
+2.  **Finde Dokumentationen über das Weltall und das Universum auf ZDFinfo**
 
-- Wenn "Überall" aktiviert ist, werden alle Begriffe, die **kein** !, #, + oder * davor haben in **allen** Feldern gesucht. Zusätzlich kann man jedoch auch hier noch nach Sender, Thema, Titel und Beschreibung filtern.
+    ```
+    !ZDFinfo #weltall #universum >30
+    ```
+
+3.  **Finde einzelne Beiträge von Tagesschau24, die kürzer als 10 Minuten sind:**
+
+    ```
+    #tagesschau24 <10
+    ```
+
+4.  **Finde Inhalte zu "Sturm der Liebe" _und_ "Rote Rosen" von ARD _und_ NDR:**
+
+    ```
+    !ard !ndr #sturm,der,liebe #rote,rosen
+    ```
 
 ### Weitere Funktionen
 
-##### Sortierung
-Die Suchergebnisse lassen sich über das Sortieren-Symbol nach verschiedenen Kriterien ordnen, z.B. nach Datum (neuste/älteste zuerst), Dauer, Sender oder Titel.
+#### Der "Überall"-Schalter
 
-##### RSS-Feed
-Jede Suche kann zudem über das RSS-Symbol als [RSS-Feed](https://de.wikipedia.org/wiki/RSS_(Web-Feed)) abonniert werden, um über neue Ergebnisse auf dem Laufenden zu bleiben.
+Wenn dieser Schalter aktiviert ist, sucht ein allgemeiner Begriff (ohne Selektor) in **allen** Feldern: Sender, Thema, Titel und Beschreibung. Das ist nützlich für eine breitere Suche.
 
+#### Sortierung
+
+Die Suchergebnisse können nach verschiedenen Kriterien wie Datum, Dauer oder Sender auf- und absteigend sortiert werden.
+
+#### RSS-Feed
+
+Jede Suchanfrage kann als [RSS-Feed](<https://de.wikipedia.org/wiki/RSS_(Web-Feed)>) abonniert werden. Klicke dazu auf das RSS-Symbol, um den Feed-Link zu erhalten. So wirst du automatisch über neue Ergebnisse informiert.
 
 ## FAQ
 
-### SRF und ORF Downloads
-Downloads von Beiträgen des ORF und SRF in MediathekViewWeb bringen lediglich eine m3u8 Datei zum vorschein. Das liegt daran, dass diese Sender keine ganzen Videos mehr anbieten, sondern nur noch HLS-Streams. Diese kann man sich zwar auf der Website anschauen (streamen), aber nichts sinnvolles herunterladen.
+### Warum kann ich SRF- und ORF-Beiträge nicht direkt herunterladen?
 
-Abhilfe schaffen hier bspw. der Java Desktop Client [MediathekView](https://mediathekview.de/) oder Universal-Downloader wie bspw.  [yt-dlp](https://yt-dlp.org/) (das kann entgegen des Namens *viel* mehr als nur YouTube) oder auch VLC wie im nächsten Abschnitt beschrieben.
+Die Sender ORF und SRF stellen ihre Inhalte oft nur als HLS-Streams zur Verfügung, nicht als einzelne Videodatei. Diese Streams können zwar direkt auf der Webseite abgespielt werden, der Download liefert aber nur eine `.m3u8`-Playlist-Datei.
 
-#### Konvertierung mit VLC
+Um diese Streams dennoch herunterzuladen, empfehlen wir Desktop-Client [MediathekView](https://mediathekview.de/) oder spezialisierte Tools wie [yt-dlp](https://yt-dlp.org/) oder den VLC Media Player.
 
-Mit dem VLC-Player bietet sich die Möglichkeit, die Streams mit der .m3u8-Endung auf dem Rechner sowohl anzusehen als auch zu speichern. Zunächst musst der entsprechende Link in die Zwischenablage kopiert werden. Wurde im VLC im Menupunkt Ansicht die "Erweiterte Steuerung" aktiviert, so sind zusätzliche Buttons vorhanden, der rote dient zum Aufnehmen und Speichern, das funktioniert z. B. auch mit Livestreams.
+### Wie kann ich Streams mit VLC speichern?
 
-Im geöffneten Player kann nun mit CTRL(STRG)-V der Link aus der Zwischenablage übernommen werden und mit Klick auf den roten Button die Aufnahme gestartet werden, dabei kann der Film auch angesehen werden. In diesem Fall muss die Aufnahme nach dem Beenden mit dem entsprechenden Dateinamen versehen werden.
+#### Voraussetzung
 
-Eine weitere Möglichkeit der Speicherung bietet sich über folgende Option:
-Medien > Netzwerkstream öffnen > Link aus der Zwischenablage übernehmen > neben dem Button Wiedergeben auf den Pfeil klicken und Konvertieren/Speichern wählen: Im Feld Zieldatei wählen den Dateinamen eingeben und abschicken > Start. Diese Prozedur lässt sich durch die Standard-Shortkeys (Achtung, die lassen sich ändern) vereinfachen: CTRL-N > Link übernehmen > ALT-O > Zieldateinamen eingeben > Start.
+- [VLC Media Player](https://www.videolan.org/vlc/) ist installiert.
+- Der Link zum `.m3u8`-Stream befindet sich in der Zwischenablage (aus MediathekViewWeb kopiert).
 
-Bei Benutzung des Aufnahme-Buttons erfolgt die Speicherung im Standard-Video Verzeichnis des Betriebssystems.
+#### Konvertierung
 
-## Verwendete Technologien
+1.  Öffne VLC.
+2.  Öffne den Dialog "Medien" über das Menü: `Medien` > `Netzwerkstream öffnen...`
+3.  Füge den `.m3u8`-Link aus der Zwischenablage in das Adressfeld ein.
+4.  Klicke neben "Wiedergeben" auf den Pfeil und wähle "Konvertieren".
+5.  Wähle im neuen Fenster ein **Profil** aus (z.B. `Video - H.264 + MP3 (MP4)`).
+6.  (Optional - Empfohlen) Originalqualität beibehalten und Zeit sparen
+    1.  Öffne die Bearbeitung für das Profil (Schraubenschlüssel).
+    2.  Klicke auf den Reiter Videocodec und aktiviere `Originalvideospur beibehalten`.
+    3.  Klicke auf den Reiter "Audiocodec" und aktiviere dort `Originalaudiospur beibehalten`.
+    4.  Klick auf speichern.
+7.  Gib über **"Durchsuchen"** eine **Zieldatei** an.
+8.  Klicke auf **"Start"**.
 
-### Serverseitig
-- **Node.js**: Die Laufzeitumgebung für den Server, die auf der V8-Engine von Chrome aufbaut.
-- **Express**: Minimalistisches und flexibles Web-Framework für die Erstellung der API und das Ausliefern der Webseiten.
-- **Socket.IO**: Ermöglicht die Echtzeit-Kommunikation zwischen Client und Server, die z.B. für die Suchanfragen genutzt wird.
-- **Valkey**: Ein Fork von Redis, der als performanter In-Memory-Datenspeicher für Caching und temporäre Daten (z.B. während der Indexierung) genutzt wird.
-- **OpenSearch**: Eine auf Apache Lucene basierende Such- und Analyse-Engine, die für die schnelle und komplexe Suche in der Filmliste verantwortlich ist.
+## Für Entwickler
 
-### Clientseitig
-- **Tailwind CSS**: Ein Utility-First-CSS-Framework für ein modernes und responsives UI-Design. Es ersetzt das frühere Bootstrap-Styling.
-- **Video.js**: Ein erweiterbarer HTML5-Videoplayer für die Wiedergabe der Medieninhalte.
-- **Socket.IO Client**: Das Gegenstück zum Server, um die Echtzeit-Verbindung herzustellen.
+### Technologie-Stack
+
+#### Serverseitig
+
+- **Node.js**: Serverseitige JavaScript-Laufzeitumgebung.
+- **Express**: Web-Framework für die API.
+- **OpenSearch**: Such- und Analyse-Engine für die Indizierung und Abfrage der Filmliste.
+- **Valkey**: Ein leistungsstarker In-Memory-Datenspeicher (Fork von Redis) für Caching.
+
+#### Clientseitig
+
+- **Svelte**: Reaktives Frontend-Framework zum Erstellen der Benutzeroberfläche.
+- **Tailwind CSS**: Ein CSS-Framework für modernes und responsives Design.
+- **Video.js**: Ein erweiterbarer HTML5-Videoplayer.

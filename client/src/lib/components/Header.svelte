@@ -17,8 +17,15 @@
     aboutMenuOpen = false;
     aboutMenuMobileOpen = false;
     mobileMenuOpen = false;
-    if (type === 'impressum') showImpressum();
-    if (type === 'datenschutz') showDatenschutz();
+    if (type === 'impressum') {
+      trackEvent('View Impressum');
+      showImpressum();
+    }
+
+    if (type === 'datenschutz') {
+      trackEvent('View Datenschutz');
+      showDatenschutz();
+    }
   }
 
   function handleMenuClick(action: () => void) {
@@ -36,13 +43,23 @@
       <div class="hidden md:flex md:items-center">
         <ul class="flex flex-row items-center gap-2">
           <li>
-            <button class="nav-link" onclick={showDonate}>Spenden</button>
+            <button
+              class="nav-link"
+              onclick={() => {
+                trackEvent('Click Donate');
+                showDonate();
+              }}>Spenden</button>
           </li>
           <li>
             <a class="nav-link" target="_blank" href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb" onclick={() => trackEvent('Click Forum Link')}>Forum</a>
           </li>
           <li>
-            <button class="nav-link" onclick={showContact}>Kontakt</button>
+            <button
+              class="nav-link"
+              onclick={() => {
+                trackEvent('Click Contact');
+                showContact();
+              }}>Kontakt</button>
           </li>
           <li>
             <a class="nav-link" target="_blank" href="https://github.com/mediathekview/mediathekviewweb" onclick={() => trackEvent('Click GitHub Link')}>GitHub</a>
@@ -75,7 +92,12 @@
     <div class="md:hidden" id="mobile-menu">
       <ul class="px-2 pb-3 space-y-1">
         <li>
-          <button class="nav-link" onclick={() => handleMenuClick(showDonate)}>Spenden</button>
+          <button
+            class="nav-link"
+            onclick={() => {
+              trackEvent('Click Donate');
+              handleMenuClick(showDonate);
+            }}>Spenden</button>
         </li>
         <li>
           <a
@@ -88,7 +110,12 @@
             }}>Forum</a>
         </li>
         <li>
-          <button class="nav-link" onclick={() => handleMenuClick(showContact)}>Kontakt</button>
+          <button
+            class="nav-link"
+            onclick={() => {
+              trackEvent('Click Contact');
+              handleMenuClick(showContact);
+            }}>Kontakt</button>
         </li>
         <li>
           <a

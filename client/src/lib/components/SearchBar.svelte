@@ -1,5 +1,6 @@
 <script lang="ts">
   import { appState } from '$lib/store.svelte';
+  import { trackEvent } from '$lib/utils';
   import Dropdown from './Dropdown.svelte';
   import Icon from './Icon.svelte';
   import Toggle from './Toggle.svelte';
@@ -54,7 +55,7 @@
       <button class="icon-btn" type="button" title="RSS-Feed" onclick={appState.openRssFeed}>
         <Icon icon="rss" class="text-gray-600 dark:text-gray-300" />
       </button>
-      <a href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md" target="_blank" rel="noopener noreferrer" class="icon-btn" title="Hilfe">
+      <a href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md" target="_blank" rel="noopener noreferrer" class="icon-btn" title="Hilfe" onclick={() => trackEvent('Click Help')}>
         <Icon icon="question-circle" class="text-gray-600 dark:text-gray-300" />
       </a>
     </div>

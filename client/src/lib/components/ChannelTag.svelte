@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { trackEvent } from '$lib/utils';
+
   interface Props extends svelte.elements.HTMLAnchorAttributes {
     channel: string;
   }
@@ -48,7 +50,7 @@
   const colorClasses = $derived(getChannelColorClasses(channel));
 </script>
 
-<a title={`Website von ${channel} besuchen`} class="channel-tag {colorClasses} {extraClass}" {...rest}>
+<a title={`Website von ${channel} besuchen`} class="channel-tag {colorClasses} {extraClass}" onclick={() => trackEvent('Click Channel Tag', { channel })} {...rest}>
   {channel}
 </a>
 

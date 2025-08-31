@@ -226,6 +226,7 @@ function createAppState() {
 
     toggleViewMode() {
       viewMode = viewMode === 'grid' ? 'list' : 'grid';
+      trackEvent('Toggle View Mode', { mode: viewMode });
       try {
         localStorage.setItem('viewMode', viewMode);
       } catch (e) {
@@ -234,6 +235,7 @@ function createAppState() {
     },
 
     openRssFeed() {
+      trackEvent('Open RSS Feed');
       const search = window.location.hash.replace('#', '');
       window.open(`${window.location.origin}/feed${search.length > 0 ? '?' : ''}${search}`, '_blank');
     },
