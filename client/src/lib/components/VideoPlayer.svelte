@@ -45,9 +45,9 @@
         e.preventDefault();
 
         const percentage = parseInt(e.key) / 10;
-        const duration = player.duration();
+        const duration = Number(player.duration());
 
-        if (duration != undefined) {
+        if (!Number.isNaN(duration)) {
           player.currentTime(duration * percentage);
         }
 
@@ -63,9 +63,10 @@
 
         case 'arrowleft': {
           e.preventDefault();
-          const currentTime = player.currentTime();
 
-          if (currentTime != undefined) {
+          const currentTime = Number(player.currentTime());
+
+          if (!Number.isNaN(currentTime)) {
             player.currentTime(currentTime - 10);
           }
 
@@ -74,9 +75,10 @@
 
         case 'arrowright': {
           e.preventDefault();
-          const currentTime = player.currentTime();
 
-          if (currentTime != undefined) {
+          const currentTime = Number(player.currentTime());
+
+          if (!Number.isNaN(currentTime)) {
             player.currentTime(currentTime + 10);
           }
 
@@ -86,9 +88,9 @@
         case 'arrowup': {
           e.preventDefault();
 
-          const currentVolume = player.volume();
+          const currentVolume = Number(player.volume());
 
-          if (currentVolume != undefined) {
+          if (!Number.isNaN(currentVolume)) {
             player.volume(Math.min(1, currentVolume + 0.1));
           }
 
@@ -98,9 +100,9 @@
         case 'arrowdown': {
           e.preventDefault();
 
-          const currentVolume = player.volume();
+          const currentVolume = Number(player.volume());
 
-          if (currentVolume != undefined) {
+          if (!Number.isNaN(currentVolume)) {
             player.volume(Math.max(0, currentVolume - 0.1));
           }
 

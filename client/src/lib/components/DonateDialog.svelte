@@ -10,7 +10,7 @@
   }
 </script>
 
-<Dialog bind:this={dialog} title="Spenden" icon="heart" onclose={() => dialog.close()}>
+<Dialog bind:this={dialog} title="Spenden" icon="heart">
   <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">Du möchtest dem Entwickler von MediathekViewWeb danken und ihm eine Pizza zahlen?</p>
   <div class="space-y-4">
     <a class="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out gap-2" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BDVH46DLCM7E8&source=url" onclick={() => trackEvent('Click PayPal Link (Donate-Dialog)')}>

@@ -140,9 +140,9 @@
   <Dialog bind:this={legalDialog} limitWidth={false} title={pageToView === 'impressum' ? 'Impressum' : 'Datenschutzerklärung'} icon={pageToView === 'impressum' ? 'person-lines-fill' : 'shield-shaded'} onclose={() => (pageToView = null)} class="max-w-4xl">
     <div class="max-h-[70vh] overflow-y-auto -mx-6 -my-8 md:-mx-8 p-6 md:p-8">
       {#if pageToView === 'impressum'}
-        <Impressum onBack={() => (pageToView = null)} />
+        <Impressum />
       {:else if pageToView === 'datenschutz'}
-        <Datenschutz onBack={() => (pageToView = null)} />
+        <Datenschutz />
       {/if}
     </div>
   </Dialog>
