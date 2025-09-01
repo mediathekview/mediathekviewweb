@@ -27,7 +27,7 @@
 </script>
 
 <div class="flex items-center gap-4 flex-wrap">
-  <nav class="flex items-stretch space-x-1">
+  <nav class="flex items-stretch gap-x-1">
     <button class="pagination-link pagination-link-arrow" disabled={appState.currentPage <= 0} onclick={() => appState.setCurrentPage(appState.currentPage - 1)}>
       <Icon icon="chevron-left" />
     </button>

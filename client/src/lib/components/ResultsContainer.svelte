@@ -38,7 +38,7 @@
       </div>
     {:else}
       <div class="overflow-x-auto rounded-b-md">
-        <table class="table-fixed">
+        <table class="table-fixed min-w-full">
           <thead class="text-sm font-semibold text-gray-700 dark:text-gray-300">
             <tr class="[&>th>div]:h-10 [&>th>div]:flex [&>th>div]:items-center [&>th]:pb-3 [&>th>div]:p-2 [&>th>div]:bg-white dark:[&>th>div]:bg-gray-800">
               <th class="w-px">
