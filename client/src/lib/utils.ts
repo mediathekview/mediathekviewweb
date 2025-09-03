@@ -77,18 +77,14 @@ export function formatDuration(seconds: number): string {
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = seconds % 60;
 
+  const minutesSecondsString = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+
   if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+    return `${hours}:${minutesSecondsString}`;
   }
 
   if (minutes > 0) {
-    let result = `${minutes}m`;
-
-    if (remainingSeconds > 0) {
-      result += ` ${remainingSeconds}s`;
-    }
-
-    return result;
+    return minutesSecondsString;
   }
 
   return `${remainingSeconds}s`;

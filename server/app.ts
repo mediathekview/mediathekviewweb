@@ -8,8 +8,8 @@ import moment from 'moment';
 
 import { MediathekManager } from './MediathekManager';
 import { RSSFeedGenerator } from './RSSFeedGenerator';
-import { getValkeyClient, initializeValkey } from './ValKey';
 import { SearchEngine } from './SearchEngine';
+import { getValkeyClient, initializeValkey } from './ValKey';
 import { config } from './config';
 
 (async () => {
@@ -56,7 +56,7 @@ import { config } from './config';
 
   app.use(compression());
 
-  app.use((request, response, next) => {
+  app.use((_request, response, next) => {
     // const webSocketSource = (request.protocol === 'http' ? 'ws://' : 'wss://') + request.get('host');
     // const orfCdn = 'https://apasfiis.sf.apa.at https://varorfvod.sf.apa.at';
     // const srfCdn = 'https://hdvodsrforigin-f.akamaihd.net http://hdvodsrforigin-f.akamaihd.net https://srfvodhd-vh.akamaihd.net';
@@ -72,22 +72,27 @@ import { config } from './config';
     next();
   });
 
-  app.use('/assets', express.static(path.join(__dirname, '/client/assets')));
-  app.use('/api', express.json(), express.text());
-
-  app.get('/', function (req, res) {
-    res.send(indexHtmlContent);
+  app.use(async (req, res, next) => {
+    if ((req.url == '/') || (req.url == '/index.html')) {
+      res.send(indexHtmlContent);
+    }
+    else {
+      next();
+    }
   });
 
-  app.get('/ads.txt', function (req, res) {
+  app.use('/', express.static(path.join(__dirname, '/client'), { index: false }));
+  app.use('/api', express.json(), express.text());
+
+  app.get('/ads.txt', (_req, res) => {
     res.send(config.adsText);
   });
 
-  app.get('/stats', function (req, res) {
+  app.get('/stats', (_req, res) => {
     res.send('Server is up and running.');
   });
 
-  app.get('/feed', async function (req, res) {
+  app.get('/feed', async (req, res) => {
     try {
       const result = await rssFeedGenerator.createFeed(req.protocol + '://' + req.get('host') + req.originalUrl);
 
@@ -101,11 +106,11 @@ import { config } from './config';
     }
   });
 
-  app.get('/api/contact-info', (req, res) => {
+  app.get('/api/contact-info', (_req, res) => {
     res.json(config.contact);
   });
 
-  app.get('/api/channels', async (req, res) => {
+  app.get('/api/channels', async (_req, res) => {
     try {
       const channels = await searchEngine.getChannels();
       res.json({
@@ -280,7 +285,7 @@ import { config } from './config';
   }
 })();
 
-process.on('SIGINT', function () {
+process.on('SIGINT', () => {
   console.log("Caught SIGINT - exiting...");
   process.exit(0);
 });

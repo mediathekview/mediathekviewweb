@@ -41,9 +41,9 @@
   </td>
   <td class="p-2">{formatDate(entry.timestamp)}</td>
   <td class="p-2">{formatTime(entry.timestamp)}</td>
-  <td class="p-2 text-nowrap">{formatDuration(entry.duration)}</td>
+  <td class="p-2 text-nowrap text-right">{formatDuration(entry.duration)}</td>
   <td class="p-2">
-    <div class="grid grid-cols-[repeat(3,1fr)] gap-x-2">
+    <div class="grid grid-cols-[repeat(4,1fr)] gap-x-2">
       <VideoActions {entry} {onPlayVideo} view="table-inline" />
     </div>
   </td>
