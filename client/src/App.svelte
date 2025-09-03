@@ -19,7 +19,7 @@
   let contactDialog: ContactDialog;
   let donateDialog: DonateDialog;
   let mainElement: HTMLElement;
-  let legalDialog: Dialog;
+  let legalDialog = $state<Dialog>();
 
   let videoToPlay = $state<VideoPayload | null>(null);
   let pageToView = $state<'datenschutz' | 'impressum' | null>(null);
