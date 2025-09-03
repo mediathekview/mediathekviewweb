@@ -85,6 +85,10 @@
     @apply bg-white dark:bg-gray-800;
   }
 
+  .result-row:not(:first-of-type) {
+    @apply border-t border-gray-300/75 dark:border-gray-700/75;
+  }
+
   tr:first-child > td:first-child {
     @apply rounded-tl-md;
   }
