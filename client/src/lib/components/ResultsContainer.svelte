@@ -15,8 +15,8 @@
     openEntryId = openEntryId === id ? null : id;
   }
 
-  const queryStats = $derived(() => {
-    if (!appState.queryInfo || appState.results.length === 0) {
+  const queryStats = $derived.by(() => {
+    if (!appState.queryInfo || appState.queryInfo.totalResults === 0) {
       return null;
     }
 
