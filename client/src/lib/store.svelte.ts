@@ -222,6 +222,18 @@ function createAppState() {
       }
     },
 
+    toggleSort(by: SortBy) {
+      if (sortBy == by) {
+        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+      }
+      else {
+        sortBy = by;
+        sortOrder = ((by == 'timestamp') || (by == 'duration')) ? 'desc' : 'asc';
+      }
+
+      currentPage = 0;
+    },
+
     setCurrentPage(page: number) {
       currentPage = page;
     },

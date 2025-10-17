@@ -5,18 +5,15 @@
   import Icon from './Icon.svelte';
   import Toggle from './Toggle.svelte';
 
-  let sortValue = $state(`${appState.sortBy}_${appState.sortOrder}`);
+  const sortValue = $derived(`${appState.sortBy}_${appState.sortOrder}`);
 
-  $effect(() => {
-    const [sortBy, sortOrder] = sortValue.split('_');
-    if (sortBy !== appState.sortBy || sortOrder !== appState.sortOrder) {
+  function handleSortChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    if (target) {
+      const [sortBy, sortOrder] = target.value.split('_');
       appState.setSort(sortBy, sortOrder);
     }
-  });
-
-  $effect(() => {
-    sortValue = `${appState.sortBy}_${appState.sortOrder}`;
-  });
+  }
 
   const sortOptions = [
     { value: 'timestamp_desc', label: 'Datum ↓' },
@@ -47,8 +44,10 @@
       <Toggle label="Überall" bind:checked={appState.everywhere} />
       <Toggle label="Zukünftige" bind:checked={appState.future} />
     </div>
-    <div class="flex items-stretch gap-2">
-      <Dropdown label="Sortierung" options={sortOptions} bind:value={sortValue} />
+    <div class="flex items-stretch gap-2 min-h-10">
+      {#if appState.viewMode === 'grid'}
+        <Dropdown label="Sortierung" options={sortOptions} value={sortValue} onchange={handleSortChange} />
+      {/if}
       <button class="icon-btn" type="button" title={appState.viewMode === 'grid' ? 'Listenansicht' : 'Kartenansicht'} onclick={appState.toggleViewMode}>
         <Icon icon={appState.viewMode === 'grid' ? 'table' : 'grid'} class="text-gray-600 dark:text-gray-300" />
       </button>
