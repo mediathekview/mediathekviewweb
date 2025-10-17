@@ -85,6 +85,7 @@ function createAppState() {
   }, 50);
 
   const trackSearch = debounce((data: Record<string, any>) => trackEvent('Search', data), 2500);
+
   const updateUrlHash = debounce((elements: Record<string, any>) => {
     let oldHash = window.location.hash;
     if (oldHash.startsWith('#')) oldHash = oldHash.slice(1);
@@ -97,7 +98,7 @@ function createAppState() {
       history.replaceState(undefined, '', url.toString());
       ignoreNextHashChange = true;
     }
-  }, 1000);
+  }, 500);
 
   function parseStateFromUrl() {
     const params = parseURIHash(window.location.hash);
@@ -123,6 +124,7 @@ function createAppState() {
       ignoreNextHashChange = false;
       return;
     }
+
     parseStateFromUrl();
   }
 
@@ -157,7 +159,7 @@ function createAppState() {
         updateUrlHash({
           query: query || undefined,
           everywhere: everywhere || undefined,
-          future: future ? undefined : false,
+          future: future ? undefined : 'false',
           sortBy: sortBy === 'timestamp' ? undefined : sortBy,
           sortOrder: sortOrder === 'desc' ? undefined : sortOrder,
           page: currentPage > 0 ? currentPage + 1 : undefined
@@ -252,7 +254,7 @@ function parseQuery(query: string) {
   let duration_min: number | undefined = undefined;
   let duration_max: number | undefined = undefined;
 
-  const splits = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const splits = query.trim().toLowerCase().split(/\s+/).filter((s) => s.length > 0);
 
   for (const split of splits) {
     if (split.startsWith('!')) {

@@ -14,34 +14,34 @@ export class RSSFeedGenerator {
     const url = URL.parse(requestUrl);
     const urlQuery = querystring.parse(url.query);
 
-    const parsedQuery = this.parseQuery(urlQuery.query || '');
+    const parsedQuery = this.parseQuery(urlQuery.query as string || '');
     const queries = [];
 
-    for (let i = 0; i < parsedQuery.channels.length; i++) {
+    for (const channel of parsedQuery.channels) {
       queries.push({
         fields: ['channel'],
-        query: parsedQuery.channels[i].join(' ')
+        query: channel.join(' ')
       });
     }
 
-    for (let i = 0; i < parsedQuery.topics.length; i++) {
+    for (const topic of parsedQuery.topics) {
       queries.push({
         fields: ['topic'],
-        query: parsedQuery.topics[i].join(' ')
+        query: topic.join(' ')
       });
     }
 
-    for (let i = 0; i < parsedQuery.titles.length; i++) {
+    for (const title of parsedQuery.titles) {
       queries.push({
         fields: ['title'],
-        query: parsedQuery.titles[i].join(' ')
+        query: title.join(' ')
       });
     }
 
-    for (let i = 0; i < parsedQuery.descriptions.length; i++) {
+    for (const description of parsedQuery.descriptions) {
       queries.push({
         fields: ['description'],
-        query: parsedQuery.descriptions[i].join(' ')
+        query: description.join(' ')
       });
     }
 
@@ -52,11 +52,13 @@ export class RSSFeedGenerator {
       });
     }
 
+    const future = urlQuery.future != 'false';
+
     const queryObj = {
       queries: queries,
-      sortBy: 'timestamp',
-      sortOrder: 'desc',
-      future: urlQuery.future || false,
+      sortBy: urlQuery.sortBy ?? 'timestamp',
+      sortOrder: urlQuery.sortOrder ?? 'desc',
+      future,
       duration_min: parsedQuery.duration_min,
       duration_max: parsedQuery.duration_max,
       offset: (typeof urlQuery.offset == 'string') ? parseInt(urlQuery.offset) : 0,
@@ -77,9 +79,9 @@ export class RSSFeedGenerator {
     });
 
     const rss = new RSS({
-      title: 'MVW - ' + urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
+      title: 'MVW - ' + (urlQuery.query || '') + (urlQuery.everywhere ? ' | Überall' : '') + (future ? ' | Zukünftige' : ''),
       ttl: 75,
-      description: urlQuery.query + (urlQuery.everywhere ? ' | Überall' : '') + (urlQuery.future ? ' | Zukünftige' : ''),
+      description: (urlQuery.query || '') + (urlQuery.everywhere ? ' | Überall' : '') + (future ? ' | Zukünftige' : ''),
       feed_url: requestUrl,
       site_url: siteUrl
     });
@@ -115,77 +117,67 @@ export class RSSFeedGenerator {
     });
   }
 
-  parseQuery(query) {
-    const channels = [];
-    const topics = [];
-    const titles = [];
-    const descriptions = [];
-    let generics = [];
-    let duration_min = undefined;
-    let duration_max = undefined;
+  parseQuery(query: string) {
+    const channels: string[][] = [];
+    const topics: string[][] = [];
+    const titles: string[][] = [];
+    const descriptions: string[][] = [];
+    let generics: string[] = [];
+    let duration_min: number | undefined = undefined;
+    let duration_max: number | undefined = undefined;
 
-    const splits = query.trim().toLowerCase().split(/\s+/).filter((split) => {
-      return (split.length > 0);
-    });
+    const splits = query.trim().toLowerCase().split(/\s+/).filter((s) => s.length > 0);
 
-    for (let i = 0; i < splits.length; i++) {
-      const split = splits[i];
-
-      if (split[0] == '!') {
-        const c = split.slice(1, split.length).split(',').filter((split) => {
-          return (split.length > 0);
-        });
-        if (c.length > 0) {
-          channels.push(c);
+    for (const split of splits) {
+      if (split.startsWith('!')) {
+        const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+        if (parts.length > 0) {
+          channels.push(parts);
         }
-      } else if (split[0] == '#') {
-        const t = split.slice(1, split.length).split(',').filter((split) => {
-          return (split.length > 0);
-        });
-        if (t.length > 0) {
-          topics.push(t);
+      }
+      else if (split.startsWith('#')) {
+        const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+        if (parts.length > 0) {
+          topics.push(parts);
         }
-      } else if (split[0] == '+') {
-        const t = split.slice(1, split.length).split(',').filter((split) => {
-          return (split.length > 0);
-        });
-        if (t.length > 0) {
-          titles.push(t);
+      }
+      else if (split.startsWith('+')) {
+        const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+        if (parts.length > 0) {
+          titles.push(parts);
         }
-      } else if (split[0] == '*') {
-        const d = split.slice(1, split.length).split(',').filter((split) => {
-          return (split.length > 0);
-        });
-        if (d.length > 0) {
-          descriptions.push(d);
+      }
+      else if (split.startsWith('*')) {
+        const parts = split.slice(1).split(',').filter((p) => p.length > 0);
+        if (parts.length > 0) {
+          descriptions.push(parts);
         }
-      } else if (split[0] == '>') {
-        const d = split.slice(1, split.length).split(',').filter((split) => {
-          return (split.length > 0);
-        });
-        if (d.length > 0 && !isNaN(d[0])) {
-          duration_min = d[0] * 60;
+      }
+      else if (split.startsWith('>')) {
+        const d_min = Number(split.slice(1));
+        if (!isNaN(d_min)) {
+          duration_min = d_min * 60;
         }
-      } else if (split[0] == '<') {
-        const d = split.slice(1, split.length).split(',').filter((split) => {
-          return (split.length > 0);
-        });
-        if (d.length > 0 && !isNaN(d[0])) {
-          duration_max = d[0] * 60;
+      }
+      else if (split.startsWith('<')) {
+        const d_max = Number(split.slice(1));
+        if (!isNaN(d_max)) {
+          duration_max = d_max * 60;
         }
-      } else {
-        generics = generics.concat(split.split(/\s+/));
+      }
+      else {
+        generics.push(split);
       }
     }
 
     return {
-      channels: channels,
-      topics: topics,
-      titles: titles,
-      descriptions: descriptions,
-      duration_min: duration_min,
-      duration_max: duration_max,
-      generics: generics
-    }
+      channels,
+      topics,
+      titles,
+      descriptions,
+      generics,
+      duration_min,
+      duration_max,
+    };
   }
 }
