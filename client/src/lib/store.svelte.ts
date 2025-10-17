@@ -1,5 +1,5 @@
 import { isSortBy, isSortOrder, type QueryResult, type ResultEntry, type SortBy, type SortOrder } from './types';
-import { debounce, throttle, trackEvent, parseURIHash, createURIHash } from './utils';
+import { createURIHash, debounce, parseURIHash, throttle, trackEvent } from './utils';
 
 const MAX_RESULTS = 10000;
 
@@ -151,19 +151,7 @@ function createAppState() {
 
     const cleanup = $effect.root(() => {
       $effect(() => {
-        const page = currentPage;
-        const ipp = itemsPerPage;
-        if (queryInfo && page * ipp > queryInfo.totalResults) {
-          currentPage = Math.floor(queryInfo.totalResults / ipp);
-        }
-
-        const maxPage = Math.floor(MAX_RESULTS / itemsPerPage - 1);
-        if (currentPage > maxPage) {
-          currentPage = maxPage;
-        }
-
         _search();
-
         trackSearch({ query, everywhere, future, sortBy, sortOrder, itemsPerPage, page: currentPage + 1 });
 
         updateUrlHash({
@@ -174,6 +162,18 @@ function createAppState() {
           sortOrder: sortOrder === 'desc' ? undefined : sortOrder,
           page: currentPage > 0 ? currentPage + 1 : undefined
         });
+      });
+
+      $effect(() => {
+        if (queryInfo && ((currentPage * itemsPerPage) > queryInfo.totalResults)) {
+          currentPage = Math.floor(queryInfo.totalResults / itemsPerPage);
+        }
+
+        const maxPage = Math.floor(MAX_RESULTS / itemsPerPage - 1);
+
+        if (currentPage > maxPage) {
+          currentPage = maxPage;
+        }
       });
 
       // This effect saves settings to localStorage
