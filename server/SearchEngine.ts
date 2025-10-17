@@ -3,6 +3,7 @@ import { Client } from '@opensearch-project/opensearch';
 import type { TermsAggregation } from '@opensearch-project/opensearch/api/_types/_common.aggregations.js';
 import type { Core_Get } from '@opensearch-project/opensearch/api/_types/index.js';
 
+import { OPENSEARCH_INDEX } from './keys';
 import { timeout } from './utils';
 
 export class SearchEngine {
@@ -29,7 +30,7 @@ export class SearchEngine {
 
   async getChannels(): Promise<string[]> {
     const response = await this.client.search({
-      index: 'filmliste',
+      index: OPENSEARCH_INDEX,
       size: 0,
       body: {
         aggs: {
@@ -48,7 +49,7 @@ export class SearchEngine {
 
   async getDescription(id: string): Promise<string> {
     try {
-      const response = await this.client.get({ index: 'filmliste', id });
+      const response = await this.client.get({ index: OPENSEARCH_INDEX, id });
       return (response.body._source as any)?.description ?? '';
     }
     catch (error) {
@@ -61,7 +62,7 @@ export class SearchEngine {
   }
 
   async getEntries(ids: string[]): Promise<object[]> {
-    const response = await this.client.mget({ index: 'filmliste', body: { ids } });
+    const response = await this.client.mget({ index: OPENSEARCH_INDEX, body: { ids } });
 
     return response.body.docs
       .filter((doc) => 'found' in doc && doc.found)
@@ -70,7 +71,7 @@ export class SearchEngine {
 
   async search(query: any): Promise<{ result: any[], totalResults: number }> {
     const opensearchQuery = {
-      index: 'filmliste',
+      index: OPENSEARCH_INDEX,
       from: query.offset || 0,
       size: query.size || 15,
       body: {

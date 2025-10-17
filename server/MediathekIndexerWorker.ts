@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { IPC } from './IPC';
 import { getValkeyClient, initializeValkey } from './ValKey';
 import { config } from './config';
+import { OPENSEARCH_INDEX, VALKEY_KEYS } from './keys';
 import { timeout } from './utils';
 
 const ipc = new IPC(process);
@@ -57,7 +58,7 @@ async function fillInputBuffers(): Promise<void> {
     const space = BUFFER_CAPACITY - addedBuffer.length;
 
     promises.push(
-      valkey.spopCount('mediathekIndexer:addedEntries', space).then((result) => {
+      valkey.spopCount(VALKEY_KEYS.ADDED_ENTRIES, space).then((result) => {
         if (result && result.size > 0) {
           addedBuffer.push(...(result as Set<string>));
         } else {
@@ -71,7 +72,7 @@ async function fillInputBuffers(): Promise<void> {
     const space = BUFFER_CAPACITY - removedBuffer.length;
 
     promises.push(
-      valkey.spopCount('mediathekIndexer:removedEntries', space).then((result) => {
+      valkey.spopCount(VALKEY_KEYS.REMOVED_ENTRIES, space).then((result) => {
         if (result && result.size > 0) {
           removedBuffer.push(...(result as Set<string>));
         } else {
@@ -135,7 +136,7 @@ async function run(): Promise<void> {
   await initializeValkey();
   const valkey = getValkeyClient();
 
-  const filmlisteTimestampStr = await valkey.get('mediathekIndexer:newFilmlisteTimestamp');
+  const filmlisteTimestampStr = await valkey.get(VALKEY_KEYS.NEW_FILMLIST_TIMESTAMP);
   const filmlisteTimestamp = Number(filmlisteTimestampStr) || 0;
 
   // 2. Main Processing Loop
@@ -163,14 +164,14 @@ async function run(): Promise<void> {
       parsedEntry.filmlisteTimestamp = filmlisteTimestamp;
 
       outBuffer.push({
-        index: { _index: 'filmliste', _id: createContentHash(rawEntry) },
+        index: { _index: OPENSEARCH_INDEX, _id: createContentHash(rawEntry) },
       });
       outBuffer.push(parsedEntry);
       addedEntries++;
     } else if (removedBuffer.length > 0) {
       const rawEntry = removedBuffer.pop()!;
       outBuffer.push({
-        delete: { _index: 'filmliste', _id: createContentHash(rawEntry) },
+        delete: { _index: OPENSEARCH_INDEX, _id: createContentHash(rawEntry) },
       });
       removedEntries++;
     }

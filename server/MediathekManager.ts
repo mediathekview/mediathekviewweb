@@ -7,6 +7,7 @@ import got, { type Progress } from 'got';
 import lzma from 'lzma-native';
 
 import { config } from './config';
+import { VALKEY_KEYS } from './keys';
 import { MediathekIndexer } from './MediathekIndexer';
 import { StateEmitter } from './StateEmitter';
 import * as utils from './utils';
@@ -31,7 +32,7 @@ export class MediathekManager extends EventEmitter {
 
   async getCurrentFilmlisteTimestamp(): Promise<number> {
     try {
-      const timestamp = await this.valkey.get('mediathekIndexer:currentFilmlisteTimestamp');
+      const timestamp = await this.valkey.get(VALKEY_KEYS.CURRENT_FILMLIST_TIMESTAMP);
       return Number(timestamp) || 0;
     }
     catch {

@@ -6,6 +6,7 @@ import { Batch } from '@valkey/valkey-glide';
 
 import { config } from './config';
 import { IPC } from './IPC';
+import { OPENSEARCH_INDEX, VALKEY_KEYS } from './keys';
 import * as opensearchDefinitions from './OpenSearchDefinitions';
 import { StateEmitter } from './StateEmitter';
 import { getValkeyClient, ValkeyClient } from './ValKey';
@@ -25,7 +26,7 @@ export class MediathekIndexer extends EventEmitter {
     this.stateEmitter = new StateEmitter(this);
   }
 
-  async indexFilmliste(file): Promise<void> {
+  async indexFilmliste(file: string): Promise<void> {
     this.stateEmitter.setState('step', 'indexFilmliste');
 
     const hasCurrent = await this.hasCurrentState();
@@ -44,9 +45,9 @@ export class MediathekIndexer extends EventEmitter {
     this.stateEmitter.setState('step', 'finalize');
 
     const batch = new Batch(true)
-      .rename('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste')
-      .rename('mediathekIndexer:newFilmlisteTimestamp', 'mediathekIndexer:currentFilmlisteTimestamp')
-      .unlink(['mediathekIndexer:addedEntries', 'mediathekIndexer:removedEntries'])
+      .rename(VALKEY_KEYS.NEW_FILMLISTE, VALKEY_KEYS.CURRENT_FILMLISTE)
+      .rename(VALKEY_KEYS.NEW_FILMLIST_TIMESTAMP, VALKEY_KEYS.CURRENT_FILMLIST_TIMESTAMP)
+      .unlink([VALKEY_KEYS.ADDED_ENTRIES, VALKEY_KEYS.REMOVED_ENTRIES]);
 
     await this.valkey.exec(batch, true, { timeout: 10000 });
 
@@ -55,59 +56,88 @@ export class MediathekIndexer extends EventEmitter {
   }
 
   async hasCurrentState(): Promise<boolean> {
-    const result = await this.valkey.exists(['mediathekIndexer:currentFilmliste']);
-    return result == 1;
+    const result = await this.valkey.exists([VALKEY_KEYS.CURRENT_FILMLISTE]);
+    return result === 1;
   }
 
   async fullIndexFilmliste(file: string): Promise<void> {
     this.stateEmitter.setState('step', 'fullIndexFilmliste');
 
-    await this.recreateOSIndex();
-    await this._parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp');
-    await this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:none');
-    await this._indexDelta();
+    await this._parseFilmliste(file, VALKEY_KEYS.NEW_FILMLISTE, VALKEY_KEYS.NEW_FILMLIST_TIMESTAMP);
+    await this._forceFullIndex(VALKEY_KEYS.NEW_FILMLISTE);
   }
 
   async recreateOSIndex(): Promise<void> {
     this.stateEmitter.setState('step', 'recreateOSIndex');
 
     await this.searchClient.indices.delete({
-      index: 'filmliste',
-      ignore_unavailable: true
+      index: OPENSEARCH_INDEX,
+      ignore_unavailable: true,
     });
 
-    await this.searchClient.indices.create({ index: 'filmliste' });
-    await this.searchClient.indices.close({ index: 'filmliste' });
-    await this.searchClient.indices.putSettings({ index: 'filmliste', body: opensearchDefinitions.settings });
-    await this.searchClient.indices.putMapping({ index: 'filmliste', body: opensearchDefinitions.mapping });
-    await this.searchClient.indices.open({ index: 'filmliste' });
+    await this.searchClient.indices.create({ index: OPENSEARCH_INDEX });
+    await this.searchClient.indices.close({ index: OPENSEARCH_INDEX });
+    await this.searchClient.indices.putSettings({ index: OPENSEARCH_INDEX, body: opensearchDefinitions.settings });
+    await this.searchClient.indices.putMapping({ index: OPENSEARCH_INDEX, body: opensearchDefinitions.mapping });
+    await this.searchClient.indices.open({ index: OPENSEARCH_INDEX });
   }
 
   async deltaIndexFilmliste(file: string): Promise<void> {
     this.stateEmitter.setState('step', 'deltaIndexFilmliste');
 
-    await this._parseFilmliste(file, 'mediathekIndexer:newFilmliste', 'mediathekIndexer:newFilmlisteTimestamp');
-    await this.createDelta('mediathekIndexer:newFilmliste', 'mediathekIndexer:currentFilmliste');
+    await this._parseFilmliste(file, VALKEY_KEYS.NEW_FILMLISTE, VALKEY_KEYS.NEW_FILMLIST_TIMESTAMP);
+    await this.createDelta(VALKEY_KEYS.NEW_FILMLISTE, VALKEY_KEYS.CURRENT_FILMLISTE);
     await this._indexDelta();
+
+    const valkeyCount = await this.valkey.scard(VALKEY_KEYS.NEW_FILMLISTE);
+
+    await this.searchClient.indices.refresh({ index: OPENSEARCH_INDEX });
+    const { body: { count: opensearchCount } } = await this.searchClient.count({ index: OPENSEARCH_INDEX });
+
+    if (valkeyCount !== opensearchCount) {
+      console.warn(`Discrepancy detected after delta index. Valkey: ${valkeyCount}, OpenSearch: ${opensearchCount}. Recreating index.`);
+      this.stateEmitter.setState('step', 'recreateAfterDiscrepancy');
+
+      await this._forceFullIndex(VALKEY_KEYS.NEW_FILMLISTE);
+
+      // Final check after recovery
+      await this.searchClient.indices.refresh({ index: OPENSEARCH_INDEX });
+      const { body: { count: finalOpensearchCount } } = await this.searchClient.count({ index: OPENSEARCH_INDEX });
+
+      if (valkeyCount !== finalOpensearchCount) {
+        throw new Error(`Count mismatch after full re-index. Valkey: ${valkeyCount}, OpenSearch: ${finalOpensearchCount}. Aborting.`);
+      }
+
+      console.log(`Index recreated successfully. Valkey: ${valkeyCount}, OpenSearch: ${finalOpensearchCount}.`);
+    }
   }
 
   async createDelta(newSet: string, currentSet: string): Promise<void> {
     this.stateEmitter.setState('step', 'createDelta');
 
     const batch = new Batch(true)
-      .sdiffstore('mediathekIndexer:addedEntries', [newSet, currentSet])
-      .sdiffstore('mediathekIndexer:removedEntries', [currentSet, newSet])
-      .scard('mediathekIndexer:addedEntries')
-      .scard('mediathekIndexer:removedEntries');
+      .sdiffstore(VALKEY_KEYS.ADDED_ENTRIES, [newSet, currentSet])
+      .sdiffstore(VALKEY_KEYS.REMOVED_ENTRIES, [currentSet, newSet])
+      .scard(VALKEY_KEYS.ADDED_ENTRIES)
+      .scard(VALKEY_KEYS.REMOVED_ENTRIES);
 
     const [, , added, removed] = await this.valkey.exec(batch, true, { timeout: 10000 });
 
     this.stateEmitter.updateState({ added, removed });
   }
 
-  combineWorkerStates(workerStates) {
-    let addedEntries = 0,
-      removedEntries = 0;
+  private async _forceFullIndex(sourceSet: string): Promise<void> {
+    this.stateEmitter.setState('step', 'forceFullIndex');
+
+    await this.recreateOSIndex();
+    // A full index is a delta against a non-existent set
+    await this.createDelta(sourceSet, VALKEY_KEYS.NONE);
+    await this._indexDelta();
+  }
+
+  combineWorkerStates(workerStates: any[]) {
+    let addedEntries = 0;
+    let removedEntries = 0;
 
     for (let i = 0; i < workerStates.length; i++) {
       if (workerStates[i] != undefined) {
@@ -118,7 +148,7 @@ export class MediathekIndexer extends EventEmitter {
 
     return {
       addedEntries: addedEntries,
-      removedEntries: removedEntries
+      removedEntries: removedEntries,
     };
   }
 
@@ -133,30 +163,31 @@ export class MediathekIndexer extends EventEmitter {
     });
   }
 
-  indexDelta(callback) {
+  indexDelta(callback: (err: Error | null) => void) {
     this.stateEmitter.setState('step', 'indexDelta');
 
-    let indexerWorkers: cp.ChildProcess[] = [];
-    let indexerWorkersState = [];
+    const indexerWorkers: cp.ChildProcess[] = [];
+    const indexerWorkersState: any[] = [];
 
     let workersDone = 0;
     let lastStatsUpdate = 0;
 
     for (let i = 0; i < config.workerCount; i++) {
-      let indexerWorker = cp.fork(__dirname + '/MediathekIndexerWorker.js', [], { execArgv: config.workerArgs });
+      const indexerWorker = cp.fork(__dirname + '/MediathekIndexerWorker.js', [], { execArgv: config.workerArgs });
 
       indexerWorkers[i] = indexerWorker;
 
-      let ipc = new IPC(indexerWorker);
+      const ipc = new IPC(indexerWorker);
 
       ipc.on('state', (state) => {
         indexerWorkersState[i] = state;
 
-        if ((Date.now() - lastStatsUpdate) > 500) { //wait atleast 500ms
+        if (Date.now() - lastStatsUpdate > 500) {
           this.stateEmitter.updateState(this.combineWorkerStates(indexerWorkersState));
           lastStatsUpdate = Date.now();
         }
       });
+
       ipc.on('done', () => {
         workersDone++;
 
@@ -165,9 +196,8 @@ export class MediathekIndexer extends EventEmitter {
           callback(null);
         }
       });
-      ipc.on('error', (err) => {
-        callback(new Error(err));
-      });
+
+      ipc.on('error', (err) => callback(new Error(err)));
     }
   }
 
@@ -183,23 +213,23 @@ export class MediathekIndexer extends EventEmitter {
     });
   }
 
-  parseFilmliste(file, setKey, timestampKey, callback) {
+  parseFilmliste(file: string, setKey: string, timestampKey: string, callback: (err: Error | null) => void) {
     this.stateEmitter.setState('step', 'parseFilmliste');
-    let filmlisteParser = cp.fork(__dirname + '/FilmlisteParser.js', [], { execArgv: config.workerArgs });
+    const filmlisteParser = cp.fork(__dirname + '/FilmlisteParser.js', [], { execArgv: config.workerArgs });
 
-    let ipc = new IPC(filmlisteParser);
+    const ipc = new IPC(filmlisteParser);
 
     ipc.on('error', (errMessage) => {
       callback(new Error(errMessage));
     });
 
-    let lastState = null;
+    let lastState: any = null;
     let lastStatsUpdate = 0;
 
     ipc.on('state', (state) => {
       lastState = state;
 
-      if ((Date.now() - lastStatsUpdate) > 500) { //wait atleast 500ms
+      if (Date.now() - lastStatsUpdate > 500) {
         this.stateEmitter.updateState(lastState);
         lastStatsUpdate = Date.now();
       }
@@ -213,7 +243,7 @@ export class MediathekIndexer extends EventEmitter {
     ipc.send('parseFilmliste', {
       file: file,
       setKey: setKey,
-      timestampKey: timestampKey
+      timestampKey: timestampKey,
     });
   }
 }
