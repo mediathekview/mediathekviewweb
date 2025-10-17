@@ -11,6 +11,7 @@ import { RSSFeedGenerator } from './RSSFeedGenerator';
 import { SearchEngine } from './SearchEngine';
 import { getValkeyClient, initializeValkey } from './ValKey';
 import { config } from './config';
+import { VALKEY_KEYS } from './keys';
 
 (async () => {
   await initializeValkey();
@@ -43,6 +44,7 @@ import { config } from './config';
   const rssFeedGenerator = new RSSFeedGenerator(searchEngine);
 
   let filmlisteTimestamp = await mediathekManager.getCurrentFilmlisteTimestamp();
+  let totalEntries = await valkey.scard(VALKEY_KEYS.CURRENT_FILMLISTE);
 
   mediathekManager.on('state', (state) => {
     if (state == null) {
@@ -227,7 +229,9 @@ import { config } from './config';
         filmlisteTimestamp: filmlisteTimestamp,
         searchEngineTime: searchEngineTime,
         resultCount: result.result.length,
-        totalResults: result.totalResults
+        totalResults: result.totalResults,
+        totalRelation: result.totalRelation,
+        totalEntries,
       };
 
       response.status(200).json({
@@ -270,6 +274,7 @@ import { config } from './config';
 
       if (updated) {
         filmlisteTimestamp = await mediathekManager.getCurrentFilmlisteTimestamp();
+        totalEntries = await valkey.scard(VALKEY_KEYS.CURRENT_FILMLISTE);
       }
     }
     catch (error) {

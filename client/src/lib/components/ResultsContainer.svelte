@@ -87,11 +87,14 @@
         Fehler:<br />{appState.error}
       {:else if appState.queryInfo}
         {#if queryStats}
-          Zeige Treffer {queryStats.start} bis {queryStats.end} von {queryStats.total} ({appState.queryInfo.searchEngineTime.toString().replace('.', ',')} ms).
+          Zeige Treffer {queryStats.start} bis {queryStats.end} von {appState.queryInfo.totalRelation === 'gte' ? 'mehr als ' : ''}{queryStats.total} ({appState.queryInfo.searchEngineTime.toString().replace('.', ',')} ms).
         {:else}
           Die Suche dauerte {appState.queryInfo.searchEngineTime.toString().replace('.', ',')} ms. Keine Treffer gefunden.
         {/if}
         <br />
+        {#if (appState.queryInfo.totalEntries ?? 0) > 0}
+          Insgesamt {new Intl.NumberFormat('de-DE').format(appState.queryInfo.totalEntries!)} Einträge.&nbsp;
+        {/if}
         Inhalt zuletzt am {formatDate(appState.queryInfo.filmlisteTimestamp)} um {formatTime(appState.queryInfo.filmlisteTimestamp)} Uhr aktualisiert.
       {/if}
     </div>

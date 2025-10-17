@@ -69,7 +69,7 @@ export class SearchEngine {
       .map((doc) => (doc as Core_Get.GetResult)._source ?? {});
   }
 
-  async search(query: any): Promise<{ result: any[], totalResults: number }> {
+  async search(query: any): Promise<{ result: any[], totalResults: number, totalRelation: string }> {
     const opensearchQuery = {
       index: OPENSEARCH_INDEX,
       from: query.offset || 0,
@@ -149,8 +149,9 @@ export class SearchEngine {
 
       const total = response.hits.total;
       const totalResults = (typeof total == 'number') ? total : (total?.value ?? 0);
+      const totalRelation = (typeof total == 'number') ? 'eq' : (total?.relation ?? 'eq');
 
-      return { result, totalResults };
+      return { result, totalResults, totalRelation };
     }
     catch (error) {
       console.error("OpenSearch search error:", error);

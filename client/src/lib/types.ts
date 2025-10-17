@@ -43,6 +43,8 @@ export type QueryResult = {
     searchEngineTime: number,
     totalResults: number,
     resultCount: number,
+    totalRelation?: string,
+    totalEntries?: number,
   },
 };
 
