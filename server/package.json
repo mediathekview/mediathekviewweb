@@ -8,16 +8,17 @@
   },
   "main": "app.js",
   "scripts": {
-    "build": "rm -rf dist && tsc && cp -r node_modules dist/"
+    "build": "rm -rf dist && tsc && cp -r node_modules dist/",
+    "build:watch": "tsc --watch"
   },
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
     "@opensearch-project/opensearch": "3.5",
-    "@valkey/valkey-glide": "^2.0.1",
+    "@valkey/valkey-glide": "2.1",
     "compression": "1.8",
     "express": "5.1",
-    "got": "14.4",
+    "got": "14.6",
     "line-reader": "0.4",
     "lzma-native": "8.0",
     "moment": "2.30",
