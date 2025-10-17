@@ -83,11 +83,7 @@ export function formatDuration(seconds: number): string {
     return `${hours}:${minutesSecondsString}`;
   }
 
-  if (minutes > 0) {
-    return minutesSecondsString;
-  }
-
-  return `${remainingSeconds}s`;
+  return minutesSecondsString;
 }
 
 export function formatBytes(bytes: number, precision: number = 3): string {
