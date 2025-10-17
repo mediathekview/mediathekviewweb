@@ -180,8 +180,8 @@
   </button>
 
   {#if videoPayload}
-    <div class="flex flex-col items-start justify-center gap-8 max-w-[100rem] h-full m-auto">
-      <div class="-mt-8">
+    <div class="max-w-[calc(3/5*100%+6rem)] h-full m-auto py-12 space-y-8">
+      <div>
         <ChannelTag href={videoPayload.url_website} target="_blank" rel="noopener noreferrer" channel={videoPayload.channel} class="text-base!" />
         <div class="mt-4 text-gray-50/80">{videoPayload.topic}</div>
         <div class="text-lg font-semibold">{videoPayload.title}</div>
