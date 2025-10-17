@@ -1,43 +1,8 @@
 version: "3.7"
 
 services:
-  application:
-    container_name: mediathekviewweb
-    image: mediathekview/mediathekviewweb:latest
-    restart: always
-    depends_on:
-      - opensearch
-      - valkey
-    environment:
-      DATA_DIRECTORY: /data
-      WEBSERVER_PORT: 8000
-      INDEX: true
-      WORKER_COUNT:
-      WORKER_ARGS:
-      VALKEY_HOST: valkey
-      VALKEY_PORT:
-      VALKEY_PASSWORD:
-      VALKEY_DB:
-      OPENSEARCH_HOST: opensearch
-      OPENSEARCH_PORT: 9200
-      CONTACT_NAME:
-      CONTACT_STREET:
-      CONTACT_POSTCODE:
-      CONTACT_CITY:
-      CONTACT_MAIL:
-      INJECT_HTML_PATH:
-    volumes:
-      - "mediathekviewweb:/data"
-    ports:
-      - "8000:8000"
-    networks:
-      - opensearch
-      - valkey
-
   opensearch:
-    container_name: opensearch
     image: opensearchproject/opensearch:3
-    restart: always
     environment:
       discovery.type: single-node
       bootstrap.memory_lock: "true"
@@ -45,26 +10,20 @@ services:
       DISABLE_INSTALL_DEMO_CONFIG: "true"
       DISABLE_SECURITY_PLUGIN: "true"
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: MediathekViewWeb01!
+      INJECT_HTML_PATH:
     volumes:
       - "opensearch:/usr/share/opensearch/data"
-    networks:
-      - opensearch
+    ports:
+      - "9200:9200"
 
   valkey:
-    container_name: valkey
     image: valkey/valkey:8-alpine
-    restart: always
-    command: ["--save", "60", "1", "--loglevel", "info"]
+    command: ["--save 60 1"]
     volumes:
       - "valkey:/data"
-    networks:
-      - valkey
+    ports:
+      - "6379:6379"
 
 volumes:
-  mediathekviewweb:
   valkey:
   opensearch:
-
-networks:
-  opensearch:
-  valkey:
