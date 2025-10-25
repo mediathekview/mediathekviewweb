@@ -56,3 +56,38 @@ export type VideoPayload = {
   quality: VideoQuality;
   url_subtitle?: string;
 };
+
+export type TopicMetaData = {
+  message?: string
+  twitterCard?: string
+  ogImage?: {
+    url: string
+    width?: string
+    height?: string
+  }
+  ogTitle?: string
+  ogType?: string
+  ogDescription?: string
+  twitterSite?: string
+  ogLocale?: string
+}
+
+export type Topic = {
+  topic: string;
+  docCount: number;
+  sample?: {
+    channel: string;
+    title: string;
+    url: string;
+    timestamp: number;
+    meta_data?: TopicMetaData
+  }
+}
+
+export type Channel = {
+  channel: string;
+  totalTopics: number;
+  totalUniqueTopics: number;
+  hasMoreTopics: boolean;
+  topics: Topic[];
+}

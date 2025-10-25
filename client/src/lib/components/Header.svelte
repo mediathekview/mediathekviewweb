@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
   import { trackEvent } from '$lib/utils';
+  import { appState } from '$lib/store.svelte';
 
   let { showContact, showDonate, showImpressum, showDatenschutz } = $props<{
     showContact: () => void;
@@ -42,6 +43,31 @@
       <!-- Desktop Menu -->
       <div class="hidden md:flex md:items-center">
         <ul class="flex flex-row items-center gap-2">
+          <li>
+            <button
+              class="nav-link"
+              class:active={appState.currentView === 'search'}
+              onclick={() => appState.currentView = 'search'}>
+              Suche
+            </button>
+          </li>
+          <li>
+            <button
+              class="nav-link"
+              class:active={appState.currentView === 'channels'}
+              onclick={() => appState.currentView = 'channels'}>
+              Kanäle
+            </button>
+          </li>
+          <li>
+            <button
+              class="nav-link"
+              class:active={appState.currentView === 'topics'}
+              onclick={() => appState.currentView = 'topics'}>
+              Themen
+            </button>
+          </li>
+          <li class="text-gray-300 dark:text-gray-600 select-none">|</li>
           <li>
             <button
               class="nav-link"
@@ -141,11 +167,4 @@
 <style>
   @reference "../../app.css";
 
-  .nav-link {
-    @apply cursor-pointer rounded-md px-3 py-2 text-lg md:text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white;
-  }
-
-  .dropdown-item {
-    @apply block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600;
-  }
 </style>

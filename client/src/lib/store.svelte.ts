@@ -1,4 +1,4 @@
-import { isSortBy, isSortOrder, type QueryResult, type ResultEntry, type SortBy, type SortOrder } from './types';
+import { isSortBy, isSortOrder, type QueryResult, type ResultEntry, type SortBy, type SortOrder, type Channel, type Topic } from './types';
 import { createURIHash, debounce, parseURIHash, throttle, trackEvent } from './utils';
 
 const MAX_RESULTS = 10000;
@@ -12,6 +12,18 @@ function createAppState() {
   let currentPage = $state(0);
   let itemsPerPage = $state(15);
   let viewMode = $state<'grid' | 'list'>('grid');
+
+  let currentView = $state<'search' | 'channels' | 'topics'>('search');
+
+  let channelOptions = $state<string[]>([])
+  let channels = $state<Channel[]>([])
+  let topics = $state<Topic[]>([])
+
+  let selectedTopic = $state<string>('')
+  let selectedChannel = $state<string>('')
+
+  let topicAfterKey = $state<string>('')
+  let topicNextAfterKey = $state<string>('')
 
   let loading = $state(false);
   let error = $state<string | null>(null);
@@ -128,6 +140,72 @@ function createAppState() {
     parseStateFromUrl();
   }
 
+  async function loadChannelOptions() {
+    try {
+      const res = await fetch('/api/channels');
+
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data = await res.json();
+      if (data.err) throw new Error(data.err.join(', '));
+
+      channelOptions = data.channels;
+    } catch (e: any) {
+      error = e.message;
+      channelOptions = [];
+    }
+  }
+
+  async function loadChannels() {
+    try {
+      const res = await fetch('/api/topics-grouped');
+
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data = await res.json();
+      if (data.err) throw new Error(data.err.join(', '));
+
+      channels = data.data;
+    } catch (e: any) {
+      error = e.message;
+      channels = [];
+    }
+  }
+
+  async function loadTopics(afterKey: string = '') {
+    try {
+      const url = new URLSearchParams()
+      url.append('size', String(8))
+      
+      if(afterKey) {
+        url.append('afterKey', afterKey)
+      }
+
+      if(selectedChannel) {
+        url.append('channel', selectedChannel)
+      }
+
+      const res = await fetch(`/api/topics/paginated?${url.toString()}`);
+
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data = await res.json();
+      if (data.err) throw new Error(data.err.join(', '));
+
+      topics = data.topics;
+      
+      if(data.pagination.hasMore){
+        topicNextAfterKey = data.pagination.afterKey
+      }else{
+        topicNextAfterKey = ''
+      }
+
+    } catch (e: any) {
+      error = e.message;
+      channels = [];
+    }
+  }
+
   function init() {
     try {
       const storedViewMode = localStorage.getItem('viewMode');
@@ -147,6 +225,8 @@ function createAppState() {
     } catch (e) {
       /* ignore */
     }
+
+    loadChannelOptions();
 
     parseStateFromUrl();
     window.addEventListener('hashchange', handleHashChange);
@@ -209,6 +289,21 @@ function createAppState() {
     set itemsPerPage(value) { itemsPerPage = value; },
     get viewMode() { return viewMode; },
 
+    set currentView(value) { currentView = value; },
+    get currentView() { return currentView; },
+
+    get channelOptions() { return channelOptions; },
+    get channels() { return channels; },
+
+    get topics() { return topics; },
+    get topicNextAfterKey() { return topicNextAfterKey; },
+
+    get selectedTopic() { return selectedTopic; },
+    set selectedTopic(value) { selectedTopic = value; },
+
+    get selectedChannel() { return selectedChannel; },
+    set selectedChannel(value) { selectedChannel = value; },
+
     get loading() { return loading; },
     get error() { return error; },
     get results() { return results; },
@@ -253,6 +348,9 @@ function createAppState() {
       const search = window.location.hash.replace('#', '');
       window.open(`${window.location.origin}/feed${search.length > 0 ? '?' : ''}${search}`, '_blank');
     },
+    loadChannelOptions,
+    loadChannels,
+    loadTopics,
     init
   };
 }

@@ -7,6 +7,13 @@
 
   const sortValue = $derived(`${appState.sortBy}_${appState.sortOrder}`);
 
+  let channelMenuOpen = $state(false);
+
+  function handleChannelClick(channel: string) {
+    channelMenuOpen = false;
+    appState.query = `!${channel}`
+  }
+
   function handleSortChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     if (target) {
@@ -39,6 +46,18 @@
       <button tabindex="-1" class="search-input-clear {appState.query.length > 0 ? 'opacity-100' : 'opacity-0'}" onclick={() => (appState.query = '')}>
         <Icon icon="x-lg" />
       </button>
+    </div>
+    <div class="relative">
+      <button class="nav-link flex gap-2 items-center" type="button" onclick={() => (channelMenuOpen = !channelMenuOpen)}>
+        Kanäle <Icon icon="chevron-down" />
+      </button>
+      {#if channelMenuOpen}
+        <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-10 max-h-80 overflow-y-auto" role="menu" aria-orientation="vertical">
+          {#each appState.channelOptions as channel}
+            <button  class="dropdown-item w-full text-left" onclick={() => handleChannelClick(channel)}>{channel}</button>
+          {/each}
+        </div>
+      {/if}
     </div>
     <div class="flex items-center gap-4">
       <Toggle label="Überall" bind:checked={appState.everywhere} />

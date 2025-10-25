@@ -37,7 +37,8 @@ export class SearchEngine {
           channels: {
             terms: {
               field: "channel.keyword",
-              size: 100
+              size: 100,
+              order: { _term: "asc" } 
             }
           }
         }
@@ -45,6 +46,256 @@ export class SearchEngine {
     });
 
     return (response.body.aggregations.channels as TermsAggregation).buckets.map((bucket) => String(bucket.key));
+  }
+
+  async getTopics(size: number = 1000, channel: string): Promise<Array<{
+    topic: string;
+    docCount: number;
+    sample: {
+      channel: string;
+      title: string;
+      timestamp: number;
+      duration: number;
+    };
+  }>> {
+
+    const body: any = {
+      aggs: {
+        topics: {
+          terms: {
+            field: "topic.keyword",
+            size: size,
+            order: { _count: 'desc' }  // Most popular topics first
+          },
+          aggs: {
+            sample_doc: {
+              top_hits: {
+                size: 1,
+                sort: [{ timestamp: { order: 'desc' } }],  // Most recent document
+                _source: ['channel', 'title', 'timestamp', 'url_website', 'meta_data']
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (channel) {
+      body.query = {
+        term: {
+          "channel.keyword": channel
+        }
+      };
+    }
+
+    const response = await this.client.search({
+      index: OPENSEARCH_INDEX,
+      size: 0,
+      body
+    });
+
+    const buckets = (response.body.aggregations.topics as any).buckets;
+    
+    return buckets.map((bucket: any) => {
+      const sampleDoc = bucket.sample_doc.hits.hits[0]?._source || {};
+      
+      return {
+        topic: String(bucket.key),
+        docCount: bucket.doc_count,
+        sample: {
+          id: bucket.sample_doc?.hits?.hits?.[0]?._id || '',
+          channel: sampleDoc.channel || '',
+          meta_data: sampleDoc.meta_data || null,
+          title: sampleDoc.title || '',
+          url: sampleDoc.url_website || '',
+          timestamp: sampleDoc.timestamp || 0,
+        }
+      };
+    });
+  }
+
+  async getTopicsPaginated(
+    size: number = 25,
+    afterKey?: string,
+    channel?: string
+  ): Promise<{
+    topics: Array<{
+      topic: string;
+      docCount: number;
+      sample: {
+        channel: string;
+        title: string;
+        timestamp: number;
+        duration: number;
+      };
+    }>;
+    afterKey: string | null;
+    hasMore: boolean;
+  }> {
+    const body: any = {
+      size: 0,
+      aggs: {
+        topics_composite: {
+          composite: {
+            size: size,
+            sources: [
+              {
+                topic: {
+                  terms: {
+                    field: "topic.keyword",
+                    order: 'asc'
+                  }
+                }
+              }
+            ]
+          },
+          aggs: {
+            sample_doc: {
+              top_hits: {
+                size: 1,
+                sort: [{ timestamp: { order: 'desc' } }],
+                _source: ['channel', 'title', 'timestamp', 'url_website', 'meta_data']
+              }
+            }
+          }
+        }
+      }
+    };
+
+    if (channel) {
+      body.query = {
+        term: {
+          "channel.keyword": channel
+        }
+      };
+    }
+
+    if (afterKey) {
+      body.aggs.topics_composite.composite.after = { topic: afterKey };
+    }
+
+    try {
+      const response = await this.client.search({
+        index: OPENSEARCH_INDEX,
+        body
+      });
+
+      const composite = (response.body.aggregations as any).topics_composite;
+      const buckets = composite.buckets || [];
+
+      const topics = buckets.map((bucket: any) => {
+        const sampleDoc = bucket.sample_doc?.hits?.hits?.[0]?._source || {};
+        
+        return {
+          topic: String(bucket.key.topic),
+          docCount: bucket.doc_count,
+          sample: {
+            id: bucket.sample_doc?.hits?.hits?.[0]?._id || '',
+            channel: sampleDoc.channel || '',
+            meta_data: sampleDoc.meta_data || null,
+            title: sampleDoc.title || '',
+            url: sampleDoc.url_website || '',
+            timestamp: sampleDoc.timestamp || 0,
+          }
+        };
+      });
+
+      const nextAfterKey = composite.after_key?.topic || null;
+
+      return {
+        topics,
+        afterKey: nextAfterKey,
+        hasMore: nextAfterKey !== null
+      };
+    } catch (error) {
+      console.error("OpenSearch composite aggregation error:", error);
+      throw new Error('Failed to get paginated topics', { cause: error });
+    }
+  }
+
+  //TODO randomize retunred topics
+  async getTopicsGroupedByChannel(topicsPerChannel: number = 100): Promise<Array<{
+    channel: string;
+    totalTopics: number;
+    topics: Array<{
+      topic: string;
+      docCount: number;
+      sample: {
+        channel: string;
+        title: string;
+        url: string;
+        timestamp: number;
+      };
+    }>;
+  }>> {
+    const response = await this.client.search({
+      index: OPENSEARCH_INDEX,
+      size: 0,
+      body: {
+        aggs: {
+          channels: {
+            terms: {
+              field: "channel.keyword",
+              size: 100
+            },
+            aggs: {
+              topics: {
+                terms: {
+                  field: "topic.keyword",
+                  size: topicsPerChannel
+                },
+                aggs: {
+                  sample_doc: {
+                    top_hits: {
+                      size: 1,
+                      sort: [{ timestamp: { order: 'desc' } }],
+                      _source: ['channel', 'title', 'timestamp', 'url_website', 'meta_data']
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const channelBuckets = (response.body.aggregations.channels as any).buckets;
+
+    return channelBuckets.map((channelBucket: any) => {
+      const channel = String(channelBucket.key);
+      const topicsAgg = channelBucket.topics;
+      const topicBuckets = topicsAgg.buckets;
+      
+      const topics = topicBuckets.map((topicBucket: any) => {
+        const sampleDocId = topicBucket.sample_doc?.hits?.hits?.[0]?._id || '';
+        const sampleDoc = topicBucket.sample_doc?.hits?.hits?.[0]?._source || {};
+        
+        return {
+          topic: String(topicBucket.key),
+          docCount: topicBucket.doc_count,
+          sample: {
+            id: sampleDocId,
+            channel: sampleDoc.channel || '',
+            meta_data: sampleDoc.meta_data || null,
+            title: sampleDoc.title || '',
+            url: sampleDoc.url_website || '',
+            timestamp: sampleDoc.timestamp || 0,
+          }
+        };
+      });
+
+      const returnedTopicsCount = topicBuckets.length;
+      const sumOtherDocCount = topicsAgg.sum_other_doc_count || 0;
+      
+      return {
+        channel,
+        totalTopics: returnedTopicsCount,
+        totalUniqueTopics: returnedTopicsCount + sumOtherDocCount,
+        hasMoreTopics: sumOtherDocCount > 0,
+        topics
+      };
+    });
   }
 
   async getDescription(id: string): Promise<string> {
