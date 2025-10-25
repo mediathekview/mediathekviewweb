@@ -1,7 +1,10 @@
 
 import { TimeUnit } from '@valkey/valkey-glide';
 import { getValkeyClient, ValkeyClient } from './ValKey';
+import { Client } from '@opensearch-project/opensearch';
 import ogs from 'open-graph-scraper';
+import { config } from './config';
+import { OPENSEARCH_INDEX } from './keys';
 
 // https://www.npmjs.com/package/open-graph-scraper/v/3.0.2?activeTab=readme
 interface MetaDataLoaderOptions {
@@ -16,10 +19,11 @@ interface MetaDataLoaderOptions {
 export class MetaDataLoader {
   valkey: ValkeyClient;
   options: MetaDataLoaderOptions
+  searchClient: Client
   cacheTTL: number
   baseCacheKey: string
 
-  constructor(options: MetaDataLoaderOptions = {},baseCacheKey:string = 'metadata', cacheTTLInSeconds: number = 12 * 60 * 60) {
+  constructor(options: MetaDataLoaderOptions = {},baseCacheKey:string = 'metadata', cacheTTLInSeconds: number = 72 * 60 * 60) {
     this.options = {
       timeout: 4000,
       headers: {
@@ -29,9 +33,11 @@ export class MetaDataLoader {
     }
 
     this.baseCacheKey = baseCacheKey
-    this.cacheTTL = cacheTTLInSeconds // defualt 12 hours
+    this.cacheTTL = cacheTTLInSeconds // defualt 72 hours
 
     this.valkey = getValkeyClient();
+
+    this.searchClient = new Client(config.opensearch);
   }
 
   getCacheKey(url: string): string {
@@ -56,7 +62,33 @@ export class MetaDataLoader {
         type: TimeUnit.Seconds
       }
     })
+
+    await this.updateDocumentInOpenSearch(url, response)
     
     return response as object
+  }
+
+  async updateDocumentInOpenSearch(url: string, metaDataResponse: any) {
+    try {
+      await this.searchClient.updateByQuery({
+        index: OPENSEARCH_INDEX,
+        body: {
+          query: {
+            term: {
+              url_website: url
+            }
+          },
+          script: {
+            source: 'ctx._source.meta_data = params.meta_data',
+            lang: 'painless',
+            params: {
+              meta_data: metaDataResponse.data
+            }
+          }
+        }
+      })
+    } catch (error) {
+      console.log("[META-DATA-LOADER-DB-SET]", error)
+    }
   }
 }

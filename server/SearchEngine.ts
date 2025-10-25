@@ -72,7 +72,7 @@ export class SearchEngine {
               top_hits: {
                 size: 1,
                 sort: [{ timestamp: { order: 'desc' } }],  // Most recent document
-                _source: ['channel', 'title', 'timestamp', 'url_website']
+                _source: ['channel', 'title', 'timestamp', 'url_website', 'meta_data']
               }
             }
           }
@@ -103,7 +103,9 @@ export class SearchEngine {
         topic: String(bucket.key),
         docCount: bucket.doc_count,
         sample: {
+          id: bucket.sample_doc?.hits?.hits?.[0]?._id || '',
           channel: sampleDoc.channel || '',
+          meta_data: sampleDoc.meta_data || null,
           title: sampleDoc.title || '',
           url: sampleDoc.url_website || '',
           timestamp: sampleDoc.timestamp || 0,
@@ -152,7 +154,7 @@ export class SearchEngine {
               top_hits: {
                 size: 1,
                 sort: [{ timestamp: { order: 'desc' } }],
-                _source: ['channel', 'title', 'timestamp', 'url_website']
+                _source: ['channel', 'title', 'timestamp', 'url_website', 'meta_data']
               }
             }
           }
@@ -188,7 +190,9 @@ export class SearchEngine {
           topic: String(bucket.key.topic),
           docCount: bucket.doc_count,
           sample: {
+            id: bucket.sample_doc?.hits?.hits?.[0]?._id || '',
             channel: sampleDoc.channel || '',
+            meta_data: sampleDoc.meta_data || null,
             title: sampleDoc.title || '',
             url: sampleDoc.url_website || '',
             timestamp: sampleDoc.timestamp || 0,
@@ -209,6 +213,7 @@ export class SearchEngine {
     }
   }
 
+  //TODO randomize retunred topics
   async getTopicsGroupedByChannel(topicsPerChannel: number = 100): Promise<Array<{
     channel: string;
     totalTopics: number;
@@ -237,15 +242,14 @@ export class SearchEngine {
               topics: {
                 terms: {
                   field: "topic.keyword",
-                  size: topicsPerChannel,
-                  order: { _count: 'desc' }
+                  size: topicsPerChannel
                 },
                 aggs: {
                   sample_doc: {
                     top_hits: {
                       size: 1,
                       sort: [{ timestamp: { order: 'desc' } }],
-                      _source: ['channel', 'title', 'timestamp', 'url_website']
+                      _source: ['channel', 'title', 'timestamp', 'url_website', 'meta_data']
                     }
                   }
                 }
@@ -264,13 +268,16 @@ export class SearchEngine {
       const topicBuckets = topicsAgg.buckets;
       
       const topics = topicBuckets.map((topicBucket: any) => {
+        const sampleDocId = topicBucket.sample_doc?.hits?.hits?.[0]?._id || '';
         const sampleDoc = topicBucket.sample_doc?.hits?.hits?.[0]?._source || {};
         
         return {
           topic: String(topicBucket.key),
           docCount: topicBucket.doc_count,
           sample: {
+            id: sampleDocId,
             channel: sampleDoc.channel || '',
+            meta_data: sampleDoc.meta_data || null,
             title: sampleDoc.title || '',
             url: sampleDoc.url_website || '',
             timestamp: sampleDoc.timestamp || 0,

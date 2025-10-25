@@ -72,6 +72,10 @@ export const mapping = {
       format: 'epoch_second',
       index: true,
     },
+    meta_data: {
+      type: 'object',
+      enabled: false
+    }
   }
 } satisfies Indices_PutMapping_RequestBody;
 
