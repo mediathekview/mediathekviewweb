@@ -30,11 +30,11 @@
   }
 </script>
 
-<tr class="result-row" role="button" tabindex="0" onclick={toggleDetails} onkeydown={toggleDetails}>
+<tr class="result-row" role="button" tabindex="0" onkeydown={toggleDetails}>
   <td class="p-2 text-nowrap"><ChannelTag href={entry.url_website} target="_blank" rel="noopener noreferrer" channel={entry.channel} /></td>
   <td class="p-2 max-w-[calc(10ch+15vw)] truncate" title={entry.topic}>{entry.topic}</td>
   <td class="p-2 max-w-[calc(25ch+15vw)] truncate" title={entry.title}>{entry.title}</td>
-  <td class="p-2 text-center">
+  <td class="p-2 text-center" onclick={toggleDetails} >
     <div class="result-details-row-toggle">
       <Icon icon="chevron-down" title="Aufklappen" class="relative top-0.5 transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
     </div>
