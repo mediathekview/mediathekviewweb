@@ -7,6 +7,8 @@
   import Header from '$lib/components/Header.svelte';
   import Impressum from '$lib/components/Impressum.svelte';
   import ResultsContainer from '$lib/components/ResultsContainer.svelte';
+  import TopicsView from '$lib/components/TopicsView.svelte';
+  import ChannelsView from '$lib/components/ChannelsView.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
   import VideoPlayer from '$lib/components/VideoPlayer.svelte';
   import { appState } from '$lib/store.svelte';
@@ -121,13 +123,22 @@
 </script>
 
 <div class:blur={!!videoToPlay}>
-  <Header showContact={() => contactDialog.show()} showDonate={() => donateDialog.show()} {showImpressum} {showDatenschutz} />
+  <Header 
+    showContact={() => contactDialog.show()} 
+    showDonate={() => donateDialog.show()} 
+    {showImpressum} 
+    {showDatenschutz}
+  />
 
   <main bind:this={mainElement} class="mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    <div>
-      <SearchBar />
-      <ResultsContainer onPlayVideo={(payload) => (videoToPlay = payload)} />
-    </div>
+    {#if appState.currentView === 'search'}
+        <SearchBar />
+        <ResultsContainer onPlayVideo={(payload) => (videoToPlay = payload)} />
+      {:else if appState.currentView === 'channels'}
+        <ChannelsView />
+      {:else if appState.currentView === 'topics'}
+        <TopicsView />
+      {/if}
   </main>
 </div>
 
