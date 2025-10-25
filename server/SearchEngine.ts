@@ -37,7 +37,8 @@ export class SearchEngine {
           channels: {
             terms: {
               field: "channel.keyword",
-              size: 100
+              size: 100,
+              order: { _term: "asc" } 
             }
           }
         }
@@ -45,6 +46,208 @@ export class SearchEngine {
     });
 
     return (response.body.aggregations.channels as TermsAggregation).buckets.map((bucket) => String(bucket.key));
+  }
+
+  async getTopics(size: number = 1000): Promise<Array<{
+    topic: string;
+    docCount: number;
+    sample: {
+      channel: string;
+      title: string;
+      timestamp: number;
+      duration: number;
+    };
+  }>> {
+    const response = await this.client.search({
+      index: OPENSEARCH_INDEX,
+      size: 0,
+      body: {
+        aggs: {
+          topics: {
+            terms: {
+              field: "topic.keyword",
+              size: size,
+              order: { _count: 'desc' }  // Most popular topics first
+            },
+            aggs: {
+              sample_doc: {
+                top_hits: {
+                  size: 1,
+                  sort: [{ timestamp: { order: 'desc' } }],  // Most recent document
+                  _source: ['channel', 'title', 'timestamp', 'url_website']
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const buckets = (response.body.aggregations.topics as any).buckets;
+    
+    return buckets.map((bucket: any) => {
+      const sampleDoc = bucket.sample_doc.hits.hits[0]?._source || {};
+      
+      return {
+        topic: String(bucket.key),
+        docCount: bucket.doc_count,
+        sample: {
+          channel: sampleDoc.channel || '',
+          title: sampleDoc.title || '',
+            url: sampleDoc.url_website || '',
+            timestamp: sampleDoc.timestamp || 0,
+        }
+      };
+    });
+  }
+
+  async getTopicsPaginated(
+    size: number = 50,
+    afterKey?: string
+  ): Promise<{
+    topics: Array<{
+      topic: string;
+      docCount: number;
+      sample: {
+        channel: string;
+        title: string;
+        timestamp: number;
+        duration: number;
+      };
+    }>;
+    afterKey: string | null;
+    hasMore: boolean;
+  }> {
+    const body: any = {
+      size: 0,
+      aggs: {
+        topics_composite: {
+          composite: {
+            size: size,
+            sources: [
+              {
+                topic: {
+                  terms: {
+                    field: "topic.keyword",
+                    order: 'asc'
+                  }
+                }
+              }
+            ]
+          },
+          aggs: {
+            sample_doc: {
+              top_hits: {
+                size: 1,
+                sort: [{ timestamp: { order: 'desc' } }],
+                _source: ['channel', 'title', 'timestamp', 'url_website']
+              }
+            }
+          }
+        }
+      }
+    };
+
+    // Add pagination token if provided
+    if (afterKey) {
+      body.aggs.topics_composite.composite.after = { topic: afterKey };
+    }
+
+    try {
+      const response = await this.client.search({
+        index: OPENSEARCH_INDEX,
+        body
+      });
+
+      const composite = (response.body.aggregations as any).topics_composite;
+      const buckets = composite.buckets || [];
+
+      const topics = buckets.map((bucket: any) => {
+        const sampleDoc = bucket.sample_doc?.hits?.hits?.[0]?._source || {};
+        
+        return {
+          topic: String(bucket.key.topic),
+          docCount: bucket.doc_count,
+          sample: {
+            channel: sampleDoc.channel || '',
+            title: sampleDoc.title || '',
+            url: sampleDoc.url_website || '',
+            timestamp: sampleDoc.timestamp || 0,
+          }
+        };
+      });
+
+      const nextAfterKey = composite.after_key?.topic || null;
+
+      return {
+        topics,
+        afterKey: nextAfterKey,
+        hasMore: nextAfterKey !== null
+      };
+    } catch (error) {
+      console.error("OpenSearch composite aggregation error:", error);
+      throw new Error('Failed to get paginated topics', { cause: error });
+    }
+  }
+
+  async getTopicsByChannel(channel: string, size: number = 1000): Promise<string[]> {
+    const response = await this.client.search({
+      index: OPENSEARCH_INDEX,
+      size: 0,
+      body: {
+        query: {
+          term: {
+            "channel.keyword": channel
+          }
+        },
+        aggs: {
+          topics: {
+            terms: {
+              field: "topic.keyword",
+              size: size
+            }
+          }
+        }
+      }
+    });
+
+    return (response.body.aggregations.topics as TermsAggregation).buckets.map((bucket) => String(bucket.key));
+  }
+
+  async getTopicsGroupedByChannel(topicsPerChannel: number = 100): Promise<Record<string, string[]>> {
+    const response = await this.client.search({
+      index: OPENSEARCH_INDEX,
+      size: 0,
+      body: {
+        aggs: {
+          channels: {
+            terms: {
+              field: "channel.keyword",
+              size: 100
+            },
+            aggs: {
+              topics: {
+                terms: {
+                  field: "topic.keyword",
+                  size: topicsPerChannel
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const result: Record<string, string[]> = {};
+    const channelBuckets = (response.body.aggregations.channels as any).buckets;
+
+    for (const channelBucket of channelBuckets) {
+      const channel = String(channelBucket.key);
+      const topics = channelBucket.topics.buckets.map((bucket: any) => String(bucket.key));
+      result[channel] = topics;
+    }
+
+    return result;
   }
 
   async getDescription(id: string): Promise<string> {

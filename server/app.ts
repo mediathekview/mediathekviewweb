@@ -7,6 +7,7 @@ import got from 'got';
 import moment from 'moment';
 
 import { MediathekManager } from './MediathekManager';
+import { MetaDataLoader } from './MetaDataLoader';
 import { RSSFeedGenerator } from './RSSFeedGenerator';
 import { SearchEngine } from './SearchEngine';
 import { getValkeyClient, initializeValkey } from './ValKey';
@@ -42,6 +43,8 @@ import { VALKEY_KEYS } from './keys';
 
   const mediathekManager = new MediathekManager();
   const rssFeedGenerator = new RSSFeedGenerator(searchEngine);
+
+  const metaDataLoader = new MetaDataLoader();
 
   let filmlisteTimestamp = await mediathekManager.getCurrentFilmlisteTimestamp();
   let totalEntries = await valkey.scard(VALKEY_KEYS.CURRENT_FILMLISTE);
@@ -125,6 +128,119 @@ import { VALKEY_KEYS } from './keys';
       res.status(500).json({
         error: errorMessage,
         channels: null
+      });
+    }
+  });
+
+  app.get('/api/topics', async (_req, res) => {
+    try {
+      const size = parseInt(_req.query.size as string) || 1000;
+      const topics = await searchEngine.getTopics(size);
+      res.json({
+        error: null,
+        topics: topics
+      });
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({
+        error: errorMessage,
+        topics: null
+      });
+    }
+  });
+
+  app.get('/api/topics/paginated', async (req, res) => {
+    try {
+      const size = Math.min(parseInt(req.query.size as string) || 50, 1000);
+      const afterKey = req.query.afterKey as string | undefined;
+      
+      const result = await searchEngine.getTopicsPaginated(size, afterKey);
+      
+      res.json({
+        error: null,
+        topics: result.topics,
+        pagination: {
+          size: size,
+          afterKey: result.afterKey,
+          hasMore: result.hasMore
+        }
+      });
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({
+        error: errorMessage,
+        topics: null
+      });
+    }
+  });
+
+  app.get('/api/topics-by-channel', async (req, res) => {
+    const channel = req.query.channel as string;
+    const size = parseInt(req.query.size as string) || 1000;
+    
+    if (!channel) {
+      res.status(400).json({
+        error: 'Channel parameter is required',
+        topics: null
+      });
+      return;
+    }
+
+    try {
+      const topics = await searchEngine.getTopicsByChannel(channel, size);
+      res.json({
+        error: null,
+        channel: channel,
+        topics: topics
+      });
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({
+        error: errorMessage,
+        topics: null
+      });
+    }
+  });
+
+  app.get('/api/topics-grouped', async (_req, res) => {
+    try {
+      const topicsPerChannel = parseInt(_req.query.topicsPerChannel as string) || 100;
+      const grouped = await searchEngine.getTopicsGroupedByChannel(topicsPerChannel);
+      res.json({
+        error: null,
+        data: grouped
+      });
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({
+        error: errorMessage,
+        data: null
+      });
+    }
+  });
+
+  app.get('/api/meta-data', async (req, res) => {
+    const url = req.query.url as string;
+
+    if (!url) {
+      res.status(400).send('URL parameter is missing');
+      return;
+    }
+
+    try {
+      const metaData = await metaDataLoader.getMetaData(url) 
+      res.json(metaData)
+    }
+    catch (error) {
+      console.log(error)
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({
+        error: errorMessage,
+        data: null
       });
     }
   });

@@ -1,6 +1,22 @@
-version: "3.7"
-
 services:
+  app:
+    build: .
+    ports:
+      - "${WEBSERVER_PORT:-8000}:8000"
+    depends_on:
+      - opensearch
+      - valkey
+    env_file:
+      - .env
+    volumes:
+      - "./data:/usr/src/app/data"
+    restart: unless-stopped
+    healthcheck:      
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   opensearch:
     image: opensearchproject/opensearch:3
     environment:
@@ -10,19 +26,20 @@ services:
       DISABLE_INSTALL_DEMO_CONFIG: "true"
       DISABLE_SECURITY_PLUGIN: "true"
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: MediathekViewWeb01!
-      INJECT_HTML_PATH:
     volumes:
       - "opensearch:/usr/share/opensearch/data"
     ports:
       - "9200:9200"
+    restart: unless-stopped
 
   valkey:
     image: valkey/valkey:8-alpine
-    command: ["--save 60 1"]
+    command: ["--save", "60", "1"]
     volumes:
       - "valkey:/data"
     ports:
       - "6379:6379"
+    restart: unless-stopped
 
 volumes:
   valkey:

@@ -19,7 +19,12 @@ export const mapping = {
       type: 'text',
       index: true,
       analyzer: 'mvw_index_analyzer',
-      search_analyzer: 'mvw_search_analyzer'
+      search_analyzer: 'mvw_search_analyzer',
+      fields: {
+        keyword: {
+          type: 'keyword'
+        }
+      }
     },
     title: {
       type: 'text',

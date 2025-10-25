@@ -22,6 +22,7 @@
     "line-reader": "0.4",
     "lzma-native": "8.0",
     "moment": "2.30",
+    "open-graph-scraper": "^3.0.2",
     "rss": "1.2"
   },
   "devDependencies": {
