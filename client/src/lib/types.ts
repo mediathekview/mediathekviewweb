@@ -58,6 +58,7 @@ export type VideoPayload = {
 };
 
 export type TopicMetaData = {
+  message?: string
   twitterCard?: string
   ogImage?: {
     url: string

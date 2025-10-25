@@ -1,4 +1,4 @@
-import { isSortBy, isSortOrder, type QueryResult, type ResultEntry, type SortBy, type SortOrder, type Channel } from './types';
+import { isSortBy, isSortOrder, type QueryResult, type ResultEntry, type SortBy, type SortOrder, type Channel, type Topic } from './types';
 import { createURIHash, debounce, parseURIHash, throttle, trackEvent } from './utils';
 
 const MAX_RESULTS = 10000;
@@ -17,9 +17,13 @@ function createAppState() {
 
   let channelOptions = $state<string[]>([])
   let channels = $state<Channel[]>([])
+  let topics = $state<Topic[]>([])
 
   let selectedTopic = $state<string>('')
   let selectedChannel = $state<string>('')
+
+  let topicAfterKey = $state<string>('')
+  let topicNextAfterKey = $state<string>('')
 
   let loading = $state(false);
   let error = $state<string | null>(null);
@@ -168,6 +172,40 @@ function createAppState() {
     }
   }
 
+  async function loadTopics(afterKey: string = '') {
+    try {
+      const url = new URLSearchParams()
+      url.append('size', String(8))
+      
+      if(afterKey) {
+        url.append('afterKey', afterKey)
+      }
+
+      if(selectedChannel) {
+        url.append('channel', selectedChannel)
+      }
+
+      const res = await fetch(`/api/topics/paginated?${url.toString()}`);
+
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data = await res.json();
+      if (data.err) throw new Error(data.err.join(', '));
+
+      topics = data.topics;
+      
+      if(data.pagination.hasMore){
+        topicNextAfterKey = data.pagination.afterKey
+      }else{
+        topicNextAfterKey = ''
+      }
+
+    } catch (e: any) {
+      error = e.message;
+      channels = [];
+    }
+  }
+
   function init() {
     try {
       const storedViewMode = localStorage.getItem('viewMode');
@@ -257,6 +295,9 @@ function createAppState() {
     get channelOptions() { return channelOptions; },
     get channels() { return channels; },
 
+    get topics() { return topics; },
+    get topicNextAfterKey() { return topicNextAfterKey; },
+
     get selectedTopic() { return selectedTopic; },
     set selectedTopic(value) { selectedTopic = value; },
 
@@ -309,6 +350,7 @@ function createAppState() {
     },
     loadChannelOptions,
     loadChannels,
+    loadTopics,
     init
   };
 }
