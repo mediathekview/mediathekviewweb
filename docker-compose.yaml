@@ -28,8 +28,6 @@ services:
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: MediathekViewWeb01!
     volumes:
       - "opensearch:/usr/share/opensearch/data"
-    ports:
-      - "9200:9200"
     restart: unless-stopped
 
   valkey:
@@ -37,8 +35,6 @@ services:
     command: ["--save", "60", "1"]
     volumes:
       - "valkey:/data"
-    ports:
-      - "6379:6379"
     restart: unless-stopped
 
 volumes:
