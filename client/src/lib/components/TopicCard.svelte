@@ -72,6 +72,8 @@
   function topicDetails() {
     appState.selectedTopic = topic.topic;
     appState.selectedChannel = topic.sample?.channel || '';
+    appState.query = `!${appState.selectedChannel} #${appState.selectedTopic.replaceAll(' ', '_')}`
+    appState.currentView = 'search'
   }
 </script>
 

@@ -134,7 +134,7 @@ import { VALKEY_KEYS } from './keys';
 
   app.get('/api/topics', async (_req, res) => {
     try {
-      const size = parseInt(_req.query.size as string) || 100;
+      const size = parseInt(_req.query.size as string) || 9;
       const channel = _req.query.channel as string | undefined
       const topics = await searchEngine.getTopics(size, channel);
       res.json({
@@ -153,7 +153,7 @@ import { VALKEY_KEYS } from './keys';
 
   app.get('/api/topics/paginated', async (req, res) => {
     try {
-      const size = Math.min(parseInt(req.query.size as string) || 50, 1000);
+      const size = Math.min(parseInt(req.query.size as string) || 9, 1000);
       const afterKey = req.query.afterKey as string | undefined;
       const channel = req.query.channel as string | undefined;
       
@@ -209,7 +209,6 @@ import { VALKEY_KEYS } from './keys';
       res.json(metaData)
     }
     catch (error) {
-      console.log(error)
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(500).json({
         error: errorMessage,

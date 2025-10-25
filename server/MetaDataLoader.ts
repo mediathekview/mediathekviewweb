@@ -23,7 +23,7 @@ export class MetaDataLoader {
   cacheTTL: number
   baseCacheKey: string
 
-  constructor(options: MetaDataLoaderOptions = {},baseCacheKey:string = 'metadata', cacheTTLInSeconds: number = 72 * 60 * 60) {
+  constructor(options: MetaDataLoaderOptions = {}, baseCacheKey:string = 'metadata', cacheTTLInSeconds: number = 1 * 60 * 60) {
     this.options = {
       timeout: 4000,
       headers: {
@@ -33,7 +33,7 @@ export class MetaDataLoader {
     }
 
     this.baseCacheKey = baseCacheKey
-    this.cacheTTL = cacheTTLInSeconds // defualt 72 hours
+    this.cacheTTL = cacheTTLInSeconds // defualt 1 hours
 
     this.valkey = getValkeyClient();
 
@@ -51,10 +51,18 @@ export class MetaDataLoader {
       return JSON.parse(cacheItem as string) as object
     }
 
-    const response = await ogs({
-      url,
-      ...this.options
-    })
+    let response = {data:{}}
+    try {
+      response = await ogs({
+        url,
+        ...this.options
+      })
+    } catch (error) {
+      console.log("[META-DATA-LOADER]", url)
+      response.data = {
+        message: `Wasnt able to resolve meta data`
+      }
+    }
     
     await this.valkey.set(cacheKey, JSON.stringify(response), {
       expiry: {

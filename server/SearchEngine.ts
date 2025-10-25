@@ -115,7 +115,7 @@ export class SearchEngine {
   }
 
   async getTopicsPaginated(
-    size: number = 50,
+    size: number = 25,
     afterKey?: string,
     channel?: string
   ): Promise<{

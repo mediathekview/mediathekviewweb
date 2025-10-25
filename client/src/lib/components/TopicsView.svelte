@@ -1,7 +1,6 @@
 <script lang="ts">
   import { appState } from "$lib/store.svelte";
   import TopicCard from "./TopicCard.svelte";
-  import TopicDetailPage from "./TopicDetailPage.svelte";
 
   let error = $state<string | null>(null);
 
@@ -18,7 +17,6 @@
 </script>
 
 <div class="prose dark:prose-invert prose-sm max-w-none">
-  {#if !appState.selectedTopic}
   <div class="flex flex-wrap gap-2 mb-3">
     {#each appState.channelOptions as channel}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -42,7 +40,4 @@
     </div>
     <button type="button" class="button" onclick={() => appState.loadTopics(appState.topicNextAfterKey)}>Nächste Seite</button>
   </div>
-  {:else}
-  <TopicDetailPage />
-  {/if}
 </div>
