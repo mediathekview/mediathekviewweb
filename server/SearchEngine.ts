@@ -48,7 +48,7 @@ export class SearchEngine {
     return (response.body.aggregations.channels as TermsAggregation).buckets.map((bucket) => String(bucket.key));
   }
 
-  async getTopics(size: number = 1000): Promise<Array<{
+  async getTopics(size: number = 1000, channel: string): Promise<Array<{
     topic: string;
     docCount: number;
     sample: {
@@ -58,29 +58,40 @@ export class SearchEngine {
       duration: number;
     };
   }>> {
-    const response = await this.client.search({
-      index: OPENSEARCH_INDEX,
-      size: 0,
-      body: {
-        aggs: {
-          topics: {
-            terms: {
-              field: "topic.keyword",
-              size: size,
-              order: { _count: 'desc' }  // Most popular topics first
-            },
-            aggs: {
-              sample_doc: {
-                top_hits: {
-                  size: 1,
-                  sort: [{ timestamp: { order: 'desc' } }],  // Most recent document
-                  _source: ['channel', 'title', 'timestamp', 'url_website']
-                }
+
+    const body: any = {
+      aggs: {
+        topics: {
+          terms: {
+            field: "topic.keyword",
+            size: size,
+            order: { _count: 'desc' }  // Most popular topics first
+          },
+          aggs: {
+            sample_doc: {
+              top_hits: {
+                size: 1,
+                sort: [{ timestamp: { order: 'desc' } }],  // Most recent document
+                _source: ['channel', 'title', 'timestamp', 'url_website']
               }
             }
           }
         }
       }
+    }
+
+    if (channel) {
+      body.query = {
+        term: {
+          "channel.keyword": channel
+        }
+      };
+    }
+
+    const response = await this.client.search({
+      index: OPENSEARCH_INDEX,
+      size: 0,
+      body
     });
 
     const buckets = (response.body.aggregations.topics as any).buckets;
@@ -94,8 +105,8 @@ export class SearchEngine {
         sample: {
           channel: sampleDoc.channel || '',
           title: sampleDoc.title || '',
-            url: sampleDoc.url_website || '',
-            timestamp: sampleDoc.timestamp || 0,
+          url: sampleDoc.url_website || '',
+          timestamp: sampleDoc.timestamp || 0,
         }
       };
     });
@@ -103,7 +114,8 @@ export class SearchEngine {
 
   async getTopicsPaginated(
     size: number = 50,
-    afterKey?: string
+    afterKey?: string,
+    channel?: string
   ): Promise<{
     topics: Array<{
       topic: string;
@@ -148,7 +160,14 @@ export class SearchEngine {
       }
     };
 
-    // Add pagination token if provided
+    if (channel) {
+      body.query = {
+        term: {
+          "channel.keyword": channel
+        }
+      };
+    }
+
     if (afterKey) {
       body.aggs.topics_composite.composite.after = { topic: afterKey };
     }
@@ -190,31 +209,20 @@ export class SearchEngine {
     }
   }
 
-  async getTopicsByChannel(channel: string, size: number = 1000): Promise<string[]> {
-    const response = await this.client.search({
-      index: OPENSEARCH_INDEX,
-      size: 0,
-      body: {
-        query: {
-          term: {
-            "channel.keyword": channel
-          }
-        },
-        aggs: {
-          topics: {
-            terms: {
-              field: "topic.keyword",
-              size: size
-            }
-          }
-        }
-      }
-    });
-
-    return (response.body.aggregations.topics as TermsAggregation).buckets.map((bucket) => String(bucket.key));
-  }
-
-  async getTopicsGroupedByChannel(topicsPerChannel: number = 100): Promise<Record<string, string[]>> {
+  async getTopicsGroupedByChannel(topicsPerChannel: number = 100): Promise<Array<{
+    channel: string;
+    totalTopics: number;
+    topics: Array<{
+      topic: string;
+      docCount: number;
+      sample: {
+        channel: string;
+        title: string;
+        url: string;
+        timestamp: number;
+      };
+    }>;
+  }>> {
     const response = await this.client.search({
       index: OPENSEARCH_INDEX,
       size: 0,
@@ -229,7 +237,17 @@ export class SearchEngine {
               topics: {
                 terms: {
                   field: "topic.keyword",
-                  size: topicsPerChannel
+                  size: topicsPerChannel,
+                  order: { _count: 'desc' }
+                },
+                aggs: {
+                  sample_doc: {
+                    top_hits: {
+                      size: 1,
+                      sort: [{ timestamp: { order: 'desc' } }],
+                      _source: ['channel', 'title', 'timestamp', 'url_website']
+                    }
+                  }
                 }
               }
             }
@@ -238,16 +256,39 @@ export class SearchEngine {
       }
     });
 
-    const result: Record<string, string[]> = {};
     const channelBuckets = (response.body.aggregations.channels as any).buckets;
 
-    for (const channelBucket of channelBuckets) {
+    return channelBuckets.map((channelBucket: any) => {
       const channel = String(channelBucket.key);
-      const topics = channelBucket.topics.buckets.map((bucket: any) => String(bucket.key));
-      result[channel] = topics;
-    }
+      const topicsAgg = channelBucket.topics;
+      const topicBuckets = topicsAgg.buckets;
+      
+      const topics = topicBuckets.map((topicBucket: any) => {
+        const sampleDoc = topicBucket.sample_doc?.hits?.hits?.[0]?._source || {};
+        
+        return {
+          topic: String(topicBucket.key),
+          docCount: topicBucket.doc_count,
+          sample: {
+            channel: sampleDoc.channel || '',
+            title: sampleDoc.title || '',
+            url: sampleDoc.url_website || '',
+            timestamp: sampleDoc.timestamp || 0,
+          }
+        };
+      });
 
-    return result;
+      const returnedTopicsCount = topicBuckets.length;
+      const sumOtherDocCount = topicsAgg.sum_other_doc_count || 0;
+      
+      return {
+        channel,
+        totalTopics: returnedTopicsCount,
+        totalUniqueTopics: returnedTopicsCount + sumOtherDocCount,
+        hasMoreTopics: sumOtherDocCount > 0,
+        topics
+      };
+    });
   }
 
   async getDescription(id: string): Promise<string> {
