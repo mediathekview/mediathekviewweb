@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "${WEBSERVER_PORT:-8000}:8000"
+      - "${WEBSERVER_PORT:-8000}:${WEBSERVER_PORT:-8000}"
     depends_on:
       - opensearch
       - valkey
