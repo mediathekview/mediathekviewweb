@@ -17,7 +17,7 @@
     "@opensearch-project/opensearch": "3.5",
     "@valkey/valkey-glide": "2.1",
     "compression": "1.8",
-    "express": "5.1",
+    "express": "5.2",
     "got": "14.6",
     "line-reader": "0.4",
     "lzma-native": "8.0",
