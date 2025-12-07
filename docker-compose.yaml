@@ -1,29 +1,76 @@
-version: "3.7"
+version: "3.9"
 
 services:
   opensearch:
     image: opensearchproject/opensearch:3
     environment:
-      discovery.type: single-node
-      bootstrap.memory_lock: "true"
-      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
-      DISABLE_INSTALL_DEMO_CONFIG: "true"
-      DISABLE_SECURITY_PLUGIN: "true"
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: MediathekViewWeb01!
-      INJECT_HTML_PATH:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-MediathekViewWeb01!}
+      - INJECT_HTML_PATH=null
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     volumes:
       - "opensearch:/usr/share/opensearch/data"
     ports:
       - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:9200/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   valkey:
     image: valkey/valkey:8-alpine
-    command: ["--save 60 1"]
+    command: ["--save", "60", "1"]
     volumes:
-      - "valkey:/data"
+      - valkey:/data
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -h localhost PING >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  mediathekviewweb:
+    build:
+      context: "https://github.com/mediathekview/mediathekviewweb.git"
+      dockerfile: Containerfile
+    image: mediathekviewweb:latest
+    environment:
+      - NODE_ENV=production
+      - WEBSERVER_PORT=8000
+      - DATA_DIRECTORY=/mediathekviewweb/data
+      - INDEX=true
+      - VALKEY_HOST=valkey
+      - VALKEY_PORT=6379
+      - VALKEY_DB=2
+      # - VALKEY_USER=myuser
+      # - VALKEY_PASSWORD=mypassword
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
+      # - CONTACT_NAME="Your Name"
+      # - CONTACT_MAIL="you@example.org"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - opensearch
+      - valkey
+    volumes:
+      - data:/mediathekviewweb/data
+    restart: unless-stopped
 
 volumes:
-  valkey:
-  opensearch:
+  opensearch: {}
+  valkey: {}
+  data: {}
