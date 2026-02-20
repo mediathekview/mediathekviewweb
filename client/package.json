@@ -26,7 +26,7 @@
     "prettier": "3.6",
     "prettier-plugin-svelte": "3.4",
     "prettier-plugin-tailwindcss": "0.7",
-    "svelte": "5.40",
+    "svelte": "5.53",
     "svelte-check": "4.3",
     "typescript": "5.9",
     "vite": "7.1",
