@@ -3,13 +3,12 @@ import path from 'node:path';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv } from 'vite';
-import devtoolsJson from 'vite-plugin-devtools-json';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname);
   return {
-    plugins: [tailwindcss(), svelte(), devtoolsJson()],
+    plugins: [tailwindcss(), svelte()],
     server: {
       proxy: {
         '/api': {
