@@ -125,6 +125,23 @@ function createAppState() {
       return;
     }
 
+    // Third-party scripts (e.g. AdSense interstitials) push/replace history
+    // entries, which fire hashchange with an empty/default hash. If that would
+    // wipe a non-default in-memory state, re-assert our state instead.
+    const newParams = parseURIHash(window.location.hash);
+    const incomingQuery = newParams['query'] ?? '';
+    if (!incomingQuery && query) {
+      updateUrlHash({
+        query,
+        everywhere,
+        future,
+        sortBy,
+        sortOrder,
+        page: currentPage + 1
+      });
+      return;
+    }
+
     parseStateFromUrl();
   }
 
