@@ -1,6 +1,7 @@
 import type { ClientOptions } from '@opensearch-project/opensearch';
 import { Client } from '@opensearch-project/opensearch';
 import type { TermsAggregation } from '@opensearch-project/opensearch/api/_types/_common.aggregations.js';
+import type { Hit } from '@opensearch-project/opensearch/api/_types/_core.search.js';
 import type { Core_Get } from '@opensearch-project/opensearch/api/_types/index.js';
 
 import { OPENSEARCH_INDEX } from './keys';
@@ -138,7 +139,7 @@ export class SearchEngine {
     try {
       const response = (await this.client.search(opensearchQuery)).body;
 
-      const result = response.hits.hits.map((hit) => {
+      const result = response.hits.hits.map((hit: Hit) => {
         const entry = hit._source as any;
         entry.id = hit._id;
 

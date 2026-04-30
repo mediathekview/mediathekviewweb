@@ -17,7 +17,7 @@ services:
       - "9200:9200"
 
   valkey:
-    image: valkey/valkey:8-alpine
+    image: valkey/valkey:9-alpine
     command: ["--save 60 1"]
     volumes:
       - "valkey:/data"

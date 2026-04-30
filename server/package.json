@@ -14,11 +14,11 @@
   "author": "Patrick Hein",
   "license": "GPLv3",
   "dependencies": {
-    "@opensearch-project/opensearch": "3.5",
-    "@valkey/valkey-glide": "2.1",
+    "@opensearch-project/opensearch": "3.6",
+    "@valkey/valkey-glide": "2.3",
     "compression": "1.8",
-    "express": "5.1",
-    "got": "14.6",
+    "express": "5.2",
+    "got": "15.0",
     "line-reader": "0.4",
     "lzma-native": "8.0",
     "moment": "2.30",
@@ -28,8 +28,8 @@
     "@types/compression": "1.8",
     "@types/express": "5.0",
     "@types/line-reader": "0.0.37",
-    "@types/node": "24",
+    "@types/node": "25",
     "@types/rss": "0.0",
-    "typescript": "5.9"
+    "typescript": "6.0"
   }
 }

@@ -1,4 +1,4 @@
-FROM node:24-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN mkdir -p /dist/client && \
     cp -R /app/server/dist/* /dist/ && \
     cp -R /app/client/dist/* /dist/client/
 
-FROM node:24-alpine
+FROM node:25-alpine
 
 ENV NODE_ENV=production
 
