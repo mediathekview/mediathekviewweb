@@ -104,4 +104,18 @@
     Weitere Informationen zum Umgang mit Nutzerdaten bei Google AdSense finden Sie in der Datenschutzerklärung von Google unter:
     <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">https://policies.google.com/technologies/ads</a>.
   </p>
+  <h2>6. Plug-ins und Tools</h2>
+  <h3>Google Cast (Chromecast)</h3>
+  <p>Diese Website bietet die optionale Möglichkeit, Videos per <i>Google Cast (Chromecast)</i> auf kompatible Wiedergabegeräte zu übertragen. Anbieter ist die Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland.</p>
+  <p>Damit diese Funktion genutzt werden kann, muss das Cast-SDK von einem Server von Google (<code>www.gstatic.com</code>) nachgeladen werden. Hierbei werden technisch notwendige Daten wie Ihre IP-Adresse sowie Informationen zu Browser und Betriebssystem an Google übertragen. Beim Starten einer Cast-Sitzung werden zudem die URL des ausgewählten Videos sowie zugehörige Metadaten (Sender, Thema, Titel) an das Wiedergabegerät und die Cast-Infrastruktur von Google übermittelt.</p>
+  <p>Das Cast-SDK wird ausschließlich nach Ihrer ausdrücklichen Einwilligung geladen. Bevor erstmalig eine Verbindung zu einem Cast-Gerät aufgebaut wird, fragen wir Sie über einen Hinweisdialog um Zustimmung. Solange Sie nicht zustimmen, werden keinerlei Daten an Google übertragen. Ihre Einwilligung können Sie jederzeit widerrufen, indem Sie die im Browser unter dem Schlüssel <code>castConsent</code> gespeicherten Daten in <i>localStorage</i> löschen.</p>
+  <p>Die Nutzung von Google Cast erfolgt auf Grundlage Ihrer Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TTDSG.</p>
+  <p>
+    Eine Übertragung von Daten in die USA kann nicht ausgeschlossen werden und wird auf die Standardvertragsklauseln der EU-Kommission gestützt. Details finden Sie hier:
+    <a href="https://policies.google.com/privacy/frameworks" target="_blank" rel="noopener noreferrer">https://policies.google.com/privacy/frameworks</a>.
+  </p>
+  <p>
+    Weitere Informationen zum Umgang mit Nutzerdaten finden Sie in der Datenschutzerklärung von Google unter:
+    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">https://policies.google.com/privacy</a>.
+  </p>
 </div>
