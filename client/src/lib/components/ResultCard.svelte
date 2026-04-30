@@ -3,6 +3,7 @@
   import { formatDate, formatDuration, formatTime } from '$lib/utils';
   import ChannelTag from './ChannelTag.svelte';
   import Drawer from './Drawer.svelte';
+  import Icon from './Icon.svelte';
   import VideoActions from './VideoActions.svelte';
 
   let { entry, onPlayVideo, isDetailsOpen, onToggleDetails, index } = $props<{
@@ -15,36 +16,47 @@
 
   const { topic, title, timestamp, duration, channel, url_website } = entry;
 
-  function handleClick(event: MouseEvent | KeyboardEvent) {
-    if (event instanceof KeyboardEvent && !['Enter', ' '].includes(event.key)) {
-      return;
-    }
-
-    if (event instanceof KeyboardEvent && event.key === ' ') {
-      event.preventDefault();
-    }
-
+  function handleClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
+
     if (target.closest('a') || target.closest('button')) {
       return;
     }
+
+    if ((window.getSelection()?.toString().length ?? 0) > 0) {
+      return;
+    }
+
     onToggleDetails(entry.id);
   }
 </script>
 
-<div class="result-card" role="button" tabindex="0" onclick={handleClick} onkeydown={handleClick}>
+<div class="result-card" onclick={handleClick}>
   <div class="p-3">
-    <div class="flex justify-between items-start">
-      <h3 class="text-sm font-semibold text-gray-900/75 dark:text-gray-300 truncate" {topic}>{topic}</h3>
+    <div class="flex justify-between items-start gap-2">
+      <div class="text-sm font-semibold text-gray-900/75 dark:text-gray-300 truncate" title={topic}>{topic}</div>
       <ChannelTag href={url_website} target="_blank" rel="noopener noreferrer" {channel} class="-mt-0.5 -mr-0.5" />
     </div>
 
-    <h2 class="mt-1 font-semibold text-gray-900 dark:text-white" {title}>{title}</h2>
-    <div class="mt-1 text-sm text-gray-500 dark:text-gray-300/85">{formatDate(timestamp)} · {formatTime(timestamp)} Uhr · {formatDuration(duration)}</div>
+    <h3 class="mt-1 font-semibold text-gray-900 dark:text-white" {title}>{title}</h3>
+    <div class="mt-1 flex items-center justify-between gap-2 text-sm text-gray-500 dark:text-gray-300/85">
+      <span>{formatDate(timestamp)} · {formatTime(timestamp)} Uhr · {formatDuration(duration)}</span>
+      <button
+        type="button"
+        class="result-card-toggle"
+        aria-expanded={isDetailsOpen}
+        aria-label={isDetailsOpen ? 'Details zuklappen' : 'Details aufklappen'}
+        onclick={(e) => {
+          e.stopPropagation();
+          onToggleDetails(entry.id);
+        }}>
+        <Icon icon="chevron-down" class="transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
+      </button>
+    </div>
   </div>
   <Drawer isOpen={isDetailsOpen}>
     {#snippet children()}
-      <div class="p-3 rounded-md not-dark:shadow-md cursor-default" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+      <div class="p-3 rounded-md not-dark:shadow-md cursor-default" onclick={(e) => e.stopPropagation()}>
         <div class="mb-2 font-semibold">Beschreibung</div>
         <p class="text-sm text-gray-900/80 dark:text-gray-300">{entry.description}</p>
         <div class="mt-4 pt-4 border-t border-gray-500/50">
@@ -60,5 +72,9 @@
 
   .result-card {
     @apply bg-white dark:bg-gray-800 hover:bg-gray-200/70 hover:dark:bg-gray-700/60 rounded-lg shadow-sm dark:shadow-none cursor-pointer transition-colors duration-250;
+  }
+
+  .result-card-toggle {
+    @apply inline-flex items-center justify-center cursor-pointer text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white;
   }
 </style>

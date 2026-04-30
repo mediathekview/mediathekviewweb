@@ -36,10 +36,10 @@
         {#if icon}
           <Icon {icon} class="text-2xl " />
         {/if}
-        <h1 class="text-2xl font-semibold">{title}</h1>
+        <h2 class="text-2xl font-semibold">{title}</h2>
       </div>
 
-      <button onclick={() => dialog.close()} class="text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 cursor-pointer" aria-label="Close">
+      <button type="button" onclick={() => dialog.close()} class="text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 cursor-pointer" aria-label="Schließen">
         <Icon icon="x-lg" size="lg" />
       </button>
     </div>

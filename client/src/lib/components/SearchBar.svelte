@@ -35,8 +35,9 @@
       <div class="search-input-icon">
         <Icon icon="search" class="text-gray-600 dark:text-gray-300" />
       </div>
-      <input type="text" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" title="Selektoren:&#13;!Sender&#13;#Thema&#13;+Titel&#13;*Beschreibung&#13;&lt;x (in Minuten)&#13;&gt;x (in Minuten)" bind:value={appState.query} />
-      <button tabindex="-1" class="search-input-clear {appState.query.length > 0 ? 'opacity-100' : 'opacity-0'}" onclick={() => (appState.query = '')}>
+      <label for="search-input" class="sr-only">Suche</label>
+      <input id="search-input" type="search" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" title="Selektoren:&#13;!Sender&#13;#Thema&#13;+Titel&#13;*Beschreibung&#13;&lt;x (in Minuten)&#13;&gt;x (in Minuten)" bind:value={appState.query} />
+      <button tabindex="-1" type="button" aria-label="Suche zurücksetzen" class="search-input-clear {appState.query.length > 0 ? 'opacity-100' : 'opacity-0'}" onclick={() => (appState.query = '')}>
         <Icon icon="x-lg" />
       </button>
     </div>
@@ -48,13 +49,13 @@
       {#if appState.viewMode === 'grid'}
         <Dropdown label="Sortierung" options={sortOptions} value={sortValue} onchange={handleSortChange} />
       {/if}
-      <button class="icon-btn" type="button" title={appState.viewMode === 'grid' ? 'Listenansicht' : 'Kartenansicht'} onclick={appState.toggleViewMode}>
+      <button class="icon-btn" type="button" aria-label={appState.viewMode === 'grid' ? 'Listenansicht' : 'Kartenansicht'} title={appState.viewMode === 'grid' ? 'Listenansicht' : 'Kartenansicht'} onclick={appState.toggleViewMode}>
         <Icon icon={appState.viewMode === 'grid' ? 'table' : 'grid'} class="text-gray-600 dark:text-gray-300" />
       </button>
-      <button class="icon-btn" type="button" title="RSS-Feed" onclick={appState.openRssFeed}>
+      <button class="icon-btn" type="button" aria-label="RSS-Feed" title="RSS-Feed" onclick={appState.openRssFeed}>
         <Icon icon="rss" class="text-gray-600 dark:text-gray-300" />
       </button>
-      <a href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md" target="_blank" rel="noopener noreferrer" class="icon-btn" title="Hilfe" onclick={() => trackEvent('Click Help')}>
+      <a href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md" target="_blank" rel="noopener noreferrer" class="icon-btn" aria-label="Hilfe" title="Hilfe" onclick={() => trackEvent('Click Help')}>
         <Icon icon="question-circle" class="text-gray-600 dark:text-gray-300" />
       </a>
     </div>

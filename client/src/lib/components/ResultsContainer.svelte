@@ -77,6 +77,8 @@
 </script>
 
 <div>
+  <h2 class="sr-only">Suchergebnisse</h2>
+
   {#if appState.results.length > 0}
     {#if appState.viewMode === 'grid'}
       <div class="space-y-4">

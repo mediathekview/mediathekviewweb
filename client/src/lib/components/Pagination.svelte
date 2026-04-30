@@ -27,18 +27,18 @@
 </script>
 
 <div class="flex items-center gap-4 flex-wrap">
-  <nav class="flex items-stretch gap-x-1">
-    <button class="pagination-link pagination-link-arrow" disabled={appState.currentPage <= 0} onclick={() => appState.setCurrentPage(appState.currentPage - 1)}>
+  <nav aria-label="Seitennavigation" class="flex items-stretch gap-x-1">
+    <button type="button" aria-label="Vorherige Seite" class="pagination-link pagination-link-arrow" disabled={appState.currentPage <= 0} onclick={() => appState.setCurrentPage(appState.currentPage - 1)}>
       <Icon icon="chevron-left" />
     </button>
 
     {#each pageNumbers as i}
-      <button class="pagination-link" class:active={appState.currentPage === i} onclick={() => appState.setCurrentPage(i)}>
+      <button type="button" aria-label={`Seite ${i + 1}`} aria-current={appState.currentPage === i ? 'page' : undefined} class="pagination-link" class:active={appState.currentPage === i} onclick={() => appState.setCurrentPage(i)}>
         {i + 1}
       </button>
     {/each}
 
-    <button class="pagination-link pagination-link-arrow" disabled={appState.currentPage >= totalPages - 1} onclick={() => appState.setCurrentPage(appState.currentPage + 1)}>
+    <button type="button" aria-label="Nächste Seite" class="pagination-link pagination-link-arrow" disabled={appState.currentPage >= totalPages - 1} onclick={() => appState.setCurrentPage(appState.currentPage + 1)}>
       <Icon icon="chevron-right" />
     </button>
   </nav>

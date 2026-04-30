@@ -175,7 +175,7 @@
 </script>
 
 <dialog bind:this={dialog} class="px-[4vw] bg-transparent max-w-none max-h-none w-full h-full backdrop:bg-black/85">
-  <button onclick={() => dialog.close()} class="absolute top-8 right-8 text-white z-10 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+  <button type="button" aria-label="Player schließen" onclick={() => dialog.close()} class="absolute top-8 right-8 text-white z-10 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
     <Icon icon="x-lg" size="3xl" />
   </button>
 

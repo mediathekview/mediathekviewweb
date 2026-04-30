@@ -34,10 +34,12 @@
   }
 </script>
 
-<nav class="bg-white dark:bg-gray-800 not-dark:shadow-sm">
+<nav class="bg-white dark:bg-gray-800 not-dark:shadow-sm" aria-label="Hauptnavigation">
   <div id="nav-container" class="max-w-7xl mx-auto px-1.5 sm:px-4 lg:px-6">
     <div class="flex items-center justify-end md:justify-between py-4">
-      <a id="logo" class="hidden md:block text-xl font-bold text-gray-900 dark:text-white" href="/">MediathekViewWeb</a>
+      <h1 class="hidden md:block text-xl font-bold text-gray-900 dark:text-white m-0">
+        <a id="logo" href="/">MediathekViewWeb</a>
+      </h1>
 
       <!-- Desktop Menu -->
       <div class="hidden md:flex md:items-center">
