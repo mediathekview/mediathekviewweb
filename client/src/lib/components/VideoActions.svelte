@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ResultEntry, VideoPayload, VideoQuality } from '$lib/types';
   import { formatBytes, playVideoInNewWindow, trackEvent } from '$lib/utils';
+  import { castVideo, isChromeBasedBrowser } from '$lib/cast';
   import Icon from './Icon.svelte';
 
   let {
@@ -20,6 +21,8 @@
     { key: 'url_video', name: 'SD' },
     { key: 'url_video_low', name: 'LQ' },
   ];
+
+  const showCastButton = isChromeBasedBrowser();
 
   let sizes = $state<Record<VideoQuality | 'subtitle', string>>({ HD: '? MB', SD: '? MB', LQ: '? MB', subtitle: '? MB' });
   let sizesFetched = $state(false);
@@ -81,6 +84,16 @@
       topic: entry.topic,
       title: entry.title,
       quality,
+    });
+  }
+
+  async function cast(event: MouseEvent, url: string) {
+    event.stopPropagation();
+    await castVideo({
+      channel: entry.channel,
+      topic: entry.topic,
+      title: entry.title,
+      url,
     });
   }
 
@@ -213,6 +226,27 @@
           {/if}
         </div>
       </div>
+      {#if showCastButton}
+        <div>
+          <h4 class="flex items-center gap-2 font-semibold mb-3">
+            <Icon icon="cast" />
+            Chromecast
+          </h4>
+          <div class="flex gap-x-2 font-bold">
+            {#each qualities as q}
+              {@const url = entry[q.key] as string}
+              {#if url}
+                <button
+                  class="action-btn"
+                  title={`${q.name} auf Chromecast abspielen`}
+                  onclick={(e) => cast(e, url)}>
+                  {q.name}
+                </button>
+              {/if}
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}

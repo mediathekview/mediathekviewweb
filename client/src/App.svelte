@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CastConsentDialog from '$lib/components/CastConsentDialog.svelte';
   import ContactDialog from '$lib/components/ContactDialog.svelte';
   import CookieDialog from '$lib/components/CookieDialog.svelte';
   import Datenschutz from '$lib/components/Datenschutz.svelte';
@@ -9,6 +10,7 @@
   import ResultsContainer from '$lib/components/ResultsContainer.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
   import VideoPlayer from '$lib/components/VideoPlayer.svelte';
+  import { setCastConsentProvider } from '$lib/cast';
   import { appState } from '$lib/store.svelte';
   import type { VideoPayload } from '$lib/types';
   import { initializeAnalytics, trackEvent } from '$lib/utils';
@@ -18,6 +20,7 @@
   let cookieDialog: CookieDialog;
   let contactDialog: ContactDialog;
   let donateDialog: DonateDialog;
+  let castConsentDialog: CastConsentDialog;
   let mainElement: HTMLElement;
   let legalDialog = $state<Dialog>();
 
@@ -72,6 +75,16 @@
 
     // This now correctly starts the reactive effects and returns a cleanup function
     const destroyStore = appState.init();
+
+    setCastConsentProvider(
+      () =>
+        new Promise((resolve) => {
+          castConsentDialog.show((choice) => {
+            trackEvent('Cast Consent', { consent: choice });
+            resolve(choice);
+          });
+        }),
+    );
 
     // Cookie consent
     try {
@@ -133,6 +146,7 @@
 
 <VideoPlayer videoPayload={videoToPlay} onClose={() => (videoToPlay = null)} />
 <CookieDialog bind:this={cookieDialog} onConsent={handleCookieConsent} {showImpressum} {showDatenschutz} />
+<CastConsentDialog bind:this={castConsentDialog} />
 <ContactDialog bind:this={contactDialog} />
 <DonateDialog bind:this={donateDialog} />
 
