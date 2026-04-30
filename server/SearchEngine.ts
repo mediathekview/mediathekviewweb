@@ -7,6 +7,8 @@ import type { Core_Get } from '@opensearch-project/opensearch/api/_types/index.j
 import { OPENSEARCH_INDEX } from './keys';
 import { timeout } from './utils';
 
+const textSortFields = new Set(['channel', 'topic', 'title']);
+
 export class SearchEngine {
   client: Client;
 
@@ -132,8 +134,10 @@ export class SearchEngine {
       });
     }
 
-    if (typeof query.sortBy === 'string' && query.sortBy.length > 0) {
-      opensearchQuery.body.sort = { [query.sortBy]: { order: query.sortOrder } };
+    if (typeof query.sortBy === 'string' && (query.sortBy.length > 0)) {
+      // Text fields (channel, topic, title) need their keyword subfield for sorting.
+      const sortField = textSortFields.has(query.sortBy) ? `${query.sortBy}.keyword` : query.sortBy;
+      opensearchQuery.body.sort = { [sortField]: { order: query.sortOrder } };
     }
 
     try {

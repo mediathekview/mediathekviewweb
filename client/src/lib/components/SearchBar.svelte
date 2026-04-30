@@ -22,10 +22,10 @@
     { value: 'duration_asc', label: 'Dauer ↑' },
     { value: 'channel_asc', label: 'Sender ↑' },
     { value: 'channel_desc', label: 'Sender ↓' },
-    // { value: 'topic_asc', label: 'Thema (A-Z)' },
-    // { value: 'topic_desc', label: 'Thema (Z-A)' },
-    // { value: 'title_asc', label: 'Titel (A-Z)' },
-    // { value: 'title_desc', label: 'Titel (Z-A)' },
+    { value: 'topic_asc', label: 'Thema ↑' },
+    { value: 'topic_desc', label: 'Thema ↓' },
+    { value: 'title_asc', label: 'Titel ↑' },
+    { value: 'title_desc', label: 'Titel ↓' },
   ];
 </script>
 

@@ -44,9 +44,13 @@
     },
     {
       label: 'Thema',
+      sortKey: 'topic',
+      sortType: 'alpha',
     },
     {
       label: 'Titel',
+      sortKey: 'title',
+      sortType: 'alpha',
     },
     {
       icon: 'card-text',
