@@ -13,31 +13,35 @@
     onToggleDetails: (id: string) => void;
   }>();
 
-  function toggleDetails(event: MouseEvent | KeyboardEvent) {
-    if (event instanceof KeyboardEvent && !['Enter', ' '].includes(event.key)) {
-      return;
-    }
-
-    if (event instanceof KeyboardEvent && event.key === ' ') {
-      event.preventDefault();
-    }
-
+  function toggleDetails(event: MouseEvent) {
     const target = event.target as HTMLElement;
+
     if (target.closest('a') || target.closest('button')) {
       return;
     }
+
+    // Skip when the click was actually a text selection drag.
+    if ((window.getSelection()?.toString().length ?? 0) > 0) {
+      return;
+    }
+
     onToggleDetails(entry.id);
   }
 </script>
 
-<tr class="result-row" role="button" tabindex="0" onclick={toggleDetails} onkeydown={toggleDetails}>
+<tr class="result-row" onclick={toggleDetails}>
   <td class="p-2 text-nowrap"><ChannelTag href={entry.url_website} target="_blank" rel="noopener noreferrer" channel={entry.channel} /></td>
   <td class="p-2"><div class="truncate" title={entry.topic}>{entry.topic}</div></td>
   <td class="p-2"><div class="truncate" title={entry.title}>{entry.title}</div></td>
   <td class="p-2 text-center">
-    <div class="result-details-row-toggle">
-      <Icon icon="chevron-down" title="Aufklappen" class="relative top-0.5 transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
-    </div>
+    <button
+      type="button"
+      class="result-details-row-toggle"
+      aria-expanded={isDetailsOpen}
+      aria-label={isDetailsOpen ? 'Details zuklappen' : 'Details aufklappen'}
+      onclick={() => onToggleDetails(entry.id)}>
+      <Icon icon="chevron-down" class="relative top-0.5 transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
+    </button>
   </td>
   <td class="p-2">{formatDate(entry.timestamp)}</td>
   <td class="p-2">{formatTime(entry.timestamp)}</td>
@@ -115,6 +119,6 @@
   }
 
   .result-details-row-toggle {
-    @apply cursor-pointer text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white;
+    @apply inline-flex items-center justify-center w-full cursor-pointer text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white;
   }
 </style>
