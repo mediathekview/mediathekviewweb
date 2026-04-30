@@ -32,46 +32,45 @@
     sortKey?: SortBy;
     sortType?: 'alpha' | 'numeric';
     icon?: string;
-    class?: string;
+    colClass?: string;
     divClass?: string;
   }[] = [
     {
       label: 'Sender',
       sortKey: 'channel',
       sortType: 'alpha',
-      class: 'w-px',
+      colClass: 'w-32',
       divClass: 'rounded-l-md',
     },
     {
       label: 'Thema',
-      class: 'w-px',
     },
     {
       label: 'Titel',
     },
     {
       icon: 'card-text',
-      class: 'w-px',
+      colClass: 'w-12',
     },
     {
       label: 'Datum',
       sortKey: 'timestamp',
       sortType: 'numeric',
-      class: 'w-px',
+      colClass: 'w-28',
     },
     {
       label: 'Zeit',
-      class: 'w-px',
+      colClass: 'w-16',
     },
     {
       label: 'Dauer',
       sortKey: 'duration',
       sortType: 'numeric',
-      class: 'w-px',
+      colClass: 'w-20',
     },
     {
       label: 'Abspielen',
-      class: 'w-px',
+      colClass: 'w-48',
       divClass: 'justify-center rounded-r-md',
     },
   ];
@@ -87,11 +86,16 @@
       </div>
     {:else}
       <div class="overflow-x-auto rounded-b-md">
-        <table class="table-fixed min-w-full">
+        <table class="table-fixed w-full min-w-[59rem]">
+          <colgroup>
+            {#each tableHeaders as header}
+              <col class={header.colClass ?? ''} />
+            {/each}
+          </colgroup>
           <thead class="text-sm font-semibold text-gray-700 dark:text-gray-300">
             <tr class="[&>th>div]:h-10 [&>th>div]:flex [&>th>div]:items-center [&>th]:pb-3 [&>th>div]:px-2 [&>th>div]:py-0 [&>th>div]:bg-white dark:[&>th>div]:bg-gray-800">
               {#each tableHeaders as header}
-                <th class={header.class ?? ''}>
+                <th>
                   <div class={header.divClass ?? ''}>
                     {#if header.sortKey}
                       {@const isActive = appState.sortBy === header.sortKey}
