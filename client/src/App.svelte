@@ -137,6 +137,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>{videoToPlay ? `${videoToPlay.title} – MediathekViewWeb` : appState.query ? `${appState.query} – MediathekViewWeb` : 'MediathekViewWeb'}</title>
+</svelte:head>
+
 <div class:blur={!!videoToPlay}>
   <Header showContact={() => contactDialog.show()} showDonate={() => donateDialog.show()} showHelp={() => helpDialog.show()} {showImpressum} {showDatenschutz} />
 
