@@ -31,8 +31,8 @@
 
 <tr class="result-row" onclick={toggleDetails}>
   <td class="p-2 text-nowrap"><ChannelTag href={entry.url_website} target="_blank" rel="noopener noreferrer" channel={entry.channel} /></td>
-  <td class="p-2"><div class="truncate" title={entry.topic}>{entry.topic}</div></td>
-  <td class="p-2"><div class="truncate" title={entry.title}>{entry.title}</div></td>
+  <td class="p-2 truncate" title={entry.topic}>{entry.topic}</td>
+  <td class="p-2 truncate" title={entry.title}>{entry.title}</td>
   <td class="p-2 text-center">
     <button
       type="button"
