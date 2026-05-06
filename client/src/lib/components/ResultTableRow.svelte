@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ResultEntry, VideoPayload } from '$lib/types';
-  import { formatDate, formatDuration, formatTime } from '$lib/utils';
+  import { formatDate, formatDuration, formatTime, isToggleClick } from '$lib/utils';
   import ChannelTag from './ChannelTag.svelte';
   import Drawer from './Drawer.svelte';
   import Icon from './Icon.svelte';
@@ -14,18 +14,9 @@
   }>();
 
   function toggleDetails(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-
-    if (target.closest('a') || target.closest('button')) {
-      return;
+    if (isToggleClick(event)) {
+      onToggleDetails(entry.id);
     }
-
-    // Skip when the click was actually a text selection drag.
-    if ((window.getSelection()?.toString().length ?? 0) > 0) {
-      return;
-    }
-
-    onToggleDetails(entry.id);
   }
 </script>
 
@@ -34,12 +25,7 @@
   <td class="p-2 truncate" title={entry.topic}>{entry.topic}</td>
   <td class="p-2 truncate" title={entry.title}>{entry.title}</td>
   <td class="p-2 text-center">
-    <button
-      type="button"
-      class="result-details-row-toggle"
-      aria-expanded={isDetailsOpen}
-      aria-label={isDetailsOpen ? 'Details zuklappen' : 'Details aufklappen'}
-      onclick={() => onToggleDetails(entry.id)}>
+    <button type="button" class="result-details-row-toggle" aria-expanded={isDetailsOpen} aria-label={isDetailsOpen ? 'Details zuklappen' : 'Details aufklappen'} onclick={() => onToggleDetails(entry.id)}>
       <Icon icon="chevron-down" class="relative top-0.5 transition-transform {isDetailsOpen ? 'rotate-180' : ''}" />
     </button>
   </td>
@@ -58,13 +44,15 @@
       {#snippet children()}
         <div class="p-4">
           <div class="cursor-default p-4 bg-gray-500/5 dark:bg-gray-500/15 rounded-md not-dark:shadow-md">
-            <div class="text-neutral-900/80 dark:text-neutral-50/90">{entry.topic}</div>
-            <div class="mb-4 text-lg font-bold">{entry.title}</div>
-
-            <div class="mb-2 text-lg font-semibold">Beschreibung</div>
-            <p class="text-neutral-900/80 dark:text-neutral-50/80">{entry.description}</p>
-            <div class="mt-4 pt-4 border-t border-gray-500/50">
-              <VideoActions {entry} {onPlayVideo} view="drawer" {isDetailsOpen} />
+            <div class="flex flex-col sm:flex-row items-start gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="text-neutral-900/80 dark:text-neutral-50/90">{entry.topic}</div>
+                <div class="mb-2 text-lg font-bold">{entry.title}</div>
+                <p class="text-neutral-900/80 dark:text-neutral-50/80">{entry.description}</p>
+              </div>
+              <div class="shrink-0 w-full sm:w-auto border-t sm:border-t-0 sm:border-l border-gray-500/30 pt-4 sm:pt-0 sm:pl-4">
+                <VideoActions {entry} {onPlayVideo} view="drawer" {isDetailsOpen} />
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { castVideo, isChromeBasedBrowser } from '$lib/cast';
   import type { ResultEntry, VideoPayload, VideoQuality } from '$lib/types';
   import { formatBytes, playVideoInNewWindow, trackEvent } from '$lib/utils';
-  import { castVideo, isChromeBasedBrowser } from '$lib/cast';
   import Icon from './Icon.svelte';
 
   let {
@@ -28,6 +28,15 @@
   let sizesFetched = $state(false);
 
   let copyStatus = $state<Record<VideoQuality | 'subtitle', 'idle' | 'copied' | 'error'>>({ HD: 'idle', SD: 'idle', LQ: 'idle', subtitle: 'idle' });
+  let pointerDownAt = 0;
+
+  function recordPointerDown() {
+    pointerDownAt = Date.now();
+  }
+
+  function isLongPress(): boolean {
+    return Date.now() - pointerDownAt > 500;
+  }
 
   async function fetchSize(quality: VideoQuality | 'subtitle', url: string) {
     if (!url) return;
@@ -55,6 +64,10 @@
 
   async function play(event: MouseEvent, quality: VideoQuality, url: string) {
     event.stopPropagation();
+
+    if (isLongPress()) {
+      return;
+    }
 
     trackEvent('Play Video', {
       channel: entry.channel,
@@ -89,6 +102,11 @@
 
   async function cast(event: MouseEvent, url: string) {
     event.stopPropagation();
+
+    if (isLongPress()) {
+      return;
+    }
+
     await castVideo({
       channel: entry.channel,
       topic: entry.topic,
@@ -126,6 +144,7 @@
         href={url}
         class="video-action-link -my-1.5"
         title={`${q.name} abspielen`}
+        onpointerdown={recordPointerDown}
         onclick={(e) => {
           e.preventDefault();
           play(e, q.name, url);
@@ -140,114 +159,100 @@
 {/if}
 
 {#if view === 'drawer'}
-  <div class="flex flex-wrap justify-between gap-x-12 gap-y-8">
-    <div>
-      <h4 class="font-semibold mb-3">Qualität</h4>
-      <div class="grid grid-cols-[repeat(2,auto)] gap-y-2 text-sm">
-        {#each qualities as q}
-          {#if entry[q.key]}
-            <span class="font-medium">{q.name}</span>
-            <span class="ml-1 font-normal"> - {sizes[q.name]}</span>
-          {/if}
-        {/each}
-        {#if entry.url_subtitle}
-          <span class="font-medium">CC</span>
-          <span class="ml-1 font-normal"> - {sizes.subtitle}</span>
-        {/if}
-      </div>
-    </div>
-    <div class="flex flex-wrap items-start gap-x-12 gap-y-8">
-      <div>
-        <h4 class="flex items-center gap-4 font-semibold mb-3">Abspielen</h4>
-        <div class="flex gap-x-2 font-bold">
-          {#each qualities as q, i}
-            {@const url = entry[q.key] as string}
-            {#if url}
+  <table class="drawer-table">
+    <tbody>
+      {#each qualities as q}
+        {@const url = entry[q.key] as string}
+        {#if url}
+          <tr>
+            <td class="quality-name">{q.name}</td>
+            <td class="quality-size">{sizes[q.name]}</td>
+            <td>
               <a
                 href={url}
                 class="action-btn"
                 title={`${q.name} abspielen`}
+                onpointerdown={recordPointerDown}
                 onclick={(e) => {
                   e.preventDefault();
                   play(e, q.name, url);
-                }}>{q.name}</a>
-            {/if}
-          {/each}
-        </div>
-      </div>
-      <div>
-        <h4 class="flex items-center gap-2 font-semibold mb-3">
-          Download
-          <span class="cursor-help" title="Zum Herunterladen je nach Browser 'Rechtsklick -> Speichern unter...' nötig.">
-            <Icon icon="info-circle" />
-          </span>
-        </h4>
-        <div class="flex gap-x-2 font-bold">
-          {#each qualities as q}
-            {@const url = entry[q.key] as string}
-            {#if url}
-              <a href={url} download target="_blank" rel="noopener noreferrer" class="action-btn" onclick={() => trackDownload(q.name)} title={`Download ${q.name}`}>{q.name}</a>
-            {/if}
-          {/each}
-          {#if entry.url_subtitle}
-            <a href={entry.url_subtitle} download target="_blank" rel="noopener noreferrer" class="action-btn" title="Untertitel herunterladen">
-              <Icon icon="cc-square" size="lg" />
-            </a>
-          {/if}
-        </div>
-      </div>
-      <div>
-        <h4 class="flex items-center gap-4 font-semibold mb-3">URL kopieren</h4>
-        <div class="flex gap-x-2 font-bold">
-          {#each qualities as q}
-            {@const url = entry[q.key] as string}
-            {#if url}
-              <button class="action-btn" onclick={() => copyToClipboard(q.name, url)} title={`URL kopieren ${q.name}`}>
+                }}>
+                <Icon icon="play-fill" />
+              </a>
+            </td>
+            <td>
+              <a href={url} download target="_blank" rel="noopener noreferrer" class="action-btn" title={`Download ${q.name}`} onclick={() => trackDownload(q.name)}>
+                <Icon icon="download" />
+              </a>
+            </td>
+            <td>
+              <a
+                href={url}
+                class="action-btn"
+                title={`URL kopieren ${q.name}`}
+                onclick={(e) => {
+                  if (e.button !== 0) return;
+                  e.preventDefault();
+                  copyToClipboard(q.name, url);
+                }}>
                 {#if copyStatus[q.name] === 'idle'}
-                  {q.name}
+                  <Icon icon="link-45deg" />
                 {:else if copyStatus[q.name] === 'copied'}
-                  <Icon icon="check-lg" size="lg" />
+                  <Icon icon="check-lg" />
                 {:else}
-                  <Icon icon="x-lg" size="lg" />
+                  <Icon icon="x-lg" />
                 {/if}
-              </button>
-            {/if}
-          {/each}
-          {#if entry.url_subtitle}
-            <button class="action-btn" onclick={() => copyToClipboard('subtitle', entry.url_subtitle as string)} title="Untertitel-URL kopieren">
-              {#if copyStatus.subtitle === 'idle'}
-                <Icon icon="cc-square" size="lg" />
-              {:else if copyStatus.subtitle === 'copied'}
-                <Icon icon="check-lg" size="lg" />
-              {:else}
-                <Icon icon="x-lg" size="lg" />
-              {/if}
-            </button>
-          {/if}
-        </div>
-      </div>
-      {#if showCastButton}
-        <div>
-          <h4 class="flex items-center gap-2 font-semibold mb-3">
-            <Icon icon="cast" />
-            Chromecast
-          </h4>
-          <div class="flex gap-x-2 font-bold">
-            {#each qualities as q}
-              {@const url = entry[q.key] as string}
-              {#if url}
-                <button
-                  class="action-btn"
-                  title={`${q.name} auf Chromecast abspielen`}
-                  onclick={(e) => cast(e, url)}>
-                  {q.name}
+              </a>
+            </td>
+            {#if showCastButton}
+              <td>
+                <button class="action-btn" title={`${q.name} auf Chromecast abspielen`} onpointerdown={recordPointerDown} onclick={(e) => cast(e, url)}>
+                  <Icon icon="cast" />
                 </button>
+              </td>
+            {/if}
+          </tr>
+        {/if}
+      {/each}
+      {#if entry.url_subtitle}
+        <tr>
+          <td class="quality-name">CC</td>
+          <td class="quality-size">{sizes.subtitle}</td>
+          <td></td>
+          <td>
+            <a href={entry.url_subtitle} download target="_blank" rel="noopener noreferrer" class="action-btn" title="Untertitel herunterladen">
+              <Icon icon="download" />
+            </a>
+          </td>
+          <td>
+            <a
+              href={entry.url_subtitle}
+              class="action-btn"
+              title="Untertitel-URL kopieren"
+              onclick={(e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                copyToClipboard('subtitle', entry.url_subtitle as string);
+              }}>
+              {#if copyStatus.subtitle === 'idle'}
+                <Icon icon="link-45deg" />
+              {:else if copyStatus.subtitle === 'copied'}
+                <Icon icon="check-lg" />
+              {:else}
+                <Icon icon="x-lg" />
               {/if}
-            {/each}
-          </div>
-        </div>
+            </a>
+          </td>
+          {#if showCastButton}<td></td>{/if}
+        </tr>
       {/if}
-    </div>
+    </tbody>
+  </table>
+  <div class="legend">
+    <span><Icon icon="play-fill" /> Abspielen</span>
+    <span><Icon icon="download" /> Download <span class="cursor-help" title="Zum Herunterladen je nach Browser 'Rechtsklick → Speichern unter...' nötig."><Icon icon="info-circle" /></span></span>
+    <span><Icon icon="link-45deg" /> URL kopieren</span>
+    {#if showCastButton}<span><Icon icon="cast" /> Chromecast</span>{/if}
   </div>
 {/if}
 
@@ -260,5 +265,34 @@
 
   .action-btn {
     @apply inline-flex items-center justify-center p-3 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors;
+  }
+
+  .drawer-table {
+    @apply border-separate border-spacing-y-1 w-fit;
+  }
+
+  .drawer-table td {
+    @apply px-1 align-middle;
+  }
+
+  .quality-name {
+    @apply font-medium text-sm whitespace-nowrap text-right pr-0;
+  }
+
+  .quality-name::after {
+    content: ' |';
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  .quality-size {
+    @apply text-sm whitespace-nowrap text-right pr-3;
+  }
+
+  .legend {
+    @apply inline-grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .legend span {
+    @apply inline-flex items-center gap-1;
   }
 </style>

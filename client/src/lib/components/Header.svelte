@@ -11,69 +11,91 @@
 
   let mobileMenuOpen = $state(false);
   let aboutMenuOpen = $state(false);
-  let aboutMenuMobileOpen = $state(false);
 
-  function handleAboutClick(type: 'impressum' | 'datenschutz') {
-    aboutMenuOpen = false;
-    aboutMenuMobileOpen = false;
-    mobileMenuOpen = false;
-    if (type === 'impressum') {
-      trackEvent('View Impressum');
-      showImpressum();
+  type NavItem = { type: 'button'; label: string; event: string; action: () => void } | { type: 'link'; label: string; event: string; href: string };
+
+  const navItems: NavItem[] = [
+    { type: 'button', label: 'Spenden', event: 'Click Donate', action: showDonate },
+    { type: 'link', label: 'Forum', event: 'Click Forum Link', href: 'https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb' },
+    { type: 'button', label: 'Kontakt', event: 'Click Contact', action: showContact },
+    { type: 'link', label: 'GitHub', event: 'Click GitHub Link', href: 'https://github.com/mediathekview/mediathekviewweb' },
+  ];
+
+  const aboutItems: { label: string; key: 'impressum' | 'datenschutz' }[] = [
+    { label: 'Impressum', key: 'impressum' },
+    { label: 'Datenschutz', key: 'datenschutz' },
+  ];
+
+  function clickOutside(node: HTMLElement, callback: () => void) {
+    function handle(e: MouseEvent) {
+      if (!node.contains(e.target as Node)) callback();
     }
 
-    if (type === 'datenschutz') {
+    window.addEventListener('click', handle, true);
+
+    return {
+      destroy() {
+        window.removeEventListener('click', handle, true);
+      },
+    };
+  }
+
+  function handleAboutClick(key: 'impressum' | 'datenschutz') {
+    aboutMenuOpen = false;
+    mobileMenuOpen = false;
+    if (key === 'impressum') {
+      trackEvent('View Impressum');
+      showImpressum();
+    } else {
       trackEvent('View Datenschutz');
       showDatenschutz();
     }
   }
-
-  function handleMenuClick(action: () => void) {
-    mobileMenuOpen = false;
-    action();
-  }
 </script>
 
+{#snippet navItem(item: NavItem, closeMobile: boolean)}
+  {#if item.type === 'link'}
+    <a
+      class="nav-link"
+      target="_blank"
+      href={item.href}
+      onclick={() => {
+        trackEvent(item.event);
+        if (closeMobile) mobileMenuOpen = false;
+      }}>{item.label}</a>
+  {:else}
+    <button
+      class="nav-link"
+      onclick={() => {
+        trackEvent(item.event);
+        if (closeMobile) mobileMenuOpen = false;
+        item.action();
+      }}>{item.label}</button>
+  {/if}
+{/snippet}
+
 <nav class="bg-white dark:bg-gray-800 not-dark:shadow-sm" aria-label="Hauptnavigation">
-  <div id="nav-container" class="max-w-7xl mx-auto px-1.5 sm:px-4 lg:px-6">
-    <div class="flex items-center justify-end md:justify-between py-4">
-      <h1 class="hidden md:block text-xl font-bold text-gray-900 dark:text-white m-0">
+  <div id="nav-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between py-4">
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white m-0">
         <a id="logo" href="/">MediathekViewWeb</a>
       </h1>
 
       <!-- Desktop Menu -->
       <div class="hidden md:flex md:items-center">
         <ul class="flex flex-row items-center gap-2">
-          <li>
-            <button
-              class="nav-link"
-              onclick={() => {
-                trackEvent('Click Donate');
-                showDonate();
-              }}>Spenden</button>
-          </li>
-          <li>
-            <a class="nav-link" target="_blank" href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb" onclick={() => trackEvent('Click Forum Link')}>Forum</a>
-          </li>
-          <li>
-            <button
-              class="nav-link"
-              onclick={() => {
-                trackEvent('Click Contact');
-                showContact();
-              }}>Kontakt</button>
-          </li>
-          <li>
-            <a class="nav-link" target="_blank" href="https://github.com/mediathekview/mediathekviewweb" onclick={() => trackEvent('Click GitHub Link')}>GitHub</a>
-          </li>
-          <li class="relative">
+          {#each navItems as item}
+            <li>{@render navItem(item, false)}</li>
+          {/each}
+          <li class="relative" use:clickOutside={() => (aboutMenuOpen = false)}>
             <button class="nav-link flex gap-2 items-center" type="button" onclick={() => (aboutMenuOpen = !aboutMenuOpen)}>
               Über <Icon icon="chevron-down" />
             </button>
             {#if aboutMenuOpen}
               <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-10" role="menu" aria-orientation="vertical">
-                <button class="dropdown-item w-full text-left" onclick={() => handleAboutClick('impressum')}>Impressum</button>
-                <button class="dropdown-item w-full text-left" onclick={() => handleAboutClick('datenschutz')}>Datenschutz</button>
+                {#each aboutItems as item}
+                  <button class="dropdown-item w-full text-left" onclick={() => handleAboutClick(item.key)}>{item.label}</button>
+                {/each}
               </div>
             {/if}
           </li>
@@ -93,48 +115,12 @@
   {#if mobileMenuOpen}
     <div class="md:hidden" id="mobile-menu">
       <ul class="px-2 pb-3 space-y-1">
-        <li>
-          <button
-            class="nav-link"
-            onclick={() => {
-              trackEvent('Click Donate');
-              handleMenuClick(showDonate);
-            }}>Spenden</button>
-        </li>
-        <li>
-          <a
-            class="nav-link"
-            target="_blank"
-            href="https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb"
-            onclick={() => {
-              trackEvent('Click Forum Link');
-              mobileMenuOpen = false;
-            }}>Forum</a>
-        </li>
-        <li>
-          <button
-            class="nav-link"
-            onclick={() => {
-              trackEvent('Click Contact');
-              handleMenuClick(showContact);
-            }}>Kontakt</button>
-        </li>
-        <li>
-          <a
-            class="nav-link"
-            target="_blank"
-            href="https://github.com/mediathekview/mediathekviewweb"
-            onclick={() => {
-              trackEvent('Click GitHub Link');
-              mobileMenuOpen = false;
-            }}>GitHub</a>
-        </li>
-        <li>
-          <button class="nav-link" onclick={() => handleAboutClick('impressum')}>Impressum</button>
-        </li>
-        <li>
-          <button class="nav-link" onclick={() => handleAboutClick('datenschutz')}>Datenschutz</button>
-        </li>
+        {#each navItems as item}
+          <li>{@render navItem(item, true)}</li>
+        {/each}
+        {#each aboutItems as item}
+          <li><button class="nav-link" onclick={() => handleAboutClick(item.key)}>{item.label}</button></li>
+        {/each}
       </ul>
     </div>
   {/if}

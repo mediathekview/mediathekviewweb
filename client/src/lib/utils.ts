@@ -88,11 +88,26 @@ export function formatDuration(seconds: number): string {
 
 export function formatBytes(bytes: number, precision: number = 3): string {
   if (bytes < 0) return '?';
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return '0 B';
   const k = 1000;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toPrecision(precision)) + ' ' + sizes[i];
+}
+
+export function isToggleClick(event: MouseEvent): boolean {
+  const target = event.target as HTMLElement;
+
+  if (target.closest('a') || target.closest('button')) {
+    return false;
+  }
+
+  // Skip when the click was actually a text selection drag.
+  if ((window.getSelection()?.toString().length ?? 0) > 0) {
+    return false;
+  }
+
+  return true;
 }
 
 export function parseURIHash(hash: string): Record<string, string> {
