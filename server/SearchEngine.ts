@@ -75,8 +75,8 @@ export class SearchEngine {
   async search(query: any): Promise<{ result: any[], totalResults: number, totalRelation: string }> {
     const opensearchQuery = {
       index: OPENSEARCH_INDEX,
-      from: query.offset || 0,
-      size: query.size || 15,
+      from: query.offset ?? 0,
+      size: Math.min(query.size ?? 15, 1000),
       body: {
         query: {
           bool: {

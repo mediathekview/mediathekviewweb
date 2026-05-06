@@ -4,7 +4,7 @@
   import Icon from './Icon.svelte';
   import Toggle from './Toggle.svelte';
 
-  let { showHelp } = $props<{ showHelp: () => void }>();
+  let { showHelp, showRssFeed } = $props<{ showHelp: () => void; showRssFeed: () => void }>();
 
   const sortValue = $derived(`${appState.sortBy}_${appState.sortOrder}`);
 
@@ -59,7 +59,7 @@
       <button class="icon-btn" type="button" aria-label={appState.viewMode === 'grid' ? 'Listenansicht' : 'Kartenansicht'} title={appState.viewMode === 'grid' ? 'Listenansicht' : 'Kartenansicht'} onclick={appState.toggleViewMode}>
         <Icon icon={appState.viewMode === 'grid' ? 'table' : 'grid'} class="text-gray-600 dark:text-gray-300" />
       </button>
-      <button class="icon-btn" type="button" aria-label="RSS-Feed" title="RSS-Feed" onclick={appState.openRssFeed}>
+      <button class="icon-btn" type="button" aria-label="RSS-Feed" title="RSS-Feed" onclick={showRssFeed}>
         <Icon icon="rss" class="text-gray-600 dark:text-gray-300" />
       </button>
     </div>

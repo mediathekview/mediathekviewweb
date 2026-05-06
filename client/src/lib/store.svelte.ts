@@ -265,10 +265,12 @@ function createAppState() {
       }
     },
 
-    openRssFeed() {
-      trackEvent('Open RSS Feed');
+    getRssFeedUrl(quality: 'hd' | 'sd' | 'low', size: number): string {
       const search = window.location.hash.replace('#', '');
-      window.open(`${window.location.origin}/feed${search.length > 0 ? '?' : ''}${search}`, '_blank');
+      const extra = `quality=${quality}&size=${size}`;
+      const params = (search.length > 0) ? `${search}&${extra}` : extra;
+
+      return `${window.location.origin}/feed?${params}`;
     },
     init
   };

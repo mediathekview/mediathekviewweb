@@ -10,11 +10,23 @@ export class RSSFeedGenerator {
     this.searchEngine = searchEngine;
   }
 
+  private resolveVideoUrl(entry: any, quality: 'hd' | 'sd' | 'low'): string {
+    if (quality === 'hd') {
+      return entry.url_video_hd || entry.url_video || entry.url_video_low || '';
+    }
+
+    if (quality === 'sd') {
+      return entry.url_video || entry.url_video_hd || entry.url_video_low || '';
+    }
+
+    return entry.url_video_low || entry.url_video || entry.url_video_hd || '';
+  }
+
   async createFeed(requestUrl): Promise<string> {
     const url = URL.parse(requestUrl);
     const urlQuery = querystring.parse(url.query);
 
-    const parsedQuery = this.parseQuery(urlQuery.query as string || '');
+    const parsedQuery = this.parseQuery((urlQuery.query ?? '') as string);
     const queries = [];
 
     for (const channel of parsedQuery.channels) {
@@ -86,19 +98,23 @@ export class RSSFeedGenerator {
       site_url: siteUrl
     });
 
+    const rawQuality = (urlQuery.quality ?? '') as string;
+    const quality: 'hd' | 'sd' | 'low' = (rawQuality === 'sd' || rawQuality === 'low') ? rawQuality : 'hd';
+
     for (let i = 0; i < result.result.length; i++) {
       const item = result.result[i];
+      const videoUrl = this.resolveVideoUrl(item, quality);
 
       rss.item({
         author: item.channel,
         categories: [item.topic],
         title: item.title,
         description: item.description,
-        url: item.url_video_hd || item.url_video,
+        url: videoUrl,
         guid: item.id,
         date: new Date(item.timestamp * 1000),
         enclosure: {
-          url: item.url_video_hd || item.url_video,
+          url: videoUrl,
           size: item.size
         },
         custom_elements: [

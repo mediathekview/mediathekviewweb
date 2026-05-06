@@ -10,6 +10,7 @@
   import HelpDialog from '$lib/components/HelpDialog.svelte';
   import Impressum from '$lib/components/Impressum.svelte';
   import ResultsContainer from '$lib/components/ResultsContainer.svelte';
+  import RssFeedDialog from '$lib/components/RssFeedDialog.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
   import VideoPlayer from '$lib/components/VideoPlayer.svelte';
   import { appState } from '$lib/store.svelte';
@@ -22,6 +23,7 @@
   let contactDialog: ContactDialog;
   let donateDialog: DonateDialog;
   let helpDialog: HelpDialog;
+  let rssFeedDialog: RssFeedDialog;
   let castConsentDialog: CastConsentDialog;
   let mainElement: HTMLElement;
   let legalDialog = $state<Dialog>();
@@ -140,7 +142,7 @@
 
   <main bind:this={mainElement} class="mx-auto py-6 px-4 sm:px-6 lg:px-8">
     <div>
-      <SearchBar showHelp={() => helpDialog.show()} />
+      <SearchBar showHelp={() => helpDialog.show()} showRssFeed={() => rssFeedDialog.show()} />
       <ResultsContainer onPlayVideo={(payload) => (videoToPlay = payload)} />
     </div>
   </main>
@@ -149,6 +151,7 @@
 <VideoPlayer videoPayload={videoToPlay} onClose={() => (videoToPlay = null)} />
 <CookieDialog bind:this={cookieDialog} onConsent={handleCookieConsent} {showImpressum} {showDatenschutz} />
 <HelpDialog bind:this={helpDialog} />
+<RssFeedDialog bind:this={rssFeedDialog} />
 <CastConsentDialog bind:this={castConsentDialog} />
 <ContactDialog bind:this={contactDialog} />
 <DonateDialog bind:this={donateDialog} />
