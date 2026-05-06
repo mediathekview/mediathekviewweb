@@ -49,7 +49,7 @@
     <div>
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Anzahl Einträge:</p>
       <div class="quality-group">
-        {#each [10, 50, 100, 250] as option (option)}
+        {#each [10, 50, 100, 250, 500, 1000] as option (option)}
           <label class="quality-option" class:active={size === option}>
             <input type="radio" name="rss-size" value={option} bind:group={size} class="sr-only" />
             {option}
