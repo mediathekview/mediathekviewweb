@@ -62,6 +62,10 @@ Um nach Inhalten zu suchen, die mehrere Wörter enthalten müssen, trenne diese 
 
 ---
 
+### Groß-/Kleinschreibung und Sonderzeichen
+
+Die Suche ist nicht case-sensitiv und behandelt Umlaute flexibel — `Ö`, `oe` und `OE` liefern die gleichen Ergebnisse. Sonderzeichen müssen nicht exakt getippt werden.
+
 ### Praxisbeispiele für die Suche
 
 1.  **Finde alle Tatort-Folgen von ARD oder WDR, die länger als 80 Minuten sind:**
@@ -82,7 +86,7 @@ Um nach Inhalten zu suchen, die mehrere Wörter enthalten müssen, trenne diese 
     !tagesschau24 <10
     ```
 
-4.  **Finde Inhalte zu "Sturm der Liebe" _und_ "Rote Rosen" von ARD _und_ NDR:**
+4.  **Finde Inhalte zu "Sturm der Liebe" _und_ "Rote Rosen" von ARD _oder_ NDR:**
     ```plaintext
     !ard !ndr #sturm,der,liebe #rote,rosen
     ```
@@ -93,13 +97,17 @@ Um nach Inhalten zu suchen, die mehrere Wörter enthalten müssen, trenne diese 
 
 Wenn dieser Schalter aktiviert ist, sucht ein allgemeiner Begriff (ohne Selektor) in **allen** Feldern: Sender, Thema, Titel und Beschreibung. Das ist nützlich für eine breitere, unspezifische Suche.
 
+### Der "Zukünftige"-Schalter
+
+Standardmäßig werden nur bereits ausgestrahlte Inhalte angezeigt. Mit diesem Schalter werden auch zukünftige Sendungen in den Ergebnissen eingeschlossen.
+
 ### Sortierung
 
 Die Suchergebnisse können nach verschiedenen Kriterien wie **Datum**, **Dauer** oder **Sender** auf- und absteigend sortiert werden.
 
 ### RSS-Feed
 
-Jede Suchanfrage kann als [RSS-Feed](<https://de.wikipedia.org/wiki/RSS_(Web-Feed)>) abonniert werden. Klicke dazu auf das **RSS-Symbol**, um den Feed-Link zu erhalten. So wirst du automatisch über neue Ergebnisse zu deiner Suche informiert.
+Jede Suchanfrage kann als [RSS-Feed](<https://de.wikipedia.org/wiki/RSS_(Web-Feed)>) abonniert werden. Klicke dazu auf das **RSS-Symbol**, um den Feed-Link zu erhalten. Der Link kodiert den vollständigen Suchzustand — Selektoren, Sortierung, Dauer-Filter und die Überall/Zukünftige-Schalter — sodass auch komplexe Suchen direkt abonniert werden können. So wirst du automatisch über neue Ergebnisse informiert.
 
 ## FAQ
 
