@@ -1,9 +1,10 @@
 <script lang="ts">
   import { appState } from '$lib/store.svelte';
-  import { trackEvent } from '$lib/utils';
   import Dropdown from './Dropdown.svelte';
   import Icon from './Icon.svelte';
   import Toggle from './Toggle.svelte';
+
+  let { showHelp } = $props<{ showHelp: () => void }>();
 
   const sortValue = $derived(`${appState.sortBy}_${appState.sortOrder}`);
 
@@ -37,9 +38,15 @@
       </div>
       <label for="search-input" class="sr-only">Suche</label>
       <input id="search-input" type="search" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" title="Selektoren:&#13;!Sender&#13;#Thema&#13;+Titel&#13;*Beschreibung&#13;&lt;x (in Minuten)&#13;&gt;x (in Minuten)" bind:value={appState.query} />
-      <button tabindex="-1" type="button" aria-label="Suche zurücksetzen" class="search-input-clear {appState.query.length > 0 ? 'opacity-100' : 'opacity-0'}" onclick={() => (appState.query = '')}>
-        <Icon icon="x-lg" />
-      </button>
+      {#if appState.query.length > 0}
+        <button tabindex="-1" type="button" aria-label="Suche zurücksetzen" class="search-input-right" onclick={() => (appState.query = '')}>
+          <Icon icon="x-lg" />
+        </button>
+      {:else}
+        <button type="button" aria-label="Hilfe" class="search-input-right" onclick={showHelp}>
+          <Icon icon="question-circle" />
+        </button>
+      {/if}
     </div>
     <div class="flex items-center gap-4">
       <Toggle label="Überall" bind:checked={appState.everywhere} />
@@ -55,9 +62,6 @@
       <button class="icon-btn" type="button" aria-label="RSS-Feed" title="RSS-Feed" onclick={appState.openRssFeed}>
         <Icon icon="rss" class="text-gray-600 dark:text-gray-300" />
       </button>
-      <a href="https://github.com/mediathekview/mediathekviewweb/blob/master/README.md" target="_blank" rel="noopener noreferrer" class="icon-btn" aria-label="Hilfe" title="Hilfe" onclick={() => trackEvent('Click Help')}>
-        <Icon icon="question-circle" class="text-gray-600 dark:text-gray-300" />
-      </a>
     </div>
   </div>
 </div>
@@ -84,9 +88,13 @@
 
   .search-input {
     @apply w-full rounded-md border border-gray-300 bg-gray-50 py-2 pl-10 pr-10 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-300 dark:focus:ring-blue-500;
+
+    &::-webkit-search-cancel-button {
+      display: none;
+    }
   }
 
-  .search-input-clear {
+  .search-input-right {
     @apply absolute right-0 inset-y-0 flex items-center px-4 leading-none text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white cursor-pointer transition-opacity;
   }
 </style>

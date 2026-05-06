@@ -3,15 +3,16 @@
   import Icon from './Icon.svelte';
 
   interface Props {
-    children: Snippet; // Main content
+    children: Snippet;
     title?: string;
     icon?: string;
     limitWidth?: boolean;
+    closeOnClickOutside?: boolean;
     onclose?: () => void;
     class?: string;
   }
 
-  let { children, title, icon, onclose, class: extraClass = '', limitWidth = true }: Props = $props();
+  let { children, title, icon, onclose, class: extraClass = '', limitWidth = true, closeOnClickOutside = false }: Props = $props();
   let dialog: HTMLDialogElement;
 
   export function show() {
@@ -29,7 +30,14 @@
   });
 </script>
 
-<dialog bind:this={dialog} class:max-w-xl={limitWidth} class:md:max-w-2xl={limitWidth} class="m-auto w-full rounded-2xl bg-white p-0 shadow-lg backdrop:bg-black/50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 {extraClass}">
+<dialog
+  bind:this={dialog}
+  class:max-w-xl={limitWidth}
+  class:md:max-w-2xl={limitWidth}
+  class="m-auto w-full rounded-2xl bg-white p-0 shadow-lg backdrop:bg-black/50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 {extraClass}"
+  onclick={(e) => {
+    if (closeOnClickOutside && e.target === dialog) dialog.close();
+  }}>
   {#if title}
     <div class="flex items-center justify-between p-6 md:p-8">
       <div class="flex items-center gap-4">

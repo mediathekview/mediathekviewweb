@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Dialog from './Dialog.svelte';
   import { trackEvent } from '$lib/utils';
+  import Dialog from './Dialog.svelte';
 
   let dialog: Dialog;
 
@@ -9,7 +9,7 @@
   }
 </script>
 
-<Dialog bind:this={dialog} title="Kontakt" icon="envelope-at" class="max-w-2xl">
+<Dialog bind:this={dialog} title="Kontakt" icon="envelope-at" closeOnClickOutside class="max-w-2xl">
   <div class="space-y-6">
     <p>
       Für gefundene Fehler oder Verbesserungsvorschläge verwende bitte die

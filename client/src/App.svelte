@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { setCastConsentProvider } from '$lib/cast';
   import CastConsentDialog from '$lib/components/CastConsentDialog.svelte';
   import ContactDialog from '$lib/components/ContactDialog.svelte';
   import CookieDialog from '$lib/components/CookieDialog.svelte';
@@ -6,11 +7,11 @@
   import Dialog from '$lib/components/Dialog.svelte';
   import DonateDialog from '$lib/components/DonateDialog.svelte';
   import Header from '$lib/components/Header.svelte';
+  import HelpDialog from '$lib/components/HelpDialog.svelte';
   import Impressum from '$lib/components/Impressum.svelte';
   import ResultsContainer from '$lib/components/ResultsContainer.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
   import VideoPlayer from '$lib/components/VideoPlayer.svelte';
-  import { setCastConsentProvider } from '$lib/cast';
   import { appState } from '$lib/store.svelte';
   import type { VideoPayload } from '$lib/types';
   import { initializeAnalytics, trackEvent } from '$lib/utils';
@@ -20,6 +21,7 @@
   let cookieDialog: CookieDialog;
   let contactDialog: ContactDialog;
   let donateDialog: DonateDialog;
+  let helpDialog: HelpDialog;
   let castConsentDialog: CastConsentDialog;
   let mainElement: HTMLElement;
   let legalDialog = $state<Dialog>();
@@ -134,11 +136,11 @@
 </script>
 
 <div class:blur={!!videoToPlay}>
-  <Header showContact={() => contactDialog.show()} showDonate={() => donateDialog.show()} {showImpressum} {showDatenschutz} />
+  <Header showContact={() => contactDialog.show()} showDonate={() => donateDialog.show()} showHelp={() => helpDialog.show()} {showImpressum} {showDatenschutz} />
 
   <main bind:this={mainElement} class="mx-auto py-6 px-4 sm:px-6 lg:px-8">
     <div>
-      <SearchBar />
+      <SearchBar showHelp={() => helpDialog.show()} />
       <ResultsContainer onPlayVideo={(payload) => (videoToPlay = payload)} />
     </div>
   </main>
@@ -146,6 +148,7 @@
 
 <VideoPlayer videoPayload={videoToPlay} onClose={() => (videoToPlay = null)} />
 <CookieDialog bind:this={cookieDialog} onConsent={handleCookieConsent} {showImpressum} {showDatenschutz} />
+<HelpDialog bind:this={helpDialog} />
 <CastConsentDialog bind:this={castConsentDialog} />
 <ContactDialog bind:this={contactDialog} />
 <DonateDialog bind:this={donateDialog} />

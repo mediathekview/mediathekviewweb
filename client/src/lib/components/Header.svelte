@@ -2,9 +2,10 @@
   import Icon from '$lib/components/Icon.svelte';
   import { trackEvent } from '$lib/utils';
 
-  let { showContact, showDonate, showImpressum, showDatenschutz } = $props<{
+  let { showContact, showDonate, showHelp, showImpressum, showDatenschutz } = $props<{
     showContact: () => void;
     showDonate: () => void;
+    showHelp: () => void;
     showImpressum: () => void;
     showDatenschutz: () => void;
   }>();
@@ -19,6 +20,7 @@
     { type: 'link', label: 'Forum', event: 'Click Forum Link', href: 'https://forum.mediathekview.de/category/11/offizeller-client-mediathekviewweb' },
     { type: 'button', label: 'Kontakt', event: 'Click Contact', action: showContact },
     { type: 'link', label: 'GitHub', event: 'Click GitHub Link', href: 'https://github.com/mediathekview/mediathekviewweb' },
+    { type: 'button', label: 'Hilfe', event: 'Click Help', action: showHelp },
   ];
 
   const aboutItems: { label: string; key: 'impressum' | 'datenschutz' }[] = [
