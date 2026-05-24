@@ -1,3 +1,5 @@
+import { uuid } from './uuid';
+
 declare const umami: {
   track: (event_name: string, data?: Record<string, any>) => void;
   identify: (unique_id: string) => void;
@@ -11,7 +13,7 @@ export function initializeAnalytics(): void {
     const umamiIdKey = 'mvw_uuid';
     let uniqueId = localStorage.getItem(umamiIdKey);
     if (!uniqueId) {
-      uniqueId = crypto.randomUUID();
+      uniqueId = uuid();
       localStorage.setItem(umamiIdKey, uniqueId);
     }
     umami.identify(uniqueId);

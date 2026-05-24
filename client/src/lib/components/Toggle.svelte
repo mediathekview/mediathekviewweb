@@ -3,10 +3,11 @@
     label: string;
     checked?: boolean;
   }
+  import { uuid } from '$lib/uuid';
 
   let { label, checked = $bindable(), class: extraClass = '', ...rest }: Props = $props();
 
-  const id = `toggle-${crypto.randomUUID()}`;
+  const id = `toggle-${uuid()}`;
 </script>
 
 <div class="flex items-center gap-2 {extraClass}">
