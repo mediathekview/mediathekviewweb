@@ -148,7 +148,23 @@ export class SearchEngine {
       opensearchQuery.body.query.bool.filter.push(durationFilter);
     }
 
-    if (query.future === false) {
+    const hasExplicitTimestampRange = query.timestamp_from != undefined || query.timestamp_to != undefined;
+    if (hasExplicitTimestampRange) {
+      const timestampFilter: { range: { timestamp: { gte?: number, lte?: number } } } = {
+        range: { timestamp: {} }
+      };
+
+      if (query.timestamp_from != undefined) {
+        timestampFilter.range.timestamp.gte = query.timestamp_from;
+      }
+
+      if (query.timestamp_to != undefined) {
+        timestampFilter.range.timestamp.lte = query.timestamp_to;
+      }
+      opensearchQuery.body.query.bool.filter.push(timestampFilter);
+    }
+
+    if (query.future === false && !hasExplicitTimestampRange) {
       opensearchQuery.body.query.bool.filter.push({
         range: {
           timestamp: { to: 'now+1h/h' }
