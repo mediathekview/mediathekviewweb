@@ -71,6 +71,8 @@ export class RSSFeedGenerator {
       sortBy: urlQuery.sortBy ?? 'timestamp',
       sortOrder: urlQuery.sortOrder ?? 'desc',
       future,
+      timestamp_from: (typeof urlQuery.timestamp_from == 'string') ? parseInt(urlQuery.timestamp_from) : undefined,
+      timestamp_to: (typeof urlQuery.timestamp_to == 'string') ? parseInt(urlQuery.timestamp_to) : undefined,
       duration_min: parsedQuery.duration_min,
       duration_max: parsedQuery.duration_max,
       offset: (typeof urlQuery.offset == 'string') ? parseInt(urlQuery.offset) : 0,

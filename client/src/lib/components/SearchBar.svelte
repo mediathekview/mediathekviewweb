@@ -8,6 +8,19 @@
 
   const sortValue = $derived(`${appState.sortBy}_${appState.sortOrder}`);
 
+  const dateFrom = $derived(appState.timestampFrom != undefined ? new Date(appState.timestampFrom * 1000).toISOString().slice(0, 10) : '');
+  const dateTo = $derived(appState.timestampTo != undefined ? new Date(appState.timestampTo * 1000).toISOString().slice(0, 10) : '');
+
+  function handleDateFromChange(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    appState.timestampFrom = value ? Math.floor(new Date(value).getTime() / 1000) : undefined;
+  }
+
+  function handleDateToChange(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    appState.timestampTo = value ? Math.floor(new Date(value).getTime() / 1000) : undefined;
+  }
+
   function handleSortChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     if (target) {
@@ -51,6 +64,12 @@
     <div class="flex items-center gap-4">
       <Toggle label="Überall" bind:checked={appState.everywhere} />
       <Toggle label="Zukünftige" bind:checked={appState.future} />
+    </div>
+    <div class="flex items-center gap-2">
+      <label for="date-from" class="date-label">Von</label>
+      <input id="date-from" type="date" class="date-input" value={dateFrom} onchange={handleDateFromChange} />
+      <label for="date-to" class="date-label">Bis</label>
+      <input id="date-to" type="date" class="date-input" value={dateTo} onchange={handleDateToChange} />
     </div>
     <div class="flex items-stretch gap-2 min-h-10">
       {#if appState.viewMode === 'grid'}
@@ -96,5 +115,14 @@
 
   .search-input-right {
     @apply absolute right-0 inset-y-0 flex items-center px-4 leading-none text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white cursor-pointer transition-opacity;
+  }
+
+  .date-input {
+    @apply h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:ring-blue-500;
+    color-scheme: light dark;
+  }
+
+  .date-label {
+    @apply text-sm text-gray-700 dark:text-gray-300;
   }
 </style>
