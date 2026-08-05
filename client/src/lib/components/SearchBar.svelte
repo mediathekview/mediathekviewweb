@@ -37,7 +37,7 @@
         <Icon icon="search" class="text-gray-600 dark:text-gray-300" />
       </div>
       <label for="search-input" class="sr-only">Suche</label>
-      <input id="search-input" type="search" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" title="Selektoren:&#13;!Sender&#13;#Thema&#13;+Titel&#13;*Beschreibung&#13;&lt;x (in Minuten)&#13;&gt;x (in Minuten)" bind:value={appState.query} />
+      <input id="search-input" type="search" class="search-input" placeholder="Suche nach Sendungen, z.B. !ARD #Tatort >80" title="Selektoren:&#13;!Sender&#13;#Thema&#13;+Titel&#13;*Beschreibung&#13;&lt;x (in Minuten)&#13;&gt;x (in Minuten)" bind:value={appState.query} autofocus />
       {#if appState.query.length > 0}
         <button tabindex="-1" type="button" aria-label="Suche zurücksetzen" class="search-input-right" onclick={() => (appState.query = '')}>
           <Icon icon="x-lg" />
