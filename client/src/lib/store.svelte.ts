@@ -7,6 +7,8 @@ function createAppState() {
   let query = $state('');
   let everywhere = $state(false);
   let future = $state(true);
+  let timestampFrom = $state<number | undefined>(undefined);
+  let timestampTo = $state<number | undefined>(undefined);
   let sortBy = $state<SortBy>('timestamp');
   let sortOrder = $state<SortOrder>('desc');
   let currentPage = $state(0);
@@ -55,6 +57,8 @@ function createAppState() {
       sortBy,
       sortOrder,
       future,
+      timestamp_from: timestampFrom,
+      timestamp_to: timestampTo,
       duration_min: parsedQuery.duration_min,
       duration_max: parsedQuery.duration_max,
       offset: currentPage * itemsPerPage,
@@ -107,6 +111,11 @@ function createAppState() {
     everywhere = params['everywhere'] === 'true';
     future = params['future'] !== 'false';
 
+    const from = parseInt(params['timestamp_from'], 10);
+    timestampFrom = !isNaN(from) ? from : undefined;
+    const to = parseInt(params['timestamp_to'], 10);
+    timestampTo = !isNaN(to) ? to : undefined;
+
     const sBy = params['sortBy'];
     if (sBy && isSortBy(sBy)) sortBy = sBy;
     else sortBy = 'timestamp';
@@ -135,6 +144,8 @@ function createAppState() {
         query,
         everywhere,
         future,
+        timestamp_from: timestampFrom,
+        timestamp_to: timestampTo,
         sortBy,
         sortOrder,
         page: currentPage + 1
@@ -171,12 +182,14 @@ function createAppState() {
     const cleanup = $effect.root(() => {
       $effect(() => {
         _search();
-        trackSearch({ query, everywhere, future, sortBy, sortOrder, itemsPerPage, page: currentPage + 1 });
+        trackSearch({ query, everywhere, future, timestampFrom, timestampTo, sortBy, sortOrder, itemsPerPage, page: currentPage + 1 });
 
         updateUrlHash({
           query: query || undefined,
           everywhere: everywhere || undefined,
           future: future ? undefined : 'false',
+          timestamp_from: timestampFrom,
+          timestamp_to: timestampTo,
           sortBy: sortBy === 'timestamp' ? undefined : sortBy,
           sortOrder: sortOrder === 'desc' ? undefined : sortOrder,
           page: currentPage > 0 ? currentPage + 1 : undefined
@@ -219,6 +232,10 @@ function createAppState() {
     set everywhere(value) { everywhere = value; currentPage = 0; },
     get future() { return future; },
     set future(value) { future = value; currentPage = 0; },
+    get timestampFrom() { return timestampFrom; },
+    set timestampFrom(value) { timestampFrom = value; currentPage = 0; },
+    get timestampTo() { return timestampTo; },
+    set timestampTo(value) { timestampTo = value; currentPage = 0; },
     get sortBy() { return sortBy; },
     get sortOrder() { return sortOrder; },
     get currentPage() { return currentPage; },
