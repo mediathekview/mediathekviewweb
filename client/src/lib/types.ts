@@ -55,4 +55,6 @@ export type VideoPayload = {
   url: string;
   quality: VideoQuality;
   url_subtitle?: string;
+  /** Length of the video in seconds, used to correct subtitle timecode offsets. */
+  duration?: number;
 };

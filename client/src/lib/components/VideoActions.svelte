@@ -88,6 +88,7 @@
       quality,
       url,
       url_subtitle: entry.url_subtitle,
+      duration: entry.duration,
     });
   }
 

@@ -3,6 +3,7 @@
   import videojs from 'video.js';
   import type Player from 'video.js/dist/types/player';
 
+  import { loadSubtitleAsWebVtt } from '$lib/subtitles';
   import type { VideoPayload } from '$lib/types';
   import { trackEvent } from '$lib/utils';
   import ChannelTag from './ChannelTag.svelte';
@@ -163,7 +164,40 @@
 
       p.src({ src: videoPayload.url, type: videoPayload.url.endsWith('m3u8') ? 'application/x-mpegURL' : undefined });
 
+      // Broadcaster subtitles are mostly TTML, which the player cannot read, so they are converted
+      // to WebVTT here and handed to the player as an object URL once ready.
+      const subtitleRequest = new AbortController();
+      let subtitleObjectUrl: string | null = null;
+
+      if (videoPayload.url_subtitle) {
+        loadSubtitleAsWebVtt(videoPayload.url_subtitle, videoPayload.duration, subtitleRequest.signal)
+          .then((objectUrl) => {
+            if (p.isDisposed()) {
+              URL.revokeObjectURL(objectUrl);
+              return;
+            }
+
+            subtitleObjectUrl = objectUrl;
+
+            // Video.js returns its own track element class, whose typings omit the `track` getter.
+            const trackElement = p.addRemoteTextTrack({ kind: 'captions', src: objectUrl, srclang: 'de', label: 'Untertitel', default: true }, true) as unknown as HTMLTrackElement;
+            // `default` only takes effect for tracks present when the player starts, so switch it on
+            // explicitly. This has to happen after addRemoteTextTrack returns: Video.js only redraws
+            // captions for tracks whose mode changes once it is already listening to them.
+            trackElement.track.mode = 'showing';
+          })
+          .catch(() => {
+            // Playback works without captions. Expected for ORF, which rejects cross-origin requests.
+          });
+      }
+
       return () => {
+        subtitleRequest.abort();
+
+        if (subtitleObjectUrl) {
+          URL.revokeObjectURL(subtitleObjectUrl);
+        }
+
         if (p && !p.isDisposed()) {
           p.dispose();
         }
@@ -191,9 +225,6 @@
       {#key videoPayload.url}
         <!-- svelte-ignore a11y_media_has_caption -->
         <video-js bind:this={videoElement} class="vjs-big-play-centered w-full rounded-lg overflow-clip">
-          {#if videoPayload.url_subtitle}
-            <track kind="captions" src={videoPayload.url_subtitle} default />
-          {/if}
         </video-js>
       {/key}
     </div>
